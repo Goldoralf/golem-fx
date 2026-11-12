@@ -71,60 +71,7 @@ enum Source {
     EnvelopeLfo,
 }
 
-/// The contract's shared sync list.
-#[derive(Enum, Debug, PartialEq, Clone, Copy)]
-enum SyncParam {
-    #[id = "off"]
-    Off,
-    #[id = "4/1"]
-    #[name = "4/1"]
-    W4,
-    #[id = "2/1"]
-    #[name = "2/1"]
-    W2,
-    #[id = "1/1"]
-    #[name = "1/1"]
-    W1,
-    #[id = "1/2"]
-    #[name = "1/2"]
-    D2,
-    #[id = "1/2d"]
-    #[name = "1/2•"]
-    D2Dot,
-    #[id = "1/2t"]
-    #[name = "1/2T"]
-    D2T,
-    #[id = "1/4"]
-    #[name = "1/4"]
-    D4,
-    #[id = "1/4d"]
-    #[name = "1/4•"]
-    D4Dot,
-    #[id = "1/4t"]
-    #[name = "1/4T"]
-    D4T,
-    #[id = "1/8"]
-    #[name = "1/8"]
-    D8,
-    #[id = "1/8d"]
-    #[name = "1/8•"]
-    D8Dot,
-    #[id = "1/8t"]
-    #[name = "1/8T"]
-    D8T,
-    #[id = "1/16"]
-    #[name = "1/16"]
-    D16,
-    #[id = "1/16d"]
-    #[name = "1/16•"]
-    D16Dot,
-    #[id = "1/16t"]
-    #[name = "1/16T"]
-    D16T,
-    #[id = "1/32"]
-    #[name = "1/32"]
-    D32,
-}
+gfx_dsp::sync_param_enum!();
 
 fn f(i: usize, unit: &'static str, decimals: usize) -> FloatParam {
     let pi = PARAMS[i];

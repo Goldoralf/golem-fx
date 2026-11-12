@@ -235,6 +235,7 @@ dependencies = [
  "gfx-eq",
  "gfx-gate",
  "gfx-limiter",
+ "gfx-tremolo",
  "gfx-wah",
 ]
 
@@ -284,6 +285,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-limiter"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-tremolo"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

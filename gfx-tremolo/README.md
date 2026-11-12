@@ -1,6 +1,6 @@
 # gfx-tremolo
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Clean (Calf Pulsator's law), Bias (antialiased push-pull with moving bias), Optical (lamp → LDR), Neon (striking lamp → LDR), Harmonic (antiphase bands); duty, 2 ms square edges, host sync with position lock, dynamics, stereo phase; model and wave changes crossfade; 7 behaviour tests, bench green.
 
 golem's tremolo. Stands for golem's `tremolo` block (today Calf Pulsator), keeping its parameter ids and
 units ([golem contract](../docs/golem-contract.md)). The aim: the amp tremolos — bias, optical, neon,
