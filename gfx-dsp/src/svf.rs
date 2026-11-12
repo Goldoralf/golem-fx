@@ -39,6 +39,47 @@ pub struct Svf {
     c: Coefs,
     ic1: f64,
     ic2: f64,
+    /// coefficient ramp (set_biquad_ramped): per-sample step and samples left
+    step: Coefs,
+    left: u32,
+}
+
+impl Coefs {
+    fn from_biquad(b: &crate::matched::Biquad) -> Option<Coefs> {
+        // denominator → g, k (bilinear structure of the TPT SVF)
+        let (a1, a2) = (b.a1, b.a2);
+        let den = 1.0 - a1 + a2;
+        let g2 = (1.0 + a1 + a2) / den;
+        if !(g2 > 0.0) || !(den > 0.0) {
+            return None;
+        }
+        let g = g2.sqrt();
+        let d = 4.0 / den; // 1 + g² + g k
+        let gk = 0.5 * d * (1.0 - a2);
+        // numerator → m0, m1, m2: N(z)·D = m0·Den(z) + m1·g(1 − z⁻²) + m2·g²(1 + z⁻¹)²
+        let r = [b.b0 * d, b.b1 * d, b.b2 * d];
+        let m = [[d, g, g2], [2.0 * g2 - 2.0, 0.0, 2.0 * g2], [1.0 + g2 - gk, -g, g2]];
+        let det = |m: &[[f64; 3]; 3]| {
+            m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+                + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+        };
+        let dm = det(&m);
+        if dm.abs() < 1e-30 {
+            return None;
+        }
+        let mut sol = [0.0; 3];
+        for (j, out) in sol.iter_mut().enumerate() {
+            let mut mj = m;
+            for i in 0..3 {
+                mj[i][j] = r[i];
+            }
+            *out = det(&mj) / dm;
+        }
+        let a1s = 1.0 / d;
+        let a2s = g * a1s;
+        let a3s = g * a2s;
+        Some(Coefs { a1: a1s, a2: a2s, a3: a3s, m0: sol[0], m1: sol[1], m2: sol[2] })
+    }
 }
 
 impl Svf {
@@ -107,6 +148,32 @@ impl Svf {
         self.c = Coefs { a1, a2, a3, m0, m1, m2 };
     }
 
+    /// Realises any stable biquad (e.g. a matched design) in the TPT structure.
+    pub fn set_biquad(&mut self, b: &crate::matched::Biquad) {
+        if let Some(c) = Coefs::from_biquad(b) {
+            self.c = c;
+            self.left = 0;
+        }
+    }
+
+    /// Same, reaching the new coefficients linearly over `n` samples (control-rate updates without
+    /// steps).
+    pub fn set_biquad_ramped(&mut self, b: &crate::matched::Biquad, n: u32) {
+        if let Some(t) = Coefs::from_biquad(b) {
+            let n = n.max(1);
+            let k = 1.0 / n as f64;
+            self.step = Coefs {
+                a1: (t.a1 - self.c.a1) * k,
+                a2: (t.a2 - self.c.a2) * k,
+                a3: (t.a3 - self.c.a3) * k,
+                m0: (t.m0 - self.c.m0) * k,
+                m1: (t.m1 - self.c.m1) * k,
+                m2: (t.m2 - self.c.m2) * k,
+            };
+            self.left = n;
+        }
+    }
+
     pub fn reset(&mut self) {
         self.ic1 = 0.0;
         self.ic2 = 0.0;
@@ -114,6 +181,17 @@ impl Svf {
 
     #[inline]
     pub fn process(&mut self, x: f32) -> f32 {
+        if self.left > 0 {
+            self.left -= 1;
+            let s = self.step;
+            let c = &mut self.c;
+            c.a1 += s.a1;
+            c.a2 += s.a2;
+            c.a3 += s.a3;
+            c.m0 += s.m0;
+            c.m1 += s.m1;
+            c.m2 += s.m2;
+        }
         let c = &self.c;
         let v0 = x as f64;
         let v3 = v0 - self.ic2;
@@ -171,6 +249,28 @@ mod tests {
         assert!((gain(SvfMode::LowShelf, 200.0, 0.707, 6.0, 30.0) - 6.0).abs() < 0.2);
         assert!((gain(SvfMode::HighShelf, 4000.0, 0.707, -6.0, 16000.0) + 6.0).abs() < 0.3);
         assert!(gain(SvfMode::AllPass, 1000.0, 0.707, 0.0, 3000.0).abs() < 0.05);
+    }
+
+    #[test]
+    fn biquad_mapping_matches_direct_form() {
+        use crate::matched::{design, Analog};
+        for (p, f0) in [(Analog::bell(1.0, 9.0), 3000.0), (Analog::low_pass(0.707), 7000.0), (Analog::high_shelf(0.6, -5.0), 9000.0)] {
+            let b = design(p, f0, 48000.0);
+            let mut s = Svf::new();
+            s.set_biquad(&b);
+            let (mut x1, mut x2, mut y1, mut y2) = (0.0f64, 0.0, 0.0, 0.0);
+            let mut rng = crate::lfo::Rng::new(5);
+            for _ in 0..2000 {
+                let x = rng.bipolar() as f64;
+                let y = b.b0 * x + b.b1 * x1 + b.b2 * x2 - b.a1 * y1 - b.a2 * y2;
+                x2 = x1;
+                x1 = x;
+                y2 = y1;
+                y1 = y;
+                let z = s.process(x as f32) as f64;
+                assert!((z - y).abs() < 1e-4, "{z} vs {y}");
+            }
+        }
     }
 
     #[test]

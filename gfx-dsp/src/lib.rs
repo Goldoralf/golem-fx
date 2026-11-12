@@ -16,6 +16,7 @@ pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
 pub mod lfo;
+pub mod matched;
 pub mod oversample;
 pub mod smooth;
 pub mod svf;
