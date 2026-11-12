@@ -10,3 +10,4 @@ publish.workspace = true
 [dependencies]
 gfx-dsp.workspace = true
 gfx-boost = { path = "../gfx-boost", default-features = false }
+gfx-gate = { path = "../gfx-gate", default-features = false }

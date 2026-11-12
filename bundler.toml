@@ -1,3 +1,6 @@
 # Bundle names (nih_plug_xtask): what the hosts show.
 [gfx-boost]
 name = "GoleM FX Boost"
+
+[gfx-gate]
+name = "GoleM FX Gate"

@@ -1,6 +1,6 @@
 # gfx-gate
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — processor, VST3 wrapper with key input, 13 behaviour tests, bench green at 44.1 – 192 kHz. Read-only meters (`state`, `gr`) pending nih-plug output parameters.
 
 golem's noise gate. Stands for golem's `gate` block (today ReaGate), keeping its parameter ids and units
 ([golem contract](../docs/golem-contract.md)). The aim is the best gate for a live rack: metal-tight stops

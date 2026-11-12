@@ -221,6 +221,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-boost",
  "gfx-dsp",
+ "gfx-gate",
 ]
 
 [[package]]
@@ -234,6 +235,14 @@ dependencies = [
 [[package]]
 name = "gfx-dsp"
 version = "0.1.0"
+
+[[package]]
+name = "gfx-gate"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
 
 [[package]]
 name = "gimli"

@@ -22,7 +22,7 @@ Rust stable (`~/.cargo/bin`).
 cargo test --workspace --release              # unit tests + the bench's common checks at 48 kHz
 cargo run --release -p gfx-bench -- check gfx-boost     # full common checks, four sample rates
 cargo run --release -p gfx-bench -- render gfx-boost --in di.wav --out out.wav --set gain=6
-cargo xtask bundle gfx-boost --release        # → target/bundled/GoleM FX Boost.vst3
+cargo xtask bundle gfx-boost --release        # → target/bundled/GoleM FX Boost.vst3 (same for gfx-gate)
 ```
 
 Each effect crate has a host-independent processor (`gfx_dsp::Effect`) and a nih-plug wrapper behind the
@@ -35,7 +35,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | # | Effect | golem block | Replaces | Status |
 |---|---|---|---|---|
 | 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | core coded |
-| 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | design |
+| 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | **coded**, bench green, meters pending |
 | 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | design |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
 | 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | design |

@@ -66,20 +66,32 @@ fn highpass4(x: &[f32], fc: f32, sr: f32) -> Vec<f32> {
     x.iter().map(|&v| b.process(a.process(v))).collect()
 }
 
+/// Latency by cross-correlation of noise in and out (an impulse would be shaped by gates and
+/// envelopes): the lag of the correlation peak, over the second half of a 1 s pink-noise render.
 pub fn latency(name: &str, sr: f32) -> CheckResult {
     let mut e = fresh(name, sr, 1, 512);
-    let at = 100;
-    let out = render(e.as_mut(), &[signals::impulse(16384, at)], 512);
-    let first = out[0].iter().position(|v| v.abs() > 1e-4);
+    let n = sr as usize;
+    let x = signals::pink(n, 0.1, 17);
+    let y = render(e.as_mut(), std::slice::from_ref(&x), 512);
     let reported = e.latency();
-    match first {
-        Some(i) => {
-            let measured = i as isize - at as isize;
-            let pass = measured == reported as isize;
-            CheckResult::new("latency", sr, pass, format!("measured {measured} samples, reported {reported}"))
+    let from = n / 2;
+    let max_lag = 4096.min(n / 4);
+    let (mut best, mut best_lag) = (0.0f64, 0usize);
+    for lag in 0..max_lag {
+        let mut c = 0.0f64;
+        for i in from..n - max_lag {
+            c += x[i] as f64 * y[0][i + lag] as f64;
         }
-        None => CheckResult::new("latency", sr, false, "no output at default settings".into()),
+        if c.abs() > best {
+            best = c.abs();
+            best_lag = lag;
+        }
     }
+    if best < 1e-9 {
+        return CheckResult::new("latency", sr, false, "no output at default settings".into());
+    }
+    let pass = best_lag == reported;
+    CheckResult::new("latency", sr, pass, format!("measured {best_lag} samples, reported {reported}"))
 }
 
 pub fn determinism(name: &str, sr: f32) -> CheckResult {

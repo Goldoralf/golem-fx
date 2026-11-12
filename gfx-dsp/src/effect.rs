@@ -44,6 +44,17 @@ impl ParamInfo {
             exp: false,
         }
     }
+    pub const fn enumeration(id: &'static str, name: &'static str, options: u32, default: u32) -> Self {
+        Self {
+            id,
+            name,
+            min: 0.0,
+            max: (options - 1) as f32,
+            default: default as f32,
+            kind: ParamKind::Enum(options),
+            exp: false,
+        }
+    }
     pub const fn with_exp(mut self) -> Self {
         self.exp = true;
         self
