@@ -33,3 +33,4 @@ gfx-octaver = { path = "../gfx-octaver", default-features = false }
 gfx-pitch = { path = "../gfx-pitch", default-features = false }
 gfx-pitch-classic = { path = "../gfx-pitch-classic", default-features = false }
 gfx-detune = { path = "../gfx-detune", default-features = false }
+gfx-gapmeter = { path = "../gfx-gapmeter", default-features = false }

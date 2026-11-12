@@ -56,7 +56,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | **coded**, bench green, to test in golem |
 | 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | **coded**, bench green, to test in golem |
 | 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, passes golem's engine checks |
-| 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
+| 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | **coded**, bench green, to wire in check-scene-gap.py |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
 gfx-chorus's. The roadmap numbers are the order of design; the order of implementation is in the review.

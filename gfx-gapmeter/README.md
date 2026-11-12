@@ -1,7 +1,6 @@
 # gfx-gapmeter
 
-> **Status: PROPOSED** — design, no code yet. Contract agreed with golem's rack session on 2026-11-12
-> (it owns `tools/check-scene-gap.py`).
+> **Status: CODED** (v0.1.0, 2026-11-12) — detector (peak envelope, 3 ms release, max of the channels; sample-accurate gaps) and generator (the test tone replaces the input, crossfaded); the audio thread only publishes atomics and a lock-free ring; a sender thread started at initialisation sends OSC over UDP to 127.0.0.1:`port`: `/gfx/gap ,iidd` (slot, k, end s, duration ms) and `/gfx/gapmeter ,idddid` every ~50 ms (slot, clock s, envelope dB, silence ms, count, longest ms); times as OSC doubles. 5 tests (one over real UDP), bench green. Contract agreed with golem's rack session on 2026-11-12 (it owns `tools/check-scene-gap.py`).
 
 A measurement probe, not an effect. It replaces golem's `golem_gapmeter.jsfx` so that
 `tools/check-scene-gap.py` works on the Golem Engine (Ardour) as well as on REAPER: it detects every

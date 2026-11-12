@@ -70,3 +70,6 @@ name = "GoleM FX Pitch Classic"
 
 [gfx-detune]
 name = "GoleM FX Detune"
+
+[gfx-gapmeter]
+name = "GoleM FX Gapmeter"

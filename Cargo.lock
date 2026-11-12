@@ -239,6 +239,7 @@ dependencies = [
  "gfx-eq",
  "gfx-flanger",
  "gfx-flanger-calf",
+ "gfx-gapmeter",
  "gfx-gate",
  "gfx-killswitch",
  "gfx-limiter",
@@ -332,6 +333,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-flanger-calf"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-gapmeter"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
