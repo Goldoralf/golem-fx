@@ -245,7 +245,9 @@ impl Fdn {
     /// Decay per band from the current lengths (Jot): RT60 low / mid / high, and the split frequencies.
     pub fn set_decay(&mut self, rt_low: f64, rt_mid: f64, rt_high: f64, f_bass: f64, f_high: f64) {
         for i in 0..16 {
-            let l = self.len[i];
+            // the length the line glides to: the gains hold once it is there (they are not recomputed
+            // while nothing else moves)
+            let l = if self.target[i] > 0.0 { self.target[i] } else { self.len[i] };
             let g = |rt: f64| 10f64.powf(-3.0 * l / (rt.max(0.05) * self.sr)) as f32;
             self.g[i] = [g(rt_low), g(rt_mid), g(rt_high)];
         }

@@ -178,6 +178,8 @@ pub struct Shimmer {
     wet_level: OnePole,
     /// a character change only restarts the shifters; a space change clears the tank too
     pending_space: bool,
+    key: [f64; 11],
+    v2_idle: [bool; 2],
     ctrl: u32,
     clock: u64,
 }
@@ -237,6 +239,8 @@ impl Shimmer {
             bloom_s: OnePole::new(50.0, 70.0, 1e-4),
             wet_level: OnePole::new(20.0, 0.0, 1e-4),
             pending_space: false,
+            key: [f64::NAN; 11],
+            v2_idle: [true; 2],
             ctrl: 0,
             clock: 0,
         }
@@ -285,13 +289,21 @@ impl Shimmer {
         let sr = self.sr;
         let v = self.s.v;
         let size = self.size.next() as f64 * 0.01;
+        self.tone.next();
         let k = (0.4 + 0.6 * size) * SPACE_SCALE[self.space.min(2)];
         let rt = self.decay.value() as f64;
         let hicut = self.hicut.value() as f64;
         let bm = v[p::BASS_MULT] as f64;
+        self.fdn.frozen = idx(v[p::FREEZE], 3) != 0;
+        self.plate.frozen = self.fdn.frozen;
+        // coefficients only when what they depend on moves (dozens of powers otherwise, every 16 samples)
+        let key = [size, rt, hicut, bm, v[p::MODDEPTH] as f64, v[p::MOD_RATE] as f64, self.bloom_s.value() as f64, self.space as f64, self.pitch.value().max(self.pitch2.value()) as f64, self.tone.value() as f64, v[p::LOWCUT] as f64];
+        if key == self.key {
+            return;
+        }
+        self.key = key;
         self.fdn.set_scale(k);
         self.fdn.set_decay(rt * bm, rt, rt * 0.6, 300.0, hicut);
-        self.fdn.frozen = idx(v[p::FREEZE], 3) != 0;
         let md = v[p::MODDEPTH] as f64 / 25.0;
         let rate = 0.4 * 2f64.powf((v[p::MOD_RATE] as f64 - 50.0) / 25.0);
         self.fdn.set_mod(0.5 * md, rate);
@@ -307,11 +319,10 @@ impl Shimmer {
         self.plate.excursion = 16.0 * md;
         self.plate.rate = rate * 2.0;
         self.plate.density = (0.4 + 0.6 * bloom) as f32;
-        self.plate.frozen = self.fdn.frozen;
         // loop filters: the high cut also anti-aliases the shifters (≤ 0.45 · sr / ratio)
         let ratio = (self.pitch.value().max(self.pitch2.value()).max(0.0) as f64 / 12.0).exp2();
         let lp = (hicut.min(0.45 * sr as f64 / ratio)) as f32;
-        let tone = (self.tone.next() - 50.0) / 50.0;
+        let tone = (self.tone.value() - 50.0) / 50.0;
         for c in 0..2 {
             self.loop_hp[c].set(SvfMode::HighPass, v[p::LOWCUT], std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
             self.loop_lp[c].set(SvfMode::LowPass, lp, std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
@@ -375,6 +386,7 @@ impl Shimmer {
                     if self.pending_space {
                         self.pending_space = false;
                         self.clear_tails();
+                        self.key = [f64::NAN; 11];
                         self.control();
                         self.diff.settle();
                         self.bloom.settle();
@@ -420,11 +432,15 @@ impl Shimmer {
             }
             let x0 = buffers[0][i];
             let x1 = if nch > 1 { buffers[1][i] } else { x0 };
-            // ducking: 0 … 100 % → 0 … 18 dB under −30 dBFS of playing
-            let e = self.duck_env.next(x0.abs().max(x1.abs()));
-            let edb = 20.0 * e.max(1e-6).log10();
-            let over = ((edb + 30.0) / 6.0).clamp(0.0, 1.0);
-            let dt = 10f32.powf(-18.0 * duck * over / 20.0);
+            // ducking: 0 … 100 % → 0 … 18 dB under −30 dBFS of playing (idle when off)
+            let dt = if duck > 0.0 {
+                let e = self.duck_env.next(x0.abs().max(x1.abs()));
+                let edb = 20.0 * e.max(1e-6).log10();
+                let over = ((edb + 30.0) / 6.0).clamp(0.0, 1.0);
+                10f32.powf(-18.0 * duck * over / 20.0)
+            } else {
+                1.0
+            };
             self.duck_gr = dt + (self.duck_gr - dt) * 0.999;
             let mut sw = 1.0;
             if swell_ms > 0.0 {
@@ -495,10 +511,20 @@ impl Shimmer {
                 s1.set_reverse(reverse);
                 s1.set_semitones((p1 + det[c]) as f64);
                 let a = s1.process(f);
-                let s2 = &mut self.regen[c][1];
-                s2.set_reverse(reverse);
-                s2.set_semitones((p2 - det[c]) as f64);
-                let b = s2.process(f);
+                // voice 2 only runs while it is heard; it restarts from silence when it comes back
+                let b = if v2 > 1e-4 {
+                    let s2 = &mut self.regen[c][1];
+                    if self.v2_idle[c] {
+                        s2.reset();
+                        self.v2_idle[c] = false;
+                    }
+                    s2.set_reverse(reverse);
+                    s2.set_semitones((p2 - det[c]) as f64);
+                    s2.process(f)
+                } else {
+                    self.v2_idle[c] = true;
+                    0.0
+                };
                 let (ga, gb) = if c == 0 { (1.0, 1.0 - pan) } else { (1.0 - pan, 1.0) };
                 let y = ga * a + v2 * gb * b;
                 // loop gain below 1 by construction: scaled by the tail's length, soft-limited, DC-free
@@ -511,8 +537,11 @@ impl Shimmer {
                 self.fb[c] = o;
             }
             let mut wet = [tl, tr];
-            for c in 0..2 {
-                wet[c] = self.tone_hi[c].process(self.tone_lo[c].process(wet[c]));
+            // the tone tilt is skipped while it sits exactly flat (50 %)
+            if self.tone.value() != 50.0 {
+                for c in 0..2 {
+                    wet[c] = self.tone_hi[c].process(self.tone_lo[c].process(wet[c]));
+                }
             }
             let mid = 0.5 * (wet[0] + wet[1]);
             let side = 0.5 * (wet[0] - wet[1]) * width;
@@ -582,6 +611,7 @@ impl Effect for Shimmer {
         self.character = idx(v[p::CHARACTER], 2);
         self.pending = false;
         self.pending_space = false;
+        self.key = [f64::NAN; 11];
         self.tone.set_target(v[p::TONE]);
         self.tone.settle();
         self.gate.set_immediate(1.0);

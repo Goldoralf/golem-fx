@@ -100,3 +100,32 @@ fn poly_shifts_a_chord() {
     let orig = probe(seg, 110.0);
     assert!(orig < 0.1 * probe(seg, 220.0), "110 Hz left: {orig:.3}");
 }
+
+#[test]
+#[ignore]
+fn activation_cost() {
+    use std::time::Instant;
+    let mut q = Pitch::new();
+    let t = Instant::now();
+    q.prepare(SR, 512, 2);
+    eprintln!("prepare  {:8.3} ms", t.elapsed().as_secs_f64() * 1e3);
+    q.set(Settings::default());
+    let t = Instant::now();
+    q.reset();
+    eprintln!("reset    {:8.3} ms", t.elapsed().as_secs_f64() * 1e3);
+    let mut l = sine(220.0, 512);
+    let mut r = l.clone();
+    for k in 0..6 {
+        let t = Instant::now();
+        q.process(&mut [&mut l[..], &mut r[..]]);
+        eprintln!("block {k}  {:8.3} ms", t.elapsed().as_secs_f64() * 1e3);
+    }
+    // the worst block over 10 s
+    let mut worst = 0.0f64;
+    for _ in 0..940 {
+        let t = Instant::now();
+        q.process(&mut [&mut l[..], &mut r[..]]);
+        worst = worst.max(t.elapsed().as_secs_f64() * 1e3);
+    }
+    eprintln!("worst block over 10 s {:8.3} ms (512 samples = 10.7 ms of budget)", worst);
+}

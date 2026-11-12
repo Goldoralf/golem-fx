@@ -93,6 +93,15 @@ impl Algo {
         }
     }
 
+    /// How many early reflections per side: sparse for big spaces, dense where they are the sound.
+    fn er_taps(self) -> usize {
+        match self {
+            Algo::Hall | Algo::Cathedral => 12,
+            Algo::Chamber => 18,
+            _ => N_ER,
+        }
+    }
+
     /// Modulation at `mod` 50 %: depth (ms) and rate (Hz).
     fn modulation(self) -> (f64, f64) {
         match self {
@@ -257,6 +266,8 @@ pub struct Reverb {
     pending_era: bool,
     wet_low: OnePole,
     wet_high: OnePole,
+    tail_key: [f64; 11],
+    filt_key: [f64; 7],
     /// after the tails are cleared their input fades in, or every line would start mid-waveform
     tail_in: LinearRamp,
     ctrl: u32,
@@ -320,6 +331,8 @@ impl Reverb {
             pending_era: false,
             wet_low: OnePole::new(30.0, 50.0, 1e-3),
             wet_high: OnePole::new(30.0, 50.0, 1e-3),
+            tail_key: [f64::NAN; 11],
+            filt_key: [f64::NAN; 7],
             tail_in: LinearRamp::new(20.0, 1.0),
             ctrl: 0,
             clock: 0,
@@ -376,7 +389,12 @@ impl Reverb {
         let rt = if algo == Algo::Ambience { rt.clamp(0.1, 0.6) } else { rt };
         let hicut = self.hicut.value() as f64;
         let frozen = idx(v[p::FREEZE], 3) != 0;
-        // tails
+        self.fdn.frozen = frozen;
+        self.plate.frozen = frozen;
+        // the tails' coefficients cost dozens of powers: recomputed only when what they depend on moves
+        let tail_key = [size, rt, hicut, v[p::BASS_MULT] as f64, v[p::HIGH_MULT] as f64, v[p::BASS_XOVER] as f64, v[p::MOD] as f64, v[p::MOD_RATE] as f64, v[p::DIFFUSION] as f64, algo as u8 as f64, self.era as f64];
+        if tail_key != self.tail_key {
+        self.tail_key = tail_key;
         self.fdn.set_scale(k * algo.scale());
         self.fdn.set_decay(rt * v[p::BASS_MULT] as f64, rt, rt * 0.5 * v[p::HIGH_MULT] as f64, v[p::BASS_XOVER] as f64, hicut);
         self.fdn.frozen = frozen;
@@ -398,7 +416,7 @@ impl Reverb {
         self.plate.excursion = 16.0 * m;
         self.plate.rate = rate * 1.8;
         self.plate.density = (0.4 + 0.6 * diff) as f32;
-        self.plate.frozen = frozen;
+        }
         let spring_len = (0.02 + 0.0012 * size) * sr as f64;
         for (j, sp) in self.springs.iter_mut().enumerate() {
             sp.set_len(spring_len * (1.0 + 0.13 * j as f64));
@@ -414,11 +432,18 @@ impl Reverb {
         let (t0, t1, _) = algo.early();
         let mut rng = Rng::new(0xEA51 + algo as u64);
         if rebuild {
+        let n_er = algo.er_taps();
+        // fewer taps, the same energy
+        let norm = (N_ER as f32 / n_er as f32).sqrt();
         for c in 0..2 {
             for i in 0..N_ER {
-                let t = t0 + (t1 - t0) * ((i as f64 + rng.next_f64()) / N_ER as f64).powf(1.3);
+                if i >= n_er {
+                    self.er[c].set(i, 1.0, 0.0);
+                    continue;
+                }
+                let t = t0 + (t1 - t0) * ((i as f64 + rng.next_f64()) / n_er as f64).powf(1.3);
                 let g = (-(t - t0) / (t1 - t0 + 1e-3) * 2.5).exp() as f32 * if rng.next_u64() & 1 == 1 { 1.0 } else { -1.0 };
-                self.er[c].set(i, t * k * 0.001 * sr as f64, g * 0.35);
+                self.er[c].set(i, t * k * 0.001 * sr as f64, g * 0.35 * norm);
             }
         }
         // bursts: flat (Gated) or rising (Reverse), over the size or the synced note
@@ -435,8 +460,14 @@ impl Reverb {
             }
         }
         }
-        // output filters
+        // output filters: also only when their inputs move
         let (wl, wh) = (self.wet_low.next(), self.wet_high.next());
+        let era = self.era;
+        let filt_key = [hicut, era as f64, wl as f64, wh as f64, v[p::LOWCUT] as f64, v[p::SHIMMER_PITCH] as f64, v[p::DUCK_RELEASE] as f64];
+        if filt_key == self.filt_key {
+            return;
+        }
+        self.filt_key = filt_key;
         let lp = (1.5 * hicut).min(0.45 * sr as f64) as f32;
         let era_f = match era {
             1 => 12000.0f32,
@@ -523,11 +554,15 @@ impl Reverb {
 
             let x0 = buffers[0][i];
             let x1 = if nch > 1 { buffers[1][i] } else { x0 };
-            // ducking detector on the dry
-            let e = self.duck_env.next(x0.abs().max(x1.abs()));
-            let edb = 20.0 * e.max(1e-6).log10();
-            let over = ((edb - duck_th) / 6.0).clamp(0.0, 1.0);
-            let dt = 10f32.powf(-duck_db * over / 20.0);
+            // ducking detector on the dry (idle when ducking is off: the gain just returns to 1)
+            let dt = if duck_db > 0.0 {
+                let e = self.duck_env.next(x0.abs().max(x1.abs()));
+                let edb = 20.0 * e.max(1e-6).log10();
+                let over = ((edb - duck_th) / 6.0).clamp(0.0, 1.0);
+                10f32.powf(-duck_db * over / 20.0)
+            } else {
+                1.0
+            };
             self.duck_gr = dt + (self.duck_gr - dt) * 0.999;
             // swell: a pick attack restarts the swell from silence
             let mut sw = 1.0;
@@ -653,13 +688,15 @@ impl Reverb {
                 self.shim_fb = 0.0;
             }
             let tail_g = if self.algo == Algo::Ambience { 0.35 } else { 1.0 };
+            let shelves = self.wet_low.value() != 50.0 || self.wet_high.value() != 50.0;
             let mut wet = [el + tl * tail_g, er + tr * tail_g];
             for c in 0..2 {
                 let mut w = self.out_lp[c].process(wet[c]);
                 if era > 0 {
                     w = self.era_lp[c].process(w);
                 }
-                wet[c] = self.high_shelf[c].process(self.low_shelf[c].process(w));
+                // the wet shelves are skipped while both sit exactly flat (50 %)
+                wet[c] = if shelves { self.high_shelf[c].process(self.low_shelf[c].process(w)) } else { w };
             }
             let mid = 0.5 * (wet[0] + wet[1]);
             let side = 0.5 * (wet[0] - wet[1]) * width;
@@ -760,6 +797,8 @@ impl Effect for Reverb {
         self.era = idx(v[p::ERA], 3);
         self.pending_era = false;
         self.taps_key = (u32::MAX, 0, 0);
+        self.tail_key = [f64::NAN; 11];
+        self.filt_key = [f64::NAN; 7];
         self.wet_low.set_target(v[p::WET_LOW]);
         self.wet_high.set_target(v[p::WET_HIGH]);
         self.wet_low.settle();

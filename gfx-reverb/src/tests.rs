@@ -137,3 +137,62 @@ fn every_algorithm_is_finite_and_stable() {
         assert!(l.iter().chain(rr.iter()).all(|v| v.is_finite() && v.abs() < 10.0), "algo {a}");
     }
 }
+
+#[test]
+#[ignore]
+fn profile_blocks() {
+    use gfx_dsp::reverb::{Diffuser, Fdn, Taps};
+    use std::time::Instant;
+    let n = 48000 * 10;
+    let mut rng = Rng::new(1);
+    let x: Vec<f32> = (0..n).map(|_| 0.1 * rng.bipolar()).collect();
+    let ns = |t: Instant| t.elapsed().as_secs_f64() * 1e9 / n as f64;
+    let mut d = Diffuser::default();
+    d.prepare(SR, 4, 40.0, 1);
+    let t = Instant::now();
+    let mut acc = 0.0f32;
+    for v in &x {
+        let mut a = [*v, *v, -*v, -*v, *v, -*v, *v, -*v];
+        d.process(&mut a);
+        acc += a[0];
+    }
+    eprintln!("diffuser   {:6.1} ns", ns(t));
+    let mut f = Fdn::default();
+    f.prepare(SR, 3.0);
+    f.set_decay(2.0, 2.0, 1.0, 300.0, 7000.0);
+    f.set_mod(0.5, 0.5);
+    f.settle();
+    let t = Instant::now();
+    for v in &x {
+        let (l, _) = f.process(&[*v; 16]);
+        acc += l;
+    }
+    eprintln!("fdn        {:6.1} ns", ns(t));
+    let mut tp = Taps::default();
+    tp.prepare(48000, 24);
+    for k in 0..24 {
+        tp.set(k, 100.0 + 300.0 * k as f64, 0.1);
+    }
+    tp.settle();
+    let t = Instant::now();
+    for v in &x {
+        tp.line.push(*v);
+        acc += tp.read(0, 1);
+    }
+    eprintln!("taps x24   {:6.1} ns", ns(t));
+    let mut r = rv(Settings::default());
+    let t = Instant::now();
+    for c in 0..(n / 128) {
+        let _ = c;
+        r.control();
+    }
+    eprintln!("control /128 samples, per sample {:6.1} ns", t.elapsed().as_secs_f64() * 1e9 / n as f64 * 8.0);
+    let mut r = rv(Settings::default());
+    let mut l = x.clone();
+    let mut rr = x.clone();
+    let t = Instant::now();
+    for (a, b) in l.chunks_mut(128).zip(rr.chunks_mut(128)) {
+        r.process(&mut [a, b]);
+    }
+    eprintln!("whole hall {:6.1} ns   ({acc})", ns(t));
+}

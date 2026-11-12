@@ -12,6 +12,8 @@ use crate::delay::{DelayLine, Interp};
 
 #[derive(Clone, Debug, Default)]
 pub struct GrainShifter {
+    /// the last interval set (semitones), so the ratio is only recomputed when it moves
+    last_st: f64,
     line: DelayLine,
     /// grain lifetime (samples)
     life: f64,
@@ -42,6 +44,8 @@ impl GrainShifter {
     pub fn reset(&mut self) {
         self.line.reset();
         self.ratio = 1.0;
+        // NaN: the next interval set always applies
+        self.last_st = f64::NAN;
         let s = self.start_delay();
         self.d = [s, s];
         self.age = [0.0, 0.5 * self.life];
@@ -52,8 +56,12 @@ impl GrainShifter {
         self.ratio = ratio.clamp(0.25, 4.0);
     }
 
+    /// The ratio is recomputed only when the interval moves (an `exp2` per sample otherwise).
     pub fn set_semitones(&mut self, st: f64) {
-        self.set_ratio((st / 12.0).exp2());
+        if st != self.last_st {
+            self.last_st = st;
+            self.set_ratio((st / 12.0).exp2());
+        }
     }
 
     /// Where a grain starts: up-shifting grains start late and run towards the write head.
@@ -127,6 +135,8 @@ const STEP: usize = 2;
 /// - **Grain length**: the longest that keeps the travel inside the centre (capped by `max_life`).
 #[derive(Clone, Debug, Default)]
 pub struct CenteredShifter {
+    /// the last interval set (semitones), so the ratio is only recomputed when it moves
+    last_st: f64,
     line: DelayLine,
     centre: f64,
     search: usize,
@@ -173,6 +183,8 @@ impl CenteredShifter {
     pub fn reset(&mut self) {
         self.line.reset();
         self.ratio = 1.0;
+        // NaN: the next interval set always applies
+        self.last_st = f64::NAN;
         let l = self.max_life;
         self.life = [l, l];
         self.age = [0.0, 0.5 * l];
@@ -188,8 +200,12 @@ impl CenteredShifter {
         self.ratio = ratio.clamp(0.25, 4.0);
     }
 
+    /// The ratio is recomputed only when the interval moves (an `exp2` per sample otherwise).
     pub fn set_semitones(&mut self, st: f64) {
-        self.set_ratio((st / 12.0).exp2());
+        if st != self.last_st {
+            self.last_st = st;
+            self.set_ratio((st / 12.0).exp2());
+        }
     }
 
     fn grain(&self) -> f64 {
@@ -271,6 +287,8 @@ impl CenteredShifter {
 /// - an optional reverse-grain mode (each grain plays backwards: smoother, organ-like).
 #[derive(Clone, Debug, Default)]
 pub struct LoopShifter {
+    /// the last interval set (semitones), so the ratio is only recomputed when it moves
+    last_st: f64,
     line: DelayLine,
     win: f64,
     cur_win: f64,
@@ -300,6 +318,7 @@ impl LoopShifter {
         self.cur_win = self.win;
         self.psi = [0.0, 0.5];
         self.ratio = 1.0;
+        self.last_st = f64::NAN;
         let s = self.start();
         self.d = [s, s];
     }
@@ -308,8 +327,12 @@ impl LoopShifter {
         self.ratio = ratio.clamp(0.25, 4.0);
     }
 
+    /// The ratio is recomputed only when the interval moves (an `exp2` per sample otherwise).
     pub fn set_semitones(&mut self, st: f64) {
-        self.set_ratio((st / 12.0).exp2());
+        if st != self.last_st {
+            self.last_st = st;
+            self.set_ratio((st / 12.0).exp2());
+        }
     }
 
     pub fn set_reverse(&mut self, reverse: bool) {
@@ -339,7 +362,9 @@ impl LoopShifter {
                 }
                 self.d[h] = self.start();
             }
-            let w = (std::f64::consts::PI * self.psi[h]).sin() as f32;
+            // sin(πψ) by Bhaskara's approximation (error < 0.2 %: the heads stay equal-power)
+            let q = self.psi[h] * (1.0 - self.psi[h]);
+            let w = (16.0 * q / (5.0 - 4.0 * q)) as f32;
             let max = self.line.max_delay() as f64 - 4.0;
             y += w * self.line.read(self.d[h].clamp(2.0, max), Interp::Lagrange3);
             self.d[h] += step;
