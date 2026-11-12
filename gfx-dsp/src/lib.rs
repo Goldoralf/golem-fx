@@ -20,6 +20,7 @@ pub mod flanger;
 pub mod lfo;
 pub mod matched;
 pub mod oversample;
+pub mod pitch;
 pub mod smooth;
 pub mod svf;
 pub mod transport;

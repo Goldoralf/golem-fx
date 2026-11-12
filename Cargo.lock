@@ -232,6 +232,7 @@ dependencies = [
  "gfx-chorus",
  "gfx-comp",
  "gfx-deesser",
+ "gfx-delay",
  "gfx-drive",
  "gfx-dsp",
  "gfx-eq",
@@ -272,6 +273,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-deesser"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-delay"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

@@ -1,6 +1,6 @@
 # gfx-delay
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Digital / Tape / BBD / Lo-Fi; glide or two-head crossfade on time changes; taps, reverse, loop pitch (correlation-spliced grain shifter, ±3 cents) and frequency shift (IIR Hilbert pair), low / high cut, sweep, diffusion, age, bounded saturation (110 % self-oscillates and recovers); ducking, swell, hold, mono / stereo / ping-pong / dual, width, kill dry, trails; repeats land on the sample (the loop colour's group delay is compensated in the read heads); 7 behaviour tests, bench green. Choices made in code: the trails switch is the VST3 bypass parameter with id `bypass` (1 = off), not `on`; `direction` Reverse plays the main head only (taps are ignored while reversed).
 
 golem's delay. Stands for golem's `delay` block (today ReaDelay, tempo-synced), keeping its parameter ids
 and units ([golem contract](../docs/golem-contract.md)). The aim is the best live delay: three canonical

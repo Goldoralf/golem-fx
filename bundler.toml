@@ -46,3 +46,6 @@ name = "GoleM FX Flanger Calf"
 
 [gfx-drive]
 name = "GoleM FX Drive"
+
+[gfx-delay]
+name = "GoleM FX Delay"

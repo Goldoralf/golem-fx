@@ -39,7 +39,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | **coded**, passes golem's engine checks |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | **coded**, bench green, to test in golem |
 | 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | **coded**, passes golem's engine checks |
-| 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | design |
+| 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | **coded**, bench green, to test in golem |
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, passes golem's engine checks |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | **coded**, bench green, to test in golem |

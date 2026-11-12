@@ -1,0 +1,217 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//! Pitch and frequency shifters for feedback loops (gfx-delay, gfx-shimmer).
+//!
+//! - [`GrainShifter`]: delay-line pitch shifter. Two read heads sweep a window at the speed the ratio
+//!   asks, half a window apart, crossfaded with sin² windows (Dattorro, *Effect Design* part 2). Inside a
+//!   loop its window delay is part of the repeat, so it reports no latency.
+//! - [`FreqShifter`]: single-sideband frequency shifter. An IIR Hilbert pair of four all-pass sections
+//!   per path (Niemitalo's coefficients, 90° ± 0.7° from 20 Hz to 20 kHz at 44.1 kHz), times a
+//!   quadrature oscillator. Zero latency.
+
+use crate::delay::{DelayLine, Interp};
+
+#[derive(Clone, Debug, Default)]
+pub struct GrainShifter {
+    line: DelayLine,
+    /// grain lifetime (samples)
+    life: f64,
+    /// splice search range (samples) and correlation length
+    range: usize,
+    corr: usize,
+    /// per head: delay (samples) and age (samples)
+    d: [f64; 2],
+    age: [f64; 2],
+    ratio: f64,
+}
+
+impl GrainShifter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// `window_ms` sets the grain (longer = smoother, more smear).
+    pub fn prepare(&mut self, sample_rate: f32, window_ms: f32) {
+        self.life = (window_ms as f64 * 0.001 * sample_rate as f64).max(64.0);
+        self.range = (0.010 * sample_rate as f64) as usize;
+        self.corr = (0.003 * sample_rate as f64) as usize;
+        // the longest delay: start of a grain at ratio 4 plus the search range and the correlation span
+        self.line.prepare((self.life * 3.0) as usize + 2 * self.range + self.corr + 16);
+        self.reset();
+    }
+
+    pub fn reset(&mut self) {
+        self.line.reset();
+        self.ratio = 1.0;
+        let s = self.start_delay();
+        self.d = [s, s];
+        self.age = [0.0, 0.5 * self.life];
+    }
+
+    /// Pitch ratio (2 = an octave up).
+    pub fn set_ratio(&mut self, ratio: f64) {
+        self.ratio = ratio.clamp(0.25, 4.0);
+    }
+
+    pub fn set_semitones(&mut self, st: f64) {
+        self.set_ratio((st / 12.0).exp2());
+    }
+
+    /// Where a grain starts: up-shifting grains start late and run towards the write head.
+    fn start_delay(&self) -> f64 {
+        let base = 2.0 + self.range as f64;
+        if self.ratio > 1.0 {
+            base + self.life * (self.ratio - 1.0)
+        } else {
+            base
+        }
+    }
+
+    /// The delay near `nominal` (± range) whose recent past best matches what head `other` plays now.
+    fn best_splice(&self, nominal: f64, other: f64) -> f64 {
+        let n = self.corr;
+        let o = other.round() as usize;
+        let lo = (nominal as isize - self.range as isize).max(2) as usize;
+        let hi = nominal as usize + self.range;
+        let (mut best, mut best_v) = (nominal, f64::MIN);
+        let mut d = lo;
+        while d <= hi {
+            let mut c = 0.0f64;
+            let mut e = 1e-12f64;
+            for k in 0..n {
+                let a = self.line.tap(d + k) as f64;
+                c += a * self.line.tap(o + k) as f64;
+                e += a * a;
+            }
+            let v = c / e.sqrt();
+            if v > best_v {
+                best_v = v;
+                best = d as f64 + (other - o as f64);
+            }
+            d += 1;
+        }
+        best
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> f32 {
+        self.line.push(x);
+        let mut y = 0.0f32;
+        for k in 0..2 {
+            if self.age[k] >= self.life {
+                // restart this grain where it continues the other one's waveform
+                let other = self.d[1 - k];
+                self.d[k] = self.best_splice(self.start_delay(), other);
+                self.age[k] -= self.life;
+            }
+            let w = (std::f64::consts::PI * self.age[k] / self.life).sin();
+            y += (w * w) as f32 * self.line.read(self.d[k].max(2.0), Interp::Lagrange3);
+            self.d[k] += 1.0 - self.ratio;
+            self.age[k] += 1.0;
+        }
+        y
+    }
+}
+
+/// Niemitalo's Hilbert pair: path A and path B (B one sample behind) are 90° apart.
+const HA: [f64; 4] = [0.6923878, 0.936_065_432_295_9, 0.988_229_522_686_0, 0.998_748_845_273_7];
+const HB: [f64; 4] = [0.402_192_116_242_6, 0.856_171_088_242_0, 0.972_290_954_565_1, 0.995_288_479_127_8];
+
+#[derive(Clone, Copy, Debug, Default)]
+struct Ap2 {
+    x1: f64,
+    x2: f64,
+    y1: f64,
+    y2: f64,
+}
+
+impl Ap2 {
+    /// y[n] = a² (x[n] + y[n−2]) − x[n−2]
+    #[inline]
+    fn run(&mut self, a: f64, x: f64) -> f64 {
+        let y = a * a * (x + self.y2) - self.x2;
+        self.x2 = self.x1;
+        self.x1 = x;
+        self.y2 = self.y1;
+        self.y1 = y;
+        y
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FreqShifter {
+    a: [Ap2; 4],
+    b: [Ap2; 4],
+    b_delay: f64,
+    phase: f64,
+}
+
+impl FreqShifter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
+
+    /// Shifts every component of `x` by `hz` (negative = down).
+    #[inline]
+    pub fn process(&mut self, x: f32, hz: f64, sample_rate: f32) -> f32 {
+        let x = x as f64;
+        let mut i = x;
+        for (s, a) in self.a.iter_mut().zip(HA) {
+            i = s.run(a, i);
+        }
+        let mut q = x;
+        for (s, a) in self.b.iter_mut().zip(HB) {
+            q = s.run(a, q);
+        }
+        let qd = self.b_delay;
+        self.b_delay = q;
+        self.phase = (self.phase + hz / sample_rate as f64).rem_euclid(1.0);
+        let (s, c) = (std::f64::consts::TAU * self.phase).sin_cos();
+        (i * c + qd * s) as f32
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn freq_of(y: &[f32], sr: f64) -> f64 {
+        let mut t = Vec::new();
+        for i in 1..y.len() {
+            if y[i - 1] < 0.0 && y[i] >= 0.0 {
+                t.push((i - 1) as f64 + (-y[i - 1] / (y[i] - y[i - 1])) as f64);
+            }
+        }
+        (t.len() - 1) as f64 / (t[t.len() - 1] - t[0]) * sr
+    }
+
+    #[test]
+    fn grain_shifter_hits_the_ratio() {
+        for f0 in [110.0f32, 330.0, 440.0, 1234.0] {
+            for st in [12.0, 7.0, -12.0, 0.3] {
+                let mut g = GrainShifter::new();
+                g.prepare(48000.0, 60.0);
+                g.set_semitones(st);
+                let y: Vec<f32> = (0..96000).map(|i| g.process((std::f32::consts::TAU * f0 * i as f32 / 48000.0).sin())).collect();
+                let f = freq_of(&y[12000..], 48000.0);
+                let cents = 1200.0 * (f / f0 as f64).log2();
+                assert!((cents - st * 100.0).abs() < 3.0, "{f0} Hz, {st} st: {cents:.1} cents");
+            }
+        }
+    }
+
+    #[test]
+    fn freq_shifter_moves_by_hertz() {
+        let mut fs = FreqShifter::new();
+        let y: Vec<f32> = (0..48000).map(|i| fs.process((std::f32::consts::TAU * 1000.0 * i as f32 / 48000.0).sin(), 30.0, 48000.0)).collect();
+        let f = freq_of(&y[4800..], 48000.0);
+        assert!((f - 1030.0).abs() < 1.0, "{f}");
+        // single sideband: the level stays put (no beating against an image)
+        let pk: Vec<f32> = y[4800..].chunks(1600).map(|c| c.iter().fold(0.0f32, |m, v| m.max(v.abs()))).collect();
+        let (lo, hi) = pk.iter().fold((f32::MAX, 0.0f32), |(a, b), v| (a.min(*v), b.max(*v)));
+        assert!(hi / lo < 1.05, "{lo} {hi}");
+    }
+}
