@@ -25,3 +25,6 @@ name = "GoleM FX Autowah"
 
 [gfx-tremolo]
 name = "GoleM FX Tremolo"
+
+[gfx-vibrato]
+name = "GoleM FX Vibrato"

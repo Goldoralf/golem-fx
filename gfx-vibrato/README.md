@@ -1,6 +1,6 @@
 # gfx-vibrato
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Clean and BBD run in the **pitch domain** (the LFO is the pitch deviation in cents, the delay is its integral: no pitch blip when speed or depth move, even 0.1 → 14 Hz at once), BBD on gfx-dsp's clock-domain engine, Varistor (zero latency), Vibe on gfx-dsp's Uni-Vibe core, Scanner V1 → V3; rise on engage (release with the bypass parameter: to do); 7 behaviour tests, bench green. Deviation from §4: `tone` defaults to 1 (neutral defaults rule).
 
 golem's pitch vibrato. Stands for golem's `vibrato` block (today guitarix GxTubeVibrato;
 `golem_vibrato.jsfx` on Windows / macOS), keeping its parameter ids and units
@@ -73,7 +73,7 @@ Catalogue ids kept.
 | `model` | Model | e | Clean · BBD · Varistor · Vibe · Scanner | new | Clean | | |
 | `shape` | Shape | e | Sine · Rounded Triangle · Random | new | Sine | | Random = smoothed, fixed seed, with LFO wobble |
 | `rise` | Rise Time | f | 0 – 5,000 ms | new | 0 ms | | On engage and release |
-| `tone` | Tone | f | 0 – 1 | new | 0.7 | | Post low-pass |
+| `tone` | Tone | f | 0 – 1 | new | 1 | | Post low-pass |
 | `mix` | Mix | f | 0 – 1 | new | 1 | | 0.5 = chorus (Hammond C modes, Uni-Vibe chorus) |
 | `sync` | Sync | e | Off · divisions | new | Off | | |
 | `stereo_phase` | Stereo Phase | f | 0 – 180° | new | 0° | | L / R LFO offset |

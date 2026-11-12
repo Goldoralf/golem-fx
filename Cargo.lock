@@ -236,6 +236,7 @@ dependencies = [
  "gfx-gate",
  "gfx-limiter",
  "gfx-tremolo",
+ "gfx-vibrato",
  "gfx-wah",
 ]
 
@@ -293,6 +294,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-tremolo"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-vibrato"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
