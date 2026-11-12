@@ -32,7 +32,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 14 | gfx-tremolo | `tremolo` | Calf Pulsator | research |
 | 15 | gfx-vibrato | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | research |
 | 16 | gfx-reverb | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | research |
-| 17 | gfx-shimmer | `reverb-shimmer` | GxShimmiZita | research |
+| 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | design |
 | 18 | gfx-wah | `wah`, `wah-color` | GxGCB-95, GxWahwah | research |
 | 19 | gfx-autowah | `autowah` | GxAutoWah | research |
 | 20 | gfx-rotary | `rotary` | Calf Rotary Speaker | research |
