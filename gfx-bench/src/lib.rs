@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -37,6 +37,9 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-shimmer" | "shimmer" => Some(Box::new(gfx_shimmer::Shimmer::new())),
         "gfx-killswitch" | "killswitch" => Some(Box::new(gfx_killswitch::Killswitch::new())),
         "gfx-octaver" | "octaver" => Some(Box::new(gfx_octaver::Octaver::new())),
+        "gfx-pitch" | "pitch" => Some(Box::new(gfx_pitch::Pitch::new())),
+        "gfx-pitch-classic" | "pitch-classic" => Some(Box::new(gfx_pitch_classic::PitchClassic::new())),
+        "gfx-detune" | "detune" => Some(Box::new(gfx_detune::Detune::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -67,6 +70,14 @@ pub fn options(name: &str) -> checks::Options {
         // 3 s after the burst the repeats are still decaying at the feedback rate (35 %, 375 ms:
         // ≈ −75 dBFS): that is the trail itself, not a residue
         o.silence_floor_db = -60.0;
+    }
+    if matches!(name, "gfx-pitch-classic" | "pitch-classic") {
+        // superpitch reports 0 and so do we: the mean delay (about window / 2) is the splicer's own
+        o.skip_latency = true;
+    }
+    if matches!(name, "gfx-detune" | "detune") {
+        // two voices: up left, down right
+        o.stereo_by_nature = true;
     }
     if matches!(name, "gfx-octaver" | "octaver") {
         // the dry runs through two all-passes that align it with the sub's smoothing filter: a phase

@@ -1,6 +1,6 @@
 # gfx-pitch
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — three VST3s on gfx-dsp's centred splice-search shifter (fixed mean delay, per-sample ratio, correlation splices with sub-sample refinement): **gfx-pitch** (Whammy, 12 ms reported; Poly, 14 ms Fast / 22 ms Stable reported; second voice, fine, glide, slew limit; dry delayed by the latency), **gfx-pitch-classic** (superpitch's two-head splicer, window / overlap literal, optional splice search, latency 0), **gfx-detune** (two ±25-cent voices, 3 ms centre, doubling delay by crossfade, latency 0); all allocate in `prepare` only. Tests: in tune within 2 cents at every integer shift (worst +1.5 at 110 Hz, +12: above the ±1 target), poly octaves each note of a chord, sweeps without a splice click, latency = the engine's centre; bench green. Choices made in code: Poly is the band-split time-domain candidate with **nine** half-octave bands (two notes in one band defeat the splice search) and **one** centre delay for all bands (different delays combed where bands overlap) — so its latency is above the 10 ms target; the multi-resolution vocoder was not prototyped; `harmony` / `key` / `scale` (phase 2) are not in yet (ids reserved by the design, appended when built).
 
 golem's pitch shifters: whammy, harmony, poly transposition, detune / doubler. They stand for three golem
 blocks ([golem contract](../docs/golem-contract.md)):

@@ -46,7 +46,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | **coded**, bench green, to test in golem |
 | 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | **coded**, bench green, to test in golem |
 | 11 | [gfx-phaser](gfx-phaser/) | `phaser-js` | JS phaser | **coded**, bench green, to test in golem |
-| 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |
+| 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | **coded**, bench green, to test in golem |
 | 14 | [gfx-tremolo](gfx-tremolo/) | `tremolo` | Calf Pulsator | **coded**, bench green, to test in golem |
 | 15 | [gfx-vibrato](gfx-vibrato/) | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | **coded**, bench green, to test in golem |
 | 16 | [gfx-reverb](gfx-reverb/) | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | **coded**, bench green, to test in golem |

@@ -147,13 +147,26 @@ impl CenteredShifter {
     /// `centre_ms`: the fixed mean delay; `search_ms`: the splice search range (± around the nominal
     /// start); `max_life_ms`: the longest grain.
     pub fn prepare(&mut self, sample_rate: f32, centre_ms: f32, search_ms: f32, max_life_ms: f32) {
+        self.allocate(sample_rate, centre_ms, search_ms);
+        self.configure(sample_rate, centre_ms, search_ms, max_life_ms);
+    }
+
+    /// Sizes the line for the largest centre and search this shifter will ever be configured with.
+    pub fn allocate(&mut self, sample_rate: f32, max_centre_ms: f32, max_search_ms: f32) {
         let ms = sample_rate as f64 * 0.001;
-        self.centre = centre_ms as f64 * ms;
-        self.search = (search_ms as f64 * ms) as usize;
+        let corr = ((3.0 * ms) as usize).max(16);
+        self.line.prepare((2.0 * max_centre_ms as f64 * ms) as usize + 2 * (max_search_ms as f64 * ms) as usize + corr + 16);
+    }
+
+    /// Sets the shape within the allocated size and resets (no allocation: real-time safe).
+    pub fn configure(&mut self, sample_rate: f32, centre_ms: f32, search_ms: f32, max_life_ms: f32) {
+        let ms = sample_rate as f64 * 0.001;
         self.corr = ((3.0 * ms) as usize).max(16);
+        let cap = self.line.max_delay() as f64 - self.corr as f64 - 16.0;
+        self.centre = (centre_ms as f64 * ms).min(0.5 * cap);
+        self.search = ((search_ms as f64 * ms) as usize).min((0.25 * cap) as usize);
         self.min_life = 2.5 * ms;
         self.max_life = max_life_ms as f64 * ms;
-        self.line.prepare((2.0 * self.centre) as usize + 2 * self.search + self.corr + 16);
         self.reset();
     }
 

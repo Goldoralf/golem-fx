@@ -233,6 +233,7 @@ dependencies = [
  "gfx-comp",
  "gfx-deesser",
  "gfx-delay",
+ "gfx-detune",
  "gfx-drive",
  "gfx-dsp",
  "gfx-eq",
@@ -243,6 +244,8 @@ dependencies = [
  "gfx-limiter",
  "gfx-octaver",
  "gfx-phaser",
+ "gfx-pitch",
+ "gfx-pitch-classic",
  "gfx-reverb",
  "gfx-rotary",
  "gfx-shimmer",
@@ -285,6 +288,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-delay"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-detune"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
@@ -361,6 +372,22 @@ dependencies = [
 
 [[package]]
 name = "gfx-phaser"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-pitch"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-pitch-classic"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

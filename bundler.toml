@@ -61,3 +61,12 @@ name = "GoleM FX Killswitch"
 
 [gfx-octaver]
 name = "GoleM FX Octaver"
+
+[gfx-pitch]
+name = "GoleM FX Pitch"
+
+[gfx-pitch-classic]
+name = "GoleM FX Pitch Classic"
+
+[gfx-detune]
+name = "GoleM FX Detune"

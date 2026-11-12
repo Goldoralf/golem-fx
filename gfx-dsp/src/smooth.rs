@@ -38,6 +38,12 @@ impl OnePole {
         self.target = target as f64;
     }
 
+    /// Changes the time constant (no allocation; real-time safe).
+    pub fn set_time(&mut self, time_ms: f32, sample_rate: f32) {
+        self.time_ms = time_ms as f64;
+        self.prepare(sample_rate);
+    }
+
     /// Jumps to the target (reset, first value).
     pub fn settle(&mut self) {
         self.value = self.target;
