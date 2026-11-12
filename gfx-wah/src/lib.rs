@@ -43,8 +43,8 @@ pub static PARAMS: [ParamInfo; 18] = [
     ParamInfo::float("engage_pos", "Engage Position", 0.0, 20.0, 3.0),
     ParamInfo::float("engage_wait", "Engage Wait", 0.0, 1000.0, 300.0),
     ParamInfo::float("env_sens", "Envelope Sensitivity", 0.0, 100.0, 50.0),
-    ParamInfo::float("env_att", "Envelope Attack", 1.0, 100.0, 5.0),
-    ParamInfo::float("env_rel", "Envelope Release", 20.0, 2000.0, 150.0),
+    ParamInfo::float("env_att", "Envelope Attack", 1.0, 100.0, 10.0),
+    ParamInfo::float("env_rel", "Envelope Release", 20.0, 2000.0, 100.0),
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -90,8 +90,8 @@ impl Default for Settings {
             engage_pos: 3.0,
             engage_wait: 300.0,
             env_sens: 50.0,
-            env_att: 5.0,
-            env_rel: 150.0,
+            env_att: 10.0,
+            env_rel: 100.0,
         }
     }
 }
@@ -173,6 +173,24 @@ impl Wah {
         self.s = s;
     }
 
+    /// The table position: guitarix's own auto law in auto mode with the model's taper (the linear
+    /// envelope, bounded and inverted per pedal, as golem's wah-color presets played it), else the
+    /// position `u` through the taper.
+    fn target_w(&self, model: usize, u: f32) -> f32 {
+        if self.s.mode == 1 && self.s.taper == 0 {
+            let (lo, hi, inv) = MODELS[model].auto;
+            let g = 4f32.powf((self.s.env_sens - 50.0) / 50.0);
+            let w = (self.env * g).clamp(lo, hi);
+            if inv {
+                1.0 - w
+            } else {
+                w
+            }
+        } else {
+            self.position_to_w(model, u)
+        }
+    }
+
     /// Toe position (0 heel … 1 toe) → the model's W, through the taper.
     fn position_to_w(&self, model: usize, u: f32) -> f32 {
         let m = &MODELS[model];
@@ -252,7 +270,7 @@ impl Wah {
             let q_s = self.q.next() * 0.01;
             let r_s = self.range.next() * 0.01;
             // the table position glides (5 ms): mode and taper changes sweep instead of jumping
-            let w_target = self.position_to_w(self.s.model, u);
+            let w_target = self.target_w(self.s.model, u);
             self.pos.set_target(w_target);
             let w = self.pos.next();
             let m = &MODELS[self.s.model];
@@ -260,7 +278,7 @@ impl Wah {
             let fade = self.model_fade.next();
             let (pm, pw, pdc) = if fade < 1.0 {
                 let pmodel = &MODELS[self.prev_model];
-                (pmodel, self.position_to_w(self.prev_model, u), (-std::f32::consts::TAU * pmodel.dc / sr).exp())
+                (pmodel, self.target_w(self.prev_model, u), (-std::f32::consts::TAU * pmodel.dc / sr).exp())
             } else {
                 (m, w, dc)
             };

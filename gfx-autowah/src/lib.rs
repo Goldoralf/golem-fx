@@ -149,6 +149,7 @@ pub struct Autowah {
     mix: OnePole,
     level: OnePole,
     drive: OnePole,
+    sens: OnePole,
     /// Structural changes (type, poles, direction, source) go through a 5 ms dip of the wet to the
     /// dry; the new structure starts from rest at the bottom.
     gate: LinearRamp,
@@ -177,6 +178,7 @@ impl Autowah {
             mix: OnePole::new(20.0, d.mix, 1e-5),
             level: OnePole::new(20.0, d.level, 1e-5),
             drive: OnePole::new(20.0, d.drive, 1e-5),
+            sens: OnePole::new(60.0, d.wah, 1e-5),
             gate: LinearRamp::new(5.0, 1.0),
             pending: None,
             clock: 0,
@@ -194,6 +196,7 @@ impl Autowah {
         self.mix.set_target(s.mix);
         self.level.set_target(s.level);
         self.drive.set_target(s.drive);
+        self.sens.set_target(s.wah);
         let structural = s.ftype != self.s.ftype || s.four_poles != self.s.four_poles || s.down != self.s.down || s.source != self.s.source;
         if structural {
             let mut keep = s;
@@ -220,8 +223,9 @@ impl Autowah {
 
     /// The filter position for a level relative to the playing's long-term level. Exposed for tests.
     pub fn position_of(level_db: f32, slow_db: f32, sensitivity: f32) -> f32 {
-        // the window starts 18 dB under the long-term level (lower with more sensitivity), 24 dB wide
-        let floor = slow_db - 6.0 - 24.0 * sensitivity;
+        // the window starts a little under the long-term level (lower with more sensitivity), 24 dB wide:
+        // the filter rests low and opens on the attacks, as GxAutoWah does
+        let floor = slow_db - 2.0 - 10.0 * sensitivity;
         ((level_db - floor) / 24.0).clamp(0.0, 1.0)
     }
 
@@ -269,7 +273,8 @@ impl Autowah {
                 }
             }
             let d = self.sc_hp.process(x).abs();
-            let pos_now = Self::position_of(20.0 * self.env.max(1e-6).log10(), self.slow_db, self.s.wah);
+            let sens = self.sens.next();
+            let pos_now = Self::position_of(20.0 * self.env.max(1e-6).log10(), self.slow_db, sens);
             // opto: the release lags more as the light dims
             let rel_eff = if self.s.response == 2 { rel_ms * (1.0 + 3.0 * (1.0 - pos_now)) } else { rel_ms };
             let rel = one_pole_coef(rel_eff as f64 * 0.001 * sr as f64) as f32;
@@ -279,7 +284,7 @@ impl Autowah {
             if env_db > -70.0 {
                 self.slow_db = env_db + (self.slow_db - env_db) * slow;
             }
-            let pos_env = Self::position_of(env_db, self.slow_db, self.s.wah);
+            let pos_env = Self::position_of(env_db, self.slow_db, sens);
 
             // LFO and sample & hold (deterministic: phase 0, fixed seed at reset)
             self.lfo_phase += rate as f64 / sr as f64;
@@ -376,7 +381,7 @@ impl Effect for Autowah {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate;
-        for s in [&mut self.low, &mut self.high, &mut self.peak, &mut self.mix, &mut self.level, &mut self.drive] {
+        for s in [&mut self.low, &mut self.high, &mut self.peak, &mut self.mix, &mut self.level, &mut self.drive, &mut self.sens] {
             s.prepare(sample_rate);
         }
         self.gate.prepare(sample_rate);
@@ -384,7 +389,7 @@ impl Effect for Autowah {
     }
 
     fn reset(&mut self) {
-        for s in [&mut self.low, &mut self.high, &mut self.peak, &mut self.mix, &mut self.level, &mut self.drive] {
+        for s in [&mut self.low, &mut self.high, &mut self.peak, &mut self.mix, &mut self.level, &mut self.drive, &mut self.sens] {
             s.settle();
         }
         for c in self.ch.iter_mut() {

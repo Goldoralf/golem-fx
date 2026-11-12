@@ -10,6 +10,7 @@
 //! - the input filter is read at each clock tick, from the audio input held over the audio sample;
 //! - the BBD output is a staircase that changes at the ticks, and it is integrated exactly into the
 //!   output filter.
+//!
 //! The only aliasing left is the chip's own, which is the sound. The simulation adds none, with no
 //! oversampling and zero latency.
 //! The filters track the clock (cutoff = `track` · f_clk, capped).

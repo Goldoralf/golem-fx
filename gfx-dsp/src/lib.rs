@@ -23,6 +23,7 @@ pub mod smooth;
 pub mod svf;
 pub mod transport;
 pub mod util;
+pub mod vibe;
 pub mod wah;
 
 pub use effect::{Effect, ParamInfo, ParamKind};

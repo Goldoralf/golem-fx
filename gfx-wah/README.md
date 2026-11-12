@@ -90,7 +90,7 @@ Catalogue ids kept; `model` options appended after the catalogue's seven.
 | `auto_engage` | Auto Engage | b | off / on | new | off | | |
 | `engage_pos` | Engage Position | f | 0 – 20 % | new | 3 % | | With hysteresis |
 | `engage_wait` | Engage Wait | f | 0 – 1,000 ms | new | 300 ms | | |
-| `env_sens`, `env_att`, `env_rel` | Envelope | f | contract's shared ids | new | 50 %, 5 ms, 150 ms | | Auto mode |
+| `env_sens`, `env_att`, `env_rel` | Envelope | f | contract's shared ids | new | 50 %, 10 ms, 100 ms | | Auto mode. With `taper` Model, guitarix's law: W = the linear envelope × 4^((sens − 50) / 50), bounded and inverted per pedal (wah-color presets keep their sound); other tapers use a 30 dB window |
 
 ## 5. Applications
 
