@@ -1,6 +1,6 @@
 # gfx-pitch
 
-> **Status: CODED** (v0.1.0, 2026-11-12) — three VST3s on gfx-dsp's centred splice-search shifter (fixed mean delay, per-sample ratio, correlation splices with sub-sample refinement): **gfx-pitch** (Whammy, 12 ms reported; Poly, 14 ms Fast / 22 ms Stable reported; second voice, fine, glide, slew limit; dry delayed by the latency), **gfx-pitch-classic** (superpitch's two-head splicer, window / overlap literal, optional splice search, latency 0), **gfx-detune** (two ±25-cent voices, 3 ms centre, doubling delay by crossfade, latency 0); all allocate in `prepare` only. Tests: in tune within 2 cents at every integer shift (worst +1.5 at 110 Hz, +12: above the ±1 target), poly octaves each note of a chord, sweeps without a splice click, latency = the engine's centre; bench green. Choices made in code: Poly is the band-split time-domain candidate with **nine** half-octave bands (two notes in one band defeat the splice search) and **one** centre delay for all bands (different delays combed where bands overlap) — so its latency is above the 10 ms target; the multi-resolution vocoder was not prototyped; `harmony` / `key` / `scale` (phase 2) are not in yet (ids reserved by the design, appended when built).
+> **Status: CODED** (v0.1.0, 2026-11-12) — three VST3s on gfx-dsp's centred splice-search shifter (fixed mean delay, per-sample ratio, correlation splices with sub-sample refinement): **gfx-pitch** (Whammy, 12 ms reported; Poly, 14 ms Fast / 22 ms Stable reported; second voice, fine, glide, slew limit; dry delayed by the latency), **gfx-pitch-classic** (superpitch's two-head splicer, window / overlap literal, optional splice search, latency 0), **gfx-detune** (two ±25-cent voices, 3 ms centre, doubling delay by crossfade, latency 0); all allocate in `prepare` only. Tests: in tune within 2 cents at every integer shift (worst +1.5 at 110 Hz, +12: above the ±1 target), poly octaves each note of a chord, sweeps without a splice click, latency = the engine's centre; bench green. Choices made in code: Poly is the band-split time-domain candidate with **nine** half-octave bands (two notes in one band defeat the splice search) and **one** centre delay for all bands (different delays combed where bands overlap) — so its latency is above the 10 ms target; the multi-resolution vocoder was not prototyped. **Phase 2 (harmony) coded 2026-11-12**: `harmony` / `key` / `scale` appended; YIN detector in gfx-dsp (`detect.rs`, ~12 kHz analysis every ~2.7 ms, 75 Hz – 1.5 kHz, harmonic-lock check) with a confirming note tracker; on the lead DIs the tracked pitch class agrees with an offline reference on 97 % (lead) / 97 % (lead-clean) of voiced frames, the rest being onset timing, and the harmony voice stays in the scale 95.5 % of the time (a fixed +4: 59 – 61 %). Detector cost ~60 – 80 ns / sample at 48 kHz, only while `harmony` is on.
 
 golem's pitch shifters: whammy, harmony, poly transposition, detune / doubler. They stand for three golem
 blocks ([golem contract](../docs/golem-contract.md)):
@@ -96,9 +96,18 @@ forums are anecdotal.
 | `shift2` | Shift 2 | f | −24 – +24 st | new | 0 st (off) | ✓ | Second voice, for harmonies / octaves |
 | `voice2` | Voice 2 Level | f | −60 – 0 dB | new | −60 dB (off) | | |
 | `fine` | Fine | f | −50 – +50 cents | new | 0 | | Fine tuning of voice 1 (detuned doubles, tuning to a recording) |
-| `harmony` | Harmony | e | Off · Scale | new | Off | | **Phase 2.** Scale = `shift` and `shift2` are read as scale degrees: each played note (detected in the Whammy engine) gets the interval that stays in `key` / `scale` |
-| `key` | Key | e | C … B | new | C | | Phase 2; golem knows the song's key and can set it per song |
-| `scale` | Scale | e | Major · Minor · Harmonic Minor · Dorian · Mixolydian · Pentatonic | new | Major | | Phase 2 |
+| `harmony` | Harmony | e | Off · Scale | new | Off | | Scale: `shift` and `shift2` become scale steps above the played note (see below); `glide` is not used |
+| `key` | Key | e | C · C# · D · Eb · E · F · F# · G · Ab · A · Bb · B | new | C | | golem knows the song's key and can set it per song |
+| `scale` | Scale | e | Major · Minor · Harmonic Minor · Melodic Minor · Dorian · Phrygian · Lydian · Mixolydian · Major Pentatonic · Minor Pentatonic | new | Major | | Grows at the end only |
+
+**Harmony (Scale).** The played note is detected on the undelayed input (so ~12 ms ahead of the wet) by YIN
+(de Cheveigné & Kawahara 2002) on a ~12 kHz decimation, every ~2.7 ms; a new pitch class is taken after two
+analyses agree and only within ±0.4 st of a note (a bend keeps the old note; unvoiced frames hold it; octave
+errors cannot change a pitch class). `shift` becomes round(shift × notes in the scale / 12) steps: in a
+7-note scale +3 / +4 = a third, +5 a fourth, +7 a fifth, +9 a sixth, +12 an octave; negative = below. The
+note sits on the scale degree at or below it and the voice goes `steps` degrees away; a chromatic note keeps
+its lower degree's interval. Interval changes pass the 1 st / ms slew limit (a ~1 – 4 ms bend). `fine` still
+applies to voice 1. Built for single notes (either engine); chords give no stable note, and the last one holds.
 
 Latency: reported per engine and tracking mode, set at initialisation or when they change; never when
 `shift` moves. The Whammy engine exposes its detected pitch internally (bounded-cost detector): intelligent
@@ -140,7 +149,7 @@ Two tiny-ratio delay-line shifters with a ~50 ms window and long crossfades; rep
 | 12-string | gfx-pitch, Poly, `shift` +12, `mix` 35 %, `fine` +5 cents | Octave double with a slight detune |
 | Octave-down thickening for riffs | gfx-pitch, Whammy, `shift` −12, `mix` 40 % | (For a synth-like sub, use gfx-octaver) |
 | Fixed harmony (thirds, fifths) | gfx-pitch, Whammy, `shift` +4 or +7, `mix` 45 % | |
-| In-key twin leads (Thin Lizzy, Maiden) | gfx-pitch, `harmony` Scale, `shift` = third above — phase 2 | Detected pitch + song key |
+| In-key twin leads (Thin Lizzy, Maiden) | gfx-pitch, `harmony` Scale, `key` / `scale` of the song, `shift` +4 (a third above), `mix` 50 % | Add `shift2` +7, `voice2` −4 dB for three voices |
 | Two-voice harmony | `shift` +4, `shift2` +7, `voice2` −3 dB | |
 | Stereo widening, no wobble | gfx-detune, `detune` 0.35, `voices` 2, `wet` = `dry` | ± cents, zero latency |
 | Vocal / guitar doubling | gfx-detune, `delay` 18 ms, `detune` 0.25 | |

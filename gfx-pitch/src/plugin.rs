@@ -27,6 +27,91 @@ enum TrackingP {
     Stable,
 }
 
+#[derive(Enum, Debug, PartialEq, Clone, Copy)]
+enum HarmonyP {
+    #[id = "off"]
+    #[name = "Off"]
+    Off,
+    #[id = "scale"]
+    #[name = "Scale"]
+    Scale,
+}
+
+#[derive(Enum, Debug, PartialEq, Clone, Copy)]
+enum KeyP {
+    #[id = "c"]
+    #[name = "C"]
+    C,
+    #[id = "c#"]
+    #[name = "C#"]
+    Cs,
+    #[id = "d"]
+    #[name = "D"]
+    D,
+    #[id = "d#"]
+    #[name = "Eb"]
+    Ds,
+    #[id = "e"]
+    #[name = "E"]
+    E,
+    #[id = "f"]
+    #[name = "F"]
+    F,
+    #[id = "f#"]
+    #[name = "F#"]
+    Fs,
+    #[id = "g"]
+    #[name = "G"]
+    G,
+    #[id = "g#"]
+    #[name = "Ab"]
+    Gs,
+    #[id = "a"]
+    #[name = "A"]
+    A,
+    #[id = "a#"]
+    #[name = "Bb"]
+    As,
+    #[id = "b"]
+    #[name = "B"]
+    B,
+}
+
+/// gfx_dsp::detect::SCALES' order: grows at the end only.
+#[derive(Enum, Debug, PartialEq, Clone, Copy)]
+enum ScaleP {
+    #[id = "major"]
+    #[name = "Major"]
+    Major,
+    #[id = "minor"]
+    #[name = "Minor"]
+    Minor,
+    #[id = "harmonic_minor"]
+    #[name = "Harmonic Minor"]
+    HarmonicMinor,
+    #[id = "melodic_minor"]
+    #[name = "Melodic Minor"]
+    MelodicMinor,
+    #[id = "dorian"]
+    #[name = "Dorian"]
+    Dorian,
+    #[id = "phrygian"]
+    #[name = "Phrygian"]
+    Phrygian,
+    #[id = "lydian"]
+    #[name = "Lydian"]
+    Lydian,
+    #[id = "mixolydian"]
+    #[name = "Mixolydian"]
+    Mixolydian,
+    #[id = "major_pentatonic"]
+    #[name = "Major Pentatonic"]
+    MajorPentatonic,
+    #[id = "minor_pentatonic"]
+    #[name = "Minor Pentatonic"]
+    MinorPentatonic,
+}
+
 fn f(i: usize, unit: &'static str, decimals: usize) -> FloatParam {
     let pi = PARAMS[i];
     FloatParam::new(pi.name, pi.default, FloatRange::Linear { min: pi.min, max: pi.max })
@@ -53,6 +138,12 @@ struct PitchParams {
     voice2: FloatParam,
     #[id = "fine"]
     fine: FloatParam,
+    #[id = "harmony"]
+    harmony: EnumParam<HarmonyP>,
+    #[id = "key"]
+    key: EnumParam<KeyP>,
+    #[id = "scale"]
+    scale: EnumParam<ScaleP>,
 }
 
 impl Default for PitchParams {
@@ -66,6 +157,9 @@ impl Default for PitchParams {
             shift2: f(5, " st", 2),
             voice2: f(6, " dB", 1),
             fine: f(7, " ct", 0),
+            harmony: EnumParam::new("Harmony", HarmonyP::Off),
+            key: EnumParam::new("Key", KeyP::C),
+            scale: EnumParam::new("Scale", ScaleP::Major),
         }
     }
 }
@@ -82,6 +176,9 @@ impl PitchParams {
                 self.shift2.value(),
                 self.voice2.value(),
                 self.fine.value(),
+                self.harmony.value() as usize as f32,
+                self.key.value() as usize as f32,
+                self.scale.value() as usize as f32,
             ],
         }
     }

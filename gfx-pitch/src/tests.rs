@@ -129,3 +129,56 @@ fn activation_cost() {
     }
     eprintln!("worst block over 10 s {:8.3} ms (512 samples = 10.7 ms of budget)", worst);
 }
+
+/// Harmony (phase 2): the wet follows the scale above the detected note.
+#[test]
+fn harmony_keeps_thirds_in_key() {
+    let midi = |m: f32| 440.0 * ((m - 69.0) / 12.0).exp2();
+    // C major, a third above, wet only: D4 → F4 (3 st), E4 → G4 (3), F4 → A4 (4), G4 → B4 (4)
+    let s = Settings::default()
+        .with(p::SHIFT, 4.0)
+        .with(p::MIX, 100.0)
+        .with(p::HARMONY, 1.0)
+        .with(p::KEY, 0.0)
+        .with(p::SCALE, 0.0);
+    for (played, expect) in [(62.0, 65.0), (64.0, 67.0), (65.0, 69.0), (67.0, 71.0)] {
+        let mut q = ps(s);
+        let y = run(&mut q, &sine(midi(played), 24000));
+        let f = freq_of(&y[12000..]);
+        let cents = 1200.0 * (f / midi(expect) as f64).log2();
+        assert!(cents.abs() < 5.0, "played {played}: {f:.2} Hz, {cents:+.1} cents from the expected {expect}");
+    }
+}
+
+#[test]
+fn harmony_follows_a_note_change() {
+    let midi = |m: f32| 440.0 * ((m - 69.0) / 12.0).exp2();
+    // A minor, a third above: A3 then C4. A → C (+3), C → E (+4)
+    let s = Settings::default()
+        .with(p::SHIFT, 3.0)
+        .with(p::MIX, 100.0)
+        .with(p::HARMONY, 1.0)
+        .with(p::KEY, 9.0)
+        .with(p::SCALE, 1.0);
+    let mut q = ps(s);
+    let mut x = sine(midi(57.0), 19200);
+    // phase-continuous change of note
+    let ph0 = std::f32::consts::TAU * midi(57.0) * 19200.0 / SR;
+    x.extend((0..19200).map(|i| 0.3 * (ph0 + std::f32::consts::TAU * midi(60.0) * i as f32 / SR).sin()));
+    let y = run(&mut q, &x);
+    let f1 = freq_of(&y[9600..19200]);
+    let f2 = freq_of(&y[28800..]);
+    assert!((1200.0 * (f1 / midi(60.0) as f64).log2()).abs() < 5.0, "A3 → {f1:.2} Hz");
+    assert!((1200.0 * (f2 / midi(64.0) as f64).log2()).abs() < 5.0, "C4 → {f2:.2} Hz");
+}
+
+#[test]
+fn harmony_off_keeps_the_fixed_interval() {
+    let midi = |m: f32| 440.0 * ((m - 69.0) / 12.0).exp2();
+    // Off: +4 on D stays a major third (F#), whatever the key
+    let s = Settings::default().with(p::SHIFT, 4.0).with(p::MIX, 100.0).with(p::KEY, 0.0);
+    let mut q = ps(s);
+    let y = run(&mut q, &sine(midi(62.0), 24000));
+    let f = freq_of(&y[12000..]);
+    assert!((1200.0 * (f / midi(66.0) as f64).log2()).abs() < 5.0, "{f:.2} Hz");
+}

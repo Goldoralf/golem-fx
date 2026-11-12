@@ -18,6 +18,7 @@
 #![allow(clippy::needless_range_loop)]
 
 use gfx_dsp::delay::DelayLine;
+use gfx_dsp::detect::{harmony_interval, NoteTracker, PitchDetector, SCALES};
 use gfx_dsp::exp_smooth::ExpSmoother;
 use gfx_dsp::pitch::CenteredShifter;
 use gfx_dsp::smooth::{LinearRamp, OnePole};
@@ -41,7 +42,7 @@ fn band_shape(k: usize) -> (f32, f32) {
     ((0.6 * period_ms).clamp(0.5, 6.5), (6.0 * period_ms).clamp(8.0, 80.0))
 }
 
-pub static PARAMS: [ParamInfo; 8] = [
+pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::float("shift", "Shift", -24.0, 24.0, 12.0).with_exp(),
     ParamInfo::float("mix", "Mix", 0.0, 100.0, 50.0).with_exp(),
     ParamInfo::enumeration("engine", "Engine", 2, 0),
@@ -50,6 +51,10 @@ pub static PARAMS: [ParamInfo; 8] = [
     ParamInfo::float("shift2", "Shift 2", -24.0, 24.0, 0.0).with_exp(),
     ParamInfo::float("voice2", "Voice 2 Level", -60.0, 0.0, -60.0),
     ParamInfo::float("fine", "Fine", -50.0, 50.0, 0.0),
+    // phase 2: intelligent harmony (appended)
+    ParamInfo::enumeration("harmony", "Harmony", 2, 0),
+    ParamInfo::enumeration("key", "Key", 12, 0),
+    ParamInfo::enumeration("scale", "Scale", SCALES.len() as u32, 0),
 ];
 
 pub mod p {
@@ -61,7 +66,10 @@ pub mod p {
     pub const SHIFT2: usize = 5;
     pub const VOICE2: usize = 6;
     pub const FINE: usize = 7;
-    pub const N: usize = 8;
+    pub const HARMONY: usize = 8;
+    pub const KEY: usize = 9;
+    pub const SCALE: usize = 10;
+    pub const N: usize = 11;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -190,6 +198,9 @@ pub struct Pitch {
     /// the shifts after the slew limit (1 st / ms: a −24 → +24 jump takes 48 ms)
     st_out: [f64; 2],
     clock: u64,
+    /// harmony: the played note (detected on the undelayed input, so ~12 ms ahead of the wet)
+    det: PitchDetector,
+    notes: NoteTracker,
 }
 
 impl Pitch {
@@ -215,6 +226,8 @@ impl Pitch {
             hold: 0,
             st_out: [0.0; 2],
             clock: 0,
+            det: PitchDetector::default(),
+            notes: NoteTracker::default(),
         }
     }
 
@@ -279,8 +292,25 @@ impl Pitch {
             }
             let gs = 0.5 - 0.5 * (std::f32::consts::PI * g).cos();
             let lim = 1000.0 / self.sr as f64;
-            let t1 = (self.shift.next() + self.fine.next() * 0.01) as f64;
-            let t2 = self.shift2.next() as f64;
+            let (sh1, sh2, fine) = (self.shift.next(), self.shift2.next(), self.fine.next());
+            let v = &self.s.v;
+            let (t1, t2) = if v[p::HARMONY] >= 0.5 {
+                // the shifts become scale steps above the played note; the slew limit below makes
+                // each interval change a ~1 ms bend
+                let xm = if nch > 1 { 0.5 * (buffers[0][i] + buffers[1][i]) } else { buffers[0][i] };
+                if self.det.push(xm) {
+                    self.notes.update(self.det.hz());
+                }
+                let key = idx(v[p::KEY], 12) as u8;
+                let scale = idx(v[p::SCALE], SCALES.len());
+                let pc = self.notes.pitch_class().unwrap_or(key);
+                (
+                    harmony_interval(pc, key, scale, v[p::SHIFT]) as f64 + (fine * 0.01) as f64,
+                    harmony_interval(pc, key, scale, v[p::SHIFT2]) as f64,
+                )
+            } else {
+                ((sh1 + fine * 0.01) as f64, sh2 as f64)
+            };
             self.st_out[0] += (t1 - self.st_out[0]).clamp(-lim, lim);
             self.st_out[1] += (t2 - self.st_out[1]).clamp(-lim, lim);
             let (st1, st2) = (self.st_out[0], self.st_out[1]);
@@ -329,6 +359,7 @@ impl Effect for Pitch {
         for v in self.v1.iter_mut().chain(self.v2.iter_mut()) {
             v.allocate(sample_rate);
         }
+        self.det.prepare(sample_rate);
         self.apply_engine();
     }
 
@@ -347,6 +378,8 @@ impl Effect for Pitch {
         self.lat_used = self.latency_samples();
         self.st_out = [(v[p::SHIFT] + v[p::FINE] * 0.01) as f64, v[p::SHIFT2] as f64];
         self.clock = 0;
+        self.det.reset();
+        self.notes.reset();
     }
 
     fn set_param(&mut self, id: &str, value: f32) {
