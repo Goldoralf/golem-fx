@@ -80,11 +80,17 @@ error of a chorus…). They are specified in the effect's design document and li
 - **Renders on reference DIs**, at the effect's default and at golem's block presets
   (`~/golem/library/block-presets/<type>/`) when the effect stands for a golem block.
 - **Blind A/B, level-matched**: our effect against the block it replaces (REAPER renders produced on
-  golem's side), or two versions of ours. Level matching is by RMS over the whole file; for dynamics
-  effects, by RMS over the sustained part.
+  golem's side), or two versions of ours. Level matching is by integrated loudness (ITU-R BS.1770, K-weighted) —
+  RMS over-weights lows; for dynamics effects, loudness over the sustained part.
 - Some effects can only be judged in context: a gate before a high-gain amp, a chorus after a cab. For
   those, the rack renders the full chain through golem; gfx-bench supplies the effect's renders and
   checks only.
+- **Reference recordings** of the real units (e.g. the open-source Juno-60 chorus recordings) live outside
+  the repo (`GFX_REF_DIR`); `gfx-bench blind` matches levels before comparing ours against them.
+- **Playing it**: every effect also builds as a nih-plug **standalone** (JACK / PipeWire), so a voicing can
+  be judged guitar in hand before it ever reaches golem.
+- **Applications**: each effect's design ends with an Applications table; the bench renders one file per
+  row (`gfx-bench apps <effect>`), so every promised use is heard at least once.
 
 ## 7. In CI
 

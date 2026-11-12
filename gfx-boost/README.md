@@ -32,7 +32,18 @@ Colour (a "clean boost" that adds some drive, like an EP Booster) belongs to gfx
   curve stays linear in dB so a written value lands exactly.
 - Mono first, stereo second; the same gain on both channels.
 
-## 3. Bench suite
+## 3. Applications
+
+| Use | Settings | Feature that matters |
+|---|---|---|
+| Volume pedal | EXP on `gain`, −60 → 0 dB (golem's taper) | Smoothed in dB: no zipper; true silence at the heel |
+| Solo boost on a footswitch / scene | `gain` +4 dB after the amp | Click-free |
+| Push the front of an amp | `gain` +6 … +12 dB before the amp | (For a coloured boost, gfx-drive) |
+| Level-match two scenes or lanes | `gain` ± a few dB | Exact dB |
+| Fix a phase cancellation between two lanes | `polarity` inverted | |
+| Swells | EXP on `gain`, before delay / reverb | |
+
+## 4. Bench suite
 
 | Check | Pass |
 |---|---|

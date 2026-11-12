@@ -72,7 +72,7 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference or not re-ch
 
 ```
 in ─┬▶ tight (HPF) ▶ pre-LPF ▶ × gain (− sag) ▶ slew ▶ [2× min-phase OS: shaper (hardness, asym), ADAA1] ▶ DC ▶ tone ▶ ceiling ─┬▶ out
-    └▶ blend path (below xover only, when xover > 0) ─────────────────────────────────────────────────────────────────────┘
+    └▶ blend path (below bass_keep only, when bass_keep > 0) ─────────────────────────────────────────────────────────────────────┘
 ```
 
 - **Shaper family** along `hardness`: 1 ≈ tanh, ~5 ≈ silicon diode, 10 ≈ the legacy hard knee. Every curve
@@ -82,13 +82,15 @@ in ─┬▶ tight (HPF) ▶ pre-LPF ▶ × gain (− sag) ▶ slew ▶ [2× min
 | `voice` | `tight` | pre-LPF | slew | Character |
 |---|---|---|---|---|
 | Legacy | off | off | off | The JS curve exactly, now alias-free |
-| Overdrive | 720 Hz [I] | 6 kHz | off | TS-style mid hump, soft symmetric |
+| Overdrive | 720 Hz [I] | 6 kHz | off | TS-style: out = in + clip(gain · HP(in)) — the unclipped signal is always summed back, which is where a Tube Screamer's dynamics and tight lows come from |
 | Distortion | 100 Hz | 5 kHz | on | RAT / DS-1: harder, slew-rounded highs |
-| Fuzz | 40 Hz | 8 kHz | off | Biased, asymmetric, sputters with `asym` |
+| Fuzz | 40 Hz | 8 kHz | off | **Two cascaded clip stages** with an inter-stage high-pass (Big Muff / Fuzz Face): one shaper cannot make a wall of fuzz. Biased; sputters and gates with `asym` and `sag`; cleans up when the input level drops (guitar volume) |
 
+- **Blend coherence**: the clean path of `blend` / `bass_keep` runs through the same oversampling filters and
+  the identity ADAA (a 2-point average), so it stays phase-aligned with the driven path: no comb at any blend.
 - Antialiasing: ADAA1 on the memoryless shaper (it sits after the stateful filters and slew), inside 2×
   polyphase IIR half-band oversampling. ADAA1 adds a fixed half-sample group delay, not reported as
-  latency (−0.7 dB at 12 kHz against the dry in a blend [I, computed]). 4× only if the bench finds aliases
+  latency (a quarter sample at the base rate; matched on the clean path, see above). 4× only if the bench finds aliases
   above −90 dBFS.
 
 ## 4. Parameters
@@ -101,17 +103,29 @@ Catalogue ids kept (`channel` is dropped: not needed). Defaults = the catalogue'
 | `hardness` | Hardness | f | 1 – 10 | same | 6 | ✓ | Knee shape: tanh → diode → hard |
 | `ceiling` | Ceiling | f | −40 – 0 dB | same | −12 dB | | Clip threshold and driven output level |
 | `voice` | Voice | e | Overdrive · Distortion · Fuzz · Legacy | new | Overdrive | | §3 |
-| `tight` | Tight | f | 20 – 1,000 Hz | new | per voice | | Pre-clip high-pass |
+| `tight` | Tight | f | 20 – 1,000 Hz | new | 20 Hz (off) | | Extra pre-clip high-pass on top of the voice's own (metal: 150 – 300 Hz) |
 | `tone` | Tone | f | −100 – +100 % | new | 0 % | ✓ | Post tilt / low-pass, 1 – 10 kHz |
 | `asym` | Asymmetry | f | 0 – 100 % | new | 0 % | | Bias into the shaper (even harmonics, sputter), DC-blocked after |
 | `sag` | Sag | f | 0 – 100 % | new | 0 % | | Hard hits lower the gain and move the bias |
 | `blend` | Blend | f | 0 – 100 % | new | 0 % | ✓ | Phase-coherent clean mix (Klon) |
-| `xover` | Bass Crossover | f | 0 (off) – 500 Hz | new | 0 | | Below it: clean only (bass keeps its fundamental) |
+| `bass_keep` | Bass Keep | f | 0 (off) – 500 Hz | new | 0 | | Below it: clean only (a bass keeps its fundamental) |
 
-"per voice" defaults follow the same rule as elsewhere (shifted by the voice only while left at default) —
-to settle once for all effects.
+Voices own their filters and slew; `tight` and `tone` act on top (contract's parameter conventions).
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Tighten a high-gain amp (the metal boost) | Overdrive, gain 6 dB, hardness 3, ceiling −6 dB, `tight` 200 Hz, `tone` +20 % | Pre-clip high-pass + level: the amp does the distortion |
+| Edge-of-breakup into a clean amp | Overdrive, gain 18 dB, hardness 2, `blend` 30 % | Clean sum: dynamics follow the pick |
+| Classic rock crunch | Distortion, gain 28 dB, hardness 5, `tone` 0 | Slew-rounded highs, no fizz |
+| Wall of fuzz | Fuzz, gain 40 dB, hardness 7, `tone` −30 % | Two cascaded stages |
+| Sputtery, gated fuzz | Fuzz, gain 35 dB, `asym` 60 %, `sag` 50 % | Bias + sag |
+| Bass overdrive | Overdrive or Distortion, gain 20 dB, `bass_keep` 150 Hz, `blend` 40 % | Lows stay clean and mono-solid |
+| Solo lift | any voice, EXP on `gain` | Level-matched across the sweep, alias-free at 50 dB |
+| Old presets unchanged | Legacy | The JS curve, alias-free |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
@@ -119,5 +133,5 @@ to settle once for all effects.
 | Aliasing | 2 – 5 kHz sines at gain 50 dB: aliased components ≤ −90 dBFS |
 | Level | loudness within ±2 dB across the gain sweep once driven |
 | Blend | `blend` 50 %: no comb filtering against the dry |
-| Bass | `xover` 120 Hz on a low E: the fundamental passes clean |
+| Bass | `bass_keep` 120 Hz on a low E: the fundamental passes clean |
 | Listening | crunch.wav, high-gain.wav into a NAM amp (rendered by golem), against the JS block and against NAM pedal captures |

@@ -94,7 +94,19 @@ Catalogue ids kept; defaults = the catalogue's.
 
 Read-only (meter): `gr`, gain reduction in dB.
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Lead vocal, live | Relative, Vocal, Shelf, `freq` 6 kHz, `thresh` −28 dB, `range` 8 dB | Relative detection: holds when the singer backs off the mic or a compressor sits upstream |
+| Bright female vocal | `freq` 7.5 kHz, Bell | |
+| Heavy sibilance | `ratio` 10, `range` 12 dB | |
+| Pick click / fizz on an overdriven guitar | Allround, Bell, `freq` 3.5 kHz, `release` 40 ms | The same engine as a de-harsh |
+| Cymbal bleed in a vocal mic | `freq` 6 kHz: the detector stops at 15 kHz | Capped detection band |
+| Finding the sibilance | `listen` on, sweep `freq` | Hear the trigger |
+| Studio pass, fully transparent | `lookahead` 5 ms | Catches the first millisecond; reported latency |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

@@ -55,8 +55,9 @@ sites refused automated reading).
 3. **The loop** carries the colour: low-cut, high-cut, soft saturation (bounded, so high feedback stays
    safe), modulation, DC blocker.
 4. **Ducking** (TC 2290) and **trails** are what make a delay live-grade.
-5. Skipped: multitap / rhythm, reverse, pitch / shimmer in the loop, groove / feel, tap tempo (the host
-   gives the tempo), full tape hysteresis.
+5. Skipped for v1: free multitap patterns, pitch / shimmer in the loop (gfx-shimmer), groove / feel, tap
+   tempo (the host gives the tempo), full tape hysteresis. **Planned next: reverse** (a live staple on the
+   Timeline / DD-500) — the line and crossfader are sized for it.
 
 ## 2. Design
 
@@ -98,16 +99,18 @@ Catalogue ids kept; `time` keeps the catalogue's option order (options are appen
 | id | Name | Type | Range | Catalogue | Default | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `time` | Time | e | 1/4• · 1/4 · 1/8• · 1/8 · 1/8T · 1/16 · 1/2 · 1/4T · 1/16• · Free | first 6 | 1/8• | glide | | Note value at the host tempo (fallback 120 BPM); Free = `time_ms` |
-| `feedback` | Feedback | f | 0 – 100 % | 0 – 75 | 35 % | 30 ms | ✓ | Loop gain; above ~90 % the saturator keeps it bounded |
-| `mix` | Mix | f | 0 – 100 % | 0 – 50 | 25 % | 20 ms | ✓ | **Wet level, dry at unity** (ReaDelay's law, kept) |
+| `feedback` | Feedback | f | 0 – 110 % | 0 – 75 | 35 % | 30 ms | ✓ | Linear loop gain (golem's `pct_db` law: 35 % = × 0.35). Above 100 % the loop self-oscillates, bounded by the saturator: the tape-echo performance trick on an EXP pedal |
+| `mix` | Mix | f | 0 – 100 % | 0 – 50 | 25 % | 20 ms | ✓ | **Wet level, dry at unity**: linear wet gain = mix / 100 (golem's `pct_db` law, kept) |
 | `model` | Model | e | Digital · Tape · BBD | new | Digital | crossfade | | §2 |
 | `time_ms` | Time (free) | f | 20 – 2,000 ms | new | 375 ms | glide | ✓ | Used when `time` = Free |
 | `glide` | Time Change | e | Auto · Glide · Crossfade | new | Auto | — | | Auto = the engine's own (table §2) |
 | `glide_ms` | Glide Time | f | 10 – 1,000 ms | new | 150 ms | — | | Slew or crossfade duration |
 | `low_cut` | Low Cut | f | 20 – 1,000 Hz | new | 80 Hz | 30 ms | | In the loop: each repeat thinner |
-| `high_cut` | High Cut | f | 1 – 20 kHz | new | per model | 30 ms | ✓ | In the loop: each repeat darker |
-| `drive` | Drive | f | 0 – 100 % | new | per model | 30 ms | | Saturation into the loop (Echoplex preamp idea) |
-| `mod` | Modulation | f | 0 – 100 % | new | per model | 50 ms | | Wow / flutter / chorus depth; rates fixed per engine; deterministic |
+| `high_cut` | High Cut | f | 1 – 20 kHz | new | 20 kHz (off) | 30 ms | ✓ | In the loop, on top of the model's own roll-off: each repeat darker |
+| `drive` | Drive | f | 0 – 100 % | new | 0 % | 30 ms | | Extra saturation into the loop, on top of the model's own (Echoplex preamp idea) |
+| `mod` | Modulation | f | 0 – 100 % | new | 50 % | 50 ms | | 50 % = the model's own wow / flutter / chorus; 0 = none; 100 = exaggerated. Deterministic |
+| `diffusion` | Diffusion | f | 0 – 100 % | new | 0 % | 30 ms | | Allpass smear in the loop: repeats blur into a wash (ambient, EchoBoy / Valhalla) |
+| `heads` | Heads | e | 1 · 1+2 · 1+2+3 | new | 1 | crossfade | | Space Echo: extra playback heads at ⅔ and ⅓ of the time, rhythmic multi-tap |
 | `duck` | Ducking | f | 0 – 24 dB | new | 0 dB | 30 ms | ✓ | Wet attenuation while playing |
 | `duck_thresh` | Duck Threshold | f | −60 – 0 dB | new | −30 dB | 20 ms | | |
 | `duck_release` | Duck Release | f | 50 – 2,000 ms | new | 300 ms | — | | How fast the repeats bloom back |
@@ -119,19 +122,38 @@ Catalogue ids kept; `time` keeps the catalogue's option order (options are appen
 | `on` | On | b | off / on | new | on | §2 | | Bypass parameter with trails |
 | `trails` | Trails | b | off / on | new | on | — | | |
 
-"per model": the stored default is the Digital engine's; Tape and BBD shift it only while the parameter
-sits at its default (same rule as `knee` in gfx-comp — to settle once for all effects).
+Models own their voicing (Tape's head bump and loss, BBD's clock-tracking darkness); `high_cut`, `drive`
+and `mod` act on top of it, as the contract's parameter conventions require.
+
+Layouts: stereo 2 / 2 by default (ping-pong, dual, width), mono 1 / 1 offered; with `stereo` = Mono the two
+outputs are identical.
 
 Real-time: the line is allocated in `initialize` for 4 s at the highest sample rate, stereo (a half note
 at 30 BPM). Modulation restarts at phase 0 and a fixed seed on reset.
 
-## 4. Bench suite (on top of gfx-bench's common checks)
+## 4. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Dotted-eighth rhythm (U2) | Digital, `time` 1/8•, feedback 35 %, mix 30 %, `stereo` Ping-Pong | Sample-accurate sync to the host |
+| Slapback (rockabilly, country) | Tape, `time` Free, `time_ms` 110, feedback 10 %, mix 30 % | Tape colour on a single repeat |
+| Lead, repeats out of the way | Digital, `time` 1/4, feedback 30 %, mix 30 %, `duck` 9 dB | Ducking: the solo stays clear, the repeats fill the gaps |
+| Ambient wash | BBD or Tape, `time` 1/4, feedback 60 %, mix 35 %, `diffusion` 60 %, `high_cut` 4 kHz, `low_cut` 200 Hz | Diffusion + loop filters |
+| Thickening | Digital, `time` 1/16, feedback 10 %, mix 20 % (golem's preset) | |
+| Dub, self-oscillation on the pedal | Tape, feedback 60 %, EXP on `feedback` up to 110 %, `drive` 40 % | Bounded self-oscillation; EXP also on `time_ms` with `glide` Glide for pitch dives |
+| Space Echo rhythms | Tape, `heads` 1+2+3, `time` 1/4•, feedback 35 % | Multi-head |
+| Wide stereo from a mono guitar | `stereo` Dual, `ratio` 1.5, `width` 100 % | |
+| Parallel lane (wet only) | `kill_dry` on, mix 100 % | |
+| Scene change with the tail ringing | `on` off with `trails` on | Trails through the bypass parameter |
+| Freeze a chord under a solo | `hold` on a footswitch | Hold |
+
+## 5. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
 | Sync | at 120 BPM, each `time` value lands on its sample (± 1) |
 | Tempo change | host tempo 120 → 90 mid-repeat: glide or crossfade per setting, no click |
-| Feedback 100 % + drive | output bounded, no runaway, no NaN |
+| Feedback 110 % | self-oscillation settles at a bounded level (≤ −6 dBFS in the loop), no NaN, recovers when feedback drops |
 | Loop filters | the n-th repeat's spectrum matches n passes of low-cut / high-cut |
 | Ducking | wet −`duck` dB while playing, back within `duck_release` |
 | Trails | `on` off: repeats continue (trails) or fade in 20 ms (no trails); no click either way |

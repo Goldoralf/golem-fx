@@ -69,14 +69,21 @@ refused automated reading; its design notes come from search excerpts).
 
 ### What we conclude
 
-1. **Two tail topologies**: an FDN-16 (hall, room, chamber, cathedral) and a Dattorro tank (plate).
+1. **Two tail topologies**: an FDN-16 (hall, room, chamber, cathedral) and a Dattorro-family tank (plate).
+   The published Dattorro tank is thin and slightly metallic at long decays: ours adds diffusers in the
+   loop, and the bench compares it with an FDN voiced as a plate before the Plate algorithm is frozen.
 2. **Density first**: a Hadamard diffuser before the tail, so it is dense within ~20 ms on a pick attack.
 3. **Modulation that kills the metallic ring without chorus**: slow seeded random walks on some lines
    (Lexicon), optionally a time-varying matrix (Schlecht).
 4. **Decay per band** with Jot attenuation filters; `hicut` = damping, zita's definition.
 5. **Live**: predelay, ducking, freeze / infinite, trails.
 6. Skipped: convolution (latency or no modulation / freeze), more than 3 decay bands (v2), scattering delay
-   networks, spring (surge-spring), shimmer (gfx-shimmer), gated / reverse, oversampling.
+   networks, shimmer (gfx-shimmer), oversampling.
+7. **Planned next, in this order**: **Spring** (the guitar reverb: dispersive allpass chains for the
+   "drip", Välimäki, Parker & Abel's parametric spring, 2 – 3 springs, dwell) — appended to `algo`, able to
+   take over golem's `surge-spring` block later; **Bloom / Swell** (slow fade-in of the tail); **Gated** and
+   **Reverse** (nonlinear envelopes on the diffuser). The engine is built so these are new algorithms, not
+   new plugins.
 
 ## 3. Design
 
@@ -84,7 +91,7 @@ refused automated reading; its design notes come from search excerpts).
 in ─┬──────────────────────────────────────────────────────────────── dry (× kill_dry) ──┐
     └▶ ×on ▶ low cut ▶ predelay ▶ early reflections ─────────────────┐                    │
                                 └▶ diffuser (Hadamard, 8 ch × 4) ▶ tail ─┴▶ width ▶ × mix × duck ┴▶ out
-                                   tail = FDN-16 (Householder, Jot 3-band attenuation, seeded random-walk mod)
+                                   tail = FDN-16 (Hadamard or Householder — bench, Jot 3-band attenuation, seeded random-walk mod)
                                         or Dattorro tank (Plate)
 ```
 
@@ -115,18 +122,18 @@ Catalogue ids kept; ranges wider; no negative minimum.
 
 | id | Name | Type | Range | Catalogue | Default | EXP | Role |
 |---|---|---|---|---|---|---|---|
-| `mix` | Mix | f | 0 – 100 % | 0 – 60 | 30 % | ✓ | Wet level, dry at unity |
+| `mix` | Mix | f | 0 – 100 % | 0 – 60 | 30 % | ✓ | Wet level, dry at unity (catalogue law). 100 % with `kill_dry` for a parallel lane |
 | `decay` | Decay | f | 0.2 – 20 s | 0.3 – 4 | 1.3 s | ✓ | Mid-band RT60 |
-| `size` | Size | f | 5 – 60 m | 8 – 50 | per algo | | Slewed |
-| `predelay` | Predelay | f | 0 – 250 ms | 0 – 40 | per algo | | |
+| `size` | Size | f | 5 – 60 m | 8 – 50 | 24 m | | Slewed. golem pins it at insert for blocks that do not expose it (plate: 15 m) |
+| `predelay` | Predelay | f | 0 – 250 ms | 0 – 40 | 0 ms | | golem pins it at insert for blocks that do not expose it (hall: 15 ms, room: 5 ms) |
 | `hicut` | High Cut | f | 1 – 20 kHz | 3 – 12 | 7 kHz | ✓ | Damping (RT60 halves there) + a gentle output low-pass |
 | `algo` | Algorithm | e | Hall · Plate · Room · Chamber · Cathedral | new | Hall | | Pinned by golem per block |
 | `lowcut` | Low Cut | f | 20 – 500 Hz | new | 80 Hz | | High-pass into the reverb |
 | `bass_mult` | Bass Decay | f | 0.5 – 2 × | new | 1 × | | Low-band RT60 ratio |
 | `bass_xover` | Bass Crossover | f | 100 – 1,000 Hz | new | 300 Hz | | |
-| `mod` | Modulation | f | 0 – 100 % | new | per algo | | Depth; rates fixed per algo |
+| `mod` | Modulation | f | 0 – 100 % | new | 50 % | | 50 % = the algorithm's own depth; 0 = static (may ring); 100 = lush, towards chorus |
 | `diffusion` | Diffusion | f | 0 – 100 % | new | 80 % | | |
-| `early` | Early Reflections | f | 0 – 100 % | new | per algo | | Ignored on Plate |
+| `early` | Early Reflections | f | 0 – 100 % | new | 50 % | | 50 % = the algorithm's own level; ignored on Plate |
 | `width` | Width | f | 0 – 150 % | new | 100 % | | |
 | `duck` | Ducking | f | 0 – 24 dB | new | 0 dB | ✓ | |
 | `duck_sens` | Duck Sensitivity | f | 0 – 100 % | new | 50 % | | Instead of a negative threshold |
@@ -136,7 +143,26 @@ Catalogue ids kept; ranges wider; no negative minimum.
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
 | `trails` | Trails | b | off / on | new | on | | |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+Layouts: stereo 2 / 2 by default, mono 1 / 1 offered (the tail summed).
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Guitar "amp in a room" | Room, decay 0.7 s, size 12 m, mix 25 %, hicut 7 kHz | Dense early reflections: the dry amp sim gets air |
+| Lead hall | Hall, decay 2.2 s, predelay 40 ms, mix 30 %, `duck` 6 dB | Predelay + ducking: the solo stays in front, the tail blooms in the gaps |
+| Clean arpeggios, lush | Hall, decay 3 s, `mod` 70 %, hicut 6 kHz | Modulated tail without metallic ring |
+| Vocal plate | Plate, decay 1.4 s, predelay 20 ms, `lowcut` 150 Hz, hicut 8 kHz | Instant density; low cut keeps the voice clear |
+| Snare / drum plate | Plate, decay 1 s, mix 25 % | |
+| Ambient pad under playing | Cathedral, decay 8 s, mix 45 %, `bass_mult` 0.7, `lowcut` 200 Hz | Bass decay below the mids: no mud at long decays |
+| Freeze a chord and solo over it | `freeze` Freeze on a footswitch | |
+| Ever-growing wash | `freeze` Infinite | New notes keep entering |
+| Bass, a touch of space | Room, decay 0.5 s, mix 12 %, `lowcut` 250 Hz | Only the highs reverberate |
+| Keys / piano | Chamber, decay 1.5 s, `mod` 30 % | Low modulation: no pitch wobble on sustained piano |
+| Scene change, tail rings out | `on` off, `trails` on | |
+| Parallel lane | `kill_dry` on, mix 100 % | |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

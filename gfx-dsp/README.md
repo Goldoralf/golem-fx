@@ -41,6 +41,28 @@ its voicing and its nih-plug wrapper.
 | `stereo` | Mid/side, width, mono-safety helpers | gfx-chorus |
 | `level` | Loudness estimate for level compensation | gfx-chorus |
 
+Added at the design review (2026-11-12), needed by the 22 designs:
+
+| Module | Content | Users |
+|---|---|---|
+| `svf` | Trapezoidal (TPT) state-variable filter and first-order allpass; matched coefficient designs (Vicanek, Orfanidis); coefficient interpolation | eq, wah, autowah, phaser, deesser, every tone filter |
+| `adaa` | First-order antiderivative antialiasing for memoryless shapers, incl. "residual" form (exact below the knee) | drive, limiter, comp, tremolo, rotary |
+| `oversample` | 2× / 4× polyphase IIR half-band (minimum phase); a matching "identity" path so a dry signal stays phase-coherent with the processed one | drive, comp, octaver |
+| `envelope` | Peak, RMS, dB-domain followers; sliding maximum (O(1)); relative (band vs full-band) detector | gate, comp, deesser, eq, autowah, duckers |
+| `exp_smooth` | The EXP-pedal smoother of the golem contract (interval-adaptive ramp + critically damped smoother + slew limit) | every EXP-capable parameter |
+| `transport` | Host tempo / position → phase; sync divisions; relocation handling | every synced LFO, delay, killswitch |
+| `fdn` | Hadamard / Householder mixing, multichannel diffuser, Jot attenuation filters, seeded delay sets | reverb, shimmer |
+| `shifter` | Delay-line pitch shifter (2 – 3 heads, equal-power or splice-search), band-split variant | pitch, shimmer, detune |
+| `stft` | Real-time STFT, phase-gradient phase vocoder | pitch (Poly, if retained) |
+| `filterbank` | ERB complex IIR filterbank, IIR Hilbert pair | octaver (Poly), barberpole |
+| `motor` | First-order inertia with separate accelerate / decelerate constants, angle integration | rotary, vibrato rise |
+| `onset` | Zero-latency pick detector (high-passed fast / slow envelope difference) | killswitch, autowah |
+| `divider` | Adaptive Schmitt trigger + flip-flops (analog octave divider) | octaver |
+
+Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter
+at 192 kHz loses precision in `f32`). Multi-line structures (FDN, filterbanks, multi-voice) are written for
+SIMD lanes from the start.
+
 Modules are written when an effect needs them, not ahead of time. A module moves here from an effect
 only once its interface is settled.
 

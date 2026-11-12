@@ -61,7 +61,7 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference or not re-ch
 ## 2. Design
 
 ```
-in ▶ low cut ▶ low shelf ▶ bell (proportional Q) ▶ de-harsh (dynamic, cut only) ▶ high shelf ▶ air
+in ▶ low cut ▶ low shelf ▶ bell (proportional Q) ▶ bell 2 ▶ de-harsh (dynamic, cut only) ▶ high shelf ▶ air
    ▶ tilt ▶ high cut ▶ output gain / auto gain ▶ out
 ```
 
@@ -89,11 +89,15 @@ Catalogue ids kept; defaults = the catalogue's; new parameters default to neutra
 | `lowfreq` | Low Freq | f | 40 – 500 Hz | new | 120 Hz | log | | Low shelf corner |
 | `midq` | Mid Q | f | 0.3 – 6 | new | 0.7 | log | | Bell width at small gains |
 | `midprop` | Proportional Q | f | 0 – 100 % | new | 50 % | lin | | 0 = constant Q; 100 = API-like narrowing with gain |
+| `mid2gain` | Mid 2 Gain | f | −18 – +18 dB | new | 0 dB | lin | ✓ | Second bell: a guitarist's commonest move is two at once (cut the mud, lift the presence) |
+| `mid2freq` | Mid 2 Freq | f | 100 – 8,000 Hz | new | 2,500 Hz | log | ✓ | |
+| `mid2q` | Mid 2 Q | f | 0.3 – 6 | new | 0.7 | log | | Same proportional-Q amount as the first bell |
 | `highfreq` | High Freq | f | 1 – 16 kHz | new | 5 kHz | log | | High shelf corner (ReaEQ's band 4 value to read on the bench) |
 | `air` | Air | f | 0 – 10 dB | new | 0 dB | lin | | Boost-only broad shelf |
 | `airfreq` | Air Freq | f | 5 – 20 kHz | new | 12 kHz | log | | |
 | `tilt` | Tilt | f | −6 – +6 dB | new | 0 dB | lin | ✓ | Around 1 kHz: + = brighter, − = darker |
 | `highcut` | High Cut | f | 1 – 22 kHz | new | 22 kHz (off) | log | ✓ | Low-pass, 12 dB / oct, matched (no forced zero at Nyquist) |
+| `highcut_slope` | High Cut Slope | e | 12 · 24 dB / oct | new | 12 | — | | 24 after a cab simulation |
 | `harsh_freq` | De-harsh Freq | f | 1.5 – 8 kHz | new | 3.5 kHz | log | | |
 | `harsh_thresh` | De-harsh Threshold | f | −40 – 0 dB | new | 0 dB (off) | lin | | Band level relative to the full band |
 | `harsh_range` | De-harsh Range | f | 0 – 12 dB | new | 6 dB | lin | | Maximum cut |
@@ -106,7 +110,22 @@ Presets to add to golem's five (Standard, Guitar polish, Mid scoop, Bass cleanup
 Guitar post-cab (low cut 90 Hz, high cut 7 kHz, de-harsh 3.5 kHz), Voice air (low cut 100 Hz, air +3 dB),
 Pultec low (lows +4 dB at 60 Hz, broad −2 dB at 200 Hz), Mesa V.
 
-## 4. Bench suite (on top of gfx-bench's common checks)
+## 4. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Guitar after amp and cab | `lowcut` 90 Hz, `highcut` 7 kHz at 24 dB / oct, `mid2gain` −3 dB at 350 Hz | The two cuts every mixed guitar gets; matched high cut (no cramping at 7 kHz) |
+| High-gain fizz | `harsh_freq` 3.5 kHz, `harsh_thresh` −18 dB, `harsh_range` 6 dB | Dynamic de-harsh: cuts only when the fizz is there, palm mutes keep their bite |
+| Solo boost on a footswitch / scene | `midgain` +4 dB at 1.2 kHz, `output` +2 dB | Click-free scene change |
+| Fixed wah / EXP sweep | `midgain` +12 dB, `midq` 4, `midprop` 0, EXP on `midfreq` | SVF core: sweep without zipper |
+| Mid scoop | `midgain` −5 dB at 550 Hz, `highs` +2 dB (golem's preset) | Proportional Q: the deeper the cut, the narrower |
+| Bass, tight and present | `lowcut` 35 Hz at 24 dB / oct, `lows` +2 dB at 80 Hz, `midgain` −3 dB at 500 Hz, `mid2gain` +3 dB at 1.5 kHz, `highcut` 5 kHz | |
+| Voice | `lowcut` 100 Hz, `midgain` −2.5 dB at 400 Hz, `air` +3 dB, de-harsh at 6 kHz | Air band: presence without harshness |
+| Acoustic guitar (piezo) | `lowcut` 80 Hz, `midgain` −4 dB at 1 kHz ("quack"), `air` +2 dB | |
+| Brighter / darker in one move | `tilt` ±2 dB with `auto_gain` on | Tilt + static auto gain: tone changes, loudness does not |
+| Pultec low end | `lows` +4 dB at 60 Hz, `midgain` −2 dB at 200 Hz, `midq` 0.5 | |
+
+## 5. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

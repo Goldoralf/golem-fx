@@ -28,6 +28,38 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
 - **Ids are permanent** once shipped: VST3 class id and parameter ids are stored by sessions and by
   golem's engine table.
 
+## Parameter conventions (all effects)
+
+Decided at the design review of 2026-11-12, to keep 22 effects coherent.
+
+- **No mode-dependent defaults.** A parameter's default never depends on another parameter (a host stores
+  every value, so "still at its default" cannot be told from "set by the user"). Instead:
+  - a **model owns its intrinsic voicing** (its filters, its saturation, its modulation), and user
+    parameters apply **on top**, defaulting to neutral (0 %, filter off, 0 dB);
+  - where a parameter must follow the model, it is **relative**: a percentage where 50 % (or 100 %,
+    stated in the table) = the model's own value, or an enum whose first option is `Model` / `Auto`;
+  - values that differ per golem block are set by golem at insert (`init` / `FX_INIT`), not by the
+    plugin's defaults.
+- **Reference settings are presets.** "CE-2", "Juno I", "Phase 90 script"… are golem block presets
+  (`library/block-presets/<type>/`) carrying the mode and the settings; the design documents list them so
+  they can be authored.
+- **Shared ids**, same meaning and unit everywhere they appear:
+
+  | id | Meaning |
+  |---|---|
+  | `mix` | Keeps the **catalogue's law** for its block, stated in each document (wet level with the dry at unity for delay, reverb, chorus; equal-power crossfade for shimmer, pitch) |
+  | `on`, `trails` | Bypass parameter with tail (§Trails) |
+  | `sync` | Off · 4/1 · 2/1 · 1/1 · 1/2 · 1/2• · 1/2T · 1/4 · 1/4• · 1/4T · 1/8 · 1/8• · 1/8T · 1/16 · 1/16• · 1/16T · 1/32 — phase from the host's position. Catalogue lists (`delay.time`, `killswitch.sync`) keep their own options |
+  | `stereo_phase` | L / R LFO offset, 0 – 180° |
+  | `bass_keep` | Hz, 0 = off: below it the signal stays dry, mono and unmodulated (Linkwitz-Riley) |
+  | `drive` | 0 – 100 %, extra saturation on top of the model's own |
+  | `env_sens`, `env_att`, `env_rel` | Envelope follower: 0 – 100 % sensitivity (level-independent, dB window), 1 – 100 ms, 20 – 2,000 ms |
+  | `gr`, `state` | Read-only meters |
+  | `model` / `mode` / `character` | `model` = a reference unit's voicing; `mode` = a behaviour or topology; `character` = gfx-comp's dynamics families |
+- **Enums only grow at the end.** Integers (patterns, step counts) are nih-plug `IntParam`s.
+- **Every document ends with an Applications section**: what each feature is for, with starting settings.
+  The coding agent implements features for those uses, and the bench listens to them.
+
 ## Audio
 
 - **VST3 only.**

@@ -89,18 +89,40 @@ Catalogue ids kept; `low` / `high` are now exact (prewarped) frequencies.
 | `shape` | LFO Shape | e | Sine · Triangle · Log · Exp · Square (smoothed) · Ramp · Random · Steps | new | Sine | | |
 | `skew` | Skew | f | 0 – 100 % (50 = symmetric) | new | 50 % | | |
 | `sweep_src` | Sweep Source | e | LFO · Envelope · Manual · LFO + Envelope | new | LFO | | |
-| `env_sens`, `env_att`, `env_rel` | Envelope | f | as gfx-flanger | new | as gfx-flanger | | |
+| `env_sens`, `env_att`, `env_rel` | Envelope | f | contract's shared ids | new | 50 %, 10 ms, 300 ms | | |
 | `stereo_phase` | Stereo Phase | f | 0 – 180° | new | 90° | | Quadrature by default |
 | `sync` | Sync | e | Off · 4 bars … 1/16 (+ dotted / triplets) | new | Off | | Phase from the host's position |
-| `color` | Color | f | 0 – 100 % | new | per model | | Nonlinearity and mismatch |
+| `color` | Color | f | 0 – 100 % | new | 50 % | | 50 % = the model's own nonlinearity and mismatch (on Stone: its Color switch above 50 %); 0 = ideal |
+| `lfo2` | Second LFO | e | Same · Reverse · Free | new | Same | | Bi-Phase: phaser B follows A, mirrors it, or runs on `rate2` |
+| `rate2` | Rate 2 | f | 0.05 – 8 Hz | new | 0.3 Hz | | Bi-Phase, `lfo2` = Free |
+| `routing` | Routing | e | Series · Parallel | new | Series | | Bi-Phase: A → B, or A left / B right |
 | `lamp_lag` | Lamp Lag | f | 5 – 100 ms | new | 30 ms | | Vibe |
 | `vibe_mode` | Vibe Mode | e | Chorus · Vibrato | new | Chorus | | Vibe: vibrato = wet only |
 | `tone` | Tone | f | 0 – 100 % (50 = flat) | new | 50 % | | Low-pass ↔ high-pass on the wet |
-| `bass_mono` | Bass Mono Below | f | 0 (off) – 300 Hz | new | 0 | | |
+| `bass_keep` | Bass Keep | f | 0 (off) – 300 Hz | new | 0 | | Lows stay dry and mono |
 
 `skew` and `tone` use 0 – 100 % with 50 % as neutral, to avoid negative minimums.
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+The catalogue's law is `dry + wet · phased`: the deepest notches need `wet` = `dry`.
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Phase 90 "script" (early Van Halen, Gilmour) | Script 90, `rate` 0.6 Hz, wet 0 dB | No feedback: smooth, vocal |
+| Phase 90 "block" | Block 90, `rate` 1 Hz | Internal feedback: more pronounced |
+| Small Stone swirl | Stone, `rate` 0.3 Hz, `color` 80 % | OTA, feedback via Color |
+| Uni-Vibe (Hendrix "Machine Gun", Trower) | Vibe, `rate` 1.2 Hz, `depth` 80 %, before the amp | Unequal stages, lamp lag, throb |
+| Vibe as vibrato | Vibe, `vibe_mode` Vibrato | |
+| Bi-Phase stereo sweep (Smashing Pumpkins) | Bi-Phase, `lfo2` Reverse, `routing` Parallel | Two phasers mirrored L / R |
+| Deep slow sweep on keys / pads | Deep 12, `rate` 0.1 Hz, `feedback` −6 dB | 6 notches over 6 octaves |
+| Endless rise / fall | Barber ↑ / ↓, `rate` 0.2 Hz | Barberpole |
+| Funk auto-phase | Classic 4 stages, `sweep_src` Envelope | Envelope sweep |
+| Phase with the foot | `sweep_src` Manual, EXP on `manual` | Exponential, click-free sweep |
+| Sample-and-hold phase (synth) | `shape` Steps, `sync` 1/8 | |
+| Bass | Script 90, `bass_keep` 120 Hz | |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

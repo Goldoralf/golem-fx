@@ -76,10 +76,25 @@ Catalogue ids kept.
 | `tone` | Tone | f | 0 – 1 | new | 0.7 | | Post low-pass |
 | `mix` | Mix | f | 0 – 1 | new | 1 | | 0.5 = chorus (Hammond C modes, Uni-Vibe chorus) |
 | `sync` | Sync | e | Off · divisions | new | Off | | |
-| `spread` | Stereo | f | 0 – 1 | new | 0 | | L / R LFO phase |
+| `stereo_phase` | Stereo Phase | f | 0 – 180° | new | 0° | | L / R LFO offset |
 | `drive` | Drive | f | 0 – 1 | new | 0 | | Tube colour, outside the delay |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Gentle pitch vibrato on clean chords | Clean, speed 5 Hz, depth 0.15 (15 cents) | Depth in cents: the same wobble at any speed |
+| Seasick (lo-fi, shoegaze) | BBD, speed 2 Hz, depth 0.6, `tone` 0.5 | BBD darkness |
+| Magnatone amp vibrato | Varistor, speed 5.5 Hz, depth 0.6 | Phase modulation: zero latency, depth strongest around 1 kHz |
+| Vibe vibrato (Hendrix, Trower) | Vibe, speed 4 Hz, depth 0.7 | Shared with gfx-phaser |
+| Hammond V3 / C3 on keys or guitar | Scanner, depth 1 (V3), `mix` 1 (vibrato) or 0.5 (chorus) | Scanner model |
+| Vibrato that grows on held notes (VB-2) | `rise` 800 ms, switched by foot | Rise time on engage and release |
+| Tape wow | Clean, `shape` Random, speed 0.8 Hz, depth 0.2 | Seeded random LFO |
+| Chorus from a vibrato | any model, `mix` 0.5 | |
+| Speed on the pedal | EXP on `speed`, depth constant in cents | |
+| Whammy-bar wobble | EXP on `depth` | No pitch blip while the depth moves |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

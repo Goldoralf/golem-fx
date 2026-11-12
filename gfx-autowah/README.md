@@ -51,7 +51,7 @@ Catalogue id kept.
 | id | Name | Type | Range | Catalogue | Default | Role |
 |---|---|---|---|---|---|---|
 | `wah` | Sensitivity | f | 0 – 1 | same | 0.3 | Envelope window: higher = reacts to softer playing |
-| `type` | Type | e | Low-pass · Band-pass · High-pass · Wah · Band-pass + Dry | new | Band-pass | Wah = gfx-wah's GCB-95 voice |
+| `type` | Type | e | Low-pass · Band-pass · High-pass · Wah · Band-pass + Dry · Vowel | new | Band-pass | Wah = gfx-wah's GCB-95 voice. Vowel = two formant band-passes morphing a → e → i → o → u with the sweep (talk-box / Boss AW-3 Humanizer) |
 | `poles` | Poles | e | 2 · 4 | new | 2 | |
 | `direction` | Direction | e | Up · Down | new | Up | |
 | `low` | Low | f | 50 – 2,000 Hz | new | 250 Hz | |
@@ -68,7 +68,23 @@ Catalogue id kept.
 | `rate` | Rate | f | 0.05 – 10 Hz | new | 1 Hz | LFO / S&H |
 | `sync` | Sync | e | Off · divisions | new | Off | |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Funk guitar "quack" (Mu-Tron III) | Band-pass, Up, `low` 250 Hz, `high` 2.5 kHz, `peak` 5, `wah` 0.5 | Level-independent follower: same quack at any guitar volume |
+| Bootsy bass | Low-pass, Up, `low` 80 Hz, `high` 1.2 kHz, `peak` 6, `bass_keep` 120 Hz | Dry lows: the bottom never thins |
+| Jerry Garcia leads | Band-pass + Dry, Up, `response` Opto, `release` 250 ms | Opto lag |
+| Downward "ow" sweep | `direction` Down | |
+| Chewy, saturated filter | `drive` 12 dB, `peak` 8 | Saturation inside the filter |
+| Synth-like 4-pole sweep (Moog) | Low-pass, `poles` 4, `peak` 10 | |
+| Auto-wah with a wah voice | `type` Wah | |
+| Talk-box vowels | `type` Vowel, Up, `wah` 0.6 | Formant morph |
+| Tempo-synced filter sweep | `source` LFO, `sync` 1/4 | |
+| Random stepped filter (synth) | `source` S&H, `sync` 1/16 | |
+| Keys / clavinet | Band-pass, `attack` 2 ms, `release` 100 ms | |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
@@ -77,4 +93,5 @@ Catalogue id kept.
 | Stability | peak 20, 4 poles, audio-rate sweep: no instability, no click |
 | Drive | saturates in the filter: THD grows with `drive` |
 | Bass | `bass_keep` 150 Hz on a low E: fundamental untouched |
+| Vowel | formant pairs within 5 % of the target vowel table at 5 sweep positions |
 | Listening | funk.wav and bass (to record) with golem's autowah presets, against gxautowah |

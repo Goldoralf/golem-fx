@@ -66,8 +66,10 @@ companding; a non-sinusoidal, smoothed or log LFO; modulation that does not soun
 
 ## Front panel (the golem block)
 
-Profile · Mode · Rate · Depth · Warmth · Mix. Everything else is in expert mode, with defaults set by
-the profile and the mode.
+Profile · Mode · Rate · Depth · Warmth · Mix. Everything else is in expert mode: each group follows the
+profile (and the mode) until its Custom switch is on. Front-panel values are never moved by the plugin;
+the reference settings ship as block presets ([VOICING.md](VOICING.md) §6, which is also the list of
+applications).
 
 ## Profiles
 

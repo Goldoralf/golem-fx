@@ -14,8 +14,7 @@
    - Custom off: the group follows the profile (its controls are greyed, `depends` in the catalogue).
    - Custom on: the group uses its own controls.
 3. **Warmth always applies.** It moves the colour around an *anchor*: the profile's, or the expert
-   group's when it is Custom. Depth is an absolute excursion: the **peak** deviation of the delay around its
-   centre (± ms); the profile and the mode only set its default.
+   group's when it is Custom. Depth is an absolute excursion: the **peak-to-peak** swing of the delay, in ms — the meaning golem's `chorus` block already has (Calf: delay = min + depth · (1 + lfo) / 2). Neither the profile nor the mode changes a front-panel value: reference settings are block presets ([VOICING.md](VOICING.md) §6).
 4. **golem catalogue ids are kept.** gfx-chorus carries the ids of golem's `chorus` block (`rate`,
    `depth`, `mix`, see `library/catalog/effects.json`), in the catalogue's units, with ranges a little
    wider. A preset keeps its settings when its block switches to gfx-chorus. Every other id is new.
@@ -33,11 +32,11 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `profile` | Profile | e | Guitar Clean · Guitar Drive · Bass · Keys · Voice | Guitar Clean | — | — | | Picks the voicing: anchors of every group, internal scale of Depth and Warmth |
-| `mode` | Mode | e | Classic · Dual I · Dual II · Dual I+II · Dimension 1 · Dimension 2 · Dimension 3 · Ensemble · Doubler | P | — | — | | Voice topology and its reference settings ([VOICING.md](VOICING.md) §2) |
-| `rate` | Rate | f | 0.05 – 10 Hz | P | log | 50 | ✓ | LFO rate (catalogue `chorus.rate`: 0.1 – 3 Hz). Ignored when `sync` ≠ Off |
-| `depth` | Depth | f | 0.1 – 10 ms | P | log | 50 | ✓ | Peak deviation of the delay, ± ms (catalogue `chorus.depth`: 1 – 8 ms) |
+| `mode` | Mode | e | Classic · Dual I · Dual II · Dual I+II · Dimension 1 · Dimension 2 · Dimension 3 · Ensemble · Doubler | Classic | — | — | | Voice topology and its reference settings ([VOICING.md](VOICING.md) §2) |
+| `rate` | Rate | f | 0.05 – 10 Hz | 0.6 Hz | log | 50 | ✓ | LFO rate (catalogue `chorus.rate`: 0.1 – 3 Hz). Ignored when `sync` ≠ Off |
+| `depth` | Depth | f | 0.1 – 12 ms | 4 ms | log | 50 | ✓ | Peak-to-peak swing of the delay (catalogue `chorus.depth`: 1 – 8 ms, same meaning) |
 | `warmth` | Warmth | f | 0 – 100 % | 50 % | lin | 30 | ✓ | Colour macro: wet low-pass, input saturation, BBD bandwidth and noise, in the profile's proportions |
-| `mix` | Mix | f | 0 – 1 (shown as %) | P | lin | 20 | ✓ | Dry / wet balance, law `mix_law` (catalogue `chorus.mix`: 0 – 1) |
+| `mix` | Mix | f | 0 – 1 (shown as %) | 0.4 | lin | 20 | ✓ | **Wet level, dry at unity** — the catalogue's law (golem forces Calf's dry to 1.0); 1.0 = wet as loud as dry (a CE-2's 50 / 50). Other laws: `mix_law` |
 
 ## Expert
 
@@ -87,9 +86,9 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `env_depth` | Env → Depth | f | −100 – +100 % | 0 % | lin | 30 | | Playing harder adds (+) or removes (−) depth |
-| `env_mix` | Env → Mix | f | −100 – +100 % | P | lin | 30 | | Playing harder raises (+) or ducks (−) the wet: chords stay clear on the attack, the chorus blooms on the sustain |
+| `env_mix` | Env → Mix | f | −100 – +100 % | 0 % | lin | 30 | | Playing harder raises (+) or ducks (−) the wet: chords stay clear on the attack, the chorus blooms on the sustain |
 
-The envelope follower's times are set by the profile (fast for guitar, slower for voice and keys).
+These two belong to the **Modulation** group: with `mod_custom` off they follow the profile (e.g. Guitar Drive ducks the wet on attacks), with it on they use these values. The follower's times are set by the profile (fast for guitar, slower for voice and keys).
 
 ### Stereo
 
@@ -112,8 +111,8 @@ The envelope follower's times are set by the profile (fast for guitar, slower fo
 
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
-| `mix_law` | Mix Law | e | Linear · Equal Power | P | — | — | | Linear = classic chorus (marked phase notches); Equal Power = constant level |
-| `level_comp` | Level Comp | b | off / on | on | — | — | | Compensates level so the effect does not seem better only because it is louder |
+| `mix_law` | Mix Law | e | Add · Crossfade · Equal Power | Add | — | — | | Add = dry at unity + wet × mix (catalogue); Crossfade = (1 − mix) dry + mix wet (1.0 = vibrato); Equal Power = constant level |
+| `level_comp` | Level Comp | b | off / on | on | — | — | | Static gain computed from `mix`, the law and the voice count (never from the signal: nothing pumps), so on / off sounds equally loud |
 | `output` | Output | f | −12 – +12 dB | 0 dB | lin | 20 | | Final output level |
 
 ## To check on the bench

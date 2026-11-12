@@ -96,7 +96,20 @@ would silently change preset levels.
 **golem side**: the catalogue's `release` `scale: 0.001` (x42 takes seconds) must go when the block
 switches to gfx-limiter (ms).
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| End-of-lane safety, inaudible | Clean, threshold −3 dB, release 50 ms, `auto_release` on | Zero latency; untouched below the threshold |
+| Louder lead without clipping the PA | Punchy, `gain` +6 dB, threshold −3 dB | Envelope + soft clip share the work, attacks kept |
+| Loud and aggressive | Clip, `gain` +9 dB, `clip` 30 % | Alias-free clipper |
+| Bass, no distortion on the low E | Clean, release 100 ms, `auto_release` on | LF hold: the gain does not ride the waveform |
+| Slap bass / percussive peaks | Punchy, threshold −6 dB | |
+| Vocal peaks | Clean, threshold −4 dB, release 120 ms | |
+| Backing tracks / keys, fully transparent | `lookahead` 2 ms, `true_peak` on | Reported latency; no inter-sample overs |
+| Level a whole patch before the output | `gain` to taste, threshold −1 dB | `threshold` is the ceiling: what you set is the peak you get |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

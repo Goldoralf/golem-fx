@@ -99,7 +99,21 @@ Catalogue ids kept; `pitch` widened so the octave is reachable.
 | `width` | Width | f | 0 – 100 % | new | 100 % | | |
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Classic octave shimmer (Eno / Lanois, The Edge) | pitch +12, shimmer 50 %, decay 5 s, mix 40 %, hicut 6 kHz | Shifter in the loop: each pass climbs an octave |
+| Organ-like halo | `character` Smooth, pitch +12, `pitch2` +19, `voice2` 40 % | Reverse grains; octave + fifth |
+| Fifths, cinematic | pitch +7, `pitch2` +12, `voice2` 60 % | Two voices |
+| Dark descent | pitch −12, shimmer 60 %, hicut 4.5 kHz, `lowcut` 200 Hz | Loop low cut against mud |
+| Subtle sparkle on clean chords | shimmer 25 %, decay 3 s, mix 25 % | |
+| Shimmer that does not climb | `placement` Input | One octave above, no runaway |
+| Pad that stays out of the way | `duck` 50 %, `bloom` 60 % | Ducking + slow fade-in |
+| Hold a chord as a drone | `freeze` on a footswitch | The climb stops, the pad sustains |
+| Swells with the volume pedal | mix 60 %, decay 8 s, EXP on `mix` or `shimmer` | |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

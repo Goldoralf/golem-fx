@@ -54,8 +54,8 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference; **[U]** not
 ## 3. Design
 
 - Engines: **Clean** (interpolated, HF-compensated), **BBD** (clock-domain model + BLEP, companding and
-  clipping in the loop, from gfx-chorus), **Tape TZ** (two lines, dry delayed by `tz_offset`, reported
-  latency), **Pseudo TZ** (allpass on the dry, zero latency).
+  clipping in the loop, from gfx-chorus), **Tape TZ** (two lines, dry delayed by a fixed 1 ms — the
+  reported latency; `manual` sets how far past zero the sweep goes, as on the Mobius), **Pseudo TZ** (allpass on the dry, zero latency).
 - Sweep: delay = manual · (length / manual)^u, u ∈ [0, 1] from the summed sources, × depth.
 - The LFO runs freely: parameter changes never reset its phase (the JS resets it on any change — not
   copied); phase 0 at reset; synced from the host's position when `sync` is on.
@@ -65,7 +65,7 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference; **[U]** not
 | Mistress | BBD | smoothed triangle | 0.5 – 8 ms | Electric Mistress, Mobius Silver |
 | Grey | BBD | log | 0.3 – 6 ms | MXR M117, Mobius Grey |
 | A/DA | BBD | triangle | 0.4 – 14 ms (35:1) | Huge sweep |
-| Tape TZ+ / TZ− | Tape TZ | sine | through zero | regen +/−; reported latency `tz_offset` |
+| Tape TZ+ / TZ− | Tape TZ | sine | through zero | regen +/−; reported latency 1 ms (fixed, so the host never re-syncs) |
 | Pseudo TZ | Pseudo TZ | sine | near zero | zero latency |
 | Barberpole ↑ / ↓ | Clean | dual ramps | endless | Esqueda dual flanger |
 | Pedal | any | none | manual only | Tycobrahe: the EXP pedal sweeps |
@@ -77,7 +77,7 @@ Catalogue ids kept (`feedback` stays a magnitude in dB; its polarity is a separa
 | id | Name | Type | Range | Catalogue | Default | EXP | Role |
 |---|---|---|---|---|---|---|---|
 | `length` | Length | f | 0.1 – 30 ms | 0 – 30 | 6 ms | | Maximum delay of the sweep |
-| `feedback` | Feedback | f | −60 – −1 dB | −60 – −6 | −24 dB | ✓ | Above −6 dB only with `drive` > 0 [to settle] |
+| `feedback` | Feedback | f | −60 – −1 dB | −60 – −6 | −24 dB | ✓ | Loop gain magnitude. Stable up to −1 dB by itself; a soft limiter sits in the loop because the comb's peaks reach +19 dB there |
 | `wet` | Wet | f | −60 – 0 dB | same | −10 dB | | |
 | `dry` | Dry | f | −60 – 0 dB | same | 0 dB | | |
 | `rate` | Rate | f | 0.05 – 5 Hz | 0.05 – 2 | 0.3 Hz | ✓ | |
@@ -85,7 +85,7 @@ Catalogue ids kept (`feedback` stays a magnitude in dB; its polarity is a separa
 | `manual` | Manual | f | 0.05 – 30 ms | new | 0.1 ms | ✓ | Minimum delay; the EXP target |
 | `depth` | Depth | f | 0 – 100 % | new | 100 % | ✓ | Exponential span between manual and length |
 | `fb_polarity` | Feedback Polarity | e | + · − | new | + | | |
-| `shape` | LFO Shape | e | Sine · Triangle · Log · Exp · Ramp Up · Ramp Down · Random | new | per mode | | Random = smoothed S&H, fixed seed |
+| `shape` | LFO Shape | e | Mode · Sine · Triangle · Log · Exp · Ramp Up · Ramp Down · Random | new | Mode | | Mode = the mode's own shape (table §3); Random = smoothed S&H, fixed seed |
 | `sweep_src` | Sweep Source | e | LFO · Envelope · Manual · LFO + Envelope | new | LFO | | |
 | `env_sens` | Envelope Sensitivity | f | −40 – 0 dB | new | −20 dB | | |
 | `env_att` | Envelope Attack | f | 1 – 100 ms | new | 10 ms | | |
@@ -95,17 +95,33 @@ Catalogue ids kept (`feedback` stays a magnitude in dB; its polarity is a separa
 | `drive` | Loop Drive | f | 0 – 100 % | new | 0 % | | Saturation in the feedback loop |
 | `fb_hpf` | Loop Low Cut | f | 20 – 500 Hz | new | 20 Hz | | |
 | `fb_lpf` | Loop High Cut | f | 1 – 20 kHz | new | 20 kHz | | |
-| `bass_mono` | Bass Mono Below | f | 0 (off) – 300 Hz | new | 0 | | Lows stay dry and mono |
-| `tz_offset` | TZ Offset | f | 0.3 – 2 ms | new | 0.5 ms | | Dry delay in Tape TZ modes = reported latency |
+| `bass_keep` | Bass Keep | f | 0 (off) – 300 Hz | new | 0 | | Lows stay dry and mono |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Jet flanger (Van Halen "Unchained") | Grey, `rate` 0.2 Hz, `feedback` −4 dB, `manual` 0.3 ms, `length` 6 ms | Log LFO lingering at the top; high regen bounded |
+| Electric Mistress shimmer (Andy Summers, Gilmour) | Mistress, `rate` 0.3 Hz, `feedback` −12 dB, `depth` 60 %, wet −6 dB | BBD engine |
+| Huge slow sweep | A/DA, `rate` 0.08 Hz, `feedback` −6 dB | 35:1 exponential sweep |
+| Tape flanging on a whole phrase | Tape TZ−, `rate` 0.1 Hz, wet = dry, `feedback` −60 dB | True through-zero cancellation |
+| Same, live, no latency | Pseudo TZ | |
+| Endless rise before a drop | Barberpole ↑, `rate` 0.15 Hz | Dual-ramp barberpole |
+| Flanging with the foot | Pedal, EXP on `manual` | Manual sweep, exponential law |
+| Touch flange (funk) | `sweep_src` Envelope, `env_sens` 60 %, `env_rel` 300 ms | Envelope source |
+| Metallic resonator / fixed comb | Pedal, `manual` 2 ms, `feedback` −2 dB, `fb_polarity` − | Tuned comb, hollow with negative feedback |
+| Bass | Mistress, `bass_keep` 150 Hz | Lows untouched |
+| Tempo-locked sweep | `sync` 2/1 | Phase from the host's position |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
 | No zipper | slow sweep on a sine: no stepping (the JS defect) |
 | Notch positions | at a fixed delay τ, notches at (2k + 1) / 2τ (+) or k / τ (−) within 1 % |
 | Through-zero | Tape TZ−, mix 50 %, regen off: full cancellation at the zero crossing (≤ −60 dB) |
-| Latency | 0 except Tape TZ = `tz_offset` exactly |
+| Latency | 0 except Tape TZ = 1 ms exactly |
 | LFO continuity | moving any parameter never jumps the LFO phase |
 | Loop | feedback −1 dB with drive: bounded, no runaway |
 | Barberpole | notches move in one direction for 30 s, no audible reset |

@@ -69,9 +69,19 @@ forums are anecdotal.
 
 1. **Whammy (mono)**: delay-line shifter with a WSOLA-style splice search — per-sample ratio for perfect
    EXP sweeps, ~5 – 10 ms.
-2. **Poly**: phase vocoder with phase-gradient integration, aiming at Helix's ~10 ms; a Fast / Stable choice.
+2. **Poly** is the hardest problem in golem-fx, and a plain phase vocoder does not solve it: a 512-point
+   frame at 48 kHz (the ~11 ms the survey hoped for) has 94 Hz bins — a guitar's low E (82 Hz) and the
+   notes of a chord fall into the same bin, and the result warbles. Two candidates, to **prototype in
+   gfx-bench before choosing**:
+   - **Band-split time domain**: 3 – 4 Linkwitz-Riley bands, each with its own splice-search delay-line
+     shifter whose window fits the band (≈ 40 ms below 200 Hz, 20 ms to 800 Hz, 10 ms to 3 kHz, 5 ms
+     above). Each band holds few partials, so splices stay clean on chords; highs (the transients) pass
+     with a short delay, lows lag more — the behaviour of the poly pedals.
+   - **Multi-resolution phase vocoder**: long frames for the lows, short frames for the highs, phase-gradient
+     integration in each.
+   The bench decides on chords (roughness, transient smear) and on latency; a Fast / Stable choice stays.
 3. **Detune**: a tiny-ratio delay-line shifter with a long crossfade: inaudible splices, ~0 latency.
-4. Skipped for v1: formant preservation (voice; 20+ ms), scale-aware harmony, time-stretch, subharmonic
+4. Skipped for v1: formant preservation (voice; 20+ ms), time-stretch, subharmonic
    octave (`octaver`), MIDI whammy (`whammy-dt`), autotune (`pitch-correct`).
 
 ## 2. gfx-pitch (block `pitch`)
@@ -80,14 +90,19 @@ forums are anecdotal.
 |---|---|---|---|---|---|---|---|
 | `shift` | Shift | f | −24 – +24 st | −12 – +12 | +12 st | ✓ | Smoothed in semitones (≈ 10 ms one-pole + slew limit), converted per sample |
 | `mix` | Mix | f | 0 – 100 % | same | 50 % | ✓ | Equal-power dry / wet; the dry is delayed by the reported latency so the mix stays coherent |
-| `engine` | Engine | e | Whammy · Poly | new | Whammy | | Whammy: mono, splice search, ~5 – 10 ms. Poly: chords, ~10 – 25 ms |
-| `tracking` | Tracking | e | Fast · Stable | new | Fast | | Poly frame size: Fast ≈ 11 – 15 ms, Stable ≈ 21 – 27 ms (smoother on sustained chords) |
+| `engine` | Engine | e | Whammy · Poly | new | Whammy | | Whammy: single notes, pitch-synchronous splices, ~5 – 10 ms. Poly: chords, reported latency = its highest band's delay (~10 ms target); lower bands lag more, unreported, as in the poly pedals |
+| `tracking` | Tracking | e | Fast · Stable | new | Fast | | Poly windows: Fast = shorter (tighter, a little rougher on sustained chords); Stable = longer |
 | `glide` | Glide | f | 0 – 1,000 ms | new | 0 ms | | Time for `shift` to reach a new value (heel-to-toe dives) |
 | `shift2` | Shift 2 | f | −24 – +24 st | new | 0 st (off) | ✓ | Second voice, for harmonies / octaves |
 | `voice2` | Voice 2 Level | f | −60 – 0 dB | new | −60 dB (off) | | |
+| `fine` | Fine | f | −50 – +50 cents | new | 0 | | Fine tuning of voice 1 (detuned doubles, tuning to a recording) |
+| `harmony` | Harmony | e | Off · Scale | new | Off | | **Phase 2.** Scale = `shift` and `shift2` are read as scale degrees: each played note (detected in the Whammy engine) gets the interval that stays in `key` / `scale` |
+| `key` | Key | e | C … B | new | C | | Phase 2; golem knows the song's key and can set it per song |
+| `scale` | Scale | e | Major · Minor · Harmonic Minor · Dorian · Mixolydian · Pentatonic | new | Major | | Phase 2 |
 
 Latency: reported per engine and tracking mode, set at initialisation or when they change; never when
-`shift` moves.
+`shift` moves. The Whammy engine exposes its detected pitch internally (bounded-cost detector): intelligent
+harmony (phase 2) and a tuner-grade readout build on it.
 
 ## 3. gfx-pitch-classic (block `pitch-shift-js`)
 
@@ -116,7 +131,22 @@ Reported latency 0 with `search` off, as the JS (the average delay ≈ window / 
 
 Two tiny-ratio delay-line shifters with a ~50 ms window and long crossfades; reported latency 0.
 
-## 5. Real-time and bench
+## 5. Applications
+
+| Use | Plugin · settings | Feature that matters |
+|---|---|---|
+| Whammy dive / octave-up squeal | gfx-pitch, Whammy, `mix` 100 %, EXP on `shift` 0 → +12 (or 0 → −12, −24) | Per-sample ratio, smoothed in semitones: no steps, no splice clicks |
+| Drop tuning without retuning (virtual capo) | gfx-pitch, Poly, `shift` −1 … −5 st, `mix` 100 % | Polyphonic quality on chords; ~10 ms |
+| 12-string | gfx-pitch, Poly, `shift` +12, `mix` 35 %, `fine` +5 cents | Octave double with a slight detune |
+| Octave-down thickening for riffs | gfx-pitch, Whammy, `shift` −12, `mix` 40 % | (For a synth-like sub, use gfx-octaver) |
+| Fixed harmony (thirds, fifths) | gfx-pitch, Whammy, `shift` +4 or +7, `mix` 45 % | |
+| In-key twin leads (Thin Lizzy, Maiden) | gfx-pitch, `harmony` Scale, `shift` = third above — phase 2 | Detected pitch + song key |
+| Two-voice harmony | `shift` +4, `shift2` +7, `voice2` −3 dB | |
+| Stereo widening, no wobble | gfx-detune, `detune` 0.35, `voices` 2, `wet` = `dry` | ± cents, zero latency |
+| Vocal / guitar doubling | gfx-detune, `delay` 18 ms, `detune` 0.25 | |
+| Old "superpitch" presets | gfx-pitch-classic | Window / overlap as before; `search` on removes the warble |
+
+## 6. Real-time and bench
 
 - Every buffer and FFT plan is allocated in `initialize()` (100 ms at 192 kHz); `reset()` only zeroes.
   Nothing allocates or blocks on enable — the reason ReaPitch was quarantined.
@@ -127,7 +157,7 @@ Two tiny-ratio delay-line shifters with a ~50 ms window and long crossfades; rep
 | Enable | `check-block-stall` green on both engines (the ReaPitch failure) |
 | Latency | reported = measured, for every engine and tracking mode |
 | Whammy sweep | `shift` 0 → +12 st in 300 ms on a held note: continuous pitch, no splice click |
-| Poly | an open E chord at +5 st: no beating beyond a bound, transients kept |
+| Poly | an open E chord and a low-E power chord at −2, +5, +12 st: roughness and transient smear measured for both candidate engines; the better one ships |
 | Pitch accuracy | ± 1 cent on a sine at every integer shift |
 | Detune | splices inaudible: HF burst bound on a held note |
 | Listening | lead-clean.wav, clean.wav (chords), lead.wav; against REAPER's superpitch and GxDetune |

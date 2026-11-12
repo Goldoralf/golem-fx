@@ -7,6 +7,10 @@ These are new sounds, not clones. They are added to golem's catalogue first and 
 blocks later, keeping the catalogue's parameter ids so presets keep their settings. The rules are in
 [docs/golem-contract.md](docs/golem-contract.md).
 
+All designs were reviewed on 2026-11-12: [docs/design-review.md](docs/design-review.md) (verdict per effect,
+corrections, open points, implementation order). Every design ends with an Applications table: what each
+feature is for.
+
 Shared code: [gfx-dsp](gfx-dsp/), the DSP library every effect is built on (delay lines, LFOs, filters,
 dynamics, saturation, BBD model…), and `gfx-bench`, the offline render and measurement tool.
 
@@ -41,4 +45,4 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
-gfx-chorus's.
+gfx-chorus's. The roadmap numbers are the order of design; the order of implementation is in the review.

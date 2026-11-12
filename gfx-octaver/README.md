@@ -52,7 +52,7 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference.
 | `mode` | Algorithm | Reported latency |
 |---|---|---|
 | **Vintage** (default) | Smoothing low-pass → adaptive Schmitt trigger (peak follower) → ÷2; ÷4 clocked from the −1 oct voice's zero crossings; the filtered signal's polarity switched; dry aligned by two allpasses | 0 |
-| **Clean** | Same trigger; sub = sign(flip-flop) · env · √((1 + x / env) / 2) | 0 |
+| **Clean** | Same trigger. The half-angle identity needs a near-sinusoid: `x` is the input through a **tracking low-pass** that follows the divider's own period (cut-off ≈ 1.5 × the detected fundamental, slewed), normalised by its envelope; sub = sign(flip-flop) · env · √((1 + x / env) / 2), clamped. On a note change the filter and the flip-flop re-settle within a period | 0 |
 | **Synth** | Oscillator phase-locked to the divider edges, sine ↔ square (`shape`), envelope follower, `glide`; a YIN confidence gate mutes on uncertain input | 0 |
 | **Poly** | ERB IIR filterbank (24 – 32 complex bands); up = z² / \|z\| per band; down = per-band square root with branch tracking below `range` | 0 (the low bands' group delay is inherent, as in analog pedals); vocoder fallback: one frame, reported, dry delayed to match |
 
@@ -79,7 +79,21 @@ Catalogue ids kept.
 | `shape` | Shape | f | 0 – 100 % | new | 0 % | | Synth: sine → square |
 | `range` | Range | f | 40 – 1,000 Hz | new | 1,000 Hz | | Poly: only notes below this get octaved |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| OC-2 synth-bass line on guitar | Vintage, direct 0.4, octave1 1, octave2 0.6 (golem's Sub synth), neck pickup, single notes | The OC-2's glitchy-warm character |
+| Fatter single-note riffs (Jack White, QOTSA) | Vintage, direct 1, octave1 0.7 | Instant, zero latency |
+| Bass: solid sub under the note | Clean, Bass, direct 1, octave1 0.5, `sub_tone` 250 Hz | Near-sine sub that follows the playing dynamics, no tracking glitches on decays |
+| Organ stack | Vintage, direct 0.8, octave1 0.8, octave2 0.5, `octave_up` 0.3 | |
+| Synth bass with glide | Synth, `shape` 70 %, `glide` 40 ms, octave1 1, direct 0 | Oscillator locked to the divider |
+| Octavia lead (Hendrix "Purple Haze") | Vintage, `octave_up` 1, direct 0.5, before a fuzz, neck pickup above the 12th fret | Rectifier octave-up |
+| Chords with a sub on the bass note only | Poly, octave1 0.6, `range` 150 Hz | Range (OC-5 "Lowest") |
+| 12-string / organ shimmer on chords | Poly, `octave_up` 0.5 | Per-band octave up |
+| Fewer false triggers on a noisy rig | `sensitivity` 30 % | Gate relative to the envelope |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

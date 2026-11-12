@@ -84,13 +84,25 @@ in ─┬───────────────────────�
 
 ### Characters
 
-| `character` | Topology | Detector | Knee default | Release | Colour | For |
-|---|---|---|---|---|---|---|
-| **Clean** | FF | peak + RMS (crest), Kotelnikov-style | 6 dB | dual path: fast after transients, slow after sustained reduction | none, bit-transparent | default; voice, keys, clean guitar |
-| **Bus** | FF | RMS-ish (SSL-like) | 2 dB | single, slightly program-dependent | light | glue on a mix, keys, after amp |
-| **FET** | FB | peak, sub-ms capable | 0 dB | program-dependent | odd harmonics | lead guitar, bass punch, aggressive voice |
-| **Opto** | FB | smoothed RMS | 12 dB | two-stage LA-2A: fast half, then slow tail charged by how long and hard it worked | warm, even | voice, bass, clean guitar sustain |
-| **Pedal** | FB | peak, fast fixed rise | 0 dB | slow, with the makeup in the loop (OTA) | OTA grit, a little hiss | country / funk squash (Dyna Comp, Ross) |
+| `character` | Topology | Detector | Release behaviour (with `auto_release`) | Colour | For |
+|---|---|---|---|---|---|
+| **Clean** | FF | peak + RMS (crest), Kotelnikov-style | dual path: fast after transients, slow after sustained reduction | none, bit-transparent | default; voice, keys, clean guitar |
+| **Bus** | FF | RMS-ish (SSL-like) | single, slightly program-dependent | light | glue on a mix, keys, after amp |
+| **FET** | FB | peak, sub-ms capable | program-dependent, faster on short peaks | odd harmonics | lead guitar, bass punch, aggressive voice |
+| **Opto** | FB | smoothed RMS | two-stage LA-2A: fast half, then a slow tail charged by how long and hard it worked | warm, even | voice, bass, clean guitar sustain |
+| **Pedal** | FB | peak, fast fixed rise | slow, with the makeup in the loop (OTA) | OTA grit, a little hiss | country / funk squash (Dyna Comp, Ross) |
+
+`knee` is an absolute width, the same in every character (it is part of the static curve). A character
+changes the **dynamics** and the **colour** only.
+
+**Time controls.** `attack` and `release` are real time constants (63 % of a step) in Clean and Bus. FET,
+Opto and Pedal start from the same values, then their program dependence moves them: FET shortens both
+on short peaks; Opto lengthens the release after long, hard reduction (up to several seconds); Pedal's
+attack is capped at 5 ms by its circuit. The knob is the centre, the character is the motion.
+
+**Feedback characters and the knee.** With a soft knee the feedback equation has no closed form: the
+gain computer is solved per sample by one Newton step from the previous gain (or a precomputed table),
+so the static curve stays exact.
 
 ## 3. Parameters
 
@@ -104,18 +116,16 @@ Catalogue ids and units kept; ranges wider. Defaults = the catalogue's.
 | `attack` | Attack | f | 0.02 – 200 ms | 1 – 50 | 15 ms | log | | |
 | `release` | Release | f | 5 – 3,000 ms | 40 – 400 | 150 ms | log | | With `auto_release`: the fast stage, the slow one follows |
 | `character` | Character | e | Clean · Bus · FET · Opto · Pedal | new | Clean | — | | §2 |
-| `knee` | Knee | f | 0 – 24 dB | new | per character | lin | | Quadratic soft knee in dB |
+| `knee` | Knee | f | 0 – 24 dB | new | 3 dB | lin | | Quadratic soft knee in dB, the same in every character |
 | `auto_release` | Auto Release | b | off / on | new | on | — | | Program-dependent release of the character |
 | `sc_hpf` | Sidechain Low Cut | f | 0 – 500 Hz | new | 0 (off) | log | | 12 dB/oct on the detection only |
 | `range` | Range | f | 0 – 60 dB | new | 60 dB | lin | | Maximum gain reduction |
 | `drive` | Drive | f | 0 – 100 % | new | 0 % | lin | | Extra colour of the character |
-| `mix` | Mix | f | 0 – 100 % | new | 100 % | lin | ✓ | Parallel compression, phase-coherent (zero latency) |
+| `mix` | Mix | f | 0 – 100 % | new | 100 % | lin | ✓ | Parallel compression; the dry runs through the same oversampling path when it is active, so the blend never combs |
+| `link` | Stereo Link | f | 0 – 100 % | new | 100 % | lin | | Stereo layout: 100 = one gain for both channels |
+| `sc_listen` | Sidechain Listen | b | off / on | new | off | — | | Hear the detector's signal (after `sc_hpf`) |
 
 Read-only (meter, [golem contract](../docs/golem-contract.md)): `gr`, gain reduction in dB.
-
-`knee` has a default per character, but a parameter cannot change another one (contract): its stored
-default is 6 dB and the character only shifts it when `knee` is left at its default. **To decide:** or
-`knee` becomes "Knee Offset" (± dB around the character's knee). The bench comparison will tell.
 
 Not taken, and why:
 
@@ -124,12 +134,27 @@ Not taken, and why:
 - **Auto makeup**: golem's presets set `makeup` by ear; an automatic one would move every preset's level.
   A loudness-matched A/B lives in gfx-bench instead.
 
-## 4. Bench suite (on top of gfx-bench's common checks)
+## 4. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Clean guitar, even level | Clean, thresh −18 dB, ratio 4, attack 15 ms, release 150 ms, knee 6 dB | Dual-path release: no pumping between strums |
+| Funk / country squash | Pedal, thresh −28 dB, ratio 8, attack 3 ms, release 80 ms, `mix` 100 % | OTA character, pick attack through the 3 ms attack |
+| Squash that keeps the pick | same, `mix` 60 % | Parallel: attack from the dry, sustain from the wet |
+| Lead sustain before the amp | Opto or FET, thresh −24 dB, ratio 4, attack 10 ms, `auto_release` on | Program-dependent release: long notes bloom, fast runs stay clear |
+| Glue after amp and cab | Bus, thresh −14 dB, ratio 2.5, attack 30 ms, release 250 ms, knee 6 dB | Slow attack keeps transients |
+| Bass, anchored | FET or Clean, thresh −22 dB, ratio 6, attack 35 ms, release 200 ms, `sc_hpf` 120 Hz | Sidechain low cut: the low E does not pump the highs |
+| Drop-tuned rhythm | Clean, ratio 3, `sc_hpf` 150 Hz | Same |
+| Voice, levelled | Opto, thresh −20 dB, ratio 3, attack 25 ms, release 300 ms | Two-stage release |
+| Gentle levelling without squashing | Clean, ratio 2, `range` 6 dB | Range caps the reduction |
+| Limiting peaks before the amp | FET, ratio 20+, attack 0.1 ms, release 60 ms | Sub-ms attack; alias-free through the 2× stage |
+
+## 5. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Signal | Pass |
 |---|---|---|
 | Static curve | slow level ramp, every character | output vs input matches thresh / ratio / knee ± 0.1 dB, the same in every character |
-| Transparency | signal below threshold − knee / 2, drive 0, mix 100 % | bit-identical to the input |
+| Transparency | signal below threshold − knee / 2, drive 0, makeup 0 dB, Clean | bit-identical to the input |
 | Attack / release | level steps, +20 dB and −20 dB | time constants within 5 % of the setting (Clean, Bus) |
 | Auto release | short burst vs long sustained reduction | release after the burst ≪ release after the sustain |
 | Aliasing | 5 kHz sine bursts, FET and Pedal, attack 0.02 ms | aliased components ≤ −90 dBFS |

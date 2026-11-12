@@ -90,9 +90,24 @@ Catalogue ids kept; `model` options appended after the catalogue's seven.
 | `auto_engage` | Auto Engage | b | off / on | new | off | | |
 | `engage_pos` | Engage Position | f | 0 – 20 % | new | 3 % | | With hysteresis |
 | `engage_wait` | Engage Wait | f | 0 – 1,000 ms | new | 300 ms | | |
-| `env_sens`, `env_att`, `env_rel` | Envelope | f | as gfx-autowah | new | | | Auto mode |
+| `env_sens`, `env_att`, `env_rel` | Envelope | f | contract's shared ids | new | 50 %, 5 ms, 150 ms | | Auto mode |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Classic wah solo (Hendrix, Clapton) | GCB-95 or Vox V847 or Clyde, EXP on `wah`, `drive` 30 % | Per-model taper; EXP smoothing without staircase |
+| Funk rhythm "wacka" | Classic, `q` 150 % | |
+| Wah into high gain (Hammett) | GCB-95, `q` 80 %, `volume` +3 dB, before the amp | Boost; clipping at the resonance |
+| Parked wah (Schenker, Knopfler) | `wah` fixed at 0.4 – 0.6, `mode` manual | A fixed resonant mid voice |
+| Step on it, it engages | `auto_engage` on, `engage_pos` 3 %, `engage_wait` 300 ms | Switchless (Morley) |
+| Smaller foot travel | `heel` 10 %, `toe` 85 % | |
+| Bass wah | Bass 105Q, `mix` 70 % | Lows kept by the mix |
+| Auto-wah without a pedal | `mode` auto, `env_sens` 60 % | Envelope drives the same models |
+| Rhythmic "alien" sweep | `mode` alien, `freq` 120 BPM | |
+| Vintage colours | Colorsound, Maestro, Foxx, Jen, Selmer, Dallas | 7 circuit-derived voicings |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

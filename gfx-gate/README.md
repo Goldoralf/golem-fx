@@ -51,7 +51,9 @@ Survey of 2026-11-12. **[V]** read in the source; **[I]** inference or not re-ch
    the noise.
 5. **Hum notch in the detector**: costs nothing, lets the threshold go lower.
 6. Not worth it: zero-crossing switching (variable delay of up to 12 ms on low notes), RMS-only opening
-   (too slow for chugs), spectral release (niche), lookahead (latency).
+   (too slow for chugs), lookahead (latency).
+7. **Tail damp** (HUSH / Decimator rack units, Gatelope): close the highs before the level, so hiss
+   disappears under a decaying note instead of being chopped with it.
 
 ## 2. Our design
 
@@ -68,17 +70,28 @@ main in ───────────┴▶ source ▶ hum notch ▶ HPF / L
 
 ### Behaviour
 
-- **Detection.** Two followers on the filtered sidechain: a **peak** follower (instant rise, ~5 ms fall)
-  decides opening; a slower **envelope** (~10 ms RMS) decides closing. Opening is as fast as the pick,
-  closing does not chatter on low notes.
+- **Detection.** Two detectors on the filtered sidechain:
+  - **open**: the instantaneous peak |x| — as fast as the pick;
+  - **close**: a **sliding maximum** of |x| over one period of the lowest content, then a short smoother.
+    Window = clamp(1.2 / max(`hpf`, 30 Hz), 8 ms, 40 ms): 40 ms full range (a low B at 31 Hz), 10 ms with
+    `hpf` at 120 Hz (golem's Chug-tight). A fixed 5 – 10 ms follower would ripple between the peaks of a
+    low note (a low E's peaks are 6 ms apart, a bass B's 16 ms) and chatter at the threshold; a
+    one-period maximum is ripple-free by construction, and its only cost — closing up to one window late —
+    is what Hold would add anyway. This is why raising `hpf` makes the gate **tighter**, not just less
+    sensitive to rumble.
 - **Curve.** Above `thresh`: unity. Below: downward expansion with `ratio` (∞ = gate) and a soft `knee`,
   floored at `range`. The close threshold is `thresh + hyst` (golem's convention, `hyst` ≤ 0).
 - **States.** CLOSED → ATTACK (peak > `thresh`) → OPEN → HOLD (envelope < `thresh + hyst`) → RELEASE → CLOSED.
   A new crossing during HOLD or RELEASE resumes from the current gain; nothing ever jumps.
 - **Attack**: S-curve (raised cosine), minimum 50 µs. **Release**: linear in dB.
-- **Follow decay** (`follow` on): while the input's own envelope is falling faster than the release
-  would, the gate follows the note instead of cutting it; `release` becomes the time once the note
-  reaches the noise. Decimator / Pro-G "Guitar" behaviour.
+- **Follow decay** (`follow` on): the release time adapts to how the note ended. The slope of the close
+  detector (dB / s over the last 50 ms) is read when the gate starts closing: an abrupt stop (a palm mute,
+  steeper than −300 dB / s) releases in `release` × 0.25; a natural decay (−20 dB / s or slower) in
+  `release` × 4; log-interpolated between. Staccato is cut tight and a ringing chord fades out, with one
+  setting. (Distinct from the expander: `ratio` shapes *how much*, `follow` shapes *how fast*.)
+- **Tail damp** (`damp`): while closing, the first part of the gain reduction is taken from the highs: a
+  one-pole low-pass slides from 20 kHz down to 1.5 kHz over the first `damp` × 12 dB of reduction, the
+  broadband gain doing the rest. Hiss fades under the note before the note itself is touched.
 - **Hum notch**: 50 or 60 Hz and its first three harmonics, notched in the detector only.
 - **Key**: VST3 auxiliary input, on its **own bus**: the main layout stays 1 / 1 (otherwise the Golem
   Engine reads a mono + key plugin as stereo). With `source` = Key and nothing connected, the gate falls
@@ -107,7 +120,8 @@ Catalogue ids and units kept; ranges a little wider. Defaults = the catalogue's.
 | `range` | Range | f | −90 – 0 dB | new | −90 dB (silent) | lin | 20 ms | Level when closed |
 | `ratio` | Ratio | f | 1 – 100 :1 (100 = ∞) | new | 100 (gate) | log | 20 ms | Expansion below the threshold; 2 – 4 = expander |
 | `knee` | Knee | f | 0 – 24 dB | new | 0 dB | lin | 20 ms | Soft knee below the threshold |
-| `follow` | Follow Decay | b | off / on | new | off | — | — | Release follows the note's own decay |
+| `follow` | Follow Decay | b | off / on | new | off | — | — | Release adapts to how the note ended (0.25× – 4×) |
+| `damp` | Tail Damp | f | 0 – 100 % | new | 0 % | lin | 20 ms | Highs close before the level (hiss under decaying notes) |
 | `hum` | Hum Filter | e | Off · 50 Hz · 60 Hz | new | Off | — | — | Notches mains hum out of detection |
 | `source` | Detector Source | e | Main · Key | new | Main | — | — | Key = the auxiliary input |
 | `listen` | Listen | b | off / on | new | off | — | — | Outputs the filtered sidechain, for setting `hpf` / `lpf` / `hum` |
@@ -123,7 +137,22 @@ engines; a "learn threshold" UI action (mute the strings, measure the noise peak
 **To check on the bench (contract):** `thresh`, `hyst` and `range` have negative minimums; check that
 REAPER and Ardour write them exactly (plain ↔ normalized, both ways).
 
-## 4. Bench suite (on top of gfx-bench's common checks)
+## 4. Applications
+
+What each feature is for. The bench renders one file per row.
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Metal rhythm, gate before the amp | thresh −38 dB, attack 0.5 ms, hold 8 ms, release 60 ms, `hpf` 120 Hz, hyst −6 dB (golem's Chug-tight), `follow` on | One-period close detector + `hpf` = tight stops; follow keeps held chords |
+| Metal, gate **after** the amp keyed from the DI | `source` Key, thresh −45 dB, release 40 ms, `range` −90 dB | Key input: the amp's hiss is gated on the clean guitar's timing; the threshold does not move with the gain |
+| High-gain lead, long sustain | ratio 3:1, knee 12 dB, release 300 ms, `follow` on, `damp` 60 % | Expander + tail damp: the note's end is never chopped, hiss fades first |
+| Single coils, mains hum | `hum` 50 or 60 Hz, thresh 6 dB lower than without | Hum notch in the detector |
+| Clean / funk, natural | ratio 2:1, `range` −20 dB, attack 3 ms, release 250 ms | Expander and range: never fully closed |
+| Bass | thresh −55 dB, attack 5 ms, hold 50 ms, release 250 ms, `hpf` 30 Hz, `lpf` 8 kHz | 40 ms close window: no chatter on a low B |
+| Voice, live mic | thresh −48 dB, hold 100 ms, release 300 ms, `hpf` 100 Hz, `lpf` 12 kHz, `range` −15 dB | Range: bleed reduced, not removed (no pumping ambience) |
+| Setting the detector by ear | `listen` on | Hear what opens the gate |
+
+## 5. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Signal | Pass |
 |---|---|---|
@@ -131,6 +160,8 @@ REAPER and Ardour write them exactly (plain ↔ normalized, both ways).
 | Hold + Release time | sine step, above → silence | starts closing after Hold; reaches `range` after Release ± 1 sample |
 | Hysteresis | slow level ramp up then down | opens at `thresh`, closes at `thresh + hyst` (± 0.1 dB) |
 | No chatter | decaying low E (82 Hz) and low B (31 Hz), hold 0, hyst 0 | a single open → close sequence |
+| Close delay | sine burst ending abruptly, `hpf` 0 and 120 Hz | closing starts ≤ one detector window after the last peak (40 ms / 10 ms) |
+| Tail damp | hiss at −50 dBFS under a decaying note, `damp` 100 % | hiss above 4 kHz falls ≥ 10 dB before the note's level falls 3 dB |
 | Clicks | sine bursts at Attack 0 and Release 5 ms | no energy above 10 kHz beyond the sine's own spectrum + a bound |
 | Expander curve | slow ramp, ratio 2 and 4, knee 0 and 12 | static curve ± 0.1 dB |
 | Follow decay | clean.wav held last chord | the decay is not cut before it reaches the noise |

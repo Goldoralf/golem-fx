@@ -78,9 +78,9 @@ Catalogue ids kept; new ones appended; no negative minimum.
 | `sens` | Sensitivity | f | 0 – 100 % | same | 50 % | | Pick detector |
 | `smooth` | Smooth | f | 0 – 20 ms | same | 1 ms | | Edge crossfade, clamped to the segment; 0 = hard cut |
 | `shape` | Shape | e | Gate · Sine · Triangle · Ramp Up · Ramp Down | new | Gate | | |
-| `pattern` | Pattern | f (int) | 1 – 65,535 | new | 65,535 (all steps) | | 16-step bitmask, bit 0 = step 1 |
-| `steps` | Steps | f (int) | 1 – 16 | new | 16 | | Pattern length |
-| `accent` | Accents | f (int) | 0 – 65,535 | new | 0 | | Accent bitmask |
+| `pattern` | Pattern | int | 1 – 65,535 | new | 65,535 (all steps) | | 16-step bitmask, bit 0 = step 1 |
+| `steps` | Steps | int | 1 – 16 | new | 16 | | Pattern length |
+| `accent` | Accents | int | 0 – 65,535 | new | 0 | | Accent bitmask |
 | `swing` | Swing | f | 0 – 75 % | new | 0 % | | |
 | `offset` | Offset | f | 0 – 100 % | new | 0 % | | Grid shift, in fractions of a step |
 | `kill` | Kill | b | off / on | new | off | | Momentary: hold to mute (with the edge crossfade) |
@@ -89,10 +89,27 @@ Catalogue ids kept; new ones appended; no negative minimum.
 
 Read-only (diagnostics, replacing the JSFX's witness sliders): `steps_count`, `picks_count`.
 
-**To agree with golem**: `pattern` and `accent` as integers carried by float parameters (exact up to
-65,535); whether golem's UI edits a step grid.
+`pattern`, `steps` and `accent` are nih-plug `IntParam`s (65,535 is exact in a VST3's 64-bit normalised
+value). **To agree with golem**: whether golem's UI edits a step grid; until then the patterns below ship
+as block presets.
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Kill switch by foot (Morello, Buckethead) | `kill` on a momentary footswitch, `smooth` 0 – 1 ms | Momentary mute, hard or de-clicked |
+| Stutter locked to the song | `trigger` Beat, `sync` 1/16, `length` 50 %, `depth` 100 % | Phase from the host's position: step 1 on the downbeat |
+| Stutter that restarts with each chord | `trigger` Pick, `sync` 1/16, `sens` 50 % | Zero-latency pick detector |
+| Helicopter | `trigger` Engage, `sync` Free, `rate` 12 Hz, `length` 40 % | |
+| Trance gate | `trigger` Beat, `sync` 1/16, `pattern` e.g. x.xx.x.x x.xx.xx. (as bits), `smooth` 3 ms | Step pattern |
+| Accented groove | pattern all on, `accent` on steps 1, 5, 9, 13, `depth` 70 % | Accents: unaccented steps cut less |
+| Swung slicer | `sync` 1/8, `swing` 30 % | |
+| Synced tremolo | `shape` Sine or Triangle, `sync` 1/8, `depth` 60 % | (For amp tremolos, gfx-tremolo) |
+| Reverse-like swells | `shape` Ramp Up, `sync` 1/4 | |
+| Auto-pan stutter | `width` 100 % | Stereo layout |
+| Speed on the pedal | EXP on `rate` (Free) or on `length` | |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|

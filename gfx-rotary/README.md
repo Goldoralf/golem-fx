@@ -90,18 +90,32 @@ Catalogue ids kept.
 | `stop_angle` | Stop Angle | f | 0 – 360° | new | 0° | | Where the horn parks |
 | `counter` | Counter-rotate | b | off / on | new | on | | Horn and drum in opposite directions |
 | `wobble` | Wobble | f | 0 – 100 % | new | 30 % | | Speed drift and flutter |
-| `sub_mono` | Sub Mono | f | 0 (off) – 200 Hz | new | 150 Hz | | Unmodulated mono sub-bass |
+| `bass_keep` | Bass Keep | f | 0 (off) – 200 Hz | new | 150 Hz | | Unmodulated mono sub-bass |
 | `level` | Level | f | −24 – +12 dB | new | 0 dB | | Check plain ↔ normalized on REAPER (negative minimum) |
 | `mix` | Mix | f | 0 – 100 % | new | 100 % | ✓ | Parallel use on guitar |
 
-## 5. Bench suite (on top of gfx-bench's common checks)
+## 5. Applications
+
+| Use | Settings to start from | Feature that matters |
+|---|---|---|
+| Slow chorale ↔ fast tremolo by foot | 122, `speed` on a footswitch, `ramp` 100 % | Horn and drum on their own inertia: the transition is the effect |
+| Guitar Leslie (Harrison, SRV "Cold Shot", Soundgarden) | Vibratone, `speed` Fast, `drive` 30 %, `mix` 100 % | Drum-only cabinet |
+| Organ-style growl on keys | 147, `drive` 60 %, `mic` 40 % | Tube stage before the crossover |
+| Brake to a fixed tone | `speed` Stop, `brake` 50 %, `stop_angle` 0° (horn at the mic) or 180° | Coasting brake + stop angle |
+| Wide, lush clean chords | 122, Slow, `spacing` 80 %, `mic` 80 % | Mic distance and spacing |
+| Subtle thickening under the dry | Slow, `mix` 40 %, `depth` 40 % | |
+| Quicker / lazier transitions | `ramp` 50 % or 200 % | |
+| Open-back, airy | 122 Rear | |
+| Mono PA | `spacing` 0 % | Exactly mono, no hollow sum |
+
+## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
 | Speeds | settled horn / drum rates within 1 % of the setting (from the AM period) |
 | Inertia | slow → fast: horn reaches 63 % in `horn_accel` ± 5 %, drum in `drum_accel` ± 5 % |
 | Brake | stop: coasts with the decelerate constant, parks at `stop_angle` |
-| Mono | `spacing` 0: L = R; sub-bass below `sub_mono` unmodulated |
+| Mono | `spacing` 0: L = R; sub-bass below `bass_keep` unmodulated |
 | Determinism | strict null between two renders and between hosts |
 | No jumps | `depth` / `spacing` swept: no click |
 | CPU | < 1 % of one core at 48 kHz |
