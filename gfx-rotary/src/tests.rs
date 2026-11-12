@@ -75,3 +75,25 @@ fn sub_bass_is_unmodulated() {
     let (lo, hi) = peaks.iter().fold((f32::MAX, 0.0f32), |(a, b), v| (a.min(*v), b.max(*v)));
     assert!(20.0 * (hi / lo).log10() < 1.5, "40 Hz swings {:.2} dB", 20.0 * (hi / lo).log10());
 }
+
+#[test]
+#[ignore]
+fn profile() {
+    use std::time::Instant;
+    for (name, s) in [
+        ("default", Settings::default()),
+        ("drive 0", Settings::default().with(p::DRIVE, 0.0)),
+        ("vibratone (no horn)", Settings::default().with(p::CABINET, 3.0)),
+        ("bass_keep off", Settings::default().with(p::BASS_KEEP, 0.0)),
+    ] {
+        let mut r = rot(s);
+        let n = 48000 * 5;
+        let mut l: Vec<f32> = (0..n).map(|i| 0.2 * (std::f32::consts::TAU * 220.0 * i as f32 / SR).sin()).collect();
+        let mut rr = l.clone();
+        let t = Instant::now();
+        for (a, b) in l.chunks_mut(128).zip(rr.chunks_mut(128)) {
+            r.process(&mut [a, b]);
+        }
+        eprintln!("{name:22} {:6.1} ns", t.elapsed().as_secs_f64() * 1e9 / n as f64);
+    }
+}

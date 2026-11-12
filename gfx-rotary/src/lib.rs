@@ -153,17 +153,59 @@ fn idx(v: f32, n: usize) -> usize {
 pub struct Rotor {
     pub hz: f64,
     pub angle: f64,
+    tau: f64,
+    k: f64,
 }
 
 impl Rotor {
     #[inline]
     fn step(&mut self, target: f64, tau_up: f64, tau_down: f64, dir: f64, sr: f64) {
         let tau = if target > self.hz { tau_up } else { tau_down };
-        let k = if tau <= 1e-4 { 0.0 } else { (-1.0 / (tau * sr)).exp() };
+        // the coefficient only changes with the time constant: an exp per change, not per sample
+        if tau != self.tau {
+            self.tau = tau;
+            self.k = if tau <= 1e-4 { 0.0 } else { (-1.0 / (tau * sr)).exp() };
+        }
+        let k = self.k;
         self.hz = target + (self.hz - target) * k;
         self.angle = (self.angle + dir * self.hz / sr).rem_euclid(1.0);
     }
 }
+
+/// A path's delay, gain and shading coefficient, interpolated linearly across a 4-sample segment (the
+/// geometry moves at most ~7 turns per second: computing it every sample was most of the cost).
+#[derive(Clone, Copy, Default)]
+struct PathLerp {
+    d: f64,
+    dd: f64,
+    g: f32,
+    dg: f32,
+    k: f32,
+    dk: f32,
+}
+
+impl PathLerp {
+    /// Aims at the end values over `seg` samples (or jumps there on the first segment).
+    #[inline]
+    fn aim(&mut self, d: f64, g: f32, k: f32, seg: f64, jump: bool) {
+        if jump {
+            *self = PathLerp { d, g, k, ..Default::default() };
+        } else {
+            self.dd = (d - self.d) / seg;
+            self.dg = (g - self.g) / seg as f32;
+            self.dk = (k - self.k) / seg as f32;
+        }
+    }
+
+    #[inline]
+    fn advance(&mut self) {
+        self.d += self.dd;
+        self.g += self.dg;
+        self.k += self.dk;
+    }
+}
+
+const SEG: u32 = 4;
 
 /// One path: shading filter (one-pole low-pass whose cut-off follows the angle).
 #[derive(Clone, Copy, Default)]
@@ -220,6 +262,10 @@ pub struct Rotary {
     horn_trig: [[(f64, f64); 4]; 2],
     drum_trig: [(f64, f64); 3],
     ctrl: u32,
+    horn_p: [[PathLerp; 4]; 2],
+    drum_p: [PathLerp; 3],
+    seg: u32,
+    paths_init: bool,
 }
 
 impl Rotary {
@@ -265,6 +311,10 @@ impl Rotary {
             horn_trig: [[(0.0, 1.0); 4]; 2],
             drum_trig: [(0.0, 1.0); 3],
             ctrl: 0,
+            horn_p: Default::default(),
+            drum_p: Default::default(),
+            seg: 0,
+            paths_init: false,
         }
     }
 
@@ -394,8 +444,13 @@ impl Rotary {
             let x = if nch > 1 { 0.5 * (buffers[0][i] + buffers[1][i]) } else { buffers[0][i] };
             let drive = self.drive.next() * 0.01 * voi.drive_gain;
             let kd = 1.0 + 6.0 * drive;
-            let sat = self.adaa.process(Shaper::Asym(0.15), x * kd) / kd;
-            let xt = x + (sat - x) * (5.0 * drive).min(1.0);
+            // the tube stage only runs while it is heard (at 0 its weight is 0: exactly clean)
+            let xt = if drive > 0.0 {
+                let sat = self.adaa.process(Shaper::Asym(0.15), x * kd) / kd;
+                x + (sat - x) * (5.0 * drive).min(1.0)
+            } else {
+                x
+            };
             let s0 = self.sub[0].process(xt);
             let sub = self.sub[1].process(s0) * self.sub_amt.next();
             let rest = xt - sub;
@@ -430,49 +485,65 @@ impl Rotary {
                 }
             }
             self.ctrl = (self.ctrl + 1) % 32;
-            let mut horn_out = [0.0f32; 2];
-            if voi.has_horn {
-                let r = voi.horn_r * geo;
-                let base = dist - r;
-                let (sh, ch) = (TAU * self.horn.angle).sin_cos();
-                for m in 0..2 {
-                    let mut acc = 0.0f32;
-                    for k in 0..4 {
-                        let (extra, gain) = if k == 0 { (0.0, voi.direct) } else { (HORN_REFL[k - 1].0, HORN_REFL[k - 1].1 * refl_g) };
-                        // cos(2π(angle + aoff − mang)) by angle addition: one sin_cos per rotor per sample
-                        let (sp, cp) = self.horn_trig[m][k];
-                        let cosv = ch * cp - sh * sp;
-                        let len = (dist * dist + r * r - 2.0 * dist * r * cosv).sqrt() - base + extra;
-                        let ds = (len / C_SOUND * sr).max(2.0);
-                        let y = self.horn_line.read(ds, Interp::Lagrange3);
-                        // facing the mic: full and bright; facing away: quieter and dark
-                        let facing = (0.5 + 0.5 * cosv) as f32;
-                        let gain_a = 1.0 - am * (1.0 - facing);
-                        let kf = self.k_dark + (self.k_bright - self.k_dark) * facing;
-                        acc += gain * gain_a * self.horn_shade[m][k].process(y, kf);
+            // every 4 samples: each path's delay, gain and shading at the segment's end (angles 4 samples
+            // ahead), then a linear glide to them
+            if self.seg == 0 {
+                let ahead = SEG as f64 / sr;
+                let jump = !self.paths_init;
+                self.paths_init = true;
+                if voi.has_horn {
+                    let r = voi.horn_r * geo;
+                    let base = dist - r;
+                    let (sh, ch) = (TAU * (self.horn.angle + self.horn.hz * ahead)).sin_cos();
+                    for m in 0..2 {
+                        for k in 0..4 {
+                            let (extra, gain) = if k == 0 { (0.0, voi.direct) } else { (HORN_REFL[k - 1].0, HORN_REFL[k - 1].1 * refl_g) };
+                            let (sp, cp) = self.horn_trig[m][k];
+                            let cosv = ch * cp - sh * sp;
+                            let len = (dist * dist + r * r - 2.0 * dist * r * cosv).sqrt() - base + extra;
+                            let facing = (0.5 + 0.5 * cosv) as f32;
+                            let g = gain * (1.0 - am * (1.0 - facing));
+                            let kf = self.k_dark + (self.k_bright - self.k_dark) * facing;
+                            self.horn_p[m][k].aim((len / C_SOUND * sr).max(2.0), g, kf, SEG as f64, jump);
+                        }
                     }
-                    horn_out[m] = acc;
                 }
-            }
-            // the drum: one mic (as on the Lex), a baffle: stronger AM
-            let mut drum_out = 0.0f32;
-            {
                 let r = voi.drum_r * geo * 0.6;
                 let base = dist - r;
-                let (sd, cd) = (TAU * self.drum.angle).sin_cos();
+                let (sd, cd) = (TAU * (self.drum.angle + dir_d * self.drum.hz * ahead)).sin_cos();
                 let (kd0, kd1) = if voi.has_horn { (self.k_drum_lo, self.k_drum_hi) } else { (self.k_vib_lo, self.k_vib_hi) };
                 for k in 0..3 {
                     let (extra, gain) = if k == 0 { (0.0, voi.direct) } else { (DRUM_REFL[k - 1].0, DRUM_REFL[k - 1].1 * refl_g) };
                     let (sp, cp) = self.drum_trig[k];
                     let cosv = cd * cp - sd * sp;
                     let len = (dist * dist + r * r - 2.0 * dist * r * cosv).sqrt() - base + extra;
-                    let ds = (len / C_SOUND * sr).max(2.0);
-                    let y = self.drum_line.read(ds, Interp::Lagrange3);
                     let facing = (0.5 + 0.5 * cosv) as f32;
-                    let gain_a = 1.0 - 1.3 * am.min(0.75) * (1.0 - facing * facing);
+                    let g = gain * (1.0 - 1.3 * am.min(0.75) * (1.0 - facing * facing));
                     let kf = kd0 + (kd1 - kd0) * facing;
-                    drum_out += gain * gain_a * self.drum_shade[k].process(y, kf);
+                    self.drum_p[k].aim((len / C_SOUND * sr).max(2.0), g, kf, SEG as f64, jump);
                 }
+            }
+            self.seg = (self.seg + 1) % SEG;
+            let mut horn_out = [0.0f32; 2];
+            if voi.has_horn {
+                for m in 0..2 {
+                    let mut acc = 0.0f32;
+                    for k in 0..4 {
+                        let pth = &mut self.horn_p[m][k];
+                        // the direct path cubic; the reflections (already shaded dark) linear
+                        let y = self.horn_line.read(pth.d, if k == 0 { Interp::Lagrange3 } else { Interp::Linear });
+                        acc += pth.g * self.horn_shade[m][k].process(y, pth.k);
+                        pth.advance();
+                    }
+                    horn_out[m] = acc;
+                }
+            }
+            let mut drum_out = 0.0f32;
+            for k in 0..3 {
+                let pth = &mut self.drum_p[k];
+                let y = self.drum_line.read(pth.d, Interp::Lagrange3);
+                drum_out += pth.g * self.drum_shade[k].process(y, pth.k);
+                pth.advance();
             }
             let bal = self.balance.next() * 0.01;
             let (gh, gd) = ((2.0 * bal).min(1.0), (2.0 * (1.0 - bal)).min(1.0));
@@ -543,8 +614,8 @@ impl Effect for Rotary {
             2 => (v[p::HORN_FAST] as f64, v[p::DRUM_FAST] as f64),
             _ => (v[p::HORN_SLOW] as f64, v[p::DRUM_SLOW] as f64),
         };
-        self.horn = Rotor { hz: h, angle: 0.0 };
-        self.drum = Rotor { hz: d, angle: 0.37 };
+        self.horn = Rotor { hz: h, angle: 0.0, tau: -1.0, k: 0.0 };
+        self.drum = Rotor { hz: d, angle: 0.37, tau: -1.0, k: 0.0 };
         self.horn_line.reset();
         self.drum_line.reset();
         self.horn_shade = Default::default();
@@ -559,6 +630,8 @@ impl Effect for Rotary {
         self.drift_ph = 0.0;
         self.parked = false;
         self.ctrl = 0;
+        self.seg = 0;
+        self.paths_init = false;
         self.set_filters();
     }
 

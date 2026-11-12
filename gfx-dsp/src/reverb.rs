@@ -16,7 +16,7 @@
 //! Everything random comes from fixed seeds reset by `reset()`. Control values are recomputed on a
 //! 16-sample grid counted from reset, so the output does not depend on the host's block size.
 
-use crate::delay::{DelayLine, Interp};
+use crate::delay::{DelayLine, Interp, MultiLine};
 use crate::lfo::Rng;
 
 const TAU: f64 = std::f64::consts::TAU;
@@ -66,7 +66,7 @@ fn hadamard16(x: &mut [f32; 16]) {
 
 #[derive(Clone, Default)]
 pub struct Diffuser {
-    lines: Vec<[DelayLine; 8]>,
+    lines: Vec<MultiLine<8>>,
     /// per step: delay per channel (samples at the current size), polarity flips, shuffle
     len: Vec<[f64; 8]>,
     flip: Vec<[bool; 8]>,
@@ -74,6 +74,9 @@ pub struct Diffuser {
     base: Vec<[f64; 8]>,
     /// whole-sample targets the lengths glide to (interpolated reads while they move)
     target: Vec<[f64; 8]>,
+    /// every length is on its target: the fast path reads these whole-sample delays directly
+    settled: bool,
+    taps: Vec<[usize; 8]>,
 }
 
 /// Length glide per sample (≈ 20 ms).
@@ -86,6 +89,7 @@ impl Diffuser {
         self.lines = (0..steps).map(|_| Default::default()).collect();
         self.len = vec![[0.0; 8]; steps];
         self.target = vec![[0.0; 8]; steps];
+        self.taps = vec![[0; 8]; steps];
         self.base = vec![[0.0; 8]; steps];
         self.flip = vec![[false; 8]; steps];
         self.perm = vec![[0; 8]; steps];
@@ -97,8 +101,8 @@ impl Diffuser {
                 let r = rng.next_f64();
                 self.base[s][c] = span * (c as f64 + r) / 8.0 * 0.001 * sample_rate as f64;
                 self.flip[s][c] = rng.next_u64() & 1 == 1;
-                self.lines[s][c].prepare(max);
             }
+            self.lines[s].prepare(max);
             // a fixed shuffle
             let mut p: [usize; 8] = core::array::from_fn(|i| i);
             for i in (1..8).rev() {
@@ -113,19 +117,19 @@ impl Diffuser {
 
     pub fn reset(&mut self) {
         for st in self.lines.iter_mut() {
-            for l in st.iter_mut() {
-                l.reset();
-            }
+            st.reset();
         }
     }
 
     /// Scales every delay (size).
     pub fn set_scale(&mut self, k: f64) {
-        for (t, base) in self.target.iter_mut().zip(self.base.iter()) {
+        for (s, (t, base)) in self.target.iter_mut().zip(self.base.iter()).enumerate() {
             for c in 0..8 {
                 t[c] = (base[c] * k).round().max(1.0);
+                self.taps[s][c] = t[c] as usize;
             }
         }
+        self.settled = self.len == self.target;
     }
 
     /// Jumps the lengths to their targets (reset, prepare).
@@ -133,25 +137,33 @@ impl Diffuser {
         for (l, t) in self.len.iter_mut().zip(self.target.iter()) {
             *l = *t;
         }
+        self.settled = true;
     }
 
     #[inline]
     pub fn process(&mut self, x: &mut [f32; 8]) {
         for s in 0..self.lines.len() {
             let mut y = [0.0f32; 8];
+            let l = &mut self.lines[s];
+            l.push(x);
+            if self.settled {
+                let taps = &self.taps[s];
+                for c in 0..8 {
+                    y[c] = l.tap(c, taps[c]);
+                }
+            } else {
             for c in 0..8 {
-                let l = &mut self.lines[s][c];
-                l.push(x[c]);
                 let (t, d) = (self.target[s][c], &mut self.len[s][c]);
                 y[c] = if *d != t {
                     *d += (t - *d) * GLIDE_K;
                     if (t - *d).abs() < 1e-3 {
                         *d = t;
                     }
-                    l.read(*d, Interp::Linear)
+                    l.read(c, *d, Interp::Linear)
                 } else {
-                    l.tap(t as usize)
+                    l.tap(c, t as usize)
                 };
+            }
             }
             let mut z = [0.0f32; 8];
             for c in 0..8 {
@@ -161,25 +173,29 @@ impl Diffuser {
             hadamard8(&mut z);
             *x = z;
         }
+        if !self.settled {
+            self.settled = self.len == self.target;
+        }
     }
 }
 
 // ---- FDN ------------------------------------------------------------------------------------------------
 
-/// Per-line 3-band attenuation: one-pole splits at the bass crossover and the damping frequency.
-#[derive(Clone, Copy, Default)]
-struct Band3 {
-    lp_b: f32,
-    lp_h: f32,
-}
+/// The output sign patterns (the same decorrelation as before, as tables).
+const OUT_L: [f32; 16] = [1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0];
+const OUT_R: [f32; 16] = [1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, -1.0, 1.0];
 
 #[derive(Clone, Default)]
 pub struct Fdn {
-    lines: [DelayLine; 16],
+    lines: MultiLine<16>,
     base: [f64; 16],
     len: [f64; 16],
-    band: [Band3; 16],
-    g: [[f32; 3]; 16],
+    /// per-line 3-band attenuation, structure of arrays (the loops vectorise)
+    lp_b: [f32; 16],
+    lp_h: [f32; 16],
+    g_lo: [f32; 16],
+    g_mid: [f32; 16],
+    g_hi: [f32; 16],
     kb: f32,
     kh: f32,
     rng: [Rng; 4],
@@ -207,8 +223,8 @@ impl Fdn {
     pub fn prepare(&mut self, sample_rate: f32, max_scale: f64) {
         self.sr = sample_rate as f64;
         let max = (97.1 * max_scale * 0.001 * self.sr) as usize + 64;
-        for (i, l) in self.lines.iter_mut().enumerate() {
-            l.prepare(max);
+        self.lines.prepare(max);
+        for i in 0..16 {
             self.base[i] = FDN_MS[i] * 0.001 * self.sr;
         }
         self.rng = [Rng::new(0xF1), Rng::new(0xF2), Rng::new(0xF3), Rng::new(0xF4)];
@@ -217,10 +233,9 @@ impl Fdn {
     }
 
     pub fn reset(&mut self) {
-        for l in self.lines.iter_mut() {
-            l.reset();
-        }
-        self.band = [Band3::default(); 16];
+        self.lines.reset();
+        self.lp_b = [0.0; 16];
+        self.lp_h = [0.0; 16];
         for r in self.rng.iter_mut() {
             r.reset();
         }
@@ -249,7 +264,9 @@ impl Fdn {
             // while nothing else moves)
             let l = if self.target[i] > 0.0 { self.target[i] } else { self.len[i] };
             let g = |rt: f64| 10f64.powf(-3.0 * l / (rt.max(0.05) * self.sr)) as f32;
-            self.g[i] = [g(rt_low), g(rt_mid), g(rt_high)];
+            self.g_lo[i] = g(rt_low);
+            self.g_mid[i] = g(rt_mid);
+            self.g_hi[i] = g(rt_high);
         }
         self.kb = (1.0 - (-TAU * f_bass / self.sr).exp()) as f32;
         self.kh = (1.0 - (-TAU * f_high.min(0.45 * self.sr) / self.sr).exp()) as f32;
@@ -310,43 +327,36 @@ impl Fdn {
             };
             // frozen: whole-sample reads only (an interpolator would slowly darken the held tail)
             y[i] = if modulated || gliding {
-                self.lines[i].read(d.max(2.0), Interp::Lagrange3)
+                self.lines.read(i, d.max(2.0), Interp::Lagrange3)
             } else {
-                self.lines[i].tap(d as usize)
+                self.lines.tap(i, d as usize)
             };
         }
+        // decorrelated outputs: fixed sign patterns (dot products)
         let (mut l, mut r) = (0.0f32, 0.0f32);
         for i in 0..16 {
-            // decorrelated outputs: alternating signs on two halves
-            if i % 2 == 0 {
-                l += y[i];
-                r += if i % 4 == 0 { y[i] } else { -y[i] };
-            } else {
-                r += y[i];
-                l += if i % 4 == 1 { -y[i] } else { y[i] };
-            }
+            l += OUT_L[i] * y[i];
+            r += OUT_R[i] * y[i];
         }
-        // attenuation, then the matrix
-        let mut fb = [0.0f32; 16];
-        for i in 0..16 {
-            let v = y[i];
-            if self.fz >= 1.0 {
-                fb[i] = v;
-                continue;
+        // attenuation (branch-free loops over arrays), then the matrix
+        let mut fb = y;
+        if self.fz < 1.0 {
+            let (kb, kh, fz) = (self.kb, self.kh, self.fz);
+            for i in 0..16 {
+                let v = y[i];
+                self.lp_b[i] += kb * (v - self.lp_b[i]);
+                let rest = v - self.lp_b[i];
+                self.lp_h[i] += kh * (rest - self.lp_h[i]);
+                let hi = rest - self.lp_h[i];
+                let att = self.g_lo[i] * self.lp_b[i] + self.g_mid[i] * self.lp_h[i] + self.g_hi[i] * hi;
+                fb[i] = att + (v - att) * fz;
             }
-            let b = &mut self.band[i];
-            b.lp_b += self.kb * (v - b.lp_b);
-            let rest = v - b.lp_b;
-            b.lp_h += self.kh * (rest - b.lp_h);
-            let hi = rest - b.lp_h;
-            let g = self.g[i];
-            let att = g[0] * b.lp_b + g[1] * b.lp_h + g[2] * hi;
-            fb[i] = att + (v - att) * self.fz;
         }
         hadamard16(&mut fb);
         for i in 0..16 {
-            self.lines[i].push(fb[i] + inp[i]);
+            fb[i] += inp[i];
         }
+        self.lines.push(&fb);
         (0.25 * l, 0.25 * r)
     }
 }

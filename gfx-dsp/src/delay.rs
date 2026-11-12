@@ -92,7 +92,7 @@ impl DelayLine {
             Interp::Lagrange3 => {
                 // nodes at offsets -1, 0, 1, 2 (relative to i), evaluate at t
                 let p = [self.tap(i.saturating_sub(1)), self.tap(i), self.tap(i + 1), self.tap(i + 2)];
-                lagrange(&p, -1.0, t)
+                lagrange4(&p, t)
             }
             Interp::Lagrange5 => {
                 let p = [
@@ -103,7 +103,66 @@ impl DelayLine {
                     self.tap(i + 2),
                     self.tap(i + 3),
                 ];
-                lagrange(&p, -2.0, t)
+                lagrange6(&p, t)
+            }
+        }
+    }
+}
+
+/// `N` delay lines sharing one interleaved buffer and one write index: a push writes one contiguous row,
+/// and the lines of a network (an FDN, a diffuser step) stay together in cache.
+#[derive(Clone, Debug, Default)]
+pub struct MultiLine<const N: usize> {
+    buf: Vec<f32>,
+    mask: usize,
+    write: usize,
+}
+
+impl<const N: usize> MultiLine<N> {
+    pub fn prepare(&mut self, max_delay: usize) {
+        let rows = (max_delay + 8).next_power_of_two();
+        self.buf = vec![0.0; rows * N];
+        self.mask = rows - 1;
+        self.write = 0;
+    }
+
+    pub fn reset(&mut self) {
+        self.buf.iter_mut().for_each(|x| *x = 0.0);
+        self.write = 0;
+    }
+
+    pub fn max_delay(&self) -> usize {
+        self.mask.saturating_sub(4)
+    }
+
+    /// Writes one sample to every line.
+    #[inline]
+    pub fn push(&mut self, x: &[f32; N]) {
+        self.write = (self.write + 1) & self.mask;
+        let at = self.write * N;
+        self.buf[at..at + N].copy_from_slice(x);
+    }
+
+    /// Line `i`, `d` pushes ago (0 = the last one).
+    #[inline]
+    pub fn tap(&self, i: usize, d: usize) -> f32 {
+        self.buf[((self.write.wrapping_sub(d)) & self.mask) * N + i]
+    }
+
+    /// Line `i` at a fractional delay.
+    #[inline]
+    pub fn read(&self, i: usize, delay: f64, interp: Interp) -> f32 {
+        let d = delay.max(0.0);
+        let k = d.floor() as usize;
+        let t = (d - k as f64) as f32;
+        match interp {
+            Interp::Linear => {
+                let a = self.tap(i, k);
+                a + (self.tap(i, k + 1) - a) * t
+            }
+            _ => {
+                let p = [self.tap(i, k.saturating_sub(1)), self.tap(i, k), self.tap(i, k + 1), self.tap(i, k + 2)];
+                lagrange4(&p, t)
             }
         }
     }
@@ -180,8 +239,38 @@ impl Default for SincTable {
     }
 }
 
-/// Lagrange interpolation through points at integer abscissae `first, first+1, …`, evaluated at `t`.
+/// Cubic Lagrange through points at −1, 0, 1, 2, evaluated at `t`: closed-form weights with constant
+/// denominators (the generic form recomputed them with 16 divisions per read).
 #[inline]
+fn lagrange4(p: &[f32; 4], t: f32) -> f32 {
+    let (a, b, c, d) = (t + 1.0, t, t - 1.0, t - 2.0);
+    let (cd, ab) = (c * d, a * b);
+    -p[0] * b * cd * (1.0 / 6.0) + p[1] * a * cd * 0.5 - p[2] * ab * d * 0.5 + p[3] * ab * c * (1.0 / 6.0)
+}
+
+/// Quintic Lagrange through points at −2 … 3, evaluated at `t` (closed form, prefix / suffix products).
+#[inline]
+fn lagrange6(p: &[f32; 6], t: f32) -> f32 {
+    let x = [t + 2.0, t + 1.0, t, t - 1.0, t - 2.0, t - 3.0];
+    // pre[j] = x0 … x(j−1), suf[j] = x(j+1) … x5
+    let mut pre = [1.0f32; 6];
+    let mut suf = [1.0f32; 6];
+    for j in 1..6 {
+        pre[j] = pre[j - 1] * x[j - 1];
+    }
+    for j in (0..5).rev() {
+        suf[j] = suf[j + 1] * x[j + 1];
+    }
+    const DEN: [f32; 6] = [-1.0 / 120.0, 1.0 / 24.0, -1.0 / 12.0, 1.0 / 12.0, -1.0 / 24.0, 1.0 / 120.0];
+    let mut y = 0.0;
+    for j in 0..6 {
+        y += p[j] * pre[j] * suf[j] * DEN[j];
+    }
+    y
+}
+
+/// The generic form (reference for the tests).
+#[cfg(test)]
 fn lagrange<const N: usize>(p: &[f32; N], first: f32, t: f32) -> f32 {
     let mut sum = 0.0f32;
     for j in 0..N {
@@ -201,6 +290,17 @@ fn lagrange<const N: usize>(p: &[f32; N], first: f32, t: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn closed_form_lagrange_matches_the_generic() {
+        let p4 = [0.3f32, -0.7, 1.1, 0.2];
+        let p6 = [0.5f32, -0.1, 0.9, -1.2, 0.4, 0.8];
+        for k in 0..=20 {
+            let t = k as f32 / 20.0;
+            assert!((lagrange4(&p4, t) - lagrange(&p4, -1.0, t)).abs() < 1e-5);
+            assert!((lagrange6(&p6, t) - lagrange(&p6, -2.0, t)).abs() < 1e-5);
+        }
+    }
 
     #[test]
     fn sinc_reads_fractional_delays() {
