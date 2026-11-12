@@ -35,7 +35,7 @@ mod plugin;
 
 const GRID: u32 = 16;
 
-pub static PARAMS: [ParamInfo; 28] = [
+pub static PARAMS: [ParamInfo; 29] = [
     ParamInfo::float("mix", "Mix", 0.0, 100.0, 40.0).with_exp(),
     ParamInfo::float("decay", "Decay", 0.5, 20.0, 4.0).with_exp(),
     ParamInfo::float("shimmer", "Shimmer", 0.0, 100.0, 50.0).with_exp(),
@@ -64,6 +64,7 @@ pub static PARAMS: [ParamInfo; 28] = [
     ParamInfo::boolean("kill_dry", "Kill Dry", false),
     ParamInfo::boolean("trails", "Trails", true),
     ParamInfo::boolean("bypass", "Bypass", false),
+    ParamInfo::float("wet_level", "Wet Level", -24.0, 24.0, 0.0),
 ];
 
 pub mod p {
@@ -95,7 +96,8 @@ pub mod p {
     pub const KILL_DRY: usize = 25;
     pub const TRAILS: usize = 26;
     pub const BYPASS: usize = 27;
-    pub const N: usize = 28;
+    pub const WET_LEVEL: usize = 28;
+    pub const N: usize = 29;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -173,6 +175,7 @@ pub struct Shimmer {
     tail_in: LinearRamp,
     tone: OnePole,
     bloom_s: OnePole,
+    wet_level: OnePole,
     /// a character change only restarts the shifters; a space change clears the tank too
     pending_space: bool,
     ctrl: u32,
@@ -232,6 +235,7 @@ impl Shimmer {
             tail_in: LinearRamp::new(20.0, 1.0),
             tone: OnePole::new(30.0, 50.0, 1e-3),
             bloom_s: OnePole::new(50.0, 70.0, 1e-4),
+            wet_level: OnePole::new(20.0, 0.0, 1e-4),
             pending_space: false,
             ctrl: 0,
             clock: 0,
@@ -273,6 +277,7 @@ impl Shimmer {
         }
         self.tone.set_target(v[p::TONE]);
         self.bloom_s.set_target(v[p::BLOOM]);
+        self.wet_level.set_target(v[p::WET_LEVEL]);
         self.s = s;
     }
 
@@ -513,7 +518,9 @@ impl Shimmer {
             let side = 0.5 * (wet[0] - wet[1]) * width;
             // equal-power dry / wet (the catalogue's law)
             let t = mix * std::f32::consts::FRAC_PI_2;
-            let (dg, wg) = (t.cos() * dry_g, t.sin() * self.duck_gr * wet_g * gs);
+            let wl = self.wet_level.next();
+            let wl = if wl == 0.0 { 1.0 } else { 10f32.powf(wl / 20.0) };
+            let (dg, wg) = (t.cos() * dry_g, t.sin() * self.duck_gr * wet_g * gs * wl);
             let (ol, or) = (x0 * dg + (mid + side) * wg, x1 * dg + (mid - side) * wg);
             if nch > 1 {
                 buffers[0][i] = ol;
@@ -543,7 +550,7 @@ impl Effect for Shimmer {
         }
         self.size.prepare(sample_rate / GRID as f32);
         self.tone.prepare(sample_rate / GRID as f32);
-        for o in [&mut self.pitch, &mut self.pitch2, &mut self.voice2, &mut self.predelay, &mut self.width, &mut self.dry_g, &mut self.freeze_in, &mut self.regen_amt, &mut self.input_amt, &mut self.bloom_s] {
+        for o in [&mut self.pitch, &mut self.pitch2, &mut self.voice2, &mut self.predelay, &mut self.width, &mut self.dry_g, &mut self.freeze_in, &mut self.regen_amt, &mut self.input_amt, &mut self.bloom_s, &mut self.wet_level] {
             o.prepare(sample_rate);
         }
         for r in [&mut self.in_g, &mut self.wet_g, &mut self.gate, &mut self.tail_in] {
@@ -568,7 +575,7 @@ impl Effect for Shimmer {
         for (i, e) in [(p::MIX, &mut self.mix), (p::DECAY, &mut self.decay), (p::SHIMMER, &mut self.shimmer), (p::HICUT, &mut self.hicut), (p::DUCK, &mut self.duck)] {
             e.settle(v[i].clamp(PARAMS[i].min, PARAMS[i].max));
         }
-        for o in [&mut self.pitch, &mut self.pitch2, &mut self.voice2, &mut self.size, &mut self.predelay, &mut self.width, &mut self.dry_g, &mut self.freeze_in, &mut self.regen_amt, &mut self.input_amt, &mut self.bloom_s] {
+        for o in [&mut self.pitch, &mut self.pitch2, &mut self.voice2, &mut self.size, &mut self.predelay, &mut self.width, &mut self.dry_g, &mut self.freeze_in, &mut self.regen_amt, &mut self.input_amt, &mut self.bloom_s, &mut self.wet_level] {
             o.settle();
         }
         self.space = idx(v[p::SPACE], 4);

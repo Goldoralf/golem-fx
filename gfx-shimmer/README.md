@@ -124,6 +124,7 @@ Catalogue ids kept; `pitch` widened so the octave is reachable.
 | `kill_dry` | Kill Dry | b | off / on | new | off | | Parallel lane |
 | `trails` | Trails | b | off / on | new | on | | |
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
+| `wet_level` | Wet Level | f | −24 – +24 dB | new | 0 dB | | Wet gain. GxShimmiZita's wet is far hotter than a calibrated reverb (golem-rack: +10.5 dB overall at mix 30 %); golem can pin this at insert for preset loudness |
 
 ## 6. Applications
 

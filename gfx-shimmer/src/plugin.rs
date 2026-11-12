@@ -125,6 +125,8 @@ struct ShimmerParams {
     trails: BoolParam,
     #[id = "bypass"]
     bypass: BoolParam,
+    #[id = "wet_level"]
+    wet_level: FloatParam,
 }
 
 impl Default for ShimmerParams {
@@ -158,6 +160,7 @@ impl Default for ShimmerParams {
             kill_dry: BoolParam::new("Kill Dry", false),
             trails: BoolParam::new("Trails", true),
             bypass: BoolParam::new("Bypass", false).make_bypass(),
+            wet_level: f(28, " dB", 1),
         }
     }
 }
@@ -194,6 +197,7 @@ impl ShimmerParams {
                 if self.kill_dry.value() { 1.0 } else { 0.0 },
                 if self.trails.value() { 1.0 } else { 0.0 },
                 if self.bypass.value() { 1.0 } else { 0.0 },
+                self.wet_level.value(),
             ],
         }
     }
