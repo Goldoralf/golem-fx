@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -29,6 +29,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-chorus" | "chorus" => Some(Box::new(gfx_chorus::Chorus::new())),
         "gfx-flanger" | "flanger" => Some(Box::new(gfx_flanger::Flanger::new())),
         "gfx-phaser" | "phaser" => Some(Box::new(gfx_phaser::Phaser::new())),
+        "gfx-rotary" | "rotary" => Some(Box::new(gfx_rotary::Rotary::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -39,11 +40,11 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
 /// The common checks' options for an effect (bounds its design documents).
 pub fn options(name: &str) -> checks::Options {
     let mut o = checks::Options::default();
-    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser") {
+    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary") {
         // the profiles spread the voices left / right: stereo by nature
         o.stereo_by_nature = true;
     }
-    if matches!(name, "gfx-vibrato" | "vibrato" | "gfx-chorus" | "chorus") {
+    if matches!(name, "gfx-vibrato" | "vibrato" | "gfx-chorus" | "chorus" | "gfx-rotary" | "rotary") {
         // the mean delay of a pitch vibrato moves with the speed: by design it is not reported (README §2)
         o.skip_latency = true;
     }

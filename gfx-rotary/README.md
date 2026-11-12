@@ -1,6 +1,6 @@
 # gfx-rotary
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — per-rotor inertia (accelerate / decelerate, ramp scaling), coasting brake with a stop angle, counter-rotation, wobble; exact path-length Doppler per mic and per reflection (3 horn, 2 drum), angle shading of level and brightness, cabinets 122 / 147 / 145 / Vibratone / 122 Rear, tube stage (ADAA), mono sub-bass, balance, mix; stereo 2 / 2 first; 5 behaviour tests, bench green. Choices made in code: the angle tables are analytic (cosine shading of level and of a one-pole's cut-off), not the 64-entry fitted tables; the mean path delay (~1 ms) is not reported; CPU 375 ns / sample at 48 kHz (1.8 % of a core, above the 1 % target).
 
 golem's rotary speaker. Stands for golem's `rotary` block (today Calf Rotary Speaker;
 `golem_rotary.jsfx` on Windows / macOS), keeping its parameter ids and units

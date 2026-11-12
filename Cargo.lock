@@ -238,6 +238,7 @@ dependencies = [
  "gfx-gate",
  "gfx-limiter",
  "gfx-phaser",
+ "gfx-rotary",
  "gfx-tremolo",
  "gfx-vibrato",
  "gfx-wah",
@@ -313,6 +314,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-phaser"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-rotary"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
