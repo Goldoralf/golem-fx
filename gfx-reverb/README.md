@@ -176,7 +176,8 @@ Catalogue ids kept; ranges wider; no negative minimum.
 | `freeze` | Freeze | e | Off · Freeze · Infinite | new | Off | ✓ | Freeze = the tail holds, new notes stay out; Infinite = the tail holds and new notes add to it |
 | `kill_dry` | Kill Dry | b | off / on | new | off | | |
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
-| `trails` | Trails | b | off / on | new | on | | |
+| `trails` | Trails | b | off / on | new | on | |
+| `dry` | Dry | f | −60 – 0 dB | new | 0 dB | | Dry level. golem pins −1.9 dB at insert on its three reverb blocks (Dragonfly's 80 % dry); approved by Raph, 2026-11-12 | |
 
 ## 5. Applications
 

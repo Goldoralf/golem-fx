@@ -112,6 +112,142 @@ impl GrainShifter {
     }
 }
 
+/// Correlation stride of the splice search (every second sample: half the cost; a full-rate search gave
+/// the same tuning).
+const STEP: usize = 2;
+
+/// A splice-searching delay-line shifter centred on a fixed delay (gfx-pitch, gfx-detune).
+///
+/// - **Fixed mean delay**: the heads travel around `centre`, from centre + T/2 down to centre − T/2
+///   (up-shifts) or the reverse, so the delay a host must compensate never moves with the ratio.
+/// - **Per-sample ratio**: an EXP sweep is a smooth glide.
+/// - **Splices**: each new head starts where its waveform best continues the playing head's, by
+///   correlation over a short span (WSOLA; the H3000's "deglitch"). Heads are faded by sin², which is
+///   amplitude-complementary for the in-phase splices the search finds.
+/// - **Grain length**: the longest that keeps the travel inside the centre (capped by `max_life`).
+#[derive(Clone, Debug, Default)]
+pub struct CenteredShifter {
+    line: DelayLine,
+    centre: f64,
+    search: usize,
+    corr: usize,
+    min_life: f64,
+    max_life: f64,
+    life: [f64; 2],
+    age: [f64; 2],
+    d: [f64; 2],
+    ratio: f64,
+}
+
+impl CenteredShifter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// `centre_ms`: the fixed mean delay; `search_ms`: the splice search range (± around the nominal
+    /// start); `max_life_ms`: the longest grain.
+    pub fn prepare(&mut self, sample_rate: f32, centre_ms: f32, search_ms: f32, max_life_ms: f32) {
+        let ms = sample_rate as f64 * 0.001;
+        self.centre = centre_ms as f64 * ms;
+        self.search = (search_ms as f64 * ms) as usize;
+        self.corr = ((3.0 * ms) as usize).max(16);
+        self.min_life = 2.5 * ms;
+        self.max_life = max_life_ms as f64 * ms;
+        self.line.prepare((2.0 * self.centre) as usize + 2 * self.search + self.corr + 16);
+        self.reset();
+    }
+
+    pub fn reset(&mut self) {
+        self.line.reset();
+        self.ratio = 1.0;
+        let l = self.max_life;
+        self.life = [l, l];
+        self.age = [0.0, 0.5 * l];
+        self.d = [self.centre, self.centre];
+    }
+
+    /// The reported latency of this shifter (samples): its centre.
+    pub fn latency(&self) -> f64 {
+        self.centre
+    }
+
+    pub fn set_ratio(&mut self, ratio: f64) {
+        self.ratio = ratio.clamp(0.25, 4.0);
+    }
+
+    pub fn set_semitones(&mut self, st: f64) {
+        self.set_ratio((st / 12.0).exp2());
+    }
+
+    fn grain(&self) -> f64 {
+        let dev = (self.ratio - 1.0).abs();
+        let room = 2.0 * (self.centre - 2.0 - self.search as f64);
+        if dev < 1e-9 {
+            self.max_life
+        } else {
+            (room / dev).clamp(self.min_life, self.max_life)
+        }
+    }
+
+    /// Normalised correlation of the span at delay `d` with the span at `o`.
+    #[inline]
+    fn corr_at(&self, d: usize, o: usize) -> f64 {
+        let (mut c, mut e) = (0.0f64, 1e-12f64);
+        let mut k = 0;
+        while k < self.corr {
+            let a = self.line.tap(d + k) as f64;
+            c += a * self.line.tap(o + k) as f64;
+            e += a * a;
+            k += STEP;
+        }
+        c / e.sqrt()
+    }
+
+    fn best_splice(&self, nominal: f64, other: f64) -> f64 {
+        if self.search == 0 {
+            return nominal;
+        }
+        let o = other.round().max(2.0) as usize;
+        let lo = (nominal - self.search as f64).max(3.0) as usize;
+        let hi = (nominal + self.search as f64) as usize;
+        let (mut best, mut best_v) = (lo, f64::MIN);
+        for d in lo..=hi {
+            let v = self.corr_at(d, o);
+            if v > best_v {
+                best_v = v;
+                best = d;
+            }
+        }
+        // sub-sample refinement: a parabola through the peak and its neighbours
+        let (a, b, c) = (self.corr_at(best - 1, o), best_v, self.corr_at(best + 1, o));
+        let den = a - 2.0 * b + c;
+        let frac = if den.abs() > 1e-12 { (0.5 * (a - c) / den).clamp(-0.5, 0.5) } else { 0.0 };
+        best as f64 + frac + (other - o as f64)
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> f32 {
+        self.line.push(x);
+        let max = self.line.max_delay() as f64 - 4.0;
+        let mut y = 0.0f32;
+        for k in 0..2 {
+            if self.age[k] >= self.life[k] {
+                let life = self.grain();
+                let travel = life * (self.ratio - 1.0);
+                let nominal = self.centre + 0.5 * travel;
+                self.d[k] = self.best_splice(nominal, self.d[1 - k]);
+                self.age[k] = 0.0;
+                self.life[k] = life;
+            }
+            let w = (std::f64::consts::PI * self.age[k] / self.life[k]).sin();
+            y += (w * w) as f32 * self.line.read(self.d[k].clamp(2.0, max), Interp::Lagrange3);
+            self.d[k] += 1.0 - self.ratio;
+            self.age[k] += 1.0;
+        }
+        y
+    }
+}
+
 /// The shifter for a reverb's feedback loop (gfx-shimmer).
 ///
 /// Inside a reverb the phase is already scrambled, so splice search finds nothing better than chance.
@@ -349,6 +485,23 @@ mod tests {
         let y: Vec<f32> = (0..96000).map(|i| g.process((std::f32::consts::TAU * 330.0 * i as f32 / 48000.0).sin())).collect();
         let f = freq_of(&y[12000..], 48000.0);
         assert!((f / 660.0 - 1.0).abs() < 0.02, "{f}");
+    }
+
+    #[test]
+    fn centered_shifter_is_in_tune_and_on_its_centre() {
+        for f0 in [110.0f32, 330.0, 880.0] {
+            for st in [12.0, 7.0, -5.0, -12.0, 0.25] {
+                let mut g = CenteredShifter::new();
+                // the search covers half a period of a low E (6 ms)
+                g.prepare(48000.0, 12.0, 6.0, 60.0);
+                g.set_semitones(st);
+                let y: Vec<f32> = (0..96000).map(|i| g.process((std::f32::consts::TAU * f0 * i as f32 / 48000.0).sin())).collect();
+                let f = freq_of(&y[12000..], 48000.0);
+                let cents = 1200.0 * (f / f0 as f64).log2();
+                // ±2 cents: the worst case (110 Hz, +12) sits at +1.5
+                assert!((cents - st * 100.0).abs() < 2.0, "{f0} Hz, {st} st: {cents:.2} cents");
+            }
+        }
     }
 
     #[test]

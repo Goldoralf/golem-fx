@@ -104,7 +104,7 @@ impl Algo {
     }
 }
 
-pub static PARAMS: [ParamInfo; 31] = [
+pub static PARAMS: [ParamInfo; 32] = [
     ParamInfo::float("mix", "Mix", 0.0, 100.0, 30.0).with_exp(),
     ParamInfo::float("decay", "Decay", 0.1, 60.0, 1.3).with_exp(),
     ParamInfo::float("size", "Size", 5.0, 60.0, 24.0),
@@ -136,6 +136,7 @@ pub static PARAMS: [ParamInfo; 31] = [
     ParamInfo::boolean("kill_dry", "Kill Dry", false),
     ParamInfo::boolean("bypass", "Bypass", false),
     ParamInfo::boolean("trails", "Trails", true),
+    ParamInfo::float("dry", "Dry", -60.0, 0.0, 0.0),
 ];
 
 pub mod p {
@@ -170,7 +171,8 @@ pub mod p {
     pub const KILL_DRY: usize = 28;
     pub const BYPASS: usize = 29;
     pub const TRAILS: usize = 30;
-    pub const N: usize = 31;
+    pub const DRY: usize = 31;
+    pub const N: usize = 32;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -341,7 +343,9 @@ impl Reverb {
         self.width.set_target(v[p::WIDTH]);
         self.early.set_target(v[p::EARLY]);
         self.drive.set_target(v[p::DRIVE]);
-        self.dry_g.set_target(if v[p::KILL_DRY] >= 0.5 { 0.0 } else { 1.0 });
+        // the dry level (dB; −60 = silent), killed for a parallel lane
+        let dry = if v[p::DRY] <= -60.0 { 0.0 } else { 10f32.powf(v[p::DRY] / 20.0) };
+        self.dry_g.set_target(if v[p::KILL_DRY] >= 0.5 { 0.0 } else { dry });
         // freeze: new notes stay out (Freeze) or still enter (Infinite)
         self.freeze_in.set_target(if idx(v[p::FREEZE], 3) == 1 { 0.0 } else { 1.0 });
         if Algo::ALL[idx(v[p::ALGO], 11)] != self.algo {

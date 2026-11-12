@@ -159,6 +159,8 @@ struct ReverbParams {
     bypass: BoolParam,
     #[id = "trails"]
     trails: BoolParam,
+    #[id = "dry"]
+    dry: FloatParam,
 }
 
 impl Default for ReverbParams {
@@ -195,6 +197,7 @@ impl Default for ReverbParams {
             kill_dry: BoolParam::new("Kill Dry", false),
             bypass: BoolParam::new("Bypass", false).make_bypass(),
             trails: BoolParam::new("Trails", true),
+            dry: f(31, " dB", 1),
         }
     }
 }
@@ -234,6 +237,7 @@ impl ReverbParams {
                 if self.kill_dry.value() { 1.0 } else { 0.0 },
                 if self.bypass.value() { 1.0 } else { 0.0 },
                 if self.trails.value() { 1.0 } else { 0.0 },
+                self.dry.value(),
             ],
         }
     }
