@@ -35,7 +35,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | design |
 | 18 | gfx-wah | `wah`, `wah-color` | GxGCB-95, GxWahwah | research |
 | 19 | gfx-autowah | `autowah` | GxAutoWah | research |
-| 20 | gfx-rotary | `rotary` | Calf Rotary Speaker | research |
+| 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | design |
 | 21 | gfx-octaver | `octaver` | Gx OC-2 | research |
 | 22 | gfx-limiter | `limiter` | x42-dpl | research |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
