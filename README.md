@@ -1,10 +1,10 @@
 # golem-fx
 
-Les effets maison de golem : un dossier par effet (`gfx-<nom>`), un seul format (VST3), chargé par
-REAPER et Ardour sous Linux, Windows et macOS. Rust / nih-plug. Licence GPL-3.0-or-later.
+golem's in-house effects: one folder per effect (`gfx-<name>`), one format (VST3), loaded by REAPER and
+Ardour on Linux, Windows and macOS. Rust / nih-plug. Licence: GPL-3.0-or-later.
 
-Ces blocs s'ajoutent au catalogue de golem ; ils ne remplacent aucun bloc existant.
+These blocks are added to golem's catalogue; they replace no existing block.
 
-| Effet | État |
+| Effect | Status |
 |---|---|
-| [gfx-chorus](gfx-chorus/) | conception |
+| [gfx-chorus](gfx-chorus/) | design |

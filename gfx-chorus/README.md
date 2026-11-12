@@ -1,34 +1,37 @@
 # gfx-chorus
 
-> **Statut : PROPOSÉ** — conception, pas de code.
+> **Status: PROPOSED** — design, no code yet.
 
-Un chorus complet, voicé par instrument.
+A complete chorus, voiced per instrument.
 
-## Façade (bloc golem)
+- Parameters: [PARAMS.md](PARAMS.md)
+- Voicing per profile and per mode: [VOICING.md](VOICING.md)
 
-Profil · Mode · Rate · Depth · Warmth · Mix. Tout le reste est en mode expert, avec des défauts posés
-par le profil.
+## Front panel (the golem block)
 
-## Profils
+Profile · Mode · Rate · Depth · Warmth · Mix. Everything else is in expert mode, with defaults set by
+the profile.
 
-Guitare clean · Guitare saturée · Basse · Synthé/claviers · Voix. Un profil fixe les plages, les filtres,
-le crossover et la quantité de couleur.
+## Profiles
 
-## Chaîne
+Guitar Clean · Guitar Drive · Bass · Keys · Voice. A profile sets the anchors of every expert group:
+filters, crossover, amount of colour, modulation scale.
 
-1. Profil d'instrument
-2. Crossover : graves sèches et mono sous une fréquence réglable
-3. Étage d'entrée : saturation douce, pré-accentuation
-4. Moteur de retard : Clean (interpolation haute qualité) · BBD (filtres AA/reconstruction, compandeur,
-   bruit d'horloge) · Tape (wow/flutter)
-5. Topologie : Classic · Dual (Juno I/II) · Dimension (voix complémentaires, cross-mix) · Ensemble (3–6
-   voix) · Doubler (dérive aléatoire)
-6. LFO : sinus, triangle arrondi, aléatoire lissé, triangle Juno ; dérive, phase stéréo, synchro tempo
-7. Filtrage du wet : passe-haut, passe-bas (chaleur)
-8. Stéréo : largeur, mono → stéréo, mode compatible mono
-9. Sortie : mix, compensation de niveau
+## Signal chain
 
-## Contraintes golem
+1. Instrument profile
+2. Crossover: lows stay dry and mono below an adjustable frequency
+3. Input stage: soft saturation, pre-emphasis
+4. Delay engine: Clean (high-quality interpolation) · BBD (anti-aliasing / reconstruction filters,
+   compander, clock noise) · Tape (wow / flutter)
+5. Topology: Classic · Dual (Juno I/II) · Dimension (complementary voices, cross-mix) · Ensemble
+   (3–6 voices) · Doubler (random drift)
+6. LFO: sine, triangle, rounded triangle, smoothed random, Juno triangle; drift, stereo phase, tempo sync
+7. Wet filtering: high-pass, low-pass (warmth)
+8. Stereo: width, mono → stereo, mono-safe mode
+9. Output: mix, level compensation
 
-Zéro latence (pas d'oversampling à phase linéaire), `check-block-stall` vert sur les deux moteurs,
-identifiants de paramètres stables, lissage compatible pédale EXP et changements de scène sans clic.
+## golem constraints
+
+Zero latency (no linear-phase oversampling), `check-block-stall` green on both engines, stable
+parameter identifiers, smoothing compatible with the EXP pedal, scene changes without clicks.
