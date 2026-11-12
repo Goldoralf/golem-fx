@@ -138,6 +138,25 @@ impl Bbd {
         }
     }
 
+    /// An engine that can later switch to any stage count up to `max_stages` without allocating.
+    pub fn with_capacity(max_stages: usize, stages: usize) -> Self {
+        let mut b = Self::new(max_stages);
+        b.set_stages(stages);
+        b
+    }
+
+    /// Changes the stage count (≤ the capacity) and clears the line. Call `set_delay` after.
+    pub fn set_stages(&mut self, stages: usize) {
+        self.len = (stages / 2).clamp(1, self.fifo.len());
+        self.w = 0;
+        self.fifo.iter_mut().for_each(|v| *v = 0.0);
+        self.fc_in = 0.0;
+    }
+
+    pub fn stages(&self) -> usize {
+        self.len * 2
+    }
+
     /// Filter law: cutoff = `track` · f_clk, never above `fc_max`.
     pub fn set_filters(&mut self, track: f64, fc_max: f64) {
         self.track = track;

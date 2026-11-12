@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -26,6 +26,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-autowah" | "autowah" => Some(Box::new(gfx_autowah::Autowah::new())),
         "gfx-tremolo" | "tremolo" => Some(Box::new(gfx_tremolo::Tremolo::new())),
         "gfx-vibrato" | "vibrato" => Some(Box::new(gfx_vibrato::Vibrato::new())),
+        "gfx-chorus" | "chorus" => Some(Box::new(gfx_chorus::Chorus::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -36,7 +37,11 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
 /// The common checks' options for an effect (bounds its design documents).
 pub fn options(name: &str) -> checks::Options {
     let mut o = checks::Options::default();
-    if matches!(name, "gfx-vibrato" | "vibrato") {
+    if matches!(name, "gfx-chorus" | "chorus") {
+        // the profiles spread the voices left / right: stereo by nature
+        o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-vibrato" | "vibrato" | "gfx-chorus" | "chorus") {
         // the mean delay of a pitch vibrato moves with the speed: by design it is not reported (README §2)
         o.skip_latency = true;
     }

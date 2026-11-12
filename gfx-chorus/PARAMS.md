@@ -1,7 +1,7 @@
 # gfx-chorus — parameters
 
-> **Status: PROPOSED** — design, no code yet. Values marked **P** depend on the profile or the mode; they
-> are set in [VOICING.md](VOICING.md).
+> **Status: CODED** (v0.1.0, 2026-11-12) — see [README.md](README.md).
+> Values marked **P** depend on the profile or the mode; they are set in [VOICING.md](VOICING.md).
 
 ## Rules
 

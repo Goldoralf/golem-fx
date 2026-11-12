@@ -28,3 +28,6 @@ name = "GoleM FX Tremolo"
 
 [gfx-vibrato]
 name = "GoleM FX Vibrato"
+
+[gfx-chorus]
+name = "GoleM FX Chorus"

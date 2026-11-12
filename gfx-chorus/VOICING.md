@@ -1,9 +1,7 @@
 # gfx-chorus — voicing
 
-> **Status: PROPOSED** — design, no code yet. Numbers come from the state-of-the-art survey
-> ([README.md](README.md) §State of the art). **[V]** = measured or read in a source; **[U]** = forum or
-> unverified; **[I]** = our choice. Everything is tuned by ear on the listening bench, and this document is
-> updated with the values that survive.
+> **Status: CODED** (v0.1.0, 2026-11-12) — see [README.md](README.md).
+> Numbers come from the state-of-the-art survey ([README.md](README.md) §State of the art). **[V]** = measured or read in a source; **[U]** = forum or unverified; **[I]** = our choice. Tuned by ear on the listening bench; this document is updated with the values that survive.
 
 This page fills the **P** values of [PARAMS.md](PARAMS.md). Depth is always the **peak-to-peak** swing of the delay, in ms (golem's catalogue meaning).
 

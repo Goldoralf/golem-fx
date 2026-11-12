@@ -1,6 +1,6 @@
 # gfx-chorus
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — 5 profiles × 9 modes (CE-2, Juno I / II / I+II, Dimension 1 / 2 / 3, Ensemble, Doubler); Clean (Lagrange 3 / 5, windowed sinc), BBD (gfx-dsp clock-domain engine, 256 – 4096 stages, filters tracking the clock) and Tape engines; Linkwitz-Riley crossover with dry mono lows; drive, NE570-style compander, emphasis, cross-mix, mono-safe, width, envelope → depth / mix, detune lock, imperfection, drift, feedback, host sync; structural changes dip the wet 20 ms, the dry never moves; 6 behaviour tests, bench green. Choices made in code: expert defaults are Guitar Clean / Classic's anchors (switching a group to Custom keeps the sound); hiss follows the playing (silence stays silent).
 
 A complete chorus, voiced per instrument. Stands for golem's `chorus` block (ids `rate`, `depth`, `mix`;
 [golem contract](../docs/golem-contract.md)).

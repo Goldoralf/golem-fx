@@ -109,6 +109,77 @@ impl DelayLine {
     }
 }
 
+/// Windowed-sinc fractional reader: 16 taps, Kaiser window (β = 7), cut-off at 0.9 × Nyquist, 256
+/// fractional phases interpolated linearly. Needs a delay of at least 8 samples. Built once (it
+/// allocates), read on the audio path.
+#[derive(Clone, Debug)]
+pub struct SincTable {
+    /// 257 phases × 16 taps
+    k: Vec<f32>,
+}
+
+impl SincTable {
+    pub const HALF: usize = 8;
+    const PHASES: usize = 256;
+
+    pub fn new() -> Self {
+        let taps = 2 * Self::HALF;
+        let bessel = |x: f64| {
+            let (mut sum, mut term) = (1.0f64, 1.0f64);
+            for k in 1..30 {
+                term *= (x / (2.0 * k as f64)).powi(2);
+                sum += term;
+            }
+            sum
+        };
+        let beta = 7.0;
+        let fc = 0.9;
+        let mut k = vec![0.0f32; (Self::PHASES + 1) * taps];
+        for p in 0..=Self::PHASES {
+            let t = p as f64 / Self::PHASES as f64;
+            let mut row = [0.0f64; 16];
+            let mut sum = 0.0;
+            for j in 0..taps {
+                // tap j sits at delay offset (j − HALF + 1) from the integer part; distance from the read point
+                let x = (j as f64 - Self::HALF as f64 + 1.0) - t;
+                let r = x / Self::HALF as f64;
+                let w = if r.abs() < 1.0 { bessel(beta * (1.0 - r * r).sqrt()) / bessel(beta) } else { 0.0 };
+                let sinc = if x.abs() < 1e-12 { 1.0 } else { (std::f64::consts::PI * fc * x).sin() / (std::f64::consts::PI * fc * x) };
+                row[j] = fc * sinc * w;
+                sum += row[j];
+            }
+            for j in 0..taps {
+                k[p * taps + j] = (row[j] / sum) as f32;
+            }
+        }
+        Self { k }
+    }
+
+    /// Fractional read of `line` at `delay` samples (≥ 8).
+    #[inline]
+    pub fn read(&self, line: &DelayLine, delay: f64) -> f32 {
+        let taps = 2 * Self::HALF;
+        let d = delay.max(Self::HALF as f64);
+        let i = d.floor() as usize;
+        let pf = (d - i as f64) * Self::PHASES as f64;
+        let p = pf.floor() as usize;
+        let u = (pf - p as f64) as f32;
+        let (r0, r1) = (&self.k[p * taps..p * taps + taps], &self.k[(p + 1) * taps..(p + 2) * taps]);
+        let mut y = 0.0f32;
+        for j in 0..taps {
+            let w = r0[j] + u * (r1[j] - r0[j]);
+            y += w * line.tap(i + j + 1 - Self::HALF);
+        }
+        y
+    }
+}
+
+impl Default for SincTable {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Lagrange interpolation through points at integer abscissae `first, first+1, …`, evaluated at `t`.
 #[inline]
 fn lagrange<const N: usize>(p: &[f32; N], first: f32, t: f32) -> f32 {
@@ -130,6 +201,22 @@ fn lagrange<const N: usize>(p: &[f32; N], first: f32, t: f32) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sinc_reads_fractional_delays() {
+        let sinc = SincTable::new();
+        let mut l = DelayLine::new();
+        l.prepare(256);
+        let f = 0.05f64;
+        for n in 0..200 {
+            l.push((std::f64::consts::TAU * f * n as f64).sin() as f32);
+        }
+        for &d in &[10.0f64, 10.25, 10.5, 33.7] {
+            let want = (std::f64::consts::TAU * f * (199.0 - d)).sin() as f32;
+            let got = sinc.read(&l, d);
+            assert!((got - want).abs() < 2e-3, "d {d}: {got} vs {want}");
+        }
+    }
 
     fn error_db(interp: Interp, freq: f32) -> f32 {
         let sr = 48000.0f32;

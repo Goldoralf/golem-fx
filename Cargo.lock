@@ -229,6 +229,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-autowah",
  "gfx-boost",
+ "gfx-chorus",
  "gfx-comp",
  "gfx-deesser",
  "gfx-dsp",
@@ -242,6 +243,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-boost"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-chorus"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
