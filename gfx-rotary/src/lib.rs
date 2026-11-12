@@ -58,15 +58,17 @@ struct Voicing {
     drive_gain: f32,
     direct: f32,
     refl: f32,
+    /// the cabinet's low-pass and shading cost some level on a guitar: made up here
+    makeup: f32,
 }
 
 fn voicing(c: Cabinet) -> Voicing {
     match c {
-        Cabinet::L122 => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 6000.0, drive_gain: 1.0, direct: 1.0, refl: 1.0 },
-        Cabinet::L147 => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 6500.0, drive_gain: 1.6, direct: 1.0, refl: 1.0 },
-        Cabinet::L145 => Voicing { horn_r: 0.15, drum_r: 0.18, has_horn: true, lp: 5500.0, drive_gain: 1.2, direct: 1.0, refl: 0.8 },
-        Cabinet::Vibratone => Voicing { horn_r: 0.0, drum_r: 0.15, has_horn: false, lp: 5000.0, drive_gain: 1.3, direct: 1.0, refl: 0.6 },
-        Cabinet::L122Rear => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 4500.0, drive_gain: 1.0, direct: 0.6, refl: 1.6 },
+        Cabinet::L122 => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 6000.0, drive_gain: 1.0, direct: 1.0, refl: 1.0, makeup: 1.12 },
+        Cabinet::L147 => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 6500.0, drive_gain: 1.6, direct: 1.0, refl: 1.0, makeup: 1.12 },
+        Cabinet::L145 => Voicing { horn_r: 0.15, drum_r: 0.18, has_horn: true, lp: 5500.0, drive_gain: 1.2, direct: 1.0, refl: 0.8, makeup: 1.15 },
+        Cabinet::Vibratone => Voicing { horn_r: 0.0, drum_r: 0.15, has_horn: false, lp: 5000.0, drive_gain: 1.3, direct: 1.0, refl: 0.6, makeup: 1.35 },
+        Cabinet::L122Rear => Voicing { horn_r: 0.192, drum_r: 0.22, has_horn: true, lp: 4500.0, drive_gain: 1.0, direct: 0.6, refl: 1.6, makeup: 1.25 },
     }
 }
 
@@ -474,8 +476,14 @@ impl Rotary {
             }
             let bal = self.balance.next() * 0.01;
             let (gh, gd) = ((2.0 * bal).min(1.0), (2.0 * (1.0 - bal)).min(1.0));
-            let norm_h = 1.0 / (voi.direct + 0.68 * refl_g);
-            let norm_d = 1.0 / (voi.direct + 0.48 * refl_g);
+            // loudness-neutral: divide by each rotor's RMS gain over a turn. With f = facing:
+            // horn g = 1 − am + am·f, E[g²] = 1 − am + 3/8·am²;
+            // drum g = 1 − c + c·f², E[g²] = (1 − c)² + 3/4·c(1 − c) + 35/128·c²
+            let c = 1.3 * am.min(0.75);
+            let rms_h = (1.0 - am + 0.375 * am * am).sqrt();
+            let rms_d = ((1.0 - c) * (1.0 - c) + 0.75 * c * (1.0 - c) + 0.2734 * c * c).sqrt();
+            let norm_h = voi.makeup / ((voi.direct + 0.68 * refl_g) * rms_h);
+            let norm_d = voi.makeup / ((voi.direct + 0.48 * refl_g) * rms_d);
             let mix = self.mix.next() * 0.01;
             let lvl = self.level.next();
             let og = if lvl == 0.0 { 1.0 } else { 10f32.powf(lvl / 20.0) };

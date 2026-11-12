@@ -16,6 +16,7 @@ pub mod delay;
 pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
+pub mod flanger;
 pub mod lfo;
 pub mod matched;
 pub mod oversample;

@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -30,6 +30,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-flanger" | "flanger" => Some(Box::new(gfx_flanger::Flanger::new())),
         "gfx-phaser" | "phaser" => Some(Box::new(gfx_phaser::Phaser::new())),
         "gfx-rotary" | "rotary" => Some(Box::new(gfx_rotary::Rotary::new())),
+        "gfx-flanger-calf" | "flanger-calf" => Some(Box::new(gfx_flanger_calf::CalfFlanger::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -40,7 +41,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
 /// The common checks' options for an effect (bounds its design documents).
 pub fn options(name: &str) -> checks::Options {
     let mut o = checks::Options::default();
-    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary") {
+    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary" | "gfx-flanger-calf" | "flanger-calf") {
         // the profiles spread the voices left / right: stereo by nature
         o.stereo_by_nature = true;
     }
