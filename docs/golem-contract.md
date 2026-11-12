@@ -59,6 +59,14 @@ Effects with a tail (delay, and any later reverb) switch on / off through their 
 - **Tempo comes from the host transport** (nih-plug `Transport::tempo`), never from a parameter. REAPER
   and the Golem Engine both provide it. No tempo from the host → 120 BPM, never silence.
 
+## Expression pedal
+
+golem's EXP values arrive every 10 – 20 ms (OSC / MIDI). A fixed short one-pole leaves a staircase that
+buzzes on resonant filters; a long one lags. EXP-capable parameters therefore ramp linearly to each new
+value over the **measured** update interval (median of the last few), then pass a short critically damped
+smoother (3 – 5 ms) and a slew limit. Shared in gfx-dsp (`smooth`). Bench: a 50 Hz-stepped sweep leaves
+control-rate sidebands ≤ −80 dB, and a step reaches 90 % within one interval + 5 ms.
+
 ## Known host behaviour
 
 - Ardour delivers a parameter value to an **active** VST3 through the next audio cycle's parameter
