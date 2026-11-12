@@ -6,6 +6,8 @@ A complete chorus, voiced per instrument.
 
 - Parameters: [PARAMS.md](PARAMS.md)
 - Voicing per profile and per mode: [VOICING.md](VOICING.md)
+- Built on [gfx-dsp](../gfx-dsp/): the chorus holds its voicing and its wrapper; the DSP blocks live in
+  the shared library
 
 ## Front panel (the golem block)
 

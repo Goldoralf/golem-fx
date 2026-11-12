@@ -8,3 +8,6 @@ These blocks are added to golem's catalogue; they replace no existing block.
 | Effect | Status |
 |---|---|
 | [gfx-chorus](gfx-chorus/) | design |
+
+Shared code: [gfx-dsp](gfx-dsp/), the DSP library every effect is built on (delay lines, LFOs,
+filters, saturation, BBD model…).
