@@ -84,6 +84,11 @@ struct GateParams {
     source: EnumParam<Source>,
     #[id = "listen"]
     listen: BoolParam,
+    /// Read-only meters (golem contract): gate open 0 / 1, gain reduction in dB (≥ 0).
+    #[id = "state"]
+    state: FloatParam,
+    #[id = "gr"]
+    gr: FloatParam,
 }
 
 impl Default for GateParams {
@@ -107,6 +112,11 @@ impl Default for GateParams {
             hum: EnumParam::new("Hum Filter", Hum::Off),
             source: EnumParam::new("Detector Source", Source::Main),
             listen: BoolParam::new("Listen", false),
+            state: FloatParam::new("Gate State", 0.0, FloatRange::Linear { min: 0.0, max: 1.0 }).read_only(),
+            gr: FloatParam::new("Gain Reduction", 0.0, FloatRange::Linear { min: 0.0, max: 90.0 })
+                .with_unit(" dB")
+                .with_value_to_string(formatters::v2s_f32_rounded(1))
+                .read_only(),
         }
     }
 }
@@ -229,6 +239,8 @@ impl Plugin for GfxGate {
             }
             _ => self.dsp.process_with_key(buffer.as_slice(), None),
         }
+        self.params.state.set_output_value(if self.dsp.is_open() { 1.0 } else { 0.0 });
+        self.params.gr.set_output_value((-self.dsp.gain_reduction_db()).clamp(0.0, 90.0));
         ProcessStatus::Normal
     }
 }

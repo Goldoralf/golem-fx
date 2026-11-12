@@ -24,8 +24,11 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
 - **One plugin may stand for several blocks** when they share ids: `volume` (`gain` −60 … +6 dB) and
   `clean-boost` (`gain` 0 … +12 dB) are both gfx-boost, with `gain` −60 … +12 dB.
 - **Meters are read-only VST3 parameters** (gain reduction, gate state…): Ardour reads them from Lua,
-  REAPER through `TrackFX_GetParam`; no other channel. nih-plug does not expose VST3 output parameters
-  today: the wrapper has to add it (to solve before the first dynamics effect ships).
+  REAPER through `TrackFX_GetParam`; no other channel. golem-fx builds on **golem's nih-plug fork**
+  ([Goldoralf/nih-plug](https://github.com/Goldoralf/nih-plug), branch `golem-fx`): `FloatParam::read_only()`
+  + `set_output_value()`, reported as `kIsReadOnly` and through the output parameter changes. The fork also
+  applies controller writes while the plugin is processing (upstream drops them), so a host that saves
+  its state before a cycle keeps the value.
 - **Sidechain (key) inputs are a separate auxiliary bus**; the main layout stays 1 / 1 or 2 / 2.
 - **Ids are permanent** once shipped: VST3 class id and parameter ids are stored by sessions and by
   golem's engine table.

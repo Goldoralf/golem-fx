@@ -35,12 +35,12 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | # | Effect | golem block | Replaces | Status |
 |---|---|---|---|---|
 | 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | core coded |
-| 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | **coded**, bench green, meters pending |
+| 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | **coded**, passes golem's engine checks |
 | 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | design |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
 | 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | design |
 | 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | design |
-| 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, bench green, to test in golem |
+| 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, passes golem's engine checks |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | design |
 | 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | design |
