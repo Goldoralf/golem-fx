@@ -24,3 +24,4 @@ gfx-flanger = { path = "../gfx-flanger", default-features = false }
 gfx-phaser = { path = "../gfx-phaser", default-features = false }
 gfx-rotary = { path = "../gfx-rotary", default-features = false }
 gfx-flanger-calf = { path = "../gfx-flanger-calf", default-features = false }
+gfx-drive = { path = "../gfx-drive", default-features = false }

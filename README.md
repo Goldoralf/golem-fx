@@ -43,7 +43,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, passes golem's engine checks |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | **coded**, bench green, to test in golem |
-| 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | design |
+| 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | **coded**, bench green, to test in golem |
 | 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | **coded**, bench green, to test in golem |
 | 11 | [gfx-phaser](gfx-phaser/) | `phaser-js` | JS phaser | **coded**, bench green, to test in golem |
 | 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |

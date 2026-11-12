@@ -1,6 +1,6 @@
 # gfx-drive
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Overdrive (TS: first-order 720 Hz gain-leg high-pass, unclipped signal summed back), Distortion (level-dependent low-pass standing for the slew limit), Fuzz (two stages, inter-stage high-pass), Legacy (the JS curve, alias-free); tanh → hard-clip family with asymmetry and sag; phase-matched clean path for `blend` and `bass_keep` (Linkwitz-Riley 8 split); 5 behaviour tests, bench green. Choices made in code: 4× oversampling (two half-band stages: 2× left aliases near −77 dBFS; 4× measures −88 to −92 dBFS at 50 dB of gain); the slew limit is a level-dependent low-pass (a hard slew limiter aliased at −34 dBFS); ~6 samples of minimum-phase group delay, not reported.
 
 golem's drive. Stands for golem's `guitar-drive` block (today REAPER's JS `guitar/distortion`), keeping
 its parameter ids and units ([golem contract](../docs/golem-contract.md)). golem already plays exact

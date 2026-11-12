@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -31,6 +31,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-phaser" | "phaser" => Some(Box::new(gfx_phaser::Phaser::new())),
         "gfx-rotary" | "rotary" => Some(Box::new(gfx_rotary::Rotary::new())),
         "gfx-flanger-calf" | "flanger-calf" => Some(Box::new(gfx_flanger_calf::CalfFlanger::new())),
+        "gfx-drive" | "drive" => Some(Box::new(gfx_drive::Drive::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -44,6 +45,13 @@ pub fn options(name: &str) -> checks::Options {
     if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary" | "gfx-flanger-calf" | "flanger-calf") {
         // the profiles spread the voices left / right: stereo by nature
         o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-drive" | "drive") {
+        // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)
+        o.skip_latency = true;
+        // a ceiling step glides through heavier clipping at a still-high level on its way (0 → −40 dB):
+        // real harmonics above 10 kHz, not a click
+        o.click_bound_db = -25.0;
     }
     if matches!(name, "gfx-vibrato" | "vibrato" | "gfx-chorus" | "chorus" | "gfx-rotary" | "rotary") {
         // the mean delay of a pitch vibrato moves with the speed: by design it is not reported (README §2)
