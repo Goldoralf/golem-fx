@@ -140,6 +140,9 @@ pub struct CenteredShifter {
     line: DelayLine,
     centre: f64,
     search: usize,
+    /// the search range the grain length is planned with (≥ `search`): shifters that must stay
+    /// coherent (Poly's bands) share it, so they splice at the same moments from the same positions
+    room_search: usize,
     corr: usize,
     min_life: f64,
     max_life: f64,
@@ -175,6 +178,7 @@ impl CenteredShifter {
         let cap = self.line.max_delay() as f64 - self.corr as f64 - 16.0;
         self.centre = (centre_ms as f64 * ms).min(0.5 * cap);
         self.search = ((search_ms as f64 * ms) as usize).min((0.25 * cap) as usize);
+        self.room_search = self.search;
         self.min_life = 2.5 * ms;
         self.max_life = max_life_ms as f64 * ms;
         self.reset();
@@ -196,6 +200,28 @@ impl CenteredShifter {
         self.centre
     }
 
+    /// Plans grain lengths with this search range (ms) instead of the shifter's own (it is clamped to at
+    /// least the own one). Call after `configure`; resets.
+    pub fn set_room_search(&mut self, sample_rate: f32, search_ms: f32) {
+        let cap = self.line.max_delay() as f64 - self.corr as f64 - 16.0;
+        let r = ((search_ms as f64 * sample_rate as f64 * 0.001) as usize).min((0.25 * cap) as usize);
+        self.room_search = r.max(self.search);
+        self.reset();
+    }
+
+    /// Ends head `k`'s grain in `remaining` samples at the same window phase (continuous, only faster).
+    fn compress(&mut self, k: usize, remaining: f64) {
+        let phi = self.age[k] / self.life[k];
+        let life = remaining / (1.0 - phi).max(1e-6);
+        self.life[k] = life;
+        self.age[k] = phi * life;
+    }
+
+    /// The two heads' current delays (samples): a diagnostic.
+    pub fn head_delays(&self) -> [f64; 2] {
+        self.d
+    }
+
     pub fn set_ratio(&mut self, ratio: f64) {
         self.ratio = ratio.clamp(0.25, 4.0);
     }
@@ -210,7 +236,8 @@ impl CenteredShifter {
 
     fn grain(&self) -> f64 {
         let dev = (self.ratio - 1.0).abs();
-        let room = 2.0 * (self.centre - 2.0 - self.search as f64);
+        // ends at d ≥ 4: inside the overrun guard's edge (3), so a steady grain never gets compressed
+        let room = 2.0 * (self.centre - 4.0 - self.room_search as f64);
         if dev < 1e-9 {
             self.max_life
         } else {
@@ -237,16 +264,32 @@ impl CenteredShifter {
             return nominal;
         }
         let o = other.round().max(2.0) as usize;
+        // nothing to align to (silence, the line still filling): the nominal start. A search on noise
+        // would park the heads anywhere, and the offset would then persist
+        let mut eo = 0.0f64;
+        let mut k = 0;
+        while k < self.corr {
+            let v = self.line.tap(o + k) as f64;
+            eo += v * v;
+            k += STEP;
+        }
+        if eo < 1e-8 * (self.corr / STEP) as f64 {
+            return nominal;
+        }
         let lo = (nominal - self.search as f64).max(3.0) as usize;
         let hi = (nominal + self.search as f64) as usize;
         let (mut best, mut best_v) = (lo, f64::MIN);
+        // equal correlations (a steady tone repeats every period): the candidate nearest the nominal
+        // wins, by a penalty far below any real correlation difference
+        let pen = 1e-6 * eo.sqrt() / self.search.max(1) as f64;
         for d in lo..=hi {
-            let v = self.corr_at(d, o);
+            let v = self.corr_at(d, o) - pen * (d as f64 - nominal).abs();
             if v > best_v {
                 best_v = v;
                 best = d;
             }
         }
+        let best_v = self.corr_at(best, o);
         // sub-sample refinement: a parabola through the peak and its neighbours
         let (a, b, c) = (self.corr_at(best - 1, o), best_v, self.corr_at(best + 1, o));
         let den = a - 2.0 * b + c;
@@ -258,7 +301,9 @@ impl CenteredShifter {
     pub fn process(&mut self, x: f32) -> f32 {
         self.line.push(x);
         let max = self.line.max_delay() as f64 - 4.0;
-        let mut y = 0.0f32;
+        // splices first, against the other head's position for this same sample (aligning on a head that
+        // had already advanced put every second splice (ratio − 1) samples off: a sharp / flat drift
+        // growing with the shift, +6.8 cents at +24)
         for k in 0..2 {
             if self.age[k] >= self.life[k] {
                 let life = self.grain();
@@ -268,6 +313,30 @@ impl CenteredShifter {
                 self.age[k] = 0.0;
                 self.life[k] = life;
             }
+        }
+        // a grain planned at one ratio overruns when the ratio sweeps meanwhile (a long grain begun near
+        // unison, then an EXP / slew sweep to +24): when the head would leave the line before its fade
+        // ends, the rest of the fade is compressed at the same window phase (continuous, only faster)
+        let rate = self.ratio - 1.0;
+        if rate.abs() > 1e-9 {
+            // decided for the pair, so they stay staggered (two heads ending together leave no crossfade:
+            // near unison both sit at the same delay and would reach the edge together): the younger head
+            // ends by its edge, the older one by half the younger's end
+            let edge = |d: f64| if rate > 0.0 { (d - 3.0) / rate } else { (max - 1.0 - d) / -rate };
+            let (young, old) = if self.age[0] / self.life[0] <= self.age[1] / self.life[1] { (0, 1) } else { (1, 0) };
+            let left_y = self.life[young] - self.age[young];
+            let end_y = left_y.min(edge(self.d[young]).max(1.0));
+            if end_y < left_y {
+                self.compress(young, end_y);
+            }
+            let left_o = self.life[old] - self.age[old];
+            let end_o = left_o.min(edge(self.d[old]).max(1.0)).min(0.5 * end_y);
+            if end_o < left_o {
+                self.compress(old, end_o.max(1.0));
+            }
+        }
+        let mut y = 0.0f32;
+        for k in 0..2 {
             let w = (std::f64::consts::PI * self.age[k] / self.life[k]).sin();
             y += (w * w) as f32 * self.line.read(self.d[k].clamp(2.0, max), Interp::Lagrange3);
             self.d[k] += 1.0 - self.ratio;
@@ -536,8 +605,8 @@ mod tests {
                 let y: Vec<f32> = (0..96000).map(|i| g.process((std::f32::consts::TAU * f0 * i as f32 / 48000.0).sin())).collect();
                 let f = freq_of(&y[12000..], 48000.0);
                 let cents = 1200.0 * (f / f0 as f64).log2();
-                // ±2 cents: the worst case (110 Hz, +12) sits at +1.5
-                assert!((cents - st * 100.0).abs() < 2.0, "{f0} Hz, {st} st: {cents:.2} cents");
+                // within 0.2 cents (before the splice-order fix: +1.5 at +12)
+                assert!((cents - st * 100.0).abs() < 0.2, "{f0} Hz, {st} st: {cents:.2} cents");
             }
         }
     }

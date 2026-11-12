@@ -111,6 +111,10 @@ struct Voice {
     bands: [CenteredShifter; NB],
     lo: [[Svf; 2]; NB - 1],
     hi: [[Svf; 2]; NB - 1],
+    /// phase compensation: band j also passes the all-passes of every crossover above it (an LR4 pair
+    /// sums to a 2nd-order all-pass), so neighbouring bands are in phase and the bands sum flat. Without
+    /// them notes near a crossover partly cancelled even at shift 0 (−14 to −17 dB on a test chord).
+    ap: [[Svf; NB - 2]; NB - 1],
 }
 
 impl Voice {
@@ -127,9 +131,15 @@ impl Voice {
         let c = centre_ms(engine, tracking);
         self.whammy.configure(sr, 12.0, 6.0, 60.0);
         let k = if tracking == 1 { 1.5 } else { 1.0 };
+        // every band splices at the same moments from the same positions (one grain length, planned with
+        // the widest search): a note shared by two neighbouring bands then stays in phase across them.
+        // Each band keeps its own search range
+        let room = (band_shape(0).0 * k).min(0.4 * c);
+        let life = band_shape(0).1 * k;
         for (j, b) in self.bands.iter_mut().enumerate() {
-            let (search, life) = band_shape(j);
-            b.configure(sr, c, (search * k).min(0.4 * c), life * k);
+            let (search, _) = band_shape(j);
+            b.configure(sr, c, (search * k).min(0.4 * c), life);
+            b.set_room_search(sr, room);
         }
         for (j, f) in XO.iter().enumerate() {
             for s in self.lo[j].iter_mut() {
@@ -137,6 +147,11 @@ impl Voice {
             }
             for s in self.hi[j].iter_mut() {
                 s.set(SvfMode::HighPass, *f, std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
+            }
+        }
+        for j in 0..NB - 1 {
+            for (m, k) in (j + 1..NB - 1).enumerate() {
+                self.ap[j][m].set(SvfMode::AllPass, XO[k], std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
             }
         }
     }
@@ -147,6 +162,11 @@ impl Voice {
             b.reset();
         }
         for s in self.lo.iter_mut().chain(self.hi.iter_mut()) {
+            for f in s.iter_mut() {
+                f.reset();
+            }
+        }
+        for s in self.ap.iter_mut() {
             for f in s.iter_mut() {
                 f.reset();
             }
@@ -164,7 +184,10 @@ impl Voice {
         let mut y = 0.0;
         for j in 0..NB - 1 {
             let a = self.lo[j][0].process(rest);
-            let low = self.lo[j][1].process(a);
+            let mut low = self.lo[j][1].process(a);
+            for m in 0..NB - 2 - j {
+                low = self.ap[j][m].process(low);
+            }
             let h = self.hi[j][0].process(rest);
             rest = self.hi[j][1].process(h);
             self.bands[j].set_semitones(st);

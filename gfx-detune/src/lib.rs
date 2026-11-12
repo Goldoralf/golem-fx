@@ -224,6 +224,7 @@ mod tests {
             1200.0 * ((t.len() - 1) as f64 / (t[t.len() - 1] - t[0]) * 48000.0 / 1000.0).log2()
         };
         let (cl, cr) = (f(&l[12000..]), f(&r[12000..]));
-        assert!((cl - 25.0).abs() < 1.0 && (cr + 25.0).abs() < 1.0, "L {cl:.2}, R {cr:.2} cents");
+        eprintln!("detune L {cl:+.3}, R {cr:+.3} cents");
+        assert!((cl - 25.0).abs() < 0.2 && (cr + 25.0).abs() < 0.2, "L {cl:.2}, R {cr:.2} cents");
     }
 }
