@@ -220,12 +220,21 @@ name = "gfx-bench"
 version = "0.1.0"
 dependencies = [
  "gfx-boost",
+ "gfx-comp",
  "gfx-dsp",
  "gfx-gate",
 ]
 
 [[package]]
 name = "gfx-boost"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-comp"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

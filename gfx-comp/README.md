@@ -1,6 +1,6 @@
 # gfx-comp
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — five characters on one static curve, implicit feedback solve, colour at 2× with ADAA, `gr` meter; 9 behaviour tests, bench green at 44.1 – 192 kHz (~0.1 µs / sample).
 
 golem's compressor. Stands for golem's `comp` block (today ReaComp), keeping its parameter ids and
 units ([golem contract](../docs/golem-contract.md)). The aim is the best compressor for a live

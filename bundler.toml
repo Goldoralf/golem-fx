@@ -4,3 +4,6 @@ name = "GoleM FX Boost"
 
 [gfx-gate]
 name = "GoleM FX Gate"
+
+[gfx-comp]
+name = "GoleM FX Comp"

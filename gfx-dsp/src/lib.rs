@@ -10,11 +10,13 @@
 
 #![allow(clippy::should_implement_trait, clippy::needless_range_loop)]
 
+pub mod adaa;
 pub mod delay;
 pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
 pub mod lfo;
+pub mod oversample;
 pub mod smooth;
 pub mod svf;
 pub mod transport;

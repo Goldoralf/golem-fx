@@ -12,12 +12,13 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
         "gfx-boost" | "boost" => Some(Box::new(gfx_boost::Boost::new())),
         "gfx-gate" | "gate" => Some(Box::new(gfx_gate::Gate::new())),
+        "gfx-comp" | "comp" => Some(Box::new(gfx_comp::Comp::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
