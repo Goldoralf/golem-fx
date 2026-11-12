@@ -29,6 +29,10 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | design |
 | 11 | [gfx-phaser](gfx-phaser/) | `phaser-js` | JS phaser | design |
 | 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |
+| 14 | gfx-tremolo | `tremolo` | Calf Pulsator | research |
+| 15 | gfx-vibrato | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | research |
+| 16 | gfx-reverb | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | research |
+| 17 | gfx-shimmer | `reverb-shimmer` | GxShimmiZita | research |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
