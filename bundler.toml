@@ -58,3 +58,6 @@ name = "GoleM FX Shimmer"
 
 [gfx-killswitch]
 name = "GoleM FX Killswitch"
+
+[gfx-octaver]
+name = "GoleM FX Octaver"

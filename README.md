@@ -54,7 +54,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 18 | [gfx-wah](gfx-wah/) | `wah`, `wah-color` | GxGCB-95, GxWahwah | **coded**, bench green, to test in golem |
 | 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | **coded**, bench green, to test in golem |
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | **coded**, bench green, to test in golem |
-| 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | design |
+| 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | **coded**, bench green, to test in golem |
 | 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, passes golem's engine checks |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 

@@ -1,6 +1,6 @@
 # gfx-octaver
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Vintage (OC-2: adaptive Schmitt trigger, ÷2 / ÷4, the filtered signal's polarity switched), Clean (half-angle identity on a fundamental-tracking low-pass: 3rd harmonic under −50 dBc on a sine), Synth (oscillator locked to the divider, sine → square, glide, stability gate), Poly (28-band ERB complex filterbank: z² / |z| up, branch-tracked √z down below `range`), octave up (oversampled rectifier; analytic z² / |z| in Clean); all zero reported latency; 5 behaviour tests, bench green. Choices made in code: Clean's envelope is the last cycle's peak, held (a decaying follower rippled ~10 % per period and put the 3rd harmonic at −35 dBc); the dry's alignment all-passes sit at 550 Hz for both instruments (switching must not move the dry); `direct` = 1 is unity, so golem's presets may need a level check against the JSFX (pregain 4.7).
 
 golem's octaver. Stands for golem's `octaver` block (today guitarix gx_oc_2, a Boss OC-2 model;
 `golem_octaver.jsfx` on Windows / macOS), keeping its parameter ids and units

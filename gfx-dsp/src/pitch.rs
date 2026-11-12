@@ -224,6 +224,36 @@ impl Ap2 {
     }
 }
 
+/// The analytic signal of a real input: (in phase, quadrature), 90° apart over the audio band.
+#[derive(Clone, Debug, Default)]
+pub struct Hilbert {
+    a: [Ap2; 4],
+    b: [Ap2; 4],
+    b_delay: f64,
+}
+
+impl Hilbert {
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> (f64, f64) {
+        let x = x as f64;
+        let mut i = x;
+        for (s, a) in self.a.iter_mut().zip(HA) {
+            i = s.run(a, i);
+        }
+        let mut q = x;
+        for (s, a) in self.b.iter_mut().zip(HB) {
+            q = s.run(a, q);
+        }
+        let qd = self.b_delay;
+        self.b_delay = q;
+        (i, qd)
+    }
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct FreqShifter {
     a: [Ap2; 4],

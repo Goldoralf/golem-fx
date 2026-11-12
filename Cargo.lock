@@ -241,6 +241,7 @@ dependencies = [
  "gfx-gate",
  "gfx-killswitch",
  "gfx-limiter",
+ "gfx-octaver",
  "gfx-phaser",
  "gfx-reverb",
  "gfx-rotary",
@@ -344,6 +345,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-limiter"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-octaver"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

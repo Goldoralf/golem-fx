@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -36,6 +36,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-reverb" | "reverb" => Some(Box::new(gfx_reverb::Reverb::new())),
         "gfx-shimmer" | "shimmer" => Some(Box::new(gfx_shimmer::Shimmer::new())),
         "gfx-killswitch" | "killswitch" => Some(Box::new(gfx_killswitch::Killswitch::new())),
+        "gfx-octaver" | "octaver" => Some(Box::new(gfx_octaver::Octaver::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -66,6 +67,11 @@ pub fn options(name: &str) -> checks::Options {
         // 3 s after the burst the repeats are still decaying at the feedback rate (35 %, 375 ms:
         // ≈ −75 dBFS): that is the trail itself, not a residue
         o.silence_floor_db = -60.0;
+    }
+    if matches!(name, "gfx-octaver" | "octaver") {
+        // the dry runs through two all-passes that align it with the sub's smoothing filter: a phase
+        // rotation (~0.5 ms of group delay at the bottom), no delay line, not reported (README §3)
+        o.skip_latency = true;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

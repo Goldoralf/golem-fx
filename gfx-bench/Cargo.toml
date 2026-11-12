@@ -29,3 +29,4 @@ gfx-delay = { path = "../gfx-delay", default-features = false }
 gfx-reverb = { path = "../gfx-reverb", default-features = false }
 gfx-shimmer = { path = "../gfx-shimmer", default-features = false }
 gfx-killswitch = { path = "../gfx-killswitch", default-features = false }
+gfx-octaver = { path = "../gfx-octaver", default-features = false }
