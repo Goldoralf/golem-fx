@@ -123,7 +123,7 @@ impl Default for AutowahParams {
     fn default() -> Self {
         Self {
             wah: f(0, "", 2),
-            ftype: EnumParam::new("Type", TypeParam::BandPass),
+            ftype: EnumParam::new("Type", TypeParam::Wah),
             poles: EnumParam::new("Poles", Poles::Two),
             direction: EnumParam::new("Direction", Direction::Up),
             low: f(4, " Hz", 0),

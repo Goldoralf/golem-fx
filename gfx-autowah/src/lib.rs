@@ -44,7 +44,7 @@ impl FilterType {
 
 pub static PARAMS: [ParamInfo; 17] = [
     ParamInfo::float("wah", "Sensitivity", 0.0, 1.0, 0.3),
-    ParamInfo::enumeration("type", "Type", 6, 1),
+    ParamInfo::enumeration("type", "Type", 6, 3),
     ParamInfo::enumeration("poles", "Poles", 2, 0),
     ParamInfo::enumeration("direction", "Direction", 2, 0),
     ParamInfo::float("low", "Low", 50.0, 2000.0, 250.0),
@@ -89,7 +89,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             wah: 0.3,
-            ftype: FilterType::BandPass,
+            ftype: FilterType::Wah,
             four_poles: false,
             down: false,
             low: 250.0,

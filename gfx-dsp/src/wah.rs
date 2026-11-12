@@ -78,7 +78,7 @@ pub static MODELS: [Model; 11] = [
     Model { name: "Selmer", f: [396.0, 420.0, 459.0, 548.0, 736.0, 1050.0, 1685.0], q: [6.7, 6.9, 6.9, 6.9, 4.9, 3.8, 2.4], g: [29.0, 28.9, 28.6, 28.3, 27.8, 27.4, 27.2], fl: [8.7, 8.7, 8.6, 8.4, 8.1, 8.0, 7.9], dc: 697.0, law: Law::Lin(0.0) },
     // Vox V847: guitarix runs it toe = low; here heel = low like every other pedal
     Model { name: "Vox V847", f: [1050.0, 906.0, 715.0, 581.0, 502.0, 473.0, 459.0], q: [4.8, 4.9, 6.7, 6.7, 8.5, 8.5, 6.9], g: [17.9, 17.9, 18.0, 18.3, 18.4, 18.5, 18.4], fl: [-4.2, -4.2, -4.0, -3.9, -3.7, -3.7, -3.6], dc: 228.0, law: Law::InvLin(0.0) },
-    Model { name: "GCB-95", f: [1736.0, 1050.0, 736.0, 548.0, 459.0, 420.0, 408.0], q: [3.1, 4.8, 5.6, 8.5, 8.5, 8.5, 8.5], g: [18.9, 19.0, 19.3, 19.5, 19.6, 19.7, 19.7], fl: [-3.2, -3.1, -2.9, -2.7, -2.5, -2.4, -2.4], dc: 228.0, law: Law::InvLog(5.0, 0.0) },
+    Model { name: "GCB-95", f: [1870.0, 893.0, 736.0, 548.0, 459.0, 420.0, 408.0], q: [3.1, 4.8, 5.6, 8.5, 8.5, 8.5, 8.5], g: [18.9, 19.0, 19.3, 19.5, 19.6, 19.7, 19.7], fl: [-3.2, -3.1, -2.9, -2.7, -2.5, -2.4, -2.4], dc: 228.0, law: Law::InvLog(5.0, 0.0) },
     // Smith's fit of a Cry Baby (CCRMA): fc = 450 · 2^(2.3 u), Q = 2^(2(1 − u) + 1)
     Model { name: "Classic", f: geo(450.0, 2221.0), q: [2.0, 2.4, 2.8, 4.0, 5.7, 7.0, 7.7], g: [20.0; 7], fl: [-3.0; 7], dc: 150.0, law: Law::InvLin(0.0) },
     // Fractal's Clyde settings: 369 – 2369 Hz, resonance 4.17
@@ -99,14 +99,17 @@ pub fn freq_at(m: &Model, idx: usize) -> f32 {
 
 /// Response at position w: (fc, Q, peak dB, floor dB), interpolated (log for the frequency).
 pub fn lookup(m: &Model, w: f32) -> (f32, f32, f32, f32) {
-    let w = w.clamp(W[0], W[6]);
+    // the frequency carries on along the end segments to W = 0 and 1 (the pots' real ends: Gxgcb_95
+    // reaches 2.25 kHz at the toe); Q and gains stay at the end values
+    let w = w.clamp(0.0, 1.0);
     let mut i = 0;
     while i < 5 && w > W[i + 1] {
         i += 1;
     }
-    let t = (w - W[i]) / (W[i + 1] - W[i]);
+    let te = (w - W[i]) / (W[i + 1] - W[i]);
     let (f0, f1) = (freq_at(m, i), freq_at(m, i + 1));
-    let fc = (f0.ln() + t * (f1.ln() - f0.ln())).exp();
+    let fc = (f0.ln() + te * (f1.ln() - f0.ln())).exp();
+    let t = te.clamp(0.0, 1.0);
     let lerp = |a: &[f32; 7]| a[i] + t * (a[i + 1] - a[i]);
     (fc, lerp(&m.q), lerp(&m.g), lerp(&m.fl))
 }

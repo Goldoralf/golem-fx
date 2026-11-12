@@ -51,7 +51,7 @@ Catalogue id kept.
 | id | Name | Type | Range | Catalogue | Default | Role |
 |---|---|---|---|---|---|---|
 | `wah` | Sensitivity | f | 0 – 1 | same | 0.3 | Envelope window: higher = reacts to softer playing |
-| `type` | Type | e | Low-pass · Band-pass · High-pass · Wah · Band-pass + Dry · Vowel | new | Band-pass | Wah = gfx-wah's GCB-95 voice. Vowel = two formant band-passes morphing a → e → i → o → u with the sweep (talk-box / Boss AW-3 Humanizer) |
+| `type` | Type | e | Low-pass · Band-pass · High-pass · Wah · Band-pass + Dry · Vowel | new | Wah | Default Wah: golem's `autowah` block played GxAutoWah, an envelope-driven Cry Baby; presets keep that sound. Wah = gfx-wah's GCB-95 voice. Vowel = two formant band-passes morphing a → e → i → o → u with the sweep (talk-box / Boss AW-3 Humanizer) |
 | `poles` | Poles | e | 2 · 4 | new | 2 | |
 | `direction` | Direction | e | Up · Down | new | Up | |
 | `low` | Low | f | 50 – 2,000 Hz | new | 250 Hz | |

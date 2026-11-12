@@ -11,6 +11,7 @@
 #![allow(clippy::should_implement_trait, clippy::needless_range_loop)]
 
 pub mod adaa;
+pub mod bbd;
 pub mod delay;
 pub mod effect;
 pub mod envelope;
