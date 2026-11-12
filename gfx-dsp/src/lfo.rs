@@ -13,6 +13,13 @@ pub struct Rng {
     seed: u64,
 }
 
+impl Default for Rng {
+    /// A fixed seed (deterministic); call `new` for a chosen one.
+    fn default() -> Self {
+        Self::new(1)
+    }
+}
+
 impl Rng {
     pub fn new(seed: u64) -> Self {
         let s = if seed == 0 { 0x9E37_79B9_7F4A_7C15 } else { seed };

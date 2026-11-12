@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -33,6 +33,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-flanger-calf" | "flanger-calf" => Some(Box::new(gfx_flanger_calf::CalfFlanger::new())),
         "gfx-drive" | "drive" => Some(Box::new(gfx_drive::Drive::new())),
         "gfx-delay" | "delay" => Some(Box::new(gfx_delay::Delay::new())),
+        "gfx-reverb" | "reverb" => Some(Box::new(gfx_reverb::Reverb::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -45,6 +46,12 @@ pub fn options(name: &str) -> checks::Options {
     let mut o = checks::Options::default();
     if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary" | "gfx-flanger-calf" | "flanger-calf") {
         // the profiles spread the voices left / right: stereo by nature
+        o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-reverb" | "reverb") {
+        // a 1.3 s tail is still at −138 dBFS three seconds after the burst: its own decay, not a residue
+        o.silence_floor_db = -120.0;
+        // decorrelated outputs: stereo by nature
         o.stereo_by_nature = true;
     }
     if matches!(name, "gfx-delay" | "delay") {

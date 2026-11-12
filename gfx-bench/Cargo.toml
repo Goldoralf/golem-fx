@@ -26,3 +26,4 @@ gfx-rotary = { path = "../gfx-rotary", default-features = false }
 gfx-flanger-calf = { path = "../gfx-flanger-calf", default-features = false }
 gfx-drive = { path = "../gfx-drive", default-features = false }
 gfx-delay = { path = "../gfx-delay", default-features = false }
+gfx-reverb = { path = "../gfx-reverb", default-features = false }

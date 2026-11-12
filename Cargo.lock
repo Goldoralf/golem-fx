@@ -241,6 +241,7 @@ dependencies = [
  "gfx-gate",
  "gfx-limiter",
  "gfx-phaser",
+ "gfx-reverb",
  "gfx-rotary",
  "gfx-tremolo",
  "gfx-vibrato",
@@ -341,6 +342,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-phaser"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-reverb"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

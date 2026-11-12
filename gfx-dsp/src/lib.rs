@@ -21,6 +21,7 @@ pub mod lfo;
 pub mod matched;
 pub mod oversample;
 pub mod pitch;
+pub mod reverb;
 pub mod smooth;
 pub mod svf;
 pub mod transport;

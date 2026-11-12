@@ -1,0 +1,139 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//! The reverb's own bench suite (README.md §6).
+
+use super::*;
+
+const SR: f32 = 48000.0;
+
+fn rv(s: Settings) -> Reverb {
+    let mut r = Reverb::new();
+    r.prepare(SR, 4800, 2);
+    r.set(s);
+    r.reset();
+    r
+}
+
+/// Wet only, flat: the tail alone.
+fn wet() -> Settings {
+    Settings::default().with(p::MIX, 100.0).with(p::KILL_DRY, 1.0).with(p::EARLY, 0.0).with(p::HICUT, 20000.0).with(p::LOWCUT, 20.0)
+}
+
+fn ir(r: &mut Reverb, secs: f32) -> Vec<f32> {
+    let n = (SR * secs) as usize;
+    let mut l = vec![0.0f32; n];
+    l[0] = 1.0;
+    let mut rr = l.clone();
+    for (a, b) in l.chunks_mut(256).zip(rr.chunks_mut(256)) {
+        r.process(&mut [a, b]);
+    }
+    l.iter().zip(&rr).map(|(a, b)| 0.5 * (a + b)).collect()
+}
+
+/// RT60 by Schroeder integration, fitted between −5 and −25 dB.
+fn rt60(ir: &[f32]) -> f64 {
+    let mut e: Vec<f64> = ir.iter().map(|v| (*v as f64).powi(2)).collect();
+    for i in (0..e.len() - 1).rev() {
+        e[i] += e[i + 1];
+    }
+    let e0 = e[0];
+    let db: Vec<f64> = e.iter().map(|v| 10.0 * (v / e0).max(1e-30).log10()).collect();
+    let t5 = db.iter().position(|v| *v < -5.0).unwrap_or(0) as f64;
+    let t25 = db.iter().position(|v| *v < -25.0).unwrap_or(db.len() - 1) as f64;
+    (t25 - t5) / SR as f64 * 3.0
+}
+
+#[test]
+fn decay_is_the_rt60() {
+    for algo in [Algo::Hall, Algo::Room, Algo::Chamber, Algo::Cathedral, Algo::Plate, Algo::Cloud] {
+        // the plate at golem's pinned size (15 m: Dattorro's own tank), from 1 s (one half-loop is 0.37 s)
+        let rts: &[f32] = if algo == Algo::Plate { &[1.0, 2.0, 8.0] } else { &[0.5, 2.0, 8.0] };
+        for &rt in rts {
+            let size = if algo == Algo::Plate { 15.0 } else { 24.0 };
+            let mut r = rv(wet().with(p::ALGO, algo as u8 as f32).with(p::DECAY, rt).with(p::SIZE, size));
+            let y = ir(&mut r, rt * 1.6 + 0.5);
+            let got = rt60(&y);
+            eprintln!("{algo:?} {rt} s: {got:.3}");
+            assert!((got / rt as f64 - 1.0).abs() < 0.15, "{algo:?} {rt} s: {got:.3}");
+        }
+    }
+}
+
+#[test]
+fn bass_decay_ratio() {
+    // bass_mult 2: lows ring twice as long (Hall)
+    let low_rt = |bm: f32| {
+        let mut r = rv(wet().with(p::DECAY, 1.0).with(p::BASS_MULT, bm).with(p::BASS_XOVER, 300.0));
+        let y = ir(&mut r, 3.5);
+        let mut lp = Svf::new();
+        lp.set(SvfMode::LowPass, 100.0, 0.707, 0.0, SR);
+        let yl: Vec<f32> = y.iter().map(|v| lp.process(*v)).collect();
+        rt60(&yl)
+    };
+    let ratio = low_rt(2.0) / low_rt(1.0);
+    assert!(ratio > 1.6 && ratio < 2.3, "{ratio:.2}");
+}
+
+#[test]
+fn freeze_holds_and_shimmer_does_not_climb() {
+    for shimmer in [0.0f32, 60.0] {
+        let mut r = rv(wet().with(p::DECAY, 3.0).with(p::SHIMMER, shimmer));
+        let n = 48000;
+        // noise: a frozen sine keeps a few modes that beat, so its level swings although nothing is lost
+        let mut rng = Rng::new(11);
+        let mut l: Vec<f32> = (0..n).map(|_| 0.2 * rng.bipolar()).collect();
+        let mut rr = l.clone();
+        for (a, b) in l.chunks_mut(256).zip(rr.chunks_mut(256)) {
+            r.process(&mut [a, b]);
+        }
+        r.set(r.settings().with(p::FREEZE, 1.0));
+        let mut l = vec![0.0f32; 48000 * 30];
+        let mut rr = l.clone();
+        for (a, b) in l.chunks_mut(256).zip(rr.chunks_mut(256)) {
+            r.process(&mut [a, b]);
+        }
+        // energy of both sides, 4 s windows
+        let en = |a: usize, b: usize| (a..b).map(|k| (l[k] as f64).powi(2) + (rr[k] as f64).powi(2)).sum::<f64>();
+        let db = 10.0 * (en(48000 * 25, 48000 * 29) / en(48000 * 2, 48000 * 6)).log10();
+        assert!(db.abs() < 0.5, "shimmer {shimmer}: freeze drifts {db:.2} dB");
+    }
+}
+
+#[test]
+fn shimmer_stays_bounded() {
+    let mut r = rv(wet().with(p::DECAY, 20.0).with(p::SHIMMER, 100.0).with(p::SHIMMER_PITCH, 12.0));
+    let mut rng = Rng::new(4);
+    let n = 48000 * 60;
+    let mut l: Vec<f32> = (0..n).map(|_| 0.2 * rng.bipolar()).collect();
+    let mut rr = l.clone();
+    for (a, b) in l.chunks_mut(512).zip(rr.chunks_mut(512)) {
+        r.process(&mut [a, b]);
+    }
+    let pk = l[n - 48000..].iter().fold(0.0f32, |m, v| m.max(v.abs()));
+    assert!(pk.is_finite() && pk < 4.0, "{pk}");
+}
+
+#[test]
+fn gated_burst_has_its_length() {
+    // size 24 m → 0.05 + 0.55 · 19/55 s
+    let want = (0.05 + 0.55 * 19.0 / 55.0) * SR as f64;
+    let mut r = rv(wet().with(p::ALGO, 9.0).with(p::DIFFUSION, 0.0));
+    let y = ir(&mut r, 1.5);
+    let pk = y.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+    let last = y.iter().rposition(|v| v.abs() > 0.05 * pk).unwrap() as f64;
+    // within the taps' spacing (240 ms / 128) plus the end fade's 5 % point
+    assert!((last - want).abs() < 0.0025 * SR as f64, "ends at {:.1} ms, want {:.1}", last / 48.0, want / 48.0);
+}
+
+#[test]
+fn every_algorithm_is_finite_and_stable() {
+    for a in 0..11 {
+        let mut r = rv(Settings::default().with(p::ALGO, a as f32).with(p::DECAY, 60.0).with(p::DRIVE, 100.0).with(p::SHIMMER, 50.0).with(p::MOD, 100.0).with(p::SIZE, 60.0).with(p::ERA, 2.0));
+        let mut rng = Rng::new(9);
+        let mut l: Vec<f32> = (0..96000).map(|_| 0.3 * rng.bipolar()).collect();
+        let mut rr = l.clone();
+        for (x, y) in l.chunks_mut(256).zip(rr.chunks_mut(256)) {
+            r.process(&mut [x, y]);
+        }
+        assert!(l.iter().chain(rr.iter()).all(|v| v.is_finite() && v.abs() < 10.0), "algo {a}");
+    }
+}

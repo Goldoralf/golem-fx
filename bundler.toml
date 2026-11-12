@@ -49,3 +49,6 @@ name = "GoleM FX Drive"
 
 [gfx-delay]
 name = "GoleM FX Delay"
+
+[gfx-reverb]
+name = "GoleM FX Reverb"

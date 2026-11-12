@@ -1,6 +1,6 @@
 # gfx-reverb
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — all eleven algorithms on gfx-dsp's reverb engine (Hadamard diffuser, FDN-16 with Jot 3-band attenuation and seeded random-walk modulation, Dattorro tank with an extra all-pass per half, dispersive springs, tap bursts); shimmer insert (bounded by construction), freeze / infinite, ducking, swell, era, trails; RT60 within −4 … +2 % (FDN) and +12 % (plate at 8 s) of the setting; 6 behaviour tests, bench green. Choices made in code: delay lengths glide to whole-sample targets and are read at whole samples once settled (an interpolator in a loop shortens the decay); `era` band-limits, reduces bits and roughens the modulation instead of running the tail at a reduced rate; the shimmer feed is scaled by 1 / √(1 + decay) and soft-limited; the plate uses four output taps per side; CPU 525 ns / sample at 48 kHz (2.5 % of a core, above the 2 % target).
 
 golem's reverb. Stands for three golem blocks (today Dragonfly Hall, Plate and Room), keeping their
 parameter ids and units ([golem contract](../docs/golem-contract.md)):
