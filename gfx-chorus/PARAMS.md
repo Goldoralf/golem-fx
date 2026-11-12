@@ -13,13 +13,17 @@
    each expert group has a **Custom** switch.
    - Custom off: the group follows the profile (its controls are greyed, `depends` in the catalogue).
    - Custom on: the group uses its own controls.
-3. **Front-panel macros always apply.** Depth and Warmth move the sound around an *anchor*: the profile's,
-   or the expert group's when it is Custom.
-4. **Two kinds of parameters**, for golem's scene changes and EXP pedal:
+3. **Warmth always applies.** It moves the colour around an *anchor*: the profile's, or the expert
+   group's when it is Custom. Depth is an absolute excursion in ms; the profile and the mode only set its
+   default.
+4. **golem catalogue ids are kept.** gfx-chorus carries the ids of golem's `chorus` block (`rate`,
+   `depth`, `mix`, see `library/catalog/effects.json`), in the catalogue's units, with ranges a little
+   wider. A preset keeps its settings when its block switches to gfx-chorus. Every other id is new.
+5. **Two kinds of parameters**, for golem's scene changes and EXP pedal:
    - **continuous**: smoothed internally, click-free, EXP-capable;
    - **structural** (profile, mode, engine, voice count…): a change triggers an internal ~20 ms
      crossfade between the old and the new state, so that a scene change never clicks.
-5. **Musical units** (Hz, ms, dB, %), logarithmic curves for frequencies and rates.
+6. **Musical units** (Hz, ms, dB, %), logarithmic curves for frequencies and rates.
 
 Columns: **Type** `f` float, `e` enum, `b` bool · **Curve** lin / log · **Smooth** in ms (— = structural,
 crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the catalogue).
@@ -30,10 +34,10 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 |---|---|---|---|---|---|---|---|---|
 | `profile` | Profile | e | Guitar Clean · Guitar Drive · Bass · Keys · Voice | Guitar Clean | — | — | | Picks the voicing: anchors of every group, internal scale of Depth and Warmth |
 | `mode` | Mode | e | Classic · Dual · Dimension · Ensemble · Doubler | P | — | — | | Voice topology (see Modulation group) |
-| `rate` | Rate | f | 0.05 – 10 Hz | P | log | 50 | ✓ | LFO rate. Ignored when `sync` ≠ Off |
-| `depth` | Depth | f | 0 – 100 % | 50 % | lin | 50 | ✓ | Delay excursion; 100 % = `mod_range` (profile anchor or Custom value) |
+| `rate` | Rate | f | 0.05 – 10 Hz | P | log | 50 | ✓ | LFO rate (catalogue `chorus.rate`: 0.1 – 3 Hz). Ignored when `sync` ≠ Off |
+| `depth` | Depth | f | 0.5 – 10 ms | P | log | 50 | ✓ | Delay excursion (catalogue `chorus.depth`: 1 – 8 ms) |
 | `warmth` | Warmth | f | 0 – 100 % | 50 % | lin | 30 | ✓ | Colour macro: wet low-pass, input saturation, compander and BBD bandwidth, in the profile's proportions |
-| `mix` | Mix | f | 0 – 100 % | P | lin | 20 | ✓ | Dry / wet balance (law: `mix_law`) |
+| `mix` | Mix | f | 0 – 1 (shown as %) | P | lin | 20 | ✓ | Dry / wet balance, law `mix_law` (catalogue `chorus.mix`: 0 – 1) |
 
 ## Expert
 
@@ -67,7 +71,6 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 |---|---|---|---|---|---|---|---|---|
 | `mod_custom` | Modulation Custom | b | off / on | off | — | — | | Off = follows the profile and the mode |
 | `delay_base` | Base Delay | f | 1 – 30 ms | P | log | 100 | | Centre delay |
-| `mod_range` | Mod Range | f | 0.1 – 10 ms | P | log | 100 | | Excursion at Depth = 100 % |
 | `lfo_shape` | LFO Shape | e | Sine · Triangle · Rounded · Random · Juno | P | — | — | | Rounded = softened triangle; Random = smoothed random; Juno = Juno-60 triangle |
 | `voices` | Voices | e | 1 – 6 | P | — | — | | Used by Ensemble and Doubler; fixed by the other modes |
 | `voice_spread` | Voice Spread | f | 0 – 360° | P | lin | 50 | | LFO phase offset between successive voices |
@@ -106,9 +109,11 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 - **`output` has a negative minimum.** REAPER's "bipolar slider" trap is documented for JSFX
   (`~/golem/docs/pitfalls/jsfx.md`); check it for an nih-plug VST3 with `fxset` (write, read back).
   Fallback: a 0 – 400 % linear gain range.
+- **Log curves.** golem writes plain values; Ardour converts them through the plugin's controller, so a
+  skewed range is fine as long as plain ↔ normalized is exact. Test it both ways for every parameter.
 - **Enums and `map`.** The catalogue requires `map: norm` for JUCE VST3 enums; measure nih-plug before
   writing the catalogue entry.
 - **Bypass.** golem disables a block through the host's bypass; nih-plug also exposes a VST3 bypass
   parameter. Pick one, and check that no click nor leftover delay-line content is heard on return.
-- **Parameter count:** 6 on the front panel, 34 in expert mode (5 of them Custom switches). An order of
+- **Parameter count:** 6 on the front panel, 33 in expert mode (5 of them Custom switches). An order of
   magnitude, not a target.

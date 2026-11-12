@@ -13,8 +13,8 @@ Two layers, never mixed:
 
 - **The mode** sets the **shape of the modulation**: voice count, centre delay, excursion, LFO shape, phase
   between voices, cross-mix, default rate. A Dimension sounds like a Dimension whatever the instrument.
-- **The profile** sets **everything else**, plus a **scale** on the mode's excursion: crossover, wet filters,
-  colour engine and amounts, stereo, mix, and the default mode.
+- **The profile** sets **everything else**: crossover, wet filters, colour engine and amounts, stereo,
+  mix, the default mode, and a **scale** applied to the mode's default depth.
 
 So 5 modes × 5 profiles give 25 voicings from two tables of 5 columns, not from 25 presets.
 
@@ -27,7 +27,7 @@ When a group is **Custom**, its own controls replace the layer's anchors for tha
 | Reference | Boss CE-2 | Juno-60 I / II | Roland Dimension D | String ensembles (Solina) | Studio double-tracking |
 | `voices` | 1 | 2 | 2, complementary | 3 (expert: 3–6) | 2 |
 | `delay_base` | 7 ms | 3.5 ms | 6 ms | 10 ms | 18 ms |
-| `mod_range` | 3 ms | 1.8 ms | 1 ms | 2.5 ms | 0.8 ms |
+| `depth` default | 3 ms | 1.8 ms | 1 ms | 2.5 ms | 0.8 ms |
 | `lfo_shape` | Triangle | Juno | Rounded | Sine | Random |
 | `voice_spread` | — | 180° | 180° | 120° (360° / voices) | — (independent random) |
 | `crossmix` | 0 % | 0 % | 50 % | 0 % | 0 % |
@@ -47,7 +47,7 @@ Built into the mode, not exposed as parameters:
 | Group | Parameter | Guitar Clean | Guitar Drive | Bass | Keys | Voice |
 |---|---|---|---|---|---|---|
 | — | default `mode` | Classic | Dimension | Classic | Dual | Doubler |
-| Modulation | excursion scale (× `mod_range`) | 1.0 | 0.7 | 0.8 | 1.0 | 0.6 |
+| Modulation | default depth scale (× mode's `depth`) | 1.0 | 0.7 | 0.8 | 1.0 | 0.6 |
 | Modulation | `drift` | 10 % | 15 % | 5 % | 5 % | 60 % |
 | Crossover | `xover_on` | off | on | on | on | off |
 | Crossover | `xover_freq` | (120 Hz) | 150 Hz | 200 Hz | 100 Hz | (120 Hz) |
@@ -99,8 +99,9 @@ parameter's range.
 
 ## 5. Depth (front panel)
 
-Excursion = `mod_range` × profile scale × depth^1.5. The curve gives fine control in the lower half,
-where subtle settings live, and keeps 100 % = the full anchor excursion.
+Depth is the excursion itself, in ms (golem catalogue id `chorus.depth`). Its default is the mode's
+`depth` × the profile's scale, clamped to the parameter's range, 0.5 – 10 ms (e.g. Guitar Drive in
+Dimension: 1 ms × 0.7 = 0.7 ms). The range uses a log curve, so the subtle settings get most of the knob's travel.
 
 ## 6. Placement in a golem chain
 
