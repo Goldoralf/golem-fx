@@ -74,5 +74,3 @@ name = "GoleM FX Detune"
 [gfx-gapmeter]
 name = "GoleM FX Gapmeter"
 
-[gfx-pitch-test]
-name = "GoleM FX Pitch Test"

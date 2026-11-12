@@ -404,14 +404,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gfx-pitch-test"
-version = "0.1.0"
-dependencies = [
- "gfx-dsp",
- "nih_plug",
-]
-
-[[package]]
 name = "gfx-reverb"
 version = "0.1.0"
 dependencies = [
