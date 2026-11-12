@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -35,6 +35,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-delay" | "delay" => Some(Box::new(gfx_delay::Delay::new())),
         "gfx-reverb" | "reverb" => Some(Box::new(gfx_reverb::Reverb::new())),
         "gfx-shimmer" | "shimmer" => Some(Box::new(gfx_shimmer::Shimmer::new())),
+        "gfx-killswitch" | "killswitch" => Some(Box::new(gfx_killswitch::Killswitch::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),

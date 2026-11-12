@@ -1,6 +1,6 @@
 # gfx-killswitch
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — raised-cosine edges clamped to 45 % of the segment (they always reach their target), fast opening ending on the step boundary, 16-step patterns with accents, swing and offset, host-position sync, zero-latency pick restart (high-passed fast / slow envelopes, the JSFX's `sens` mapping), Gate / Sine / Triangle / Ramp shapes, momentary kill, restart, autopan width, engage through the VST3 bypass parameter, read-only `steps_count` / `picks_count`; 5 behaviour tests, bench green. Choices made in code: pattern, steps, accents, shape and swing take effect at the next step boundary (a change mid-step would cut or open the step at once); a final slew guard over min(`smooth`, 1 ms) catches a change that lands exactly on a boundary; the bar anchor is beat 0 (4 / 4 assumed: the transport gives no bar start).
 
 golem's rhythmic kill switch / stutter / slicer. Stands for golem's `killswitch` block (today golem's own
 `golem_killswitch.jsfx`), keeping its parameter ids and units ([golem contract](../docs/golem-contract.md)).

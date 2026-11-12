@@ -239,6 +239,7 @@ dependencies = [
  "gfx-flanger",
  "gfx-flanger-calf",
  "gfx-gate",
+ "gfx-killswitch",
  "gfx-limiter",
  "gfx-phaser",
  "gfx-reverb",
@@ -327,6 +328,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-gate"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-killswitch"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

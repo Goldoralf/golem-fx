@@ -55,3 +55,6 @@ name = "GoleM FX Reverb"
 
 [gfx-shimmer]
 name = "GoleM FX Shimmer"
+
+[gfx-killswitch]
+name = "GoleM FX Killswitch"

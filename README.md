@@ -41,7 +41,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | **coded**, passes golem's engine checks |
 | 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | **coded**, bench green, to test in golem |
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, passes golem's engine checks |
-| 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
+| 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | **coded**, bench green, to test in golem |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | **coded**, bench green, to test in golem |
 | 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | **coded**, bench green, to test in golem |
 | 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | **coded**, bench green, to test in golem |
