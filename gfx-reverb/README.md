@@ -79,11 +79,10 @@ refused automated reading; its design notes come from search excerpts).
 5. **Live**: predelay, ducking, freeze / infinite, trails.
 6. Skipped: convolution (latency or no modulation / freeze), more than 3 decay bands (v2), scattering delay
    networks, shimmer (gfx-shimmer), oversampling.
-7. **Planned next, in this order**: **Spring** (the guitar reverb: dispersive allpass chains for the
-   "drip", Välimäki, Parker & Abel's parametric spring, 2 – 3 springs, dwell) — appended to `algo`, able to
-   take over golem's `surge-spring` block later; **Bloom / Swell** (slow fade-in of the tail); **Gated** and
-   **Reverse** (nonlinear envelopes on the diffuser). The engine is built so these are new algorithms, not
-   new plugins.
+7. **Full coverage is the goal** (BigSky has 12 machines, VintageVerb 22 algorithms): beyond the five core
+   algorithms, the design specifies Ambience, Spring, Bloom, Cloud, Gated and Reverse (§3). They share the
+   engine's blocks (diffuser, FDN, tank, envelope), so each is a voicing and a routing, not a new plugin.
+   Built in that order after the core five; Spring can take over golem's `surge-spring` block later.
 
 ## 3. Design
 
@@ -102,6 +101,22 @@ in ─┬───────────────────────�
 | Room | FDN-16, short lines | dense, early | low | Short, close |
 | Chamber | FDN-16 | dense | low | Between room and hall |
 | Cathedral | FDN-16, long lines | sparse, very late | medium | Very long |
+| Ambience | early reflections + a very short diffuse tail | dense, the main signal | none | "Not a reverb": air and width around a dry amp sim (decay 0.1 – 0.6 s) |
+| Spring | 1 – 3 parallel spring lines: dispersive allpass chains (the "drip" chirp), low-passed feedback, slight random modulation ([Välimäki, Parker & Abel 2010](https://www.aes.org/e-lib/browse.cfm?elib=15310) [I link]) | none | spring wobble | Fender tank; `drive` = dwell |
+| Bloom | diffuser fed back on itself before the FDN | none | medium | The tail **fades in** (0.2 – 2 s) then decays: pads behind the note |
+| Cloud | FDN-16 with very long lines and heavy diffusion (Supermassive / Blackhole territory) | none | high | Huge, slow, enveloping; decay up to 60 s |
+| Gated | diffuser + early taps with a flat envelope cut after `size` | the tail itself | none | 80s gated snare / guitar stabs; non-decaying burst |
+| Reverse | the same taps with a rising envelope, ending on the beat | the tail itself | none | Swell-in before silence; `predelay` = length, syncable |
+
+What the shared controls mean per algorithm:
+
+| Control | Hall · Room · Chamber · Cathedral · Cloud | Plate | Spring | Bloom | Gated · Reverse | Ambience |
+|---|---|---|---|---|---|---|
+| `decay` | RT60 | RT60 | RT60 of the springs | RT60 after the bloom | — (length is `size`) | 0.1 – 0.6 s |
+| `size` | room dimension (delay scale) | plate size | spring length (chirp rate) | bloom time | burst length (50 – 600 ms, or `sync`) | space of the reflections |
+| `diffusion` | smoothness of the onset | density | drip amount | how slow the fade-in | grain of the burst | density |
+| `early` | reflections level | — | — | — | — | the effect itself |
+| `drive` | — | — | dwell (how hard the springs are hit) | — | — | — |
 
 - **Decay**: per-line low shelf + high shelf + damping low-pass from `hicut`, gains recomputed from the
   current delay lengths; bass decay set by `bass_mult` around `bass_xover`.
@@ -123,11 +138,11 @@ Catalogue ids kept; ranges wider; no negative minimum.
 | id | Name | Type | Range | Catalogue | Default | EXP | Role |
 |---|---|---|---|---|---|---|---|
 | `mix` | Mix | f | 0 – 100 % | 0 – 60 | 30 % | ✓ | Wet level, dry at unity (catalogue law). 100 % with `kill_dry` for a parallel lane |
-| `decay` | Decay | f | 0.2 – 20 s | 0.3 – 4 | 1.3 s | ✓ | Mid-band RT60 |
+| `decay` | Decay | f | 0.1 – 60 s | 0.3 – 4 | 1.3 s | ✓ | Mid-band RT60 |
 | `size` | Size | f | 5 – 60 m | 8 – 50 | 24 m | | Slewed. golem pins it at insert for blocks that do not expose it (plate: 15 m) |
 | `predelay` | Predelay | f | 0 – 250 ms | 0 – 40 | 0 ms | | golem pins it at insert for blocks that do not expose it (hall: 15 ms, room: 5 ms) |
 | `hicut` | High Cut | f | 1 – 20 kHz | 3 – 12 | 7 kHz | ✓ | Damping (RT60 halves there) + a gentle output low-pass |
-| `algo` | Algorithm | e | Hall · Plate · Room · Chamber · Cathedral | new | Hall | | Pinned by golem per block |
+| `algo` | Algorithm | e | Hall · Plate · Room · Chamber · Cathedral · Ambience · Spring · Bloom · Cloud · Gated · Reverse | new | Hall | | Pinned by golem per block (the first three are today's blocks) |
 | `lowcut` | Low Cut | f | 20 – 500 Hz | new | 80 Hz | | High-pass into the reverb |
 | `bass_mult` | Bass Decay | f | 0.5 – 2 × | new | 1 × | | Low-band RT60 ratio |
 | `bass_xover` | Bass Crossover | f | 100 – 1,000 Hz | new | 300 Hz | | |
@@ -135,10 +150,19 @@ Catalogue ids kept; ranges wider; no negative minimum.
 | `diffusion` | Diffusion | f | 0 – 100 % | new | 80 % | | |
 | `early` | Early Reflections | f | 0 – 100 % | new | 50 % | | 50 % = the algorithm's own level; ignored on Plate |
 | `width` | Width | f | 0 – 150 % | new | 100 % | | |
+| `era` | Era | e | Modern · 80s · 70s | new | Modern | | The converter and the modulation of the period (VintageVerb's "Color"): 80s = 16 kHz band, brighter early digital grain; 70s = 10 kHz band, darker, noisier modulation. Runs the tail at a reduced internal rate — also cheaper |
+| `mod_rate` | Modulation Rate | f | 0 – 100 % | new | 50 % | | 50 % = the algorithm's own (Lexicon "spin"); `mod` is the depth ("wander") |
+| `high_mult` | High Decay | f | 0.1 – 1 × | new | 1 × | | High-band RT60 ratio above `hicut` / 2: with `bass_mult`, a three-band decay |
+| `wet_low` | Wet Low Shelf | f | 0 – 100 % (50 = flat) | new | 50 % | | ±12 dB at 200 Hz on the wet |
+| `wet_high` | Wet High Shelf | f | 0 – 100 % (50 = flat) | new | 50 % | | ±12 dB at 4 kHz on the wet: tone of the reverb without changing its decay |
+| `swell` | Swell | f | 0 (off) – 2,000 ms | new | 0 | | Auto volume swell **into** the reverb: the pick attack is removed from the wet (pad / violin effect) |
+| `drive` | Drive | f | 0 – 100 % | new | 0 % | | Saturation into the tank; on Spring = dwell |
+| `springs` | Springs | e | 1 · 2 · 3 | new | 2 | | Spring |
+| `sync` | Sync | e | contract's list | new | Off | | Predelay (and Gated / Reverse length) as a note value |
 | `duck` | Ducking | f | 0 – 24 dB | new | 0 dB | ✓ | |
 | `duck_sens` | Duck Sensitivity | f | 0 – 100 % | new | 50 % | | Instead of a negative threshold |
 | `duck_release` | Duck Release | f | 50 – 2,000 ms | new | 400 ms | | |
-| `freeze` | Freeze | e | Off · Freeze · Infinite | new | Off | ✓ | |
+| `freeze` | Freeze | e | Off · Freeze · Infinite | new | Off | ✓ | Freeze = the tail holds, new notes stay out; Infinite = the tail holds and new notes add to it |
 | `kill_dry` | Kill Dry | b | off / on | new | off | | |
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
 | `trails` | Trails | b | off / on | new | on | | |
@@ -161,12 +185,24 @@ Layouts: stereo 2 / 2 by default, mono 1 / 1 offered (the tail summed).
 | Keys / piano | Chamber, decay 1.5 s, `mod` 30 % | Low modulation: no pitch wobble on sustained piano |
 | Scene change, tail rings out | `on` off, `trails` on | |
 | Parallel lane | `kill_dry` on, mix 100 % | |
+| Surf / spaghetti western | Spring, `springs` 2, decay 2 s, `drive` 50 %, `diffusion` 70 %, mix 35 %, before or after the amp | Drip from the dispersive chains; dwell |
+| Air around a dry amp sim, always on | Ambience, `size` 10 m, mix 20 % | Early reflections only: space without a tail |
+| Pads that swell behind the playing | Bloom, `size` 30 m, decay 6 s, `swell` 400 ms, mix 50 % | Fade-in tail + attack removed |
+| Post-rock wall / drone | Cloud, decay 30 s, `mod` 70 %, `duck` 6 dB, `lowcut` 250 Hz | Huge tail kept behind the playing |
+| 80s gated stabs | Gated, `sync` 1/8, `diffusion` 80 %, mix 60 % | Flat burst, cut on the beat |
+| Reverse swell into the note | Reverse, `sync` 1/4, mix 70 %, `kill_dry` optional | Rising envelope ending on the beat |
+| Vintage digital hall (80s ballad lead) | Hall, `era` 80s, decay 2.8 s, `mod` 60 % | Reduced bandwidth and period modulation |
+| Dark, warm 70s hall | Hall, `era` 70s, `wet_high` 35 % | |
+| Bright tail that does not last in the highs | `wet_high` 65 %, `high_mult` 0.5 | Tone and decay are separate controls |
 
 ## 6. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
-| RT60 per octave | within ±10 % of target at decay 0.5, 2 and 8 s, every algo |
+| RT60 per octave | within ±10 % of target at decay 0.5, 2 and 8 s, every decaying algo; `bass_mult` and `high_mult` ratios within ±10 % |
+| Spring | chirp visible in the spectrogram (dispersion curve as designed); no metallic ring on a pick attack |
+| Gated / Reverse | burst length = `size` or the synced note value ± 1 ms; ends on the beat when synced |
+| Bloom | onset reaches −3 dB of its peak after the bloom time ± 15 % |
 | Echo density | normalised echo density reaches 1 within 30 ms (Plate), 80 ms (Hall) |
 | Size sweep | no click; RT60 unchanged |
 | Mono sum | spectrally flat within a bound (no comb) |

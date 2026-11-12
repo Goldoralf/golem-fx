@@ -19,7 +19,23 @@ shifter.
 - `golem_shimmer.jsfx` (MIT, Windows / macOS): 8-line Hadamard FDN with a 2-head shifter on every line,
   3-band decay, shifter off below 0.05 st. A useful comparison.
 
-## 2. State of the art
+## 2. Can it approach ValhallaShimmer?
+
+Yes — more reachably than for any other effect here, and the bench will say how close:
+
+- **The recipe is public.** Its author documented the principle (shifter in the feedback path of diffuse
+  delay lines), why the shifter must stay simple (the reverb scrambles phase; random splices *are* the
+  sound), and the role of loop filtering and diffusion. Our design follows it.
+- **What is left is voicing**: the smoothness of the diffusion network, modulation amounts, gain staging per
+  pass. That is ear work against the reference — blind, level-matched, on the same DI — not missing
+  science.
+- **Where this design goes further** than the reference's controls (as listed in its manual): two
+  independent detuned voices over ±24 st, freeze that stops the climb (Eventide), infinite, ducking, swell,
+  shifter placement (Strymon), choice of space, pitch glide, trails.
+- **Acceptance test**: on clean.wav and lead-clean.wav, at matched settings (+12, long decay), a listener
+  cannot reliably prefer the reference over gfx-shimmer in a blind A / B. Until then it is not done.
+
+## 3. State of the art
 
 Survey of 2026-11-12. **[V]** read in a primary source; **[I]** inference or secondary.
 
@@ -48,7 +64,7 @@ shifters + zita-rev1, our own stack.
    mud.
 5. **Freeze stops the climb** by taking the shifter out of the loop.
 
-## 3. Design
+## 4. Design
 
 ```
 in ─┬──────────────────────────────────────────────────────────────── dry ──┐
@@ -73,7 +89,7 @@ in ─┬───────────────────────�
   extra predelay. Reporting it would delay the dry, which is wrong.
 - **Determinism**: per-voice fixed head phases, fixed-seed jitter.
 
-## 4. Parameters
+## 5. Parameters
 
 Catalogue ids kept; `pitch` widened so the octave is reachable.
 
@@ -94,12 +110,21 @@ Catalogue ids kept; `pitch` widened so the octave is reachable.
 | `bloom` | Bloom | f | 0 – 100 % | new | 70 % | | Diffusion; mid values fade in slowly |
 | `moddepth` | Modulation | f | 0 – 100 % | new | 25 % | | Low by default: the shifter already modulates |
 | `character` | Character | e | Grainy · Smooth | new | Grainy | | Smooth = reverse grains |
+| `space` | Space | e | Hall · Cathedral · Cloud · Plate | new | Hall | | Which gfx-reverb tail carries the shimmer: Cloud = the biggest and slowest (ValhallaShimmer's large modes), Plate = tight and bright |
+| `mod_rate` | Modulation Rate | f | 0 – 100 % | new | 50 % | | 50 % = the space's own |
+| `swell` | Swell | f | 0 (off) – 2,000 ms | new | 0 | | Auto volume swell into the reverb: no pick attack in the pad (Mercury7) |
+| `voice_pan` | Voice Spread | f | 0 – 100 % | new | 50 % | | Voice 1 towards the left, voice 2 towards the right |
+| `bass_mult` | Bass Decay | f | 0.5 – 2 × | new | 1 × | | As gfx-reverb |
+| `tone` | Tone | f | 0 – 100 % (50 = flat) | new | 50 % | | Tilt on the wet |
+| `glide` | Pitch Glide | f | 0 – 2,000 ms | new | 50 ms | | Time for `pitch` / `pitch2` to reach a new value: scene changes sweep instead of jumping |
 | `duck` | Ducking | f | 0 – 100 % | new | 0 % | ✓ | Wet ducked while playing |
-| `freeze` | Freeze | b | off / on | new | off | ✓ | Stops the climb |
+| `freeze` | Freeze | e | Off · Freeze · Infinite | new | Off | ✓ | Freeze = the pad holds, the climb stops (shifter out of the loop), new notes stay out; Infinite = the pad holds and new notes add to it |
 | `width` | Width | f | 0 – 100 % | new | 100 % | | |
+| `kill_dry` | Kill Dry | b | off / on | new | off | | Parallel lane |
+| `trails` | Trails | b | off / on | new | on | | |
 | `on` | On | b | off / on | new | on | | Bypass parameter with trails |
 
-## 5. Applications
+## 6. Applications
 
 | Use | Settings to start from | Feature that matters |
 |---|---|---|
@@ -112,8 +137,14 @@ Catalogue ids kept; `pitch` widened so the octave is reachable.
 | Pad that stays out of the way | `duck` 50 %, `bloom` 60 % | Ducking + slow fade-in |
 | Hold a chord as a drone | `freeze` on a footswitch | The climb stops, the pad sustains |
 | Swells with the volume pedal | mix 60 %, decay 8 s, EXP on `mix` or `shimmer` | |
+| ValhallaShimmer-style giant pad | `space` Cloud, pitch +12, shimmer 60 %, decay 12 s, `bloom` 60 %, `moddepth` 20 % | Diffuse big tail + in-loop shifter |
+| Octave up and down together (Valhalla "Dual") | pitch +12, `pitch2` −12, `voice2` 100 %, `lowcut` 200 Hz | Two voices |
+| Attack-free strings | `swell` 500 ms, `character` Smooth, mix 70 % | Swell + reverse grains |
+| Bright, tight shimmer on rhythm | `space` Plate, decay 2 s, shimmer 35 % | |
+| Growing wash you can play into | `freeze` Infinite | |
+| Chord change sweeps the pad's interval | scene sets `pitch` +7 → +12, `glide` 1 s | Pitch glide |
 
-## 6. Bench suite (on top of gfx-bench's common checks)
+## 7. Bench suite (on top of gfx-bench's common checks)
 
 | Check | Pass |
 |---|---|
@@ -123,4 +154,5 @@ Catalogue ids kept; `pitch` widened so the octave is reachable.
 | Freeze | no climb: spectrum centroid stable over 30 s |
 | Determinism | strict null between two renders, and between REAPER and Ardour |
 | CPU | tank + 2 voices stereo ≤ 2 % of one core at 48 kHz |
-| Listening | clean.wav and lead-clean.wav with golem's four presets (Octave halo at +12), against GxShimmiZita and golem_shimmer.jsfx |
+| Spaces | stable and bounded in every `space` at pitch +12, shimmer 100 % |
+| Listening | clean.wav and lead-clean.wav with golem's four presets (Octave halo at +12), against GxShimmiZita and golem_shimmer.jsfx; then the blind acceptance test of §2 |

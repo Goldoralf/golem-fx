@@ -55,9 +55,12 @@ sites refused automated reading).
 3. **The loop** carries the colour: low-cut, high-cut, soft saturation (bounded, so high feedback stays
    safe), modulation, DC blocker.
 4. **Ducking** (TC 2290) and **trails** are what make a delay live-grade.
-5. Skipped for v1: free multitap patterns, pitch / shimmer in the loop (gfx-shimmer), groove / feel, tap
-   tempo (the host gives the tempo), full tape hysteresis. **Planned next: reverse** (a live staple on the
-   Timeline / DD-500) — the line and crossfader are sized for it.
+5. **Full coverage is the goal** (the Timeline has 12 machines; EchoBoy 30 styles): the design covers
+   digital, tape, BBD, lo-fi, reverse, multi-head / pattern taps, pitch and frequency-shifted repeats,
+   swell, ducking, filter sweep, diffusion, hold. Each is a block in the loop, so they **combine** (a
+   reversed, diffused tape delay with octave-up repeats is three switches).
+6. Skipped: a free tap editor (patterns cover the uses; a golem UI question), groove / feel, tap tempo
+   (the host gives the tempo), full tape hysteresis, a looper (golem has one).
 
 ## 2. Design
 
@@ -65,8 +68,9 @@ sites refused automated reading).
 
 ```
 in ─┬──────────────────────────────────────────────────────────────── dry (× kill_dry) ──┐
-    └▶ ×on ▶ drive ▶ (+) ▶ write ▶ read (Lagrange, mod, glide / crossfade) ▶ low-cut ▶ high-cut
-                      ▲                                                         ▶ sat ▶ DC ─┐
+    └▶ ×on ▶ swell ▶ drive ▶ (+) ▶ write ▶ read (taps, forward / reverse, mod, glide / crossfade)
+                              ▲      ▶ loop pitch / freq shift ▶ low-cut ▶ high-cut (sweep) ▶ diffusion
+                              │                                                 ▶ sat (age) ▶ DC ─┐
                       └────────────── × feedback (+ crossfeed in ping-pong) ◀───────────────┤
                                                                      wet × mix × duck ◀──────┴▶ out
 ```
@@ -78,6 +82,7 @@ in ─┬───────────────────────�
 | **Digital** (default) | flat, slight top roll-off (SDE-3000 era) | very light | crossfade |
 | **Tape** | head bump, high-frequency loss growing with each pass, tape saturation | wow + flutter (Echoplex model) | glide (pitch bend) |
 | **BBD** | darker as the time grows (filters track the clock), compander softness, optional hiss | light, triangle | glide |
+| **Lo-Fi** | early digital: sample-rate and bit-depth reduction **inside the loop** (each repeat grainier), no anti-alias smoothing (DL4 "Lo Res", Timeline "Lo-Fi") | none | crossfade |
 
 ### Trails
 
@@ -101,8 +106,8 @@ Catalogue ids kept; `time` keeps the catalogue's option order (options are appen
 | `time` | Time | e | 1/4• · 1/4 · 1/8• · 1/8 · 1/8T · 1/16 · 1/2 · 1/4T · 1/16• · Free | first 6 | 1/8• | glide | | Note value at the host tempo (fallback 120 BPM); Free = `time_ms` |
 | `feedback` | Feedback | f | 0 – 110 % | 0 – 75 | 35 % | 30 ms | ✓ | Linear loop gain (golem's `pct_db` law: 35 % = × 0.35). Above 100 % the loop self-oscillates, bounded by the saturator: the tape-echo performance trick on an EXP pedal |
 | `mix` | Mix | f | 0 – 100 % | 0 – 50 | 25 % | 20 ms | ✓ | **Wet level, dry at unity**: linear wet gain = mix / 100 (golem's `pct_db` law, kept) |
-| `model` | Model | e | Digital · Tape · BBD | new | Digital | crossfade | | §2 |
-| `time_ms` | Time (free) | f | 20 – 2,000 ms | new | 375 ms | glide | ✓ | Used when `time` = Free |
+| `model` | Model | e | Digital · Tape · BBD · Lo-Fi | new | Digital | crossfade | | §2 |
+| `time_ms` | Time (free) | f | 1 – 4,000 ms | new | 375 ms | glide | ✓ | Used when `time` = Free. From comb / doubling (1 – 40 ms) to long ambient repeats |
 | `glide` | Time Change | e | Auto · Glide · Crossfade | new | Auto | — | | Auto = the engine's own (table §2) |
 | `glide_ms` | Glide Time | f | 10 – 1,000 ms | new | 150 ms | — | | Slew or crossfade duration |
 | `low_cut` | Low Cut | f | 20 – 1,000 Hz | new | 80 Hz | 30 ms | | In the loop: each repeat thinner |
@@ -110,7 +115,13 @@ Catalogue ids kept; `time` keeps the catalogue's option order (options are appen
 | `drive` | Drive | f | 0 – 100 % | new | 0 % | 30 ms | | Extra saturation into the loop, on top of the model's own (Echoplex preamp idea) |
 | `mod` | Modulation | f | 0 – 100 % | new | 50 % | 50 ms | | 50 % = the model's own wow / flutter / chorus; 0 = none; 100 = exaggerated. Deterministic |
 | `diffusion` | Diffusion | f | 0 – 100 % | new | 0 % | 30 ms | | Allpass smear in the loop: repeats blur into a wash (ambient, EchoBoy / Valhalla) |
-| `heads` | Heads | e | 1 · 1+2 · 1+2+3 | new | 1 | crossfade | | Space Echo: extra playback heads at ⅔ and ⅓ of the time, rhythmic multi-tap |
+| `taps` | Taps | e | Single · Heads 1+2 · Heads 1+2+3 · Heads 1+3 · Golden · Triplet Gallop · Dotted + Quarter · Swing | new | Single | crossfade | | Extra playback taps before the feedback point. Heads = Space Echo (⅓, ⅔, 1); Golden = taps at 0.382 and 0.618 (dense, non-rhythmic); Dotted + Quarter = The Edge's two delays in one |
+| `direction` | Direction | e | Forward · Reverse | new | Forward | crossfade | | Reverse: each repeat plays backwards, in windows of one delay time, crossfaded at the seams |
+| `loop_pitch` | Loop Pitch | f | −12 – +12 st | new | 0 (off) | 50 ms | | A pitch shifter in the loop: each repeat climbs or falls (crystal delays at +12, shimmer delay at +7 / +12, detuned repeats at ±0.1) |
+| `loop_shift` | Loop Freq Shift | f | 0 – 100 % (50 = off) | new | 50 % | 50 ms | | A frequency shifter in the loop (±50 Hz, log): repeats drift inharmonically (Valhalla "Ghost"); small values = barber-pole phasing echoes |
+| `age` | Age | f | 0 – 100 % | new | 0 % | 50 ms | | Wear of the medium, per model: Tape = more wow, dropouts, crinkle, treble loss; BBD = more clock noise and compander pumping; Lo-Fi = lower rate and bits; Digital = none |
+| `swell` | Swell | f | 0 (off) – 2,000 ms | new | 0 | — | | Auto volume swell into the delay: pick attacks removed from the repeats (pad delays) |
+| `sweep` | Loop Filter Sweep | f | 0 – 100 % | new | 0 % | 30 ms | | A slow LFO on the loop's band-pass: each repeat filtered differently (Timeline "Filter") |
 | `duck` | Ducking | f | 0 – 24 dB | new | 0 dB | 30 ms | ✓ | Wet attenuation while playing |
 | `duck_thresh` | Duck Threshold | f | −60 – 0 dB | new | −30 dB | 20 ms | | |
 | `duck_release` | Duck Release | f | 50 – 2,000 ms | new | 300 ms | — | | How fast the repeats bloom back |
@@ -128,8 +139,10 @@ and `mod` act on top of it, as the contract's parameter conventions require.
 Layouts: stereo 2 / 2 by default (ping-pong, dual, width), mono 1 / 1 offered; with `stereo` = Mono the two
 outputs are identical.
 
-Real-time: the line is allocated in `initialize` for 4 s at the highest sample rate, stereo (a half note
-at 30 BPM). Modulation restarts at phase 0 and a fixed seed on reset.
+Real-time: the line is allocated in `initialize` for 8 s at the highest sample rate, stereo (reverse and
+multi-tap read behind the main tap). The loop pitch shifter is gfx-dsp's delay-line shifter (as in
+gfx-shimmer: inside a loop its delay is part of the repeat, no reported latency); the frequency shifter is
+an IIR Hilbert pair (zero latency). Modulation restarts at phase 0 and a fixed seed on reset.
 
 ## 4. Applications
 
@@ -146,6 +159,19 @@ at 30 BPM). Modulation restarts at phase 0 and a fixed seed on reset.
 | Parallel lane (wet only) | `kill_dry` on, mix 100 % | |
 | Scene change with the tail ringing | `on` off with `trails` on | Trails through the bypass parameter |
 | Freeze a chord under a solo | `hold` on a footswitch | Hold |
+| Reverse solo (Hendrix "Are You Experienced") | `direction` Reverse, `time` 1/2, feedback 0 %, mix 100 %, `kill_dry` on | Reverse windows crossfaded |
+| Reverse ambience behind chords | Reverse, feedback 40 %, `diffusion` 50 %, mix 35 % | |
+| Crystal / octave-up repeats | Digital, `loop_pitch` +12, feedback 55 %, `high_cut` 6 kHz | Shifter in the loop |
+| Falling, haunted repeats | Tape, `loop_pitch` −0.3, feedback 60 %, `age` 60 % | |
+| Ghost echoes | `loop_shift` 60 %, feedback 65 %, `diffusion` 40 % | Frequency shifter in the loop |
+| The Edge, two delays at once | `taps` Dotted + Quarter, `time` 1/4, feedback 30 % | |
+| Dense non-rhythmic thickening | `taps` Golden, `time_ms` 180, feedback 20 %, `diffusion` 30 % | |
+| Worn-out tape echo | Tape, `age` 80 %, `mod` 70 %, `drive` 40 % | Age |
+| 8-bit / lo-fi repeats | Lo-Fi, `age` 60 %, feedback 45 % | Degradation accumulates per repeat |
+| Pad delay (no attacks) | `swell` 300 ms, `time` 1/4•, feedback 55 %, `diffusion` 60 %, mix 50 % | Swell |
+| Moving filtered repeats | `sweep` 60 %, feedback 60 % | |
+| Doubling / ADT | `time_ms` 25, feedback 0 %, `mod` 60 %, mix 80 % | Short time range |
+| Tuned comb / resonator | `time_ms` 5, feedback 95 %, EXP on `time_ms` | 1 ms minimum, glide |
 
 ## 5. Bench suite (on top of gfx-bench's common checks)
 
@@ -158,6 +184,10 @@ at 30 BPM). Modulation restarts at phase 0 and a fixed seed on reset.
 | Ducking | wet −`duck` dB while playing, back within `duck_release` |
 | Trails | `on` off: repeats continue (trails) or fade in 20 ms (no trails); no click either way |
 | Hold | the loop sustains without growing or decaying beyond ± 0.5 dB over 30 s |
+| Reverse | each window is the exact time-reversal of the input segment; seams click-free; window = delay time ± 1 sample |
+| Loop pitch | n-th repeat shifted by n × `loop_pitch` ± 3 cents; bounded at feedback 100 % |
+| Taps | each pattern's taps at their ratios ± 1 sample |
+| Lo-Fi / Age | degradation accumulates per repeat; deterministic (same render twice) |
 | Mono / stereo | Mono mode: L = R |
 | Presets | golem's 10 delay presets (Standard, Slapback, Dotted eighths, Ambient…) on clean and lead-clean |
 

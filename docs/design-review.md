@@ -124,6 +124,18 @@ Honest boundaries, so expectations are right:
   further design: reference recordings, blind level-matched comparisons, and the missing DIs (bass,
   voice, keys renders).
 
+### Priority effects: reverb, delay, shimmer
+
+Raph's priority (2026-11-12): these three must be as complete as possible. Extended after the review:
+
+- **gfx-reverb**: 11 algorithms (Hall, Plate, Room, Chamber, Cathedral, Ambience, Spring, Bloom, Cloud, Gated,
+  Reverse), `era` (Modern / 80s / 70s), three-band decay, wet shelves, swell, drive / dwell, modulation rate,
+  sync, decay to 60 s.
+- **gfx-delay**: 4 models (Digital, Tape, BBD, Lo-Fi), reverse, 8 tap patterns, pitch and frequency shifters
+  in the loop, age, swell, filter sweep, diffusion, 1 ms – 4 s. All combinable.
+- **gfx-shimmer**: choice of space, two voices, freeze / infinite, swell, pitch glide, voice spread; an explicit
+  acceptance test against ValhallaShimmer (blind A / B).
+
 ## 7. Open points
 
 | Point | Owner |
