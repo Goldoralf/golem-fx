@@ -29,8 +29,8 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | design |
 | 11 | [gfx-phaser](gfx-phaser/) | `phaser-js` | JS phaser | design |
 | 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |
-| 14 | gfx-tremolo | `tremolo` | Calf Pulsator | research |
-| 15 | gfx-vibrato | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | research |
+| 14 | [gfx-tremolo](gfx-tremolo/) | `tremolo` | Calf Pulsator | design |
+| 15 | [gfx-vibrato](gfx-vibrato/) | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | design |
 | 16 | [gfx-reverb](gfx-reverb/) | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | design |
 | 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | design |
 | 18 | gfx-wah | `wah`, `wah-color` | GxGCB-95, GxWahwah | research |
