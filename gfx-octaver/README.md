@@ -78,6 +78,7 @@ Catalogue ids kept.
 | `glide` | Glide | f | 0 – 200 ms | new | 0 ms | | Synth |
 | `shape` | Shape | f | 0 – 100 % | new | 0 % | | Synth: sine → square |
 | `range` | Range | f | 40 – 1,000 Hz | new | 1,000 Hz | | Poly: only notes below this get octaved |
+| `level` | Level | f | −24 – +24 dB | new | 0 dB | | Output. Gxoc_2 (what golem plays on Linux) runs ~12 dB hot against unity: golem can pin this at insert for preset loudness |
 
 ## 5. Applications
 

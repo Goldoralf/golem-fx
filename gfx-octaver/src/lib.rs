@@ -32,7 +32,7 @@ mod plugin;
 const MAX_CH: usize = 2;
 const N_BANDS: usize = 28;
 
-pub static PARAMS: [ParamInfo; 12] = [
+pub static PARAMS: [ParamInfo; 13] = [
     ParamInfo::float("direct", "Direct", 0.0, 1.0, 1.0).with_exp(),
     ParamInfo::float("octave1", "Octave -1", 0.0, 1.0, 0.6).with_exp(),
     ParamInfo::float("octave2", "Octave -2", 0.0, 1.0, 0.0).with_exp(),
@@ -45,6 +45,7 @@ pub static PARAMS: [ParamInfo; 12] = [
     ParamInfo::float("glide", "Glide", 0.0, 200.0, 0.0),
     ParamInfo::float("shape", "Shape", 0.0, 100.0, 0.0),
     ParamInfo::float("range", "Range", 40.0, 1000.0, 1000.0),
+    ParamInfo::float("level", "Level", -24.0, 24.0, 0.0),
 ];
 
 pub mod p {
@@ -60,7 +61,8 @@ pub mod p {
     pub const GLIDE: usize = 9;
     pub const SHAPE: usize = 10;
     pub const RANGE: usize = 11;
-    pub const N: usize = 12;
+    pub const LEVEL: usize = 12;
+    pub const N: usize = 13;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -148,6 +150,7 @@ pub struct Octaver {
     octave_up: ExpSmoother,
     sub_tone: OnePole,
     up_tone: OnePole,
+    level: OnePole,
     mode: usize,
     pending: bool,
     gate: LinearRamp,
@@ -169,6 +172,7 @@ impl Octaver {
             octave_up: ExpSmoother::new(0.0, 1.0, v[p::OCTAVE_UP]),
             sub_tone: OnePole::new(30.0, v[p::SUB_TONE], 1e-3),
             up_tone: OnePole::new(30.0, v[p::UP_TONE], 1e-3),
+            level: OnePole::new(20.0, v[p::LEVEL], 1e-4),
             mode: 0,
             pending: false,
             gate: LinearRamp::new(20.0, 1.0),
@@ -191,6 +195,7 @@ impl Octaver {
         }
         self.sub_tone.set_target(v[p::SUB_TONE]);
         self.up_tone.set_target(v[p::UP_TONE]);
+        self.level.set_target(v[p::LEVEL]);
         if idx(v[p::MODE], 4) != self.mode || idx(v[p::INSTRUMENT], 2) != idx(old[p::INSTRUMENT], 2) {
             self.pending = true;
             self.gate.set_target(0.0);
@@ -282,6 +287,8 @@ impl Octaver {
             let o1 = self.octave1.next() * gs;
             let o2 = self.octave2.next() * gs;
             let up = self.octave_up.next() * gs;
+            let lv = self.level.next();
+            let og = if lv == 0.0 { 1.0 } else { 10f32.powf(lv / 20.0) };
             let mode = self.mode;
             for c in 0..nch {
                 let x = buffers[c][i];
@@ -459,7 +466,7 @@ impl Octaver {
                 let s2a = ch.sub2_lp[0].process(sub2);
                 let s2f = ch.sub2_lp[1].process(s2a);
                 let upf = ch.up_lp.process(upv);
-                buffers[c][i] = direct * dry + o1 * s1f + o2 * s2f + up * upf;
+                buffers[c][i] = (direct * dry + o1 * s1f + o2 * s2f + up * upf) * og;
             }
         }
     }
@@ -484,6 +491,7 @@ impl Effect for Octaver {
         self.sub_tone.prepare(sample_rate / 16.0);
         self.up_tone.prepare(sample_rate / 16.0);
         self.gate.prepare(sample_rate);
+        self.level.prepare(sample_rate);
         self.build_bands();
         self.control();
     }
@@ -495,6 +503,7 @@ impl Effect for Octaver {
         }
         self.sub_tone.settle();
         self.up_tone.settle();
+        self.level.settle();
         self.mode = idx(v[p::MODE], 4);
         self.pending = false;
         self.gate.set_immediate(1.0);

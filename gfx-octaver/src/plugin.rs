@@ -67,6 +67,8 @@ struct OctaverParams {
     shape: FloatParam,
     #[id = "range"]
     range: FloatParam,
+    #[id = "level"]
+    level: FloatParam,
 }
 
 impl Default for OctaverParams {
@@ -84,6 +86,7 @@ impl Default for OctaverParams {
             glide: f(9, " ms", 0),
             shape: f(10, " %", 0),
             range: f(11, " Hz", 0),
+            level: f(12, " dB", 1),
         }
     }
 }
@@ -104,6 +107,7 @@ impl OctaverParams {
                 self.glide.value(),
                 self.shape.value(),
                 self.range.value(),
+                self.level.value(),
             ],
         }
     }
