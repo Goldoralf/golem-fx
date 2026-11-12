@@ -70,8 +70,9 @@ Decided at the design review of 2026-11-12, to keep 22 effects coherent.
 - **VST3 only.**
 - **Mono layout first** (1 in / 1 out), stereo 2 / 2 second. The Golem Engine keeps a lane mono until its
   first plugin whose default layout is stereo, so a gate before the amp must not make the lane stereo.
-  Stereo-by-nature effects (chorus, delay, phaser…) may default to stereo; the mono DI then arrives on
-  both inputs.
+  **Stereo-by-nature effects (chorus, delay, reverb, shimmer, phaser, rotary…) put 2 / 2 first**: that is
+  where golem turns the lane stereo, and the mono DI then arrives on both inputs. A stereo effect left at
+  1 / 1 first plays mono on a mono lane (golem-rack, 2026-11-12, gfx-chorus).
 - **Zero latency**, unless reported to the host.
 - **No allocation, lock or I/O in `process`.**
 - **No modal window, no blocking work when the plugin turns on.** A plugin that freezes the engine on
@@ -121,6 +122,14 @@ sidebands ≤ −80 dB, a step reaches 90 % within one interval + 5 ms, a 128-st
   invisible; an offline bench must let the engine run one cycle before saving.
 - golem_rig sets REAPER's displayed-value ("norm") knobs one display step below the target. Our own
   renders write raw values.
+
+### nih-plug parameter normalization in REAPER (golem-rack, 2026-11-12)
+
+Measured with `TrackFX_SetParamNormalized`, then the formatted value read back:
+- **Enums**: index / (n − 1), exact; a value between steps snaps to the nearest.
+- **Bools**: seen as toggles; 0 … 0.5 → off, 0.75 and 1 → on. golem writes 0 / 1.
+- **Negative minimum** (e.g. `output` −12 … +12 dB): linear, plain = min + (max − min) · n. No bipolar
+  trap: that is a JSFX slider issue only.
 
 ## Proof
 
