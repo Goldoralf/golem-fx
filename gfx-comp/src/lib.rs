@@ -14,8 +14,10 @@
 //! - Colour: an antiderivative-antialiased shaper inside 2× minimum-phase oversampling, crossfaded in
 //!   only when the character or `drive` asks for it; the dry of `mix` goes through the same filters.
 //!
-//! Levels are "sine-calibrated": an RMS detector reads √2 × RMS, so a sine reads its peak in every
-//! character. Zero latency.
+//! Levels are **RMS-calibrated**, as ReaComp's and most compressors' thresholds: an RMS detector reads
+//! the RMS, a peak detector reads peak − 3 dB, so a steady sine reads its RMS in every character (golem's
+//! presets were set by ear on ReaComp's RMS detector; measured by the rack session 2026-11-12: a
+//! peak-calibrated reading compressed 2.6 dB harder at the same settings). Zero latency.
 
 use gfx_dsp::adaa::{Adaa1, HalfSample, Shaper};
 use gfx_dsp::envelope::SlidingMax;
@@ -32,6 +34,8 @@ mod plugin;
 
 const MAX_CH: usize = 2;
 const CTL: u64 = 32;
+/// Peak − RMS of a sine (dB): peak detectors are calibrated to read a sine's RMS.
+const SINE_CREST_DB: f32 = 3.010_3;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Character {
@@ -355,11 +359,11 @@ impl Comp {
         // program-dependent release coefficients computed here when needed
         let c = &mut self.ch[i];
         c.ms = (sc as f64) * (sc as f64) + (c.ms - (sc as f64) * (sc as f64)) * rms_coef;
-        let peak = db(c.pk.next(sc));
-        let rms = db(((2.0 * c.ms).sqrt()) as f32);
+        let peak = db(c.pk.next(sc)) - SINE_CREST_DB;
+        let rms = db((c.ms.sqrt()) as f32);
         // how long and how hard it has been compressing: rises in 300 ms, falls in 3 s
         // busy = the input itself asks for reduction (not the release still recovering from it)
-        let busy = if static_curve(rms.max(peak - 3.0), t, r, w) - rms.max(peak - 3.0) < -1.0 { 1.0 } else { 0.0 };
+        let busy = if static_curve(rms.max(peak), t, r, w) - rms.max(peak) < -1.0 { 1.0 } else { 0.0 };
         let k_s = if busy > c.sustain { sustain_coef } else { sustain_fall };
         c.sustain = busy + (c.sustain - busy) * k_s;
         let into = |g: f32, target: f32, a: f32, r: f32| if target < g { target + (g - target) * a } else { target + (g - target) * r };

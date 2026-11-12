@@ -38,7 +38,7 @@ fn run(c: &mut Comp, x: &[f32], block: usize) -> (Vec<f32>, Vec<f32>) {
 fn one_static_curve_in_every_character() {
     let (t, r, w) = (-20.0, 4.0, 6.0);
     for ch in Character::ALL {
-        for level in [-30.0f32, -22.0, -18.0, -10.0, -4.0] {
+        for level in [-27.0f32, -19.0, -15.0, -7.0, -1.0] {
             let mut c = comp(|s| {
                 s.character = ch;
                 s.thresh = t;
@@ -50,7 +50,9 @@ fn one_static_curve_in_every_character() {
             let x = sine(ms(2000.0), 1000.0, 10f32.powf(level / 20.0));
             let (_, gr) = run(&mut c, &x, 480);
             let got = gr[gr.len() - 1];
-            let want = level - static_curve(level, t, r, w);
+            // levels read as RMS: a sine of peak `level` dBFS reads level − 3 dB
+            let l = level - 3.0103;
+            let want = l - static_curve(l, t, r, w);
             assert!((got - want).abs() < 0.5, "{ch:?} at {level} dBFS: gr {got:.2}, curve {want:.2}");
         }
     }
