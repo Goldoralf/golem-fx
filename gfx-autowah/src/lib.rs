@@ -347,10 +347,12 @@ impl Autowah {
                             ch.f1.set(mode, fc, q, 0.0, sr);
                             ch.f1.process(driven)
                         };
-                        if ftype == FilterType::BandPassDry {
-                            driven + y
-                        } else {
-                            y
+                        // band-pass: the resonant output of the analogue state-variable filter (gain = Q at
+                        // the peak), as in the Mu-Tron and the Q-Tron, not a unity-peak band
+                        match ftype {
+                            FilterType::BandPassDry => driven + y * q.sqrt(),
+                            FilterType::BandPass => y * q,
+                            _ => y,
                         }
                     }
                 };
