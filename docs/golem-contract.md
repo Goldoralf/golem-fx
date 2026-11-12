@@ -61,11 +61,21 @@ Effects with a tail (delay, and any later reverb) switch on / off through their 
 
 ## Expression pedal
 
-golem's EXP values arrive every 10 – 20 ms (OSC / MIDI). A fixed short one-pole leaves a staircase that
-buzzes on resonant filters; a long one lags. EXP-capable parameters therefore ramp linearly to each new
-value over the **measured** update interval (median of the last few), then pass a short critically damped
-smoother (3 – 5 ms) and a slew limit. Shared in gfx-dsp (`smooth`). Bench: a 50 Hz-stepped sweep leaves
-control-rate sidebands ≤ −80 dB, and a step reaches 90 % within one interval + 5 ms.
+How EXP values arrive (golem's `bridge/foot.py`, 2026-11-12; the rate itself not measured yet):
+
+- The foot controller sends a **7-bit** MIDI CC (0 – 127) each time the pedal moves; the bridge drops
+  repeats and forwards each CC at once, with no throttle and no smoothing.
+- REAPER: one OSC message per CC, applied by its control surface on the main thread — so values land in
+  **batches**, several steps at once. Golem Engine: the same OSC message, applied at the next audio cycle.
+- So: at most 128 steps, **irregular** intervals (a few ms during a fast sweep, nothing while the foot
+  rests), bursts on REAPER.
+
+Rule for EXP-capable parameters (shared in gfx-dsp `smooth`): on each new value, ramp linearly from the
+current value to the target over the recent update interval (median of the last few, clamped to
+5 – 30 ms; in a burst only the last value counts), then a short critically damped smoother (3 – 5 ms) and a
+slew limit. The 7-bit steps are the smoother's job, not the plugin's resolution: musical parameters
+driven by EXP must not sound stepped at 128 values. Bench: a 50 Hz-stepped sweep leaves control-rate
+sidebands ≤ −80 dB, a step reaches 90 % within one interval + 5 ms, a 128-step sweep has no audible steps.
 
 ## Known host behaviour
 

@@ -12,7 +12,8 @@ parameter ids and units ([golem contract](../docs/golem-contract.md)):
 | `reverb-room` | Dragonfly Room (early reflections + Progenitor allpass loop) | `mix` 0 – 60 %, `decay` 0.3 – 2.5 s, `size` 8 – 24 m, `hicut` 3 – 12 kHz |
 
 The ids share their units across the three blocks, so **one plugin** covers them, with an `algo`
-parameter golem pins per block (to agree; fallback: three VST3 classes with `algo` fixed). The shimmer is
+parameter golem pins per block at insert (agreed with the rack session: `init` in the Golem Engine table,
+`FX_INIT` under REAPER — reverb = Hall, reverb-plate = Plate, reverb-room = Room, never touched again). The shimmer is
 [gfx-shimmer](../gfx-shimmer/), built on this engine; the spring stays golem's `surge-spring`.
 
 The aim: dense, smooth tails with no metallic ring, accurate decay per band, the two sounds people
