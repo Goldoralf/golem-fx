@@ -25,10 +25,10 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | design |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | design |
-| 9 | gfx-drive | `guitar-drive` | JS guitar/distortion | — |
+| 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | design |
 | 10 | gfx-flanger | `flanger-js` | JS flanger | — |
 | 11 | gfx-phaser | `phaser-js` | JS phaser | — |
-| 12 | gfx-pitch | `pitch-shift-js`, `pitch`, `detune` | JS pitch shift, ReaPitch (quarantined) | — |
+| 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
