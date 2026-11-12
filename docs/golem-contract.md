@@ -16,8 +16,10 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
   the catalogue's **unit**. Ranges may be a little wider than the catalogue's. The display name is free;
   golem maps catalogue id → parameter on its side (engine table).
 - **Real units**: dB, ms, Hz, %, semitones, or the catalogue's own scale (e.g. 0 – 1).
-- **golem writes plain values.** Ardour converts them through the plugin's controller, so a skewed range
-  is fine as long as plain ↔ normalized is exact both ways.
+- **Linear ranges only.** Ardour converts plain values through the plugin's controller, but REAPER's path
+  (golem_rig) writes the normalized value as (v − min) / (max − min) — measured on gfx-boost 2026-11-12. A
+  skewed range would land on the wrong value in REAPER. Knob feel is golem's UI's business, not the
+  plugin's.
 - **Enums in the catalogue's option order.**
 - **One plugin may stand for several blocks** when they share ids: `volume` (`gain` −60 … +6 dB) and
   `clean-boost` (`gain` 0 … +12 dB) are both gfx-boost, with `gain` −60 … +12 dB.

@@ -27,24 +27,14 @@ enum Source {
     Key,
 }
 
-fn skew(min: f32, max: f32, centre: f32) -> FloatRange {
-    FloatRange::Skewed { min, max, factor: FloatRange::skew_factor_from_centre(min, max, centre) }
+/// Linear ranges only: golem writes REAPER's normalized value as (v − min) / (max − min)
+/// (golem contract §Parameters), so any skew would land on the wrong value.
+fn lin(min: f32, max: f32) -> FloatRange {
+    FloatRange::Linear { min, max }
 }
 
-trait SkewCentre {
-    fn skew_factor_from_centre(min: f32, max: f32, centre: f32) -> f32;
-}
-
-impl SkewCentre for FloatRange {
-    /// The skew factor that puts `centre` at the middle of the knob.
-    fn skew_factor_from_centre(min: f32, max: f32, centre: f32) -> f32 {
-        let x = (centre - min) / (max - min);
-        (0.5f32).ln() / x.ln()
-    }
-}
-
-fn ms(name: &str, default: f32, min: f32, max: f32, centre: f32) -> FloatParam {
-    FloatParam::new(name, default, skew(min, max, centre))
+fn ms(name: &str, default: f32, min: f32, max: f32, _centre: f32) -> FloatParam {
+    FloatParam::new(name, default, lin(min, max))
         .with_unit(" ms")
         .with_value_to_string(formatters::v2s_f32_rounded(1))
 }
@@ -55,8 +45,8 @@ fn db(name: &str, default: f32, min: f32, max: f32) -> FloatParam {
         .with_value_to_string(formatters::v2s_f32_rounded(1))
 }
 
-fn hz(name: &str, default: f32, min: f32, max: f32, centre: f32) -> FloatParam {
-    FloatParam::new(name, default, skew(min, max, centre))
+fn hz(name: &str, default: f32, min: f32, max: f32, _centre: f32) -> FloatParam {
+    FloatParam::new(name, default, lin(min, max))
         .with_unit(" Hz")
         .with_value_to_string(formatters::v2s_f32_rounded(0))
 }
@@ -107,7 +97,7 @@ impl Default for GateParams {
             lpf: hz("Sidechain High Cut", 20000.0, 500.0, 22000.0, 5000.0),
             hyst: db("Hysteresis", 0.0, -24.0, 0.0),
             range: db("Range", -90.0, -90.0, 0.0),
-            ratio: FloatParam::new("Ratio", 100.0, skew(1.0, 100.0, 4.0))
+            ratio: FloatParam::new("Ratio", 100.0, lin(1.0, 100.0))
                 .with_value_to_string(Arc::new(|v| if v >= 99.5 { "inf".into() } else { format!("{v:.1}:1") })),
             knee: db("Knee", 0.0, 0.0, 24.0),
             follow: BoolParam::new("Follow Decay", false),

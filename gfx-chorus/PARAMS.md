@@ -24,7 +24,7 @@
      crossfade between the old and the new state, so that a scene change never clicks.
 6. **Musical units** (Hz, ms, dB, %), logarithmic curves for frequencies and rates.
 
-Columns: **Type** `f` float, `e` enum, `b` bool · **Curve** lin / log · **Smooth** in ms (— = structural,
+Columns: **Type** `f` float, `e` enum, `b` bool · **Curve** (display only — every range is linear, see the contract) · **Smooth** in ms (— = structural,
 crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the catalogue).
 
 ## Front panel — the golem block
@@ -120,8 +120,8 @@ These two belong to the **Modulation** group: with `mod_custom` off they follow 
 - **`output` has a negative minimum.** REAPER's "bipolar slider" trap is documented for JSFX
   (`~/golem/docs/pitfalls/jsfx.md`); check it for an nih-plug VST3 with `fxset` (write, read back).
   Fallback: a 0 – 400 % linear gain range.
-- **Log curves.** golem writes plain values; Ardour converts them through the plugin's controller, so a
-  skewed range is fine as long as plain ↔ normalized is exact. Test it both ways for every parameter.
+- **Ranges are linear** (golem contract: REAPER writes (v − min) / (max − min)); the "log" curve column is
+  a display hint for golem's UI only.
 - **Enums and `map`.** The catalogue requires `map: norm` for JUCE VST3 enums; measure nih-plug before
   writing the catalogue entry.
 - **Bypass.** golem disables a block through the host's bypass; nih-plug also exposes a VST3 bypass
