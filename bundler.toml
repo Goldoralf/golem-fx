@@ -34,3 +34,6 @@ name = "GoleM FX Chorus"
 
 [gfx-flanger]
 name = "GoleM FX Flanger"
+
+[gfx-phaser]
+name = "GoleM FX Phaser"

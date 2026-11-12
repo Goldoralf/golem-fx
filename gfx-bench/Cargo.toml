@@ -21,3 +21,4 @@ gfx-tremolo = { path = "../gfx-tremolo", default-features = false }
 gfx-vibrato = { path = "../gfx-vibrato", default-features = false }
 gfx-chorus = { path = "../gfx-chorus", default-features = false }
 gfx-flanger = { path = "../gfx-flanger", default-features = false }
+gfx-phaser = { path = "../gfx-phaser", default-features = false }

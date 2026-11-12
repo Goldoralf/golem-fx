@@ -1,6 +1,6 @@
 # gfx-phaser
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — TPT all-pass cascade (exact prewarped corners, exponential sweep) with zero-delay feedback; Classic, Script 90, Block 90, Stone, Vibe (gfx-dsp Uni-Vibe core, lamp lag, chorus / vibrato), Bi-Phase (series / parallel, second LFO same / reverse / free), Deep 12, Barber ↑ / ↓; spread, colour, skew, eight LFO shapes, envelope / manual sweeps, tone, bass keep, host sync; stereo 2 / 2 first; 6 behaviour tests, bench green. Choices made in code: the barberpole is two cascades on sawtooth sweeps, crossfaded (the dual-flanger method), not an SSB shifter in the loop; the Classic family is linear at `color` 50 % (their own character is ideal), saturation comes in above it; notches sit where the bilinear map puts them (each stage's corner is exact).
 
 golem's phaser. Stands for golem's `phaser-js` block (today REAPER's JS `guitar/phaser`), keeping its
 parameter ids and units ([golem contract](../docs/golem-contract.md)). The aim: an exact, click-free
