@@ -162,6 +162,7 @@ an IIR Hilbert pair (zero latency). Modulation restarts at phase 0 and a fixed s
 | Reverse solo (Hendrix "Are You Experienced") | `direction` Reverse, `time` 1/2, feedback 0 %, mix 100 %, `kill_dry` on | Reverse windows crossfaded |
 | Reverse ambience behind chords | Reverse, feedback 40 %, `diffusion` 50 %, mix 35 % | |
 | Crystal / octave-up repeats | Digital, `loop_pitch` +12, feedback 55 %, `high_cut` 6 kHz | Shifter in the loop |
+| **Shimmer delay** (Timeline "Ice") | BBD or Digital, `loop_pitch` +12, `diffusion` 60 %, feedback 60 %, `high_cut` 5 kHz, `swell` 200 ms | Shifter + diffusion in the loop: the repeats blur into a rising pad |
 | Falling, haunted repeats | Tape, `loop_pitch` −0.3, feedback 60 %, `age` 60 % | |
 | Ghost echoes | `loop_shift` 60 %, feedback 65 %, `diffusion` 40 % | Frequency shifter in the loop |
 | The Edge, two delays at once | `taps` Dotted + Quarter, `time` 1/4, feedback 30 % | |

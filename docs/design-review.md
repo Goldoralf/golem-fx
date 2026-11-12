@@ -133,6 +133,8 @@ Raph's priority (2026-11-12): these three must be as complete as possible. Exten
   sync, decay to 60 s.
 - **gfx-delay**: 4 models (Digital, Tape, BBD, Lo-Fi), reverse, 8 tap patterns, pitch and frequency shifters
   in the loop, age, swell, filter sweep, diffusion, 1 ms – 4 s. All combinable.
+- **Shimmer in all three**: gfx-reverb has a one-voice shimmer on any algorithm; gfx-delay a shifter in its
+  loop; gfx-shimmer is the full instrument (same code).
 - **gfx-shimmer**: choice of space, two voices, freeze / infinite, swell, pitch glide, voice spread; an explicit
   acceptance test against ValhallaShimmer (blind A / B).
 

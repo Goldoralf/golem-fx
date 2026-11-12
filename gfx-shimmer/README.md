@@ -6,7 +6,8 @@ golem's shimmer reverb. Stands for golem's `reverb-shimmer` block (today guitari
 zita-rev1 + a pitch shifter **limited to ±6 st**, so the classic octave shimmer is out of reach — golem's
 "Octave halo" preset plays a tritone). Keeps the block's parameter ids and units
 ([golem contract](../docs/golem-contract.md)). Built on the gfx-reverb tank and the gfx-pitch delay-line
-shifter.
+shifter. gfx-reverb carries a one-voice version of the same insert as a colour on any algorithm, and
+gfx-delay a shifter in its loop (shimmer delay); this plugin is the full instrument.
 
 ## 1. Local facts
 

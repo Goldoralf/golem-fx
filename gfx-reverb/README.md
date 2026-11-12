@@ -13,8 +13,12 @@ parameter ids and units ([golem contract](../docs/golem-contract.md)):
 
 The ids share their units across the three blocks, so **one plugin** covers them, with an `algo`
 parameter golem pins per block at insert (agreed with the rack session: `init` in the Golem Engine table,
-`FX_INIT` under REAPER — reverb = Hall, reverb-plate = Plate, reverb-room = Room, never touched again). The shimmer is
-[gfx-shimmer](../gfx-shimmer/), built on this engine; the spring stays golem's `surge-spring`.
+`FX_INIT` under REAPER — reverb = Hall, reverb-plate = Plate, reverb-room = Room, never touched again). **Shimmer in two places, on purpose.** gfx-reverb has a simple shimmer (`shimmer`, `shimmer_pitch`): a
+colour added to any of its algorithms — a plate with an octave halo, a shimmering spring, a rising Cloud.
+[gfx-shimmer](../gfx-shimmer/) is the effect whose subject is the shimmer: two detuned voices, shifter
+placement, a freeze that stops the climb, glide, reverse grains; it stands for golem's `reverb-shimmer`
+block, whose `mix` is a crossfade (here `mix` is a wet level, so one plugin cannot be both). Same engine,
+same code.
 
 The aim: dense, smooth tails with no metallic ring, accurate decay per band, the two sounds people
 recognise (FDN hall / room, Dattorro plate), and the live features — trails, freeze, ducking — on a CPU
@@ -124,7 +128,12 @@ What the shared controls mean per algorithm:
   a slight glide in the tail, never a click; the decay stays put. Buffers sized at initialisation for the
   largest size at the highest sample rate.
 - **Stereo**: decorrelated output taps; mono sum checked for combing.
-- **Freeze**: input muted, attenuation 1. **Infinite**: new notes still enter, the tail never decays.
+- **Shimmer**: gfx-shimmer's regeneration insert with one voice — tail output → loop low-pass (clamped to
+  0.45 · sr / ratio, anti-alias) → delay-line shifter (equal-power heads, seeded jitter) → back into the
+  tail's input; loop gain < 1 by construction; reported latency 0 (the shifter's delay is part of the tail).
+  At `shimmer` 0 the insert is bypassed: no CPU, bit-identical to the reverb without it.
+- **Freeze**: input muted, attenuation 1, **shimmer out of the loop** (otherwise the frozen tail would
+  climb forever). **Infinite**: new notes still enter, the tail never decays.
 - **Trails**: `on` is the bypass parameter (`make_bypass`): the tail rings out.
 - **Determinism** (golem compares REAPER and Ardour renders by null test): every random source from a fixed
   seed, reset on `reset()`; coefficients recomputed on a fixed 16-sample grid counted from reset, smoothing
@@ -159,6 +168,8 @@ Catalogue ids kept; ranges wider; no negative minimum.
 | `drive` | Drive | f | 0 – 100 % | new | 0 % | | Saturation into the tank; on Spring = dwell |
 | `springs` | Springs | e | 1 · 2 · 3 | new | 2 | | Spring |
 | `sync` | Sync | e | contract's list | new | Off | | Predelay (and Gated / Reverse length) as a note value |
+| `shimmer` | Shimmer | f | 0 – 100 % | new | 0 % | ✓ | Share of the tail fed back through a pitch shifter (gfx-shimmer's regeneration insert, one voice): each pass climbs by `shimmer_pitch`. Works on every algorithm with a tail (ignored on Gated, Reverse, Ambience) |
+| `shimmer_pitch` | Shimmer Pitch | f | −12 – +24 st | new | +12 st | | Octave by default; +7 fifths, +19, +24, −12 |
 | `duck` | Ducking | f | 0 – 24 dB | new | 0 dB | ✓ | |
 | `duck_sens` | Duck Sensitivity | f | 0 – 100 % | new | 50 % | | Instead of a negative threshold |
 | `duck_release` | Duck Release | f | 50 – 2,000 ms | new | 400 ms | | |
@@ -194,6 +205,11 @@ Layouts: stereo 2 / 2 by default, mono 1 / 1 offered (the tail summed).
 | Vintage digital hall (80s ballad lead) | Hall, `era` 80s, decay 2.8 s, `mod` 60 % | Reduced bandwidth and period modulation |
 | Dark, warm 70s hall | Hall, `era` 70s, `wet_high` 35 % | |
 | Bright tail that does not last in the highs | `wet_high` 65 %, `high_mult` 0.5 | Tone and decay are separate controls |
+| Plate with an octave halo (clean arpeggios) | Plate, decay 2 s, `shimmer` 25 %, hicut 7 kHz | A colour on a normal reverb |
+| Shimmering spring | Spring, `shimmer` 20 %, `shimmer_pitch` +12 | Only possible here |
+| Rising Cloud | Cloud, decay 20 s, `shimmer` 45 %, `duck` 6 dB | |
+| Fifths under a hall | Hall, `shimmer` 30 %, `shimmer_pitch` +7 | |
+| Full shimmer instrument (two voices, placement, glide) | → gfx-shimmer | |
 
 ## 6. Bench suite (on top of gfx-bench's common checks)
 
@@ -206,7 +222,8 @@ Layouts: stereo 2 / 2 by default, mono 1 / 1 offered (the tail summed).
 | Echo density | normalised echo density reaches 1 within 30 ms (Plate), 80 ms (Hall) |
 | Size sweep | no click; RT60 unchanged |
 | Mono sum | spectrally flat within a bound (no comb) |
-| Freeze | ±0.5 dB over 30 s |
+| Freeze | ±0.5 dB over 30 s; no climb with `shimmer` > 0 |
+| Shimmer | `shimmer` 0: bit-identical to the reverb without the insert; `shimmer` 100 %, +12, decay 20 s, 60 s of sweep: bounded; first pass +12 st ± 2 cents |
 | Trails | `on` off: the tail decays naturally |
 | Host independence | identical output at 64- and 512-sample blocks; strict null REAPER vs Ardour |
 | CPU | ≤ 2 % of one core per instance at 48 kHz |
