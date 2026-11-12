@@ -1,6 +1,6 @@
 # gfx-gapmeter
 
-> **Status: PROPOSED** — design, no code yet. **The contract is to be agreed with golem's rack session**
+> **Status: PROPOSED** — design, no code yet. Contract agreed with golem's rack session on 2026-11-12
 > (it owns `tools/check-scene-gap.py`).
 
 A measurement probe, not an effect. It replaces golem's `golem_gapmeter.jsfx` so that
@@ -29,29 +29,44 @@ A VST3 has no shared memory with golem. Options for getting the results out:
 | B. VST3 output parameters | Read-only parameters (gap count, longest gap…) read by the host | Standard VST3 | nih-plug does not expose output parameters; a ring of 24 events does not fit parameters |
 | C. A file | The background thread writes a JSON file | Simple | Polling, stale data, disk I/O during a measurement |
 
-## 3. Proposed design (option A)
+## 3. Design (option A, agreed)
+
+Two roles, chosen per instance:
+
+- **Detector** (default): audio passes through unchanged; gaps are detected on the max of the channels.
+  Instances sit at the end of the merge track and of each branch.
+- **Generator** (`tone` on): the output is the test tone, **replacing** the input (the plugged-in guitar
+  must not mix with it). One instance sits at the end of a lane's input track.
 
 | id | Name | Type | Range | Default | Role |
 |---|---|---|---|---|---|
-| `slot` | Slot | e | 0 – 7 | 0 | Identifies the probe in its messages (one per lane / branch) |
+| `slot` | Slot | e | 0 – 7 | 0 | Identifies the probe in its messages |
 | `thresh` | Silence Threshold | f | −90 – 0 dB | −45 dB | Envelope level under which the signal counts as silent |
 | `min_gap` | Min Gap | f | 1 – 500 ms | 10 ms | Shorter silences are ignored |
-| `port` | Port | f | 1024 – 65535 | to agree | UDP port of golem's bridge |
-| `tone` | Test Tone | b | off / on | off | Adds a continuous test tone to the output (replaces REAPER's Tone Generator, absent from Ardour) |
-| `tone_freq` | Tone Freq | f | 50 – 2,000 Hz | 440 Hz | |
-| `tone_level` | Tone Level | f | −60 – 0 dB | −18 dB | |
+| `port` | Port | f | 1024 – 65535 | 9071 | UDP port; `check-scene-gap.py` binds it (never 9000, the bridge's REAPER feedback port, nor 3819, Ardour's surface) |
+| `tone` | Test Tone | b | off / on | off | Generator mode: output = tone, input discarded |
+| `tone_freq` | Tone Freq | f | 50 – 2,000 Hz | 196 Hz | |
+| `tone_level` | Tone Level | f | −60 – 0 dB | −20 dB | |
 
-Messages (OSC, to agree):
+Detection, as in the JSFX: peak envelope with a 3 ms release, max of the channels; a gap is a silence of
+at least `min_gap`. Clock = samples processed since activation / sample rate.
 
-- `/gfx/gap <slot> <start_s> <duration_ms>` when a gap ends;
-- `/gfx/gapmeter <slot> <clock_s> <env_db> <silence_ms>` heartbeat every ~50 ms (proves the audio thread
-  runs, like the JSFX's clock).
+### Messages (OSC over UDP to 127.0.0.1:`port`)
 
-Clock = samples processed since activation / sample rate, as in the JSFX. Same detection as the JSFX
-(peak envelope, 3 ms release), so results stay comparable across the switch.
+| Address | Arguments | When |
+|---|---|---|
+| `/gfx/gap` | `slot` `k` `end_s` `duration_ms` | when a gap ends; `k` = the gap's index (0, 1, 2…), so a dropped packet is detectable |
+| `/gfx/gapmeter` | `slot` `clock_s` `env_db` `silence_ms` `n` `max_ms` | every ~50 ms |
 
-## 4. Questions for the rack session
+- The audio thread only publishes: the latest clock, envelope and silence in atomics, gap events in a
+  lock-free ring. No allocation, no I/O.
+- A background thread sends. The heartbeat keeps coming with the **latest published clock**: if the audio
+  thread stalls, the clock freezes while the heartbeats continue. That is how `check-scene-gap.py`
+  measures a stall (wall time elapsed − sample clock elapsed).
+- Nothing is sent before activation.
 
-1. Option A (UDP / OSC from a background thread) acceptable? Which port, which addresses?
-2. Is the built-in test tone useful, or does golem place its own generator on the Golem Engine?
-3. Anything else `check-scene-gap.py` reads today that the probe must provide?
+### Layouts
+
+1 / 1 and 2 / 2; golem picks at insert time. Do not assume one instance per track: if a host ever runs a
+mono plugin as dual mono, two instances would publish the same slot (golem inserts the matching layout
+to avoid it).

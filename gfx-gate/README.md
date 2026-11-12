@@ -80,8 +80,14 @@ main in ───────────┴▶ source ▶ hum notch ▶ HPF / L
   would, the gate follows the note instead of cutting it; `release` becomes the time once the note
   reaches the noise. Decimator / Pro-G "Guitar" behaviour.
 - **Hum notch**: 50 or 60 Hz and its first three harmonics, notched in the detector only.
-- **Key**: VST3 auxiliary input. With `source` = Key and nothing connected, the gate falls back to the main
-  input (never stays closed).
+- **Key**: VST3 auxiliary input, on its **own bus**: the main layout stays 1 / 1 (otherwise the Golem
+  Engine reads a mono + key plugin as stereo). With `source` = Key and nothing connected, the gate falls
+  back to the main input (never stays closed). golem will route the DI to it: Ardour through
+  `Route:add_sidechain`, REAPER through a 4-channel track and pin mappings (golem-side work, scheduled
+  once gfx-gate exists).
+- **Meters**: gate state (open 0 / 1) and gain reduction (dB) as **read-only VST3 parameters**; golem reads
+  them through Lua (Ardour) and `TrackFX_GetParam` (REAPER). nih-plug does not expose output parameters
+  today: to solve in the wrapper (see the contract).
 - **Stereo**: linked detection (max of both channels), same gain on both.
 - **Zero latency.** No lookahead.
 
@@ -108,13 +114,11 @@ Catalogue ids and units kept; ranges a little wider. Defaults = the catalogue's.
 
 Defaults keep golem's presets sounding like a gate (ratio ∞, knee 0, follow off).
 
-**On golem's side** (asked of the rack session):
+Read-only (meters, see §2): `state` (open 0 / 1) and `gr` (gain reduction, dB).
 
-- **Key routing**: can a lane feed the DI to the auxiliary input of a gate placed after the amp, in REAPER
-  and in the Golem Engine?
-- **Learn threshold**: a golem UI action (mute the strings, measure the noise peak for 1 s, write
-  `thresh` = peak + 3 dB). It belongs in golem's UI, not in the plugin.
-- **Gate state and gain reduction**: golem's own meters.
+**On golem's side** (agreed with the rack session, scheduled once gfx-gate exists): key routing on both
+engines; a "learn threshold" UI action (mute the strings, measure the noise peak for 1 s, write
+`thresh` = peak + 3 dB); the gate-state and gain-reduction display, from the read-only parameters.
 
 **To check on the bench (contract):** `thresh`, `hyst` and `range` have negative minimums; check that
 REAPER and Ardour write them exactly (plain ↔ normalized, both ways).
