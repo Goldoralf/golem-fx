@@ -78,6 +78,7 @@ Catalogue ids kept.
 | `sync` | Sync | e | Off · divisions | new | Off | | |
 | `stereo_phase` | Stereo Phase | f | 0 – 180° | new | 0° | | L / R LFO offset |
 | `drive` | Drive | f | 0 – 1 | new | 0 | | Tube colour, outside the delay |
+| `level` | Level | f | −12 – +12 dB | new | 0 dB | | Output; GxTubeVibrato plays ~6.6 dB louder than unity (golem-rack, pink noise): golem can pin it at insert for preset continuity |
 
 ## 5. Applications
 

@@ -180,7 +180,9 @@ impl Wah {
         if self.s.mode == 1 && self.s.taper == 0 {
             let (lo, hi, inv) = MODELS[model].auto;
             let g = 4f32.powf((self.s.env_sens - 50.0) / 50.0);
-            let w = (self.env * g).clamp(lo, hi);
+            // 1.25: guitarix's envelope runs hotter than golem_colwah.jsfx's; fitted to golem-rack's
+            // GxWahwah Dallas peaks on sines at −30 / −20 / −10 / −3 dBFS (1425 / 1270 / 1008 / 755 Hz)
+            let w = (1.25 * self.env * g).clamp(lo, hi);
             if inv {
                 1.0 - w
             } else {

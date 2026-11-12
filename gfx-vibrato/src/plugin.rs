@@ -65,6 +65,8 @@ struct VibratoParams {
     stereo_phase: FloatParam,
     #[id = "drive"]
     drive: FloatParam,
+    #[id = "level"]
+    level: FloatParam,
 }
 
 impl Default for VibratoParams {
@@ -80,6 +82,7 @@ impl Default for VibratoParams {
             sync: EnumParam::new("Sync", SyncParam::Off),
             stereo_phase: f(8, "°", 0),
             drive: f(9, "", 2),
+            level: f(10, " dB", 1),
         }
     }
 }
@@ -97,6 +100,7 @@ impl VibratoParams {
             sync: self.sync.value() as u32,
             stereo_phase: self.stereo_phase.value(),
             drive: self.drive.value(),
+            level: self.level.value(),
         }
     }
 }

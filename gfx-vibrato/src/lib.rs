@@ -52,7 +52,7 @@ impl Model {
     pub const ALL: [Model; 5] = [Model::Clean, Model::Bbd, Model::Varistor, Model::Vibe, Model::Scanner];
 }
 
-pub static PARAMS: [ParamInfo; 10] = [
+pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::float("depth", "Depth", 0.0, 1.0, 0.4).with_exp(),
     ParamInfo::float("speed", "Speed", 0.1, 14.0, 5.0).with_exp(),
     ParamInfo::enumeration("model", "Model", 5, 0),
@@ -63,6 +63,7 @@ pub static PARAMS: [ParamInfo; 10] = [
     ParamInfo::enumeration("sync", "Sync", 17, 0),
     ParamInfo::float("stereo_phase", "Stereo Phase", 0.0, 180.0, 0.0),
     ParamInfo::float("drive", "Drive", 0.0, 1.0, 0.0),
+    ParamInfo::float("level", "Level", -12.0, 12.0, 0.0),
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -78,11 +79,12 @@ pub struct Settings {
     pub sync: u32,
     pub stereo_phase: f32,
     pub drive: f32,
+    pub level: f32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { depth: 0.4, speed: 5.0, model: Model::Clean, shape: 0, rise: 0.0, tone: 1.0, mix: 1.0, sync: 0, stereo_phase: 0.0, drive: 0.0 }
+        Self { depth: 0.4, speed: 5.0, model: Model::Clean, shape: 0, rise: 0.0, tone: 1.0, mix: 1.0, sync: 0, stereo_phase: 0.0, drive: 0.0, level: 0.0 }
     }
 }
 
@@ -185,6 +187,7 @@ pub struct Vibrato {
     mix: OnePole,
     drive: OnePole,
     sphase: OnePole,
+    level: OnePole,
     /// mean delay (s), slew-limited
     centre: f64,
     model_fade: LinearRamp,
@@ -212,6 +215,7 @@ impl Vibrato {
             mix: OnePole::new(20.0, d.mix, 1e-5),
             drive: OnePole::new(20.0, d.drive, 1e-5),
             sphase: OnePole::new(30.0, d.stereo_phase, 1e-4),
+            level: OnePole::new(20.0, d.level, 1e-5),
             centre: 0.002,
             model_fade: LinearRamp::new(30.0, 1.0),
             prev_model: d.model,
@@ -247,6 +251,7 @@ impl Vibrato {
         self.mix.set_target(s.mix);
         self.drive.set_target(s.drive);
         self.sphase.set_target(s.stereo_phase);
+        self.level.set_target(s.level);
         if s.model != self.s.model {
             self.prev_model = self.s.model;
             for c in self.ch.iter_mut() {
@@ -337,6 +342,8 @@ impl Vibrato {
             let mix = self.mix.next();
             let drive = self.drive.next();
             let sph = self.sphase.next() as f64 / 360.0;
+            let lvl = self.level.next();
+            let gain = if lvl == 0.0 { 1.0 } else { 10f32.powf(lvl / 20.0) };
             let mf = self.model_fade.next();
             let sf = self.shape_fade.next() as f64;
             let hz = self.rate_hz(speed);
@@ -381,7 +388,7 @@ impl Vibrato {
                 let ch = &mut self.ch[c];
                 ch.tone.set(SvfMode::LowPass, tone_hz.min(0.45 * self.sr), std::f32::consts::FRAC_1_SQRT_2, 0.0, self.sr);
                 let wet = ch.tone.process(wet);
-                buffers[c][i] = x + (wet - x) * mix;
+                buffers[c][i] = (x + (wet - x) * mix) * gain;
             }
         }
     }
@@ -402,7 +409,7 @@ impl Effect for Vibrato {
         self.sr = sample_rate;
         self.depth.prepare(sample_rate);
         self.speed.prepare(sample_rate);
-        for o in [&mut self.tone, &mut self.mix, &mut self.drive, &mut self.sphase, &mut self.slope] {
+        for o in [&mut self.tone, &mut self.mix, &mut self.drive, &mut self.sphase, &mut self.slope, &mut self.level] {
             o.prepare(sample_rate);
         }
         self.model_fade.prepare(sample_rate);
@@ -420,7 +427,7 @@ impl Effect for Vibrato {
         self.depth.settle(self.s.depth);
         self.speed.settle(self.s.speed);
         self.slope.set_target(peak_slope(self.s.shape) as f32);
-        for o in [&mut self.tone, &mut self.mix, &mut self.drive, &mut self.sphase, &mut self.slope] {
+        for o in [&mut self.tone, &mut self.mix, &mut self.drive, &mut self.sphase, &mut self.slope, &mut self.level] {
             o.settle();
         }
         self.model_fade.set_immediate(1.0);
@@ -467,6 +474,7 @@ impl Effect for Vibrato {
             "sync" => s.sync = v.round().clamp(0.0, 16.0) as u32,
             "stereo_phase" => s.stereo_phase = v,
             "drive" => s.drive = v,
+            "level" => s.level = v,
             _ => return,
         }
         self.set(s);

@@ -247,10 +247,10 @@ impl Autowah {
 
     /// The filter position for a level relative to the playing's long-term level. Exposed for tests.
     pub fn position_of(level_db: f32, slow_db: f32, sensitivity: f32) -> f32 {
-        // the window starts a little under the long-term level (lower with more sensitivity), 24 dB wide:
+        // the window starts near the long-term level (lower with more sensitivity), 30 dB wide:
         // the filter rests low and opens on the attacks, as GxAutoWah does
-        let floor = slow_db - 2.0 - 10.0 * sensitivity;
-        ((level_db - floor) / 24.0).clamp(0.0, 1.0)
+        let floor = slow_db + 4.0 - 8.0 * sensitivity;
+        ((level_db - floor) / 30.0).clamp(0.0, 1.0)
     }
 
     pub fn process_block(&mut self, buffers: &mut [&mut [f32]]) {
