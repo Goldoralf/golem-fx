@@ -111,6 +111,8 @@ Catalogue ids and units kept; ranges wider. Defaults = the catalogue's.
 | `drive` | Drive | f | 0 – 100 % | new | 0 % | lin | | Extra colour of the character |
 | `mix` | Mix | f | 0 – 100 % | new | 100 % | lin | ✓ | Parallel compression, phase-coherent (zero latency) |
 
+Read-only (meter, [golem contract](../docs/golem-contract.md)): `gr`, gain reduction in dB.
+
 `knee` has a default per character, but a parameter cannot change another one (contract): its stored
 default is 6 dB and the character only shifts it when `knee` is left at its default. **To decide:** or
 `knee` becomes "Knee Offset" (± dB around the character's knee). The bench comparison will tell.
