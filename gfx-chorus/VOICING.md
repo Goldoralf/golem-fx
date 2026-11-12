@@ -1,61 +1,114 @@
 # gfx-chorus — voicing
 
-> **Status: PROPOSED** — design, no code yet. Every number below is a **starting point**, taken from
-> published descriptions of the reference units (Boss CE-2, Roland Juno-60, Roland Dimension D, string
-> ensembles) and from common practice. They are tuned by ear on the listening bench; this document is
+> **Status: PROPOSED** — design, no code yet. Numbers come from the state-of-the-art survey
+> ([README.md](README.md) §State of the art). **[V]** = measured or read in a source; **[U]** = forum or
+> unverified; **[I]** = our choice. Everything is tuned by ear on the listening bench, and this document is
 > updated with the values that survive.
 
-This page fills the **P** values of [PARAMS.md](PARAMS.md).
+This page fills the **P** values of [PARAMS.md](PARAMS.md). Depth is always the **peak** deviation (± ms).
 
 ## 1. Who sets what
 
 Two layers, never mixed:
 
-- **The mode** sets the **shape of the modulation**: voice count, centre delay, excursion, LFO shape, phase
-  between voices, cross-mix, default rate. A Dimension sounds like a Dimension whatever the instrument.
+- **The mode** sets the **shape of the modulation** and what the reference unit does intrinsically: voice
+  count, centre delay, depth, LFO, phases, cross-mix, BBD stages, compander. A Dimension sounds like a
+  Dimension whatever the instrument.
 - **The profile** sets **everything else**: crossover, wet filters, colour engine and amounts, stereo,
-  mix, the default mode, and a **scale** applied to the mode's default depth.
-
-So 5 modes × 5 profiles give 25 voicings from two tables of 5 columns, not from 25 presets.
+  envelope follower, mix, the default mode, and a **scale** on the mode's default depth.
 
 When a group is **Custom**, its own controls replace the layer's anchors for that group only.
 
-## 2. Mode anchors (Modulation group)
+## 2. Mode anchors
 
-| | Classic | Dual | Dimension | Ensemble | Doubler |
-|---|---|---|---|---|---|
-| Reference | Boss CE-2 | Juno-60 I / II | Roland Dimension D | String ensembles (Solina) | Studio double-tracking |
-| `voices` | 1 | 2 | 2, complementary | 3 (expert: 3–6) | 2 |
-| `delay_base` | 7 ms | 3.5 ms | 6 ms | 10 ms | 18 ms |
-| `depth` default | 3 ms | 1.8 ms | 1 ms | 2.5 ms | 0.8 ms |
-| `lfo_shape` | Triangle | Juno | Rounded | Sine | Random |
-| `voice_spread` | — | 180° | 180° | 120° (360° / voices) | — (independent random) |
-| `crossmix` | 0 % | 0 % | 50 % | 0 % | 0 % |
-| `rate` default | 0.8 Hz | 0.5 Hz (Juno I; Juno II ≈ 0.8 Hz) | 0.4 Hz | 0.6 Hz | 0.25 Hz |
+### Classic — Boss CE-2
 
-Built into the mode, not exposed as parameters:
+Source: [ElectroSmash CE-2 analysis](https://www.electrosmash.com/boss-ce-2-analysis) [V].
 
-- **Dimension**: the two voices are modulated in antiphase and each output carries one voice plus the
-  other one inverted and attenuated (`crossmix`). The pitch movements cancel out in part, which is why a
-  Dimension sounds wide but not seasick.
-- **Ensemble**: a second, fast and shallow LFO (≈ 6 Hz, ≈ 10 % of the excursion) is added on top of the
-  slow one, as string ensembles do; it gives the shimmer.
-- **Doubler**: each voice follows its own smoothed random path (no periodic LFO), so nothing repeats.
+| Anchor | Value | Note |
+|---|---|---|
+| Voices | 1, mono wet | |
+| Centre delay / depth | 8 ms ± 2.5 ms [I] | MN3007 floor is 5.12 ms [V]; to tune by ear |
+| LFO | Triangle, RC-smoothed (72 Hz) [V] | |
+| Rate | default 0.8 Hz; the unit tops out near 3.5 Hz [V] | |
+| BBD | 1024 stages, anti-alias / reconstruction ≈ 6.6 kHz two-pole [V] | |
+| Emphasis | 100 % (≈ +15 dB above ~410 Hz – 2.3 kHz, de-emphasised after) [V] | |
+| Compander | 0 % — the CE-2 has none [V] | |
+| Mix | 50 / 50 by equal resistors [V] | |
+
+### Dual — Roland Juno-60
+
+Source: [pendragon-andyh Juno-60 chorus analysis](https://github.com/pendragon-andyh/Juno60/blob/master/Chorus/README.md)
+(measured) [V].
+
+| Anchor | Dual I | Dual II | Dual I+II |
+|---|---|---|---|
+| Rate default | 0.513 Hz | 0.863 Hz | 9.75 Hz (vibrato) |
+| Centre delay / depth | 3.5 ± 1.85 ms (1.66 – 5.35 ms) | 3.5 ± 1.85 ms | 3.5 ± 0.2 ms (3.3 – 3.7 ms) |
+| Voices | 2: right channel's modulation inverted (180°) | same | 1, mono |
+| LFO | Triangle | Triangle | Triangle |
+| BBD | 256 stages, ~70 kHz clock, 12 dB low-pass before the line | same | same |
+| Compander | 0 % — none in the schematic [V] | | |
+
+Arturia describes Mode II as deeper as well as faster [V]; the measurement says same depth. We follow
+the measurement and check against reference recordings.
+
+### Dimension — Roland Dimension D (SDD-320)
+
+Sources: [SDD-320 owner's manual](https://archive.org/stream/SDD-320_owners_manual/SDD-320_owners_manual_djvu.txt)
+[V], [Arturia Chorus DIMENSION-D manual](https://www.arturia.com/products/software-effects/chorus-dimension-d/overview)
+("measured on original units") [V], Fractal forum [U].
+
+| Anchor | Dimension 1 | Dimension 2 | Dimension 3 |
+|---|---|---|---|
+| Relative to mode 1 [V] | — | delay ≈ ½ | delay between 1 and 2, depth × 2 |
+| Centre delay / depth [I, to measure] | 6 ± 0.6 ms | 3 ± 0.6 ms | 4.5 ± 1.2 ms |
+| Rate default [U] | 0.25 Hz | 0.25 Hz | 0.5 Hz |
+| Voices | 2, LFOs at 180°, triangle | | |
+| Cross-mix | each output = its voice + the other voice **polarity-inverted and high-passed** (low shelf so the bass does not cancel) [V] | | |
+| Compander | always on (compressor → delay → expander per channel) [V] | | |
+| Dry | slightly bass-boosted [V] | | |
+
+The original's button 4 is a wet boost combined with 1 – 3 [V]: covered by `mix`, not a mode.
+
+### Ensemble — string ensembles (Solina)
+
+Sources: [J. Haible, Triple Chorus](http://jhaible.com/legacy/triple_chorus/triple_chorus.html) [V],
+[Surge XT BBD Ensemble](https://github.com/surge-synthesizer/surge/blob/main/src/common/dsp/effects/BBDEnsembleEffect.cpp) [V].
+
+| Anchor | Value |
+|---|---|
+| Voices | 3, from two 3-phase LFOs (slow + fast) summed per voice |
+| Slow LFO | 0.6 Hz default (forum 0.6 – 0.8 [U]; Surge 0.18) |
+| Fast LFO | 6 Hz, about 20 % of the slow depth (Surge ≈ 20 % [V]) |
+| Centre delay / depth | 5 ± 1 ms [I] |
+| Stereo | shared middle voice: L = voices 1 + 2, R = voices 2 + 3 [V, Surge] — naturally mono-compatible |
+| Imperfection | 30 %: the original's 120° phases and amplitudes are approximate, and that is part of the sound [V] |
+| BBD | 512 stages; modulation drives the clock (delay ∝ 1 / f_clk) [V] |
+
+### Doubler — studio double-tracking
+
+| Anchor | Value |
+|---|---|
+| Voices | 2, each on its own smoothed random path (no periodic LFO) |
+| Centre delay / depth | 18 ± 0.8 ms [I] |
+| Rate default | 0.25 Hz (speed of the random wander) |
 
 ## 3. Profile anchors
 
 | Group | Parameter | Guitar Clean | Guitar Drive | Bass | Keys | Voice |
 |---|---|---|---|---|---|---|
-| — | default `mode` | Classic | Dimension | Classic | Dual | Doubler |
-| Modulation | default depth scale (× mode's `depth`) | 1.0 | 0.7 | 0.8 | 1.0 | 0.6 |
+| — | default `mode` | Classic | Dimension 2 | Classic | Dual I | Doubler |
+| Modulation | default depth scale (× mode's depth) | 1.0 | 0.7 | 0.8 | 1.0 | 0.6 |
 | Modulation | `drift` | 10 % | 15 % | 5 % | 5 % | 60 % |
+| Modulation | `imperfection` (outside Ensemble) | 10 % | 10 % | 5 % | 15 % | 0 % |
 | Crossover | `xover_on` | off | on | on | on | off |
 | Crossover | `xover_freq` | (120 Hz) | 150 Hz | 200 Hz | 100 Hz | (120 Hz) |
 | Color | `engine` | BBD | Clean | BBD | BBD | Clean |
 | Color | `drive` | 25 % | 5 % | 30 % | 20 % | 0 % |
-| Color | `bbd_bw` | 6 kHz | (8 kHz) | 5 kHz | 8 kHz | (10 kHz) |
-| Color | `compander` | 40 % | 15 % | 40 % | 60 % | 0 % |
+| Color | `emphasis` | 100 % | (100 %) | 100 % | 0 % | (0 %) |
 | Color | `noise` | 15 % | 0 % | 10 % | 40 % | 0 % |
+| Dynamics | `env_mix` | 0 % | −30 % | 0 % | 0 % | −20 % |
 | Filters | `wet_hpf` | 80 Hz | 250 Hz | 40 Hz | 60 Hz | 150 Hz |
 | Filters | `wet_lpf` | 8 kHz | 5 kHz | 4 kHz | 10 kHz | 12 kHz |
 | Stereo | `stereo_phase` | 90° | 180° | 90° | 180° | 90° |
@@ -64,44 +117,44 @@ Built into the mode, not exposed as parameters:
 | Output | `mix` default | 50 % | 35 % | 50 % | 50 % | 30 % |
 | Output | `mix_law` | Linear | Equal Power | Linear | Linear | Equal Power |
 
-Values in parentheses are used only if the user switches that part on in a Custom group (e.g. a BBD
-engine on the Voice profile).
+`bbd_chip`, `compander` and `bbd_bw` come from the mode (§2), since they belong to the reference unit.
+Values in parentheses apply only if the user switches that part on in a Custom group.
 
 Why each profile looks like this:
 
-- **Guitar Clean** — the generous, coloured pedal chorus: BBD engine, a dark wet, some hiss, a linear
-  mix for the deep phase notches that make a CE-2 sound like a CE-2.
-- **Guitar Drive** — the chorus sits after the distortion and must not blur it: clean engine (any noise
-  or fizz is already loud), tight lows (crossover at 150 Hz and a 250 Hz wet low-cut), a dark wet to
-  keep the fizz out, Dimension for width without pitch wobble, a lower mix.
-- **Bass** — the lows are the instrument: below 200 Hz the signal stays dry and mono, only the mids and
-  highs move. Narrower stereo, mono-safe, a dark BBD wet (as bass chorus pedals do).
-- **Keys** — the Juno: BBD, strong compander, audible hiss — the noise is part of the sound.
-- **Voice** — a discreet double: no colour at all, random drift instead of a periodic wobble, a low mix,
-  and a 150 Hz wet low-cut so the double does not thicken the chest of the voice.
+- **Guitar Clean** — the CE-2: BBD with emphasis, dark wet, some hiss, linear 50 / 50 mix for the deep
+  phase notches.
+- **Guitar Drive** — after the distortion, it must not blur it: clean engine, tight lows (crossover
+  150 Hz, wet low-cut 250 Hz), dark wet against fizz, Dimension 2 for width without wobble, and the wet
+  ducked on attacks (`env_mix` −30 %) so chugs stay clear and the chorus blooms on sustains.
+- **Bass** — below 200 Hz the signal stays dry and mono; only mids and highs move. Narrower stereo,
+  mono-safe, dark BBD wet.
+- **Keys** — the Juno: 256-stage BBD, no emphasis, audible hiss (from `noise`, not from a compander,
+  since the Juno has none).
+- **Voice** — a discreet double: no colour, random drift, low mix, wet low-cut at 150 Hz, the wet slightly
+  ducked on syllable attacks.
 
 ## 4. Warmth (front panel)
 
 Warmth 50 % = the anchors above. 0 % moves towards clean and bright, 100 % towards dark and coloured.
-Each profile moves only what makes sense for it:
 
-| Profile | `wet_lpf` | `bbd_bw` | `drive` | `compander` | `noise` |
-|---|---|---|---|---|---|
-| Guitar Clean | +1 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 1.5 | × 0.5 → × 1.5 |
-| Guitar Drive | +0.5 → −1 oct | — | × 0 → × 2 | × 0.5 → × 1.5 | — |
-| Bass | +0.5 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 1.5 | × 0.5 → × 1.5 |
-| Keys | +1 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 1.5 | × 0.5 → × 2 |
-| Voice | +0.5 → −0.5 oct | — | — | — | — |
+| Profile | `wet_lpf` | `bbd_bw` | `drive` | `noise` |
+|---|---|---|---|---|
+| Guitar Clean | +1 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 1.5 |
+| Guitar Drive | +0.5 → −1 oct | — | × 0 → × 2 | — |
+| Bass | +0.5 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 1.5 |
+| Keys | +1 → −1 oct | +0.5 → −0.5 oct | × 0 → × 2 | × 0.5 → × 2 |
+| Voice | +0.5 → −0.5 oct | — | — | — |
 
-Read "+1 → −1 oct" as: at 0 % the cut-off is one octave above its anchor, at 100 % one octave below.
 Octave shifts are interpolated linearly in octaves, multipliers linearly; results are clamped to the
 parameter's range.
 
 ## 5. Depth (front panel)
 
-Depth is the excursion itself, in ms (golem catalogue id `chorus.depth`). Its default is the mode's
-`depth` × the profile's scale, clamped to the parameter's range, 0.5 – 10 ms (e.g. Guitar Drive in
-Dimension: 1 ms × 0.7 = 0.7 ms). The range uses a log curve, so the subtle settings get most of the knob's travel.
+Depth is the peak deviation itself, ± ms (golem catalogue id `chorus.depth`). Its default is the mode's
+depth × the profile's scale, clamped to 0.1 – 10 ms. Log curve: the subtle settings get most of the
+knob's travel. With `detune_lock` on, depth is scaled by (default rate / rate) so the pitch deviation
+stays constant when the rate moves.
 
 ## 6. Placement in a golem chain
 
@@ -117,7 +170,10 @@ What the Designer should suggest when the block is inserted (a suggestion, never
 
 ## 7. To validate on the bench
 
-- Every number in §2 and §3 against reference recordings, blind, level-matched.
-- The Dimension cross-mix ratio: 50 % is a guess; the original's balance is to be measured.
-- Juno I / II rates: commonly quoted around 0.5 and 0.8 Hz; check against a recording.
-- Guitar Drive with the Clean engine: try BBD with zero noise as an alternative.
+- Juno modes against the [pendragon Juno-60 recordings](https://github.com/pendragon-andyh/Juno60) and the
+  [rc-effect-playground](https://github.com/jpcima/rc-effect-playground) references, level-matched.
+- Dimension absolute delays and rates: only relative values are verified; the SDD-320 service notes are
+  the next source.
+- CE-2 centre delay and depth by ear (the analysis gives the chip's range, not the pedal's sweep).
+- Ensemble slow-LFO rate: sources disagree (0.18 – 0.8 Hz).
+- Guitar Drive with the Clean engine vs BBD with zero noise.
