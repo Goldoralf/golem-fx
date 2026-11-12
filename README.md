@@ -22,14 +22,14 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
 | 4 | gfx-eq | `eq` | ReaEQ | — |
 | 5 | gfx-delay | `delay` | ReaDelay | — |
-| 6 | gfx-boost | `clean-boost`, `volume` | JS Volume Adjustment | — |
+| 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | design |
 | 7 | gfx-killswitch | `killswitch` | golem_killswitch.jsfx | — |
 | 8 | gfx-deesser | `deesser` | golem_deesser.jsfx | — |
 | 9 | gfx-drive | `guitar-drive` | JS guitar/distortion | — |
 | 10 | gfx-flanger | `flanger-js` | JS flanger | — |
 | 11 | gfx-phaser | `phaser-js` | JS phaser | — |
 | 12 | gfx-pitch | `pitch-shift-js`, `pitch`, `detune` | JS pitch shift, ReaPitch (quarantined) | — |
-| 13 | gfx-gapmeter | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | contract to agree |
+| 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design, contract to agree |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
 gfx-chorus's.
