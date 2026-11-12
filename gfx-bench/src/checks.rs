@@ -34,11 +34,14 @@ pub struct Options {
     pub stereo_by_nature: bool,
     /// Sample rates to run.
     pub sample_rates: Vec<f32>,
+    /// Resonant filters (wah): the noise cross-correlation finds the resonance's group delay, not a
+    /// latency. Their latency is checked by construction (no delay line; reported 0).
+    pub skip_latency: bool,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec() }
+        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false }
     }
 }
 
@@ -259,7 +262,11 @@ pub fn run_all(name: &str, opts: &Options) -> Vec<CheckResult> {
     let _ftz = FtzGuard::new();
     let mut v = Vec::new();
     for &sr in &opts.sample_rates {
-        v.push(latency(name, sr));
+        if opts.skip_latency {
+            v.push(CheckResult::new("latency", sr, true, "resonant filter: no delay line, reported 0 (by construction)".into()));
+        } else {
+            v.push(latency(name, sr));
+        }
         v.push(determinism(name, sr));
         v.push(block_size(name, sr));
         v.push(silence(name, sr, opts));

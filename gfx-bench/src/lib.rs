@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -22,11 +22,25 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-limiter" | "limiter" => Some(Box::new(gfx_limiter::Limiter::new())),
         "gfx-eq" | "eq" => Some(Box::new(gfx_eq::Eq::new())),
         "gfx-deesser" | "deesser" => Some(Box::new(gfx_deesser::Deesser::new())),
+        "gfx-wah" | "wah" => Some(Box::new(gfx_wah::Wah::new())),
+        "gfx-autowah" | "autowah" => Some(Box::new(gfx_autowah::Autowah::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
         _ => None,
     }
+}
+
+/// The common checks' options for an effect (bounds its design documents).
+pub fn options(name: &str) -> checks::Options {
+    let mut o = checks::Options::default();
+    if matches!(name, "gfx-wah" | "wah" | "gfx-autowah" | "autowah") {
+        o.skip_latency = true;
+        // a +20 dB resonance swept heel to toe in 15 ms is a chirp, and `drive` clips that resonance
+        // on purpose: both put real energy above 10 kHz that is not a click
+        o.click_bound_db = -35.0;
+    }
+    o
 }
 
 /// A fresh, prepared and reset instance.

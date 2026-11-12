@@ -40,7 +40,7 @@ pub static PARAMS: [ParamInfo; 10] = [
     ParamInfo::float("freq", "Frequency", 1500.0, 14000.0, 6000.0),
     ParamInfo::float("range", "Range", 0.0, 24.0, 10.0),
     ParamInfo::boolean("listen", "Listen", false),
-    ParamInfo::enumeration("detect", "Detection", 2, 0),
+    ParamInfo::enumeration("detect", "Detection", 2, 1),
     ParamInfo::enumeration("shape", "Shape", 3, 0),
     ParamInfo::enumeration("focus", "Focus", 2, 0),
     ParamInfo::float("ratio", "Ratio", 1.0, 20.0, 6.0),
@@ -71,7 +71,9 @@ impl Default for Settings {
             freq: 6000.0,
             range: 10.0,
             listen: false,
-            relative: true,
+            // absolute by default: golem's presets set absolute thresholds (catalogue continuity);
+            // relative detection is one switch away
+            relative: false,
             shape: Shape::Shelf,
             vocal: true,
             ratio: 6.0,

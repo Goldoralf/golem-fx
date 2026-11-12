@@ -16,3 +16,9 @@ name = "GoleM FX EQ"
 
 [gfx-deesser]
 name = "GoleM FX De-esser"
+
+[gfx-wah]
+name = "GoleM FX Wah"
+
+[gfx-autowah]
+name = "GoleM FX Autowah"

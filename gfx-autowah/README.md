@@ -1,6 +1,6 @@
 # gfx-autowah
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — follower relative to the playing's long-term level, LP / BP / HP (2 or 4 poles), wah voice, BP + dry, vowel, drive into the filter, bass keep, envelope / LFO / S&H sources synced to the host; structural changes dip the wet 5 ms; 5 behaviour tests, bench green.
 
 golem's envelope filter. Stands for golem's `autowah` block (today guitarix gxautowah), keeping its
 parameter id ([golem contract](../docs/golem-contract.md)): `wah` 0 – 1, which here means **sensitivity**

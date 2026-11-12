@@ -51,8 +51,8 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 15 | [gfx-vibrato](gfx-vibrato/) | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | design |
 | 16 | [gfx-reverb](gfx-reverb/) | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | design |
 | 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | design |
-| 18 | [gfx-wah](gfx-wah/) | `wah`, `wah-color` | GxGCB-95, GxWahwah | design |
-| 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | design |
+| 18 | [gfx-wah](gfx-wah/) | `wah`, `wah-color` | GxGCB-95, GxWahwah | **coded**, bench green, to test in golem |
+| 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | **coded**, bench green, to test in golem |
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | design |
 | 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | design |
 | 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, passes golem's engine checks |

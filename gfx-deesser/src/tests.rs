@@ -9,7 +9,7 @@ const SR: f32 = 48000.0;
 fn deesser(f: impl FnOnce(&mut Settings)) -> Deesser {
     let mut d = Deesser::new();
     d.prepare(SR, 4800, 1);
-    let mut s = Settings::default();
+    let mut s = Settings { relative: true, ..Settings::default() };
     f(&mut s);
     d.set(s);
     d.reset();

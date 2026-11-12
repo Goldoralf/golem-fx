@@ -85,7 +85,7 @@ Catalogue ids kept; defaults = the catalogue's.
 | `freq` | Frequency | f | 1,500 – 14,000 Hz | 2,000 – 12,000 | 6,000 Hz | Start of the detection band; corner of the shelf / centre of the bell |
 | `range` | Range | f | 0 – 24 dB | 0 – 24 | 10 dB | Maximum reduction |
 | `listen` | Listen | b | off / on | bool | off | Solo of what the detector hears |
-| `detect` | Detection | e | Relative · Absolute | new | Relative | Absolute = the JSFX's behaviour |
+| `detect` | Detection | e | Relative · Absolute | new | Absolute | Absolute = the JSFX's behaviour, the default so golem presets keep their meaning (rack session's advice); Relative = level-independent |
 | `shape` | Shape | e | Shelf · Bell · Wide | new | Shelf | |
 | `focus` | Focus | e | Vocal · Allround | new | Vocal | Vocal adds the zero-crossing confidence weight; Allround = pure high-frequency limiter (guitar de-harsh, cymbals) |
 | `ratio` | Ratio | f | 1 – 20 :1 | new | 6 :1 | The JSFX's fixed ratio, now a parameter |

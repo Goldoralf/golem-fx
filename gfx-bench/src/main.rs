@@ -5,7 +5,7 @@
 //!   gfx-bench check <effect> [--sr 48000]
 //!   gfx-bench render <effect> --in <wav> --out <wav> [--set id=value]… [--stereo] [--block 512]
 
-use gfx_bench::checks::{self, Options};
+use gfx_bench::checks;
 use gfx_bench::{apply_settings, fresh, render, wav, EFFECTS};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -38,7 +38,7 @@ fn check(args: &[String]) -> ExitCode {
         eprintln!("unknown effect {name}");
         return ExitCode::from(2);
     }
-    let mut opts = Options::default();
+    let mut opts = gfx_bench::options(name);
     let mut i = 1;
     while i < args.len() {
         if args[i] == "--sr" && i + 1 < args.len() {

@@ -1,6 +1,6 @@
 # gfx-wah
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — eleven voices from golem's measured tables (+ Classic, Clyde, Bass 105Q), each pedal's own pot law (Vox heel = low), EXP-smoothed pedal, taper, heel / toe, Q and range scaling, antialiased drive, auto-engage, manual / auto / alien; 5 behaviour tests, bench green (step bound −35 dB: a fast sweep of a +20 dB resonance is a chirp, not a click).
 
 golem's wah. Stands for two golem blocks whose ids never conflict ([golem contract](../docs/golem-contract.md)):
 

@@ -216,9 +216,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
+name = "gfx-autowah"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
 name = "gfx-bench"
 version = "0.1.0"
 dependencies = [
+ "gfx-autowah",
  "gfx-boost",
  "gfx-comp",
  "gfx-deesser",
@@ -226,6 +235,7 @@ dependencies = [
  "gfx-eq",
  "gfx-gate",
  "gfx-limiter",
+ "gfx-wah",
 ]
 
 [[package]]
@@ -274,6 +284,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-limiter"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-wah"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

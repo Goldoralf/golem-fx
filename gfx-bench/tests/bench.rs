@@ -18,8 +18,8 @@ fn catches_unreported_latency_and_dirty_reset() {
 
 #[test]
 fn every_effect_passes_at_48k() {
-    let opts = Options { sample_rates: vec![48000.0], ..Options::default() };
     for name in gfx_bench::EFFECTS {
+        let opts = Options { sample_rates: vec![48000.0], ..gfx_bench::options(name) };
         for r in checks::run_all(name, &opts) {
             assert!(r.pass, "{name}: {} — {}", r.name, r.detail);
         }

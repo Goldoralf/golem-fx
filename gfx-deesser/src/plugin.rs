@@ -73,7 +73,7 @@ impl Default for DeesserParams {
             freq: lin("Frequency", 6000.0, 1500.0, 14000.0, " Hz", 0),
             range: lin("Range", 10.0, 0.0, 24.0, " dB", 1),
             listen: BoolParam::new("Listen", false),
-            detect: EnumParam::new("Detection", Detect::Relative),
+            detect: EnumParam::new("Detection", Detect::Absolute),
             shape: EnumParam::new("Shape", ShapeParam::Shelf),
             focus: EnumParam::new("Focus", Focus::Vocal),
             ratio: lin("Ratio", 6.0, 1.0, 20.0, ":1", 1),
