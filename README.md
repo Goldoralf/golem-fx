@@ -33,6 +33,11 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 15 | gfx-vibrato | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | research |
 | 16 | gfx-reverb | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | research |
 | 17 | gfx-shimmer | `reverb-shimmer` | GxShimmiZita | research |
+| 18 | gfx-wah | `wah`, `wah-color` | GxGCB-95, GxWahwah | research |
+| 19 | gfx-autowah | `autowah` | GxAutoWah | research |
+| 20 | gfx-rotary | `rotary` | Calf Rotary Speaker | research |
+| 21 | gfx-octaver | `octaver` | Gx OC-2 | research |
+| 22 | gfx-limiter | `limiter` | x42-dpl | research |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
