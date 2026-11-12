@@ -31,3 +31,6 @@ name = "GoleM FX Vibrato"
 
 [gfx-chorus]
 name = "GoleM FX Chorus"
+
+[gfx-flanger]
+name = "GoleM FX Flanger"

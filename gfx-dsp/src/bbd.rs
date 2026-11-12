@@ -216,11 +216,26 @@ impl Bbd {
         let mut acc = [C::default(); 2];
         // ticks inside this sample, at fractions δ of the sample
         let mut t = (1.0 - self.phase) / self.inc;
+        // the ticks are evenly spaced (dt): the exponentials advance by one complex product per tick
+        let dt = 1.0 / self.inc;
+        let mut ein = [C::default(); 2];
+        let mut eout = [C::default(); 2];
+        let mut sin = [C::default(); 2];
+        let mut sout = [C::default(); 2];
+        if t < 1.0 {
+            for i in 0..2 {
+                ein[i] = C::exp_t(self.input.p[i], t * self.ts);
+                sin[i] = C::exp_t(self.input.p[i], dt * self.ts);
+                eout[i] = C::exp_t(self.output.p[i], (1.0 - t) * self.ts);
+                sout[i] = C::exp_t(self.output.p[i], -dt * self.ts);
+            }
+        }
         while t < 1.0 {
             // input filter at δ = t: e^(p δ Ts) x + (e^(p δ Ts) − 1) / p · u
             let mut y = 0.0;
             for i in 0..2 {
-                let e = C::exp_t(self.input.p[i], t * self.ts);
+                let e = ein[i];
+                ein[i] = ein[i].mul(sin[i]);
                 let g = e.sub(C::new(1.0, 0.0)).div(self.input.p[i]);
                 let xs = e.mul(self.x[i]).add(g.scale(u));
                 y += 2.0 * self.input.r[i].mul(xs).re;
@@ -238,7 +253,8 @@ impl Bbd {
             // the output staircase steps by (out − held) at δ: its exact share of this sample
             let dv = (out - self.held) as f64;
             for i in 0..2 {
-                let e = C::exp_t(self.output.p[i], (1.0 - t) * self.ts);
+                let e = eout[i];
+                eout[i] = eout[i].mul(sout[i]);
                 let g = e.sub(C::new(1.0, 0.0)).div(self.output.p[i]);
                 acc[i] = acc[i].add(g.scale(dv));
             }

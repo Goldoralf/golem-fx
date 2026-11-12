@@ -1,6 +1,6 @@
 # gfx-flanger
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — Mistress / Grey / A/DA on the BBD engine, Tape TZ± (dry delayed 1 ms, reported), Pseudo TZ (all-passed dry, zero latency), Barberpole ↑ / ↓ (dual flanger), Pedal; exponential sweep manual → length, LFO / envelope / manual sources, loop drive, filters and soft limiter, bass keep (complementary split; off in Tape TZ), host sync; 5 behaviour tests, bench green. Deviations from §3 – §4: Pedal runs the Clean engine (exact comb for the EXP pedal); `length` keeps the catalogue's 0 – 30 ms range (clamped above `manual` inside); through-zero cancellation measured ≤ −40 dB on noise in 1 ms windows (the −60 dB target holds only at the exact zero instant).
 
 golem's flanger. Stands for golem's `flanger-js` block (today REAPER's JS `guitar/flanger`), keeping its
 parameter ids and units ([golem contract](../docs/golem-contract.md)). Built on the same modulated-delay

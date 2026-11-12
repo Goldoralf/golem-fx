@@ -44,7 +44,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | **coded**, bench green, to test in golem |
 | 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | design |
-| 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | design |
+| 10 | [gfx-flanger](gfx-flanger/) | `flanger-js` | JS flanger | **coded**, bench green, to test in golem |
 | 11 | [gfx-phaser](gfx-phaser/) | `phaser-js` | JS phaser | design |
 | 12 | [gfx-pitch](gfx-pitch/) (+ gfx-pitch-classic, gfx-detune) | `pitch`, `pitch-shift-js`, `detune` | ReaPitch (quarantined), JS superpitch, GxDetune | design |
 | 14 | [gfx-tremolo](gfx-tremolo/) | `tremolo` | Calf Pulsator | **coded**, bench green, to test in golem |

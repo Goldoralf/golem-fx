@@ -234,6 +234,7 @@ dependencies = [
  "gfx-deesser",
  "gfx-dsp",
  "gfx-eq",
+ "gfx-flanger",
  "gfx-gate",
  "gfx-limiter",
  "gfx-tremolo",
@@ -279,6 +280,14 @@ version = "0.1.0"
 
 [[package]]
 name = "gfx-eq"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-flanger"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
