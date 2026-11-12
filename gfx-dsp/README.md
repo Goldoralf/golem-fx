@@ -19,7 +19,10 @@ its voicing and its nih-plug wrapper.
 5. **Sample-rate independent**: every block is tested at 44.1, 48, 96 and 192 kHz.
 6. **A block = a struct with `prepare`, `reset`, `process`.** Parameters are plain setters; smoothing is
    the caller's choice, through the smoothing block.
-7. **Measured, not assumed.** Each block has tests that measure its behaviour (frequency response,
+7. **Deterministic.** Every LFO and random source starts from a fixed state on `reset` (phase 0, fixed
+   seed). Two renders of the same input give the same output, bit for bit
+   ([golem contract](../docs/golem-contract.md)).
+8. **Measured, not assumed.** Each block has tests that measure its behaviour (frequency response,
    interpolation error, aliasing, noise floor), not just that it runs.
 
 ## Modules

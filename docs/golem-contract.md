@@ -19,6 +19,8 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
 - **golem writes plain values.** Ardour converts them through the plugin's controller, so a skewed range
   is fine as long as plain ↔ normalized is exact both ways.
 - **Enums in the catalogue's option order.**
+- **One plugin may stand for several blocks** when they share ids: `volume` (`gain` −60 … +6 dB) and
+  `clean-boost` (`gain` 0 … +12 dB) are both gfx-boost, with `gain` −60 … +12 dB.
 - **Ids are permanent** once shipped: VST3 class id and parameter ids are stored by sessions and by
   golem's engine table.
 
@@ -33,6 +35,16 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
 - **No allocation, lock or I/O in `process`.**
 - **No modal window, no blocking work when the plugin turns on.** A plugin that freezes the engine on
   enable is quarantined by golem.
+
+## Modulation and tempo
+
+- **Deterministic modulation.** Every LFO, random source or grain scheduler starts from a fixed state on
+  initialize and reset: phase 0, fixed seed, never time- or address-based. Random still means random
+  (drift, Doubler paths…), only reproducible. Then a modulated effect renders the same in both engines
+  and passes the strict null (≤ −50 dB) like any other. Ardour pre-rolls 2 s before an export and the
+  rack's bench gives REAPER the same pre-roll, so a reset at activation is enough.
+- **Tempo comes from the host transport** (nih-plug `Transport::tempo`), never from a parameter. REAPER
+  and the Golem Engine both provide it. No tempo from the host → 120 BPM, never silence.
 
 ## Known host behaviour
 
