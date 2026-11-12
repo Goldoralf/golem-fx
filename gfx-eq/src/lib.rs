@@ -62,7 +62,8 @@ pub static PARAMS: [ParamInfo; NP] = [
     ParamInfo::enumeration("lowcut_slope", "Low Cut Slope", 2, 0),
     ParamInfo::float("lows", "Lows", -18.0, 18.0, 0.0),
     ParamInfo::float("lowfreq", "Low Freq", 40.0, 500.0, 120.0),
-    ParamInfo::float("midq", "Mid Q", 0.3, 6.0, 0.7),
+    // ReaEQ's band 3 under golem: 2 octaves = Q 0.67 (read by the rack session)
+    ParamInfo::float("midq", "Mid Q", 0.3, 6.0, 0.67),
     ParamInfo::float("midprop", "Proportional Q", 0.0, 100.0, 50.0),
     ParamInfo::float("mid2gain", "Mid 2 Gain", -18.0, 18.0, 0.0).with_exp(),
     ParamInfo::float("mid2freq", "Mid 2 Freq", 100.0, 8000.0, 2500.0).with_exp(),
@@ -222,7 +223,8 @@ impl Eq {
                 d[LC1] = Some(design(Analog::high_pass(BW2[0]), lc, sr));
                 d[LC2] = Some(design(Analog::high_pass(BW2[1]), lc, sr));
             } else {
-                d[LC1] = Some(design(Analog::high_pass(std::f64::consts::FRAC_1_SQRT_2), lc, sr));
+                // 12 dB / oct with ReaEQ's default 2-octave shape (Q 0.67): golem's presets were voiced on it
+                d[LC1] = Some(design(Analog::high_pass(0.667), lc, sr));
             }
         }
         let lows = self.cur(p::LOWS) as f64;

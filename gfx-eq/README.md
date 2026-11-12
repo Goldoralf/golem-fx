@@ -87,7 +87,7 @@ Catalogue ids kept; defaults = the catalogue's; new parameters default to neutra
 | `lowcut_slope` | Low Cut Slope | e | 12 · 24 dB / oct | new | 12 | — | | Butterworth |
 | `lows` | Lows | f | −18 – +18 dB | new | 0 dB | lin | | Low shelf gain |
 | `lowfreq` | Low Freq | f | 40 – 500 Hz | new | 120 Hz | log | | Low shelf corner |
-| `midq` | Mid Q | f | 0.3 – 6 | new | 0.7 | log | | Bell width at small gains |
+| `midq` | Mid Q | f | 0.3 – 6 | new | 0.67 (ReaEQ's 2 octaves) | log | | Bell width at small gains |
 | `midprop` | Proportional Q | f | 0 – 100 % | new | 50 % | lin | | 0 = constant Q; 100 = API-like narrowing with gain |
 | `mid2gain` | Mid 2 Gain | f | −18 – +18 dB | new | 0 dB | lin | ✓ | Second bell: a guitarist's commonest move is two at once (cut the mud, lift the presence) |
 | `mid2freq` | Mid 2 Freq | f | 100 – 8,000 Hz | new | 2,500 Hz | log | ✓ | |

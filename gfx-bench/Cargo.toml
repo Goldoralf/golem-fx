@@ -14,3 +14,4 @@ gfx-gate = { path = "../gfx-gate", default-features = false }
 gfx-comp = { path = "../gfx-comp", default-features = false }
 gfx-limiter = { path = "../gfx-limiter", default-features = false }
 gfx-eq = { path = "../gfx-eq", default-features = false }
+gfx-deesser = { path = "../gfx-deesser", default-features = false }

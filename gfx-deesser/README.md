@@ -1,6 +1,6 @@
 # gfx-deesser
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — relative detection, 4th-order capped detection band, zero-crossing weight (Vocal), dynamic matched shelf / bell / wide, optional reported lookahead, `gr` meter; 5 behaviour tests, bench green at 44.1 – 192 kHz.
 
 golem's de-esser. Stands for golem's `deesser` block (today golem's own `golem_deesser.jsfx`), keeping
 its parameter ids and units ([golem contract](../docs/golem-contract.md)). The aim: sibilance tamed at

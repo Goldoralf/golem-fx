@@ -148,6 +148,19 @@ impl Svf {
         self.c = Coefs { a1, a2, a3, m0, m1, m2 };
     }
 
+    /// Sets the structure directly: cut-off `freq` (prewarped), damping k = 1 / Q, and the output mix
+    /// m0·input + m1·band + m2·low (table-driven filters such as the wah models).
+    pub fn set_raw(&mut self, freq: f32, q: f32, m0: f32, m1: f32, m2: f32, sample_rate: f32) {
+        let sr = sample_rate as f64;
+        let g = (PI * (freq as f64).clamp(1.0, 0.49 * sr) / sr).tan();
+        let k = 1.0 / (q as f64).max(1e-3);
+        let a1 = 1.0 / (1.0 + g * (g + k));
+        let a2 = g * a1;
+        let a3 = g * a2;
+        self.c = Coefs { a1, a2, a3, m0: m0 as f64, m1: m1 as f64, m2: m2 as f64 };
+        self.left = 0;
+    }
+
     /// Realises any stable biquad (e.g. a matched design) in the TPT structure.
     pub fn set_biquad(&mut self, b: &crate::matched::Biquad) {
         if let Some(c) = Coefs::from_biquad(b) {

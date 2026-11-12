@@ -13,3 +13,6 @@ name = "GoleM FX Limiter"
 
 [gfx-eq]
 name = "GoleM FX EQ"
+
+[gfx-deesser]
+name = "GoleM FX De-esser"

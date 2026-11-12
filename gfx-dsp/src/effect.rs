@@ -78,6 +78,10 @@ pub trait Effect: Send {
     /// (through the parameter's own smoothing). Unknown ids are ignored.
     fn set_param(&mut self, id: &str, value: f32);
 
+    /// The host transport for the coming block (tempo, position). Effects that sync to the tempo use
+    /// it; the default ignores it. Called before `process` when the host gives it.
+    fn set_transport(&mut self, _transport: crate::transport::TransportInfo) {}
+
     /// Reported latency in samples.
     fn latency(&self) -> usize {
         0
