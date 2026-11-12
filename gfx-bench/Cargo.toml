@@ -12,3 +12,4 @@ gfx-dsp.workspace = true
 gfx-boost = { path = "../gfx-boost", default-features = false }
 gfx-gate = { path = "../gfx-gate", default-features = false }
 gfx-comp = { path = "../gfx-comp", default-features = false }
+gfx-limiter = { path = "../gfx-limiter", default-features = false }

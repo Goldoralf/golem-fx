@@ -1,6 +1,6 @@
 # gfx-limiter
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — zero-latency and lookahead (1 / 2 / 5 ms, true peak) modes, three styles, `gr` meter; 6 behaviour tests (never above the threshold in any mode, bit-transparent below it, latency = delay, no bass riding, true peak ≤ +0.1 dB, Clip-style aliasing ≈ −57 dB), bench green at 44.1 – 192 kHz. Clip style clips at 2× with 1.7 dB of headroom for the down-sampler's overshoot, so its peaks land up to 1.7 dB under the threshold.
 
 golem's peak limiter. Stands for golem's `limiter` block (today x42-dpl; `golem_limiter.jsfx` on
 Windows / macOS), keeping its parameter ids and units ([golem contract](../docs/golem-contract.md)). The

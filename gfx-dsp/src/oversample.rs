@@ -201,3 +201,35 @@ mod tests {
         assert!(db < -90.0, "alias at {db} dB");
     }
 }
+
+#[cfg(test)]
+mod order_test {
+    use super::*;
+
+    fn probe(y: &[f32], f: f64, sr: f64) -> f64 {
+        let w = 2.0 * PI * f / sr;
+        let (mut re, mut im) = (0.0, 0.0);
+        for (i, v) in y.iter().enumerate() {
+            let win = 0.5 - 0.5 * (2.0 * PI * i as f64 / y.len() as f64).cos();
+            re += *v as f64 * win * (w * i as f64).cos();
+            im += *v as f64 * win * (w * i as f64).sin();
+        }
+        (re * re + im * im).sqrt()
+    }
+
+    #[test]
+    fn upsampled_stream_has_no_image() {
+        let mut o = Oversampler2x::new();
+        let mut up = Vec::new();
+        for i in 0..8192 {
+            let x = (2.0 * PI * 5000.0 * i as f64 / 48000.0).sin() as f32;
+            up.extend_from_slice(&o.up(x));
+        }
+        let s = &up[4096..];
+        let main = probe(s, 5000.0, 96000.0);
+        let image = probe(s, 43000.0, 96000.0);
+        let db = 20.0 * (image / main).log10();
+        assert!(db < -90.0, "image at {db:.1} dB");
+    }
+}
+

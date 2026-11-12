@@ -7,3 +7,6 @@ name = "GoleM FX Gate"
 
 [gfx-comp]
 name = "GoleM FX Comp"
+
+[gfx-limiter]
+name = "GoleM FX Limiter"

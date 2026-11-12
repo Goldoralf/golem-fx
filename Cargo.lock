@@ -223,6 +223,7 @@ dependencies = [
  "gfx-comp",
  "gfx-dsp",
  "gfx-gate",
+ "gfx-limiter",
 ]
 
 [[package]]
@@ -247,6 +248,14 @@ version = "0.1.0"
 
 [[package]]
 name = "gfx-gate"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-limiter"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

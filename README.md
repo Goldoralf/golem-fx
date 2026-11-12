@@ -55,7 +55,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | design |
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | design |
 | 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | design |
-| 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | design |
+| 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, bench green, to test in golem |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
