@@ -14,8 +14,8 @@
    - Custom off: the group follows the profile (its controls are greyed, `depends` in the catalogue).
    - Custom on: the group uses its own controls.
 3. **Warmth always applies.** It moves the colour around an *anchor*: the profile's, or the expert
-   group's when it is Custom. Depth is an absolute excursion in ms; the profile and the mode only set its
-   default.
+   group's when it is Custom. Depth is an absolute excursion: the **peak** deviation of the delay around its
+   centre (± ms); the profile and the mode only set its default.
 4. **golem catalogue ids are kept.** gfx-chorus carries the ids of golem's `chorus` block (`rate`,
    `depth`, `mix`, see `library/catalog/effects.json`), in the catalogue's units, with ranges a little
    wider. A preset keeps its settings when its block switches to gfx-chorus. Every other id is new.
@@ -33,10 +33,10 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `profile` | Profile | e | Guitar Clean · Guitar Drive · Bass · Keys · Voice | Guitar Clean | — | — | | Picks the voicing: anchors of every group, internal scale of Depth and Warmth |
-| `mode` | Mode | e | Classic · Dual · Dimension · Ensemble · Doubler | P | — | — | | Voice topology (see Modulation group) |
+| `mode` | Mode | e | Classic · Dual I · Dual II · Dual I+II · Dimension 1 · Dimension 2 · Dimension 3 · Ensemble · Doubler | P | — | — | | Voice topology and its reference settings ([VOICING.md](VOICING.md) §2) |
 | `rate` | Rate | f | 0.05 – 10 Hz | P | log | 50 | ✓ | LFO rate (catalogue `chorus.rate`: 0.1 – 3 Hz). Ignored when `sync` ≠ Off |
-| `depth` | Depth | f | 0.5 – 10 ms | P | log | 50 | ✓ | Delay excursion (catalogue `chorus.depth`: 1 – 8 ms) |
-| `warmth` | Warmth | f | 0 – 100 % | 50 % | lin | 30 | ✓ | Colour macro: wet low-pass, input saturation, compander and BBD bandwidth, in the profile's proportions |
+| `depth` | Depth | f | 0.1 – 10 ms | P | log | 50 | ✓ | Peak deviation of the delay, ± ms (catalogue `chorus.depth`: 1 – 8 ms) |
+| `warmth` | Warmth | f | 0 – 100 % | 50 % | lin | 30 | ✓ | Colour macro: wet low-pass, input saturation, BBD bandwidth and noise, in the profile's proportions |
 | `mix` | Mix | f | 0 – 1 (shown as %) | P | lin | 20 | ✓ | Dry / wet balance, law `mix_law` (catalogue `chorus.mix`: 0 – 1) |
 
 ## Expert
@@ -56,11 +56,12 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 |---|---|---|---|---|---|---|---|---|
 | `color_custom` | Color Custom | b | off / on | off | — | — | | Off = follows the profile |
 | `engine` | Engine | e | Clean · BBD · Tape | P | — | — | | Delay-line engine |
-| `interp` | Interpolation | e | Hermite · Lagrange 5 · Allpass · Sinc | Lagrange 5 | — | — | | Clean engine only (`depends: engine=Clean`) |
+| `interp` | Interpolation | e | Lagrange 3 · Lagrange 5 · Sinc | Lagrange 5 | — | — | | Clean engine only (`depends: engine=Clean`) |
 | `drive` | Drive | f | 0 – 100 % | P | lin | 30 | | Soft saturation of the input stage (wet only) |
-| `bbd_chip` | BBD Chip | e | 512 · 1024 · 2048 · 4096 stages | 1024 | — | — | | Stage count: sets the clock frequency and so the aliasing (`depends: engine=BBD`) |
+| `bbd_chip` | BBD Chip | e | 256 · 512 · 1024 · 2048 · 4096 stages | P | — | — | | Stage count: sets the clock frequency and so the aliasing (`depends: engine=BBD`) |
 | `bbd_bw` | BBD Bandwidth | f | 2 – 15 kHz | P | log | 30 | | Cut-off of the anti-aliasing and reconstruction filters |
-| `compander` | Compander | f | 0 – 100 % | P | lin | 30 | | NE570-style compression/expansion: pumping, breathing noise |
+| `emphasis` | Emphasis | f | 0 – 100 % | P | lin | 30 | | BBD pre-emphasis before the line and matching de-emphasis after (CE-2: ≈ +15 dB treble shelf); lowers hiss, shapes the BBD's distortion |
+| `compander` | Compander | f | 0 – 100 % | P | lin | 30 | | NE570-style compression/expansion (Dimension D): pumping, breathing noise |
 | `noise` | Noise | f | 0 – 100 % | P | lin | 30 | | Hiss and clock bleed (BBD), tape hiss (Tape) |
 | `wow` | Wow | f | 0 – 100 % | P | lin | 50 | | Slow speed drift (`depends: engine=Tape`) |
 | `flutter` | Flutter | f | 0 – 100 % | P | lin | 50 | | Fast speed variation (`depends: engine=Tape`) |
@@ -71,13 +72,24 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 |---|---|---|---|---|---|---|---|---|
 | `mod_custom` | Modulation Custom | b | off / on | off | — | — | | Off = follows the profile and the mode |
 | `delay_base` | Base Delay | f | 1 – 30 ms | P | log | 100 | | Centre delay |
-| `lfo_shape` | LFO Shape | e | Sine · Triangle · Rounded · Random · Juno | P | — | — | | Rounded = softened triangle; Random = smoothed random; Juno = Juno-60 triangle |
+| `lfo_shape` | LFO Shape | e | Sine · Triangle · Rounded · Random · Log | P | — | — | | Triangle is RC-smoothed like the CE-2's (no corner in pitch); Rounded = softer; Random = smoothed random; Log = Strymon "dBucket"-style log LFO |
 | `voices` | Voices | e | 1 – 6 | P | — | — | | Used by Ensemble and Doubler; fixed by the other modes |
 | `voice_spread` | Voice Spread | f | 0 – 360° | P | lin | 50 | | LFO phase offset between successive voices |
+| `imperfection` | Imperfection | f | 0 – 100 % | P | lin | 100 | | Analogue tolerances: phase and amplitude errors between voices, curved control voltage (string ensembles) |
+| `detune_lock` | Detune Lock | b | off / on | off | — | — | | Holds the peak pitch deviation constant when Rate changes (depth shrinks as rate rises) |
 | `drift` | Drift | f | 0 – 100 % | P | lin | 100 | | Slow random detuning of rate and depth between voices ("human") |
 | `crossmix` | Cross-Mix | f | 0 – 100 % | P | lin | 30 | | L/R cross-mix of the complementary voices (Dimension mode) |
 | `feedback` | Feedback | f | 0 – 50 % | 0 % | lin | 30 | | Feedback; above ~30 % it drifts towards a flanger |
 | `sync` | Sync | e | Off · 4/1 · 2/1 · 1/1 · 1/2 · 1/4 · 1/8 · 1/16 (+ dotted / triplets) | Off | — | — | | Locks the LFO to the host tempo |
+
+### Dynamics — envelope follower
+
+| id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
+|---|---|---|---|---|---|---|---|---|
+| `env_depth` | Env → Depth | f | −100 – +100 % | 0 % | lin | 30 | | Playing harder adds (+) or removes (−) depth |
+| `env_mix` | Env → Mix | f | −100 – +100 % | P | lin | 30 | | Playing harder raises (+) or ducks (−) the wet: chords stay clear on the attack, the chorus blooms on the sustain |
+
+The envelope follower's times are set by the profile (fast for guitar, slower for voice and keys).
 
 ### Stereo
 
@@ -115,5 +127,5 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
   writing the catalogue entry.
 - **Bypass.** golem disables a block through the host's bypass; nih-plug also exposes a VST3 bypass
   parameter. Pick one, and check that no click nor leftover delay-line content is heard on return.
-- **Parameter count:** 6 on the front panel, 33 in expert mode (5 of them Custom switches). An order of
+- **Parameter count:** 6 on the front panel, 38 in expert mode (5 of them Custom switches). An order of
   magnitude, not a target.
