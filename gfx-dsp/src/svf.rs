@@ -50,7 +50,7 @@ impl Coefs {
         let (a1, a2) = (b.a1, b.a2);
         let den = 1.0 - a1 + a2;
         let g2 = (1.0 + a1 + a2) / den;
-        if !(g2 > 0.0) || !(den > 0.0) {
+        if g2.is_nan() || g2 <= 0.0 || den.is_nan() || den <= 0.0 {
             return None;
         }
         let g = g2.sqrt();

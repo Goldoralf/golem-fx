@@ -1,0 +1,20 @@
+[package]
+name = "gfx-eq"
+version = "0.1.0"
+description = "GoleM FX EQ — golem's EQ (block eq)"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["plugin"]
+# The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
+plugin = ["dep:nih_plug"]
+
+[dependencies]
+gfx-dsp.workspace = true
+nih_plug = { workspace = true, optional = true }

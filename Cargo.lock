@@ -222,6 +222,7 @@ dependencies = [
  "gfx-boost",
  "gfx-comp",
  "gfx-dsp",
+ "gfx-eq",
  "gfx-gate",
  "gfx-limiter",
 ]
@@ -245,6 +246,14 @@ dependencies = [
 [[package]]
 name = "gfx-dsp"
 version = "0.1.0"
+
+[[package]]
+name = "gfx-eq"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
 
 [[package]]
 name = "gfx-gate"

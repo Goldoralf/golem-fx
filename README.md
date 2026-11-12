@@ -36,9 +36,9 @@ In order. The golem block each effect stands for is its catalogue `type`.
 |---|---|---|---|---|
 | 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | core coded (+ oversampling, ADAA) |
 | 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | **coded**, passes golem's engine checks |
-| 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | **coded**, bench green, to test in golem |
+| 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | **coded**, passes golem's engine checks |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
-| 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | design |
+| 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | **coded**, bench green, to test in golem |
 | 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | design |
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, passes golem's engine checks |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
@@ -55,7 +55,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | design |
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | design |
 | 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | design |
-| 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, bench green, to test in golem |
+| 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, passes golem's engine checks |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | design |
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto

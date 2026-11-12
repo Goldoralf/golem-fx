@@ -10,3 +10,6 @@ name = "GoleM FX Comp"
 
 [gfx-limiter]
 name = "GoleM FX Limiter"
+
+[gfx-eq]
+name = "GoleM FX EQ"

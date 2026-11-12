@@ -1,6 +1,6 @@
 # gfx-eq
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — every band a matched section in the TPT SVF (within 1 dB of analog to 20 kHz at 48 kHz), proportional Q, de-harsh with relative detection, static auto gain, bands fade in / out (bit-transparent when flat), `harsh_gr` meter; 6 behaviour tests, bench green at 44.1 – 192 kHz.
 
 golem's EQ. Stands for golem's `eq` block (today ReaEQ: high-pass, one bell, a high shelf), keeping its
 four parameter ids and units ([golem contract](../docs/golem-contract.md)). The aim is the best live EQ:
