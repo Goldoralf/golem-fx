@@ -1,6 +1,6 @@
 # gfx-shimmer
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — shifters in the reverb's feedback (gfx-dsp's loop shifter: equal-power heads, seeded jitter, forward or reverse grains), two detuned voices over ±24 st, loop low / high cut (anti-alias clamp), placement Regen / Input / Both, spaces Hall / Cathedral / Cloud (FDN-16) and Plate, bloom, freeze that stops the climb, infinite, ducking, swell, pitch glide, trails; 4 behaviour tests (T60 at shimmer 0, first pass an octave up, bounded at full shimmer in every space and character, freeze holds without climbing), bench green. Choices made in code: the regeneration adds only the shifted signal (the tank keeps its own decay, so `decay` stays the T60) and is scaled by 1 / √(1 + decay) and soft-limited; CPU 707 ns / sample at 48 kHz (3.4 % of a core, above the 2 % target). The blind acceptance test against ValhallaShimmer (§2) is still to run.
 
 golem's shimmer reverb. Stands for golem's `reverb-shimmer` block (today guitarix GxShimmiZita:
 zita-rev1 + a pitch shifter **limited to ±6 st**, so the classic octave shimmer is out of reach — golem's

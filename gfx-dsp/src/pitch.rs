@@ -112,6 +112,93 @@ impl GrainShifter {
     }
 }
 
+/// The shifter for a reverb's feedback loop (gfx-shimmer).
+///
+/// Inside a reverb the phase is already scrambled, so splice search finds nothing better than chance.
+/// The random splices are the sound (Costello, Valhalla DSP), which is why this shifter has none:
+/// - two heads half a window apart, **equal-power** sin / cos weights (a linear crossfade loses
+///   ~1.8 dB per pass on decorrelated content and skews the decay);
+/// - window lengths jittered from a fixed seed;
+/// - an optional reverse-grain mode (each grain plays backwards: smoother, organ-like).
+#[derive(Clone, Debug, Default)]
+pub struct LoopShifter {
+    line: DelayLine,
+    win: f64,
+    cur_win: f64,
+    psi: [f64; 2],
+    d: [f64; 2],
+    ratio: f64,
+    reverse: bool,
+    rng: crate::lfo::Rng,
+    seed: u64,
+}
+
+impl LoopShifter {
+    pub fn new(seed: u64) -> Self {
+        Self { seed, rng: crate::lfo::Rng::new(seed), ..Default::default() }
+    }
+
+    pub fn prepare(&mut self, sample_rate: f32, window_ms: f32) {
+        self.win = (window_ms as f64 * 0.001 * sample_rate as f64).max(32.0);
+        // the longest travel: a reverse grain at ratio 4 over a jittered window
+        self.line.prepare((self.win * 1.3 * 5.0) as usize + 16);
+        self.reset();
+    }
+
+    pub fn reset(&mut self) {
+        self.line.reset();
+        self.rng = crate::lfo::Rng::new(self.seed);
+        self.cur_win = self.win;
+        self.psi = [0.0, 0.5];
+        self.ratio = 1.0;
+        let s = self.start();
+        self.d = [s, s];
+    }
+
+    pub fn set_ratio(&mut self, ratio: f64) {
+        self.ratio = ratio.clamp(0.25, 4.0);
+    }
+
+    pub fn set_semitones(&mut self, st: f64) {
+        self.set_ratio((st / 12.0).exp2());
+    }
+
+    pub fn set_reverse(&mut self, reverse: bool) {
+        self.reverse = reverse;
+    }
+
+    fn start(&self) -> f64 {
+        if !self.reverse && self.ratio > 1.0 {
+            2.0 + self.cur_win * (self.ratio - 1.0)
+        } else {
+            2.0
+        }
+    }
+
+    #[inline]
+    pub fn process(&mut self, x: f32) -> f32 {
+        self.line.push(x);
+        let step = if self.reverse { 1.0 + self.ratio } else { 1.0 - self.ratio };
+        let mut y = 0.0f32;
+        for h in 0..2 {
+            self.psi[h] += 1.0 / self.cur_win;
+            if self.psi[h] >= 1.0 {
+                self.psi[h] -= 1.0;
+                if h == 0 {
+                    // a new window length for the next cycle (±20 %, seeded)
+                    self.cur_win = self.win * (1.0 + 0.2 * self.rng.bipolar() as f64);
+                }
+                self.d[h] = self.start();
+            }
+            let w = (std::f64::consts::PI * self.psi[h]).sin() as f32;
+            let max = self.line.max_delay() as f64 - 4.0;
+            y += w * self.line.read(self.d[h].clamp(2.0, max), Interp::Lagrange3);
+            self.d[h] += step;
+        }
+        y
+    }
+}
+
 /// Niemitalo's Hilbert pair: path A and path B (B one sample behind) are 90° apart.
 const HA: [f64; 4] = [0.6923878, 0.936_065_432_295_9, 0.988_229_522_686_0, 0.998_748_845_273_7];
 const HB: [f64; 4] = [0.402_192_116_242_6, 0.856_171_088_242_0, 0.972_290_954_565_1, 0.995_288_479_127_8];
@@ -201,6 +288,37 @@ mod tests {
                 assert!((cents - st * 100.0).abs() < 3.0, "{f0} Hz, {st} st: {cents:.1} cents");
             }
         }
+    }
+
+    #[test]
+    fn loop_shifter_shifts_and_keeps_power() {
+        for (st, rev) in [(12.0, false), (-12.0, false), (12.0, true), (7.0, false)] {
+            let mut g = LoopShifter::new(5);
+            g.prepare(48000.0, 60.0);
+            g.set_reverse(rev);
+            g.set_semitones(st);
+            let mut r = crate::lfo::Rng::new(3);
+            // decorrelated input (noise through a resonator at 500 Hz): the output keeps its power
+            let (mut a, mut b) = (0.0f32, 0.0f32);
+            let x: Vec<f32> = (0..96000)
+                .map(|_| {
+                    let v = 0.1 * r.bipolar() + 1.97 * a - 0.985 * b;
+                    b = a;
+                    a = v;
+                    v * 0.05
+                })
+                .collect();
+            let y: Vec<f32> = x.iter().map(|v| g.process(*v)).collect();
+            let p = |v: &[f32]| v.iter().map(|s| (*s as f64).powi(2)).sum::<f64>() / v.len() as f64;
+            let db = 10.0 * (p(&y[24000..]) / p(&x[24000..])).log10();
+            assert!(db.abs() < 1.0, "{st} st reverse {rev}: power {db:.2} dB");
+        }
+        let mut g = LoopShifter::new(5);
+        g.prepare(48000.0, 60.0);
+        g.set_semitones(12.0);
+        let y: Vec<f32> = (0..96000).map(|i| g.process((std::f32::consts::TAU * 330.0 * i as f32 / 48000.0).sin())).collect();
+        let f = freq_of(&y[12000..], 48000.0);
+        assert!((f / 660.0 - 1.0).abs() < 0.02, "{f}");
     }
 
     #[test]

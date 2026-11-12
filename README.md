@@ -50,7 +50,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 14 | [gfx-tremolo](gfx-tremolo/) | `tremolo` | Calf Pulsator | **coded**, bench green, to test in golem |
 | 15 | [gfx-vibrato](gfx-vibrato/) | `vibrato` | GxTubeVibrato / golem_vibrato.jsfx | **coded**, bench green, to test in golem |
 | 16 | [gfx-reverb](gfx-reverb/) | `reverb`, `reverb-plate`, `reverb-room` | Dragonfly Hall / Plate / Room | **coded**, bench green, to test in golem |
-| 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | design |
+| 17 | [gfx-shimmer](gfx-shimmer/) | `reverb-shimmer` | GxShimmiZita | **coded**, bench green, to test in golem |
 | 18 | [gfx-wah](gfx-wah/) | `wah`, `wah-color` | GxGCB-95, GxWahwah | **coded**, bench green, to test in golem |
 | 19 | [gfx-autowah](gfx-autowah/) | `autowah` | GxAutoWah | **coded**, bench green, to test in golem |
 | 20 | [gfx-rotary](gfx-rotary/) | `rotary` | Calf Rotary Speaker | **coded**, bench green, to test in golem |

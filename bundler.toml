@@ -52,3 +52,6 @@ name = "GoleM FX Delay"
 
 [gfx-reverb]
 name = "GoleM FX Reverb"
+
+[gfx-shimmer]
+name = "GoleM FX Shimmer"

@@ -187,6 +187,8 @@ pub struct Fdn {
     walk_t: [f64; 4],
     walk_ph: f64,
     mod_depth: f64,
+    /// the depth asked for; `mod_depth` glides to it (a jump would move the modulated read heads)
+    mod_target: f64,
     mod_rate: f64,
     sr: f64,
     pub frozen: bool,
@@ -237,6 +239,7 @@ impl Fdn {
     /// Jumps the lengths to their targets.
     pub fn settle(&mut self) {
         self.len = self.target;
+        self.mod_depth = self.mod_target;
     }
 
     /// Decay per band from the current lengths (Jot): RT60 low / mid / high, and the split frequencies.
@@ -251,8 +254,13 @@ impl Fdn {
     }
 
     pub fn set_mod(&mut self, depth_ms: f64, rate_hz: f64) {
-        self.mod_depth = depth_ms * 0.001 * self.sr;
+        self.mod_target = depth_ms * 0.001 * self.sr;
         self.mod_rate = rate_hz;
+    }
+
+    /// Jumps the modulation depth to its target (reset).
+    pub fn settle_mod(&mut self) {
+        self.mod_depth = self.mod_target;
     }
 
     /// One sample: `inp` 16 inputs; returns (left, right).
@@ -276,6 +284,12 @@ impl Fdn {
             }
         }
         let mod_amt = (1.0 - self.fz) as f64;
+        if self.mod_depth != self.mod_target {
+            self.mod_depth += (self.mod_target - self.mod_depth) * 0.0005;
+            if (self.mod_target - self.mod_depth).abs() < 1e-4 {
+                self.mod_depth = self.mod_target;
+            }
+        }
         let mut y = [0.0f32; 16];
         for i in 0..16 {
             let gliding = self.len[i] != self.target[i];
