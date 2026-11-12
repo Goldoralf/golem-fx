@@ -18,7 +18,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 |---|---|---|---|---|
 | 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | design |
 | 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | design |
-| 2 | gfx-comp | `comp` | ReaComp | — |
+| 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | design |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
 | 4 | gfx-eq | `eq` | ReaEQ | — |
 | 5 | gfx-delay | `delay` | ReaDelay | — |
