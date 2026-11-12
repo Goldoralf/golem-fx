@@ -55,7 +55,7 @@ Catalogue id kept.
 | `poles` | Poles | e | 2 · 4 | new | 2 | |
 | `direction` | Direction | e | Up · Down | new | Up | |
 | `low` | Low | f | 50 – 2,000 Hz | new | 250 Hz | |
-| `high` | High | f | 200 – 8,000 Hz | new | 2,500 Hz | |
+| `high` | High | f | 200 – 8,000 Hz | new | 1,200 Hz | |
 | `peak` | Peak | f | 0.5 – 20 | new | 4 | Q |
 | `attack` | Attack | f | 0.5 – 100 ms | new | 5 ms | |
 | `release` | Release | f | 10 – 2,000 ms | new | 150 ms | |

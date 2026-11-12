@@ -21,7 +21,7 @@ use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::transport::{Sync, TransportInfo};
 use gfx_dsp::util::one_pole_coef;
 use gfx_dsp::{Effect, ParamInfo};
-use gfx_dsp::wah::{Voice, GCB95, MODELS};
+use gfx_dsp::wah::{lookup, Voice, GCB95, MODELS};
 
 #[cfg(feature = "plugin")]
 mod plugin;
@@ -48,7 +48,7 @@ pub static PARAMS: [ParamInfo; 17] = [
     ParamInfo::enumeration("poles", "Poles", 2, 0),
     ParamInfo::enumeration("direction", "Direction", 2, 0),
     ParamInfo::float("low", "Low", 50.0, 2000.0, 250.0),
-    ParamInfo::float("high", "High", 200.0, 8000.0, 2500.0),
+    ParamInfo::float("high", "High", 200.0, 8000.0, 1200.0),
     ParamInfo::float("peak", "Peak", 0.5, 20.0, 4.0),
     ParamInfo::float("attack", "Attack", 0.5, 100.0, 5.0),
     ParamInfo::float("release", "Release", 10.0, 2000.0, 150.0),
@@ -93,7 +93,7 @@ impl Default for Settings {
             four_poles: false,
             down: false,
             low: 250.0,
-            high: 2500.0,
+            high: 1200.0,
             peak: 4.0,
             attack: 5.0,
             release: 150.0,
@@ -150,6 +150,8 @@ pub struct Autowah {
     level: OnePole,
     drive: OnePole,
     sens: OnePole,
+    /// ln(peak frequency) of the wah voice at W = k / 128
+    wah_lnf: [f32; 129],
     /// Structural changes (type, poles, direction, source) go through a 5 ms dip of the wet to the
     /// dry; the new structure starts from rest at the bottom.
     gate: LinearRamp,
@@ -179,6 +181,7 @@ impl Autowah {
             level: OnePole::new(20.0, d.level, 1e-5),
             drive: OnePole::new(20.0, d.drive, 1e-5),
             sens: OnePole::new(60.0, d.wah, 1e-5),
+            wah_lnf: core::array::from_fn(|k| lookup(&MODELS[GCB95], k as f32 / 128.0).0.ln()),
             gate: LinearRamp::new(5.0, 1.0),
             pending: None,
             clock: 0,
@@ -219,6 +222,27 @@ impl Autowah {
         } else {
             self.s = s;
         }
+    }
+
+    /// The wah voice's W where it peaks at ln f (its table falls with W), by search in the table.
+    fn wah_w(&self, lnf: f32) -> f32 {
+        let t = &self.wah_lnf;
+        if lnf >= t[0] {
+            return 0.0;
+        }
+        if lnf <= t[128] {
+            return 1.0;
+        }
+        let (mut a, mut b) = (0usize, 128usize);
+        while b - a > 1 {
+            let m = (a + b) / 2;
+            if t[m] > lnf {
+                a = m;
+            } else {
+                b = m;
+            }
+        }
+        (a as f32 + (t[a] - lnf) / (t[a] - t[b])) / 128.0
     }
 
     /// The filter position for a level relative to the playing's long-term level. Exposed for tests.
@@ -321,6 +345,7 @@ impl Autowah {
             let ftype = self.s.ftype;
             let four = self.s.four_poles;
             let wah_model = &MODELS[GCB95];
+            let wah_w = if ftype == FilterType::Wah { self.wah_w(lo + (hi - lo) * pos) } else { 0.0 };
             for c in 0..nch {
                 let x = buffers[c][i];
                 let ch = &mut self.ch[c];
@@ -330,7 +355,8 @@ impl Autowah {
                 let driven = if drive_db > 0.0 { ch.adaa.process(Shaper::Tanh, hx * kd) / kd.sqrt() } else { hx };
                 let wet = match ftype {
                     FilterType::Wah => {
-                        ch.wah.set(wah_model, 1.0 - pos, q / 4.0, 1.0, sr);
+                        // the voice sweeps between `low` and `high` like the other types
+                        ch.wah.set(wah_model, wah_w, q / 4.0, 1.0, sr);
                         ch.wah.process(driven, (-std::f32::consts::TAU * 20.0 / sr).exp(), 0.0)
                     }
                     FilterType::Vowel => {
