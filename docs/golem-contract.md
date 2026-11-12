@@ -40,6 +40,15 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
 - **No modal window, no blocking work when the plugin turns on.** A plugin that freezes the engine on
   enable is quarantined by golem.
 
+## Trails
+
+Effects with a tail (delay, and any later reverb) switch on / off through their own bypass parameter
+(nih-plug `make_bypass`, VST3 `kIsBypass`), so their tail rings out:
+
+- Ardour keeps such a plugin running and drives that parameter instead of deactivating it.
+- REAPER stops processing a host-bypassed plugin, so golem switches these effects by that parameter, as it
+  does for GoleM Freeze (`switch_param_of` in `golem_rig.lua`). golem-side change.
+
 ## Modulation and tempo
 
 - **Deterministic modulation.** Every LFO, random source or grain scheduler starts from a fixed state on
