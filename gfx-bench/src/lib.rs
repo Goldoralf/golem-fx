@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//! gfx-bench — offline render and measurement of golem-fx effects (design: README.md).
+//!
+//! It drives each effect's host-independent processor ([`gfx_dsp::Effect`]); golem's own tools test
+//! the VST3 in REAPER and the Golem Engine.
+
+pub mod checks;
+pub mod selftest;
+pub mod signals;
+pub mod wav;
+
+use gfx_dsp::Effect;
+
+/// Every effect the bench knows, by crate name.
+pub const EFFECTS: &[&str] = &["gfx-boost"];
+
+pub fn make(name: &str) -> Option<Box<dyn Effect>> {
+    match name {
+        "gfx-boost" | "boost" => Some(Box::new(gfx_boost::Boost::new())),
+        // the bench's own faulty effects (selftest.rs)
+        "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
+        "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
+        _ => None,
+    }
+}
+
+/// A fresh, prepared and reset instance.
+pub fn fresh(name: &str, sample_rate: f32, channels: usize, max_block: usize) -> Box<dyn Effect> {
+    let mut e = make(name).unwrap_or_else(|| panic!("unknown effect {name}"));
+    e.prepare(sample_rate, max_block, channels);
+    e.reset();
+    e
+}
+
+/// Sets parameters, settles them (by processing silence is NOT done: settings are applied before
+/// reset so they start settled), and renders `input` in blocks of `block`.
+pub fn render(effect: &mut dyn Effect, input: &[Vec<f32>], block: usize) -> Vec<Vec<f32>> {
+    let mut out: Vec<Vec<f32>> = input.to_vec();
+    let n = out.first().map_or(0, |c| c.len());
+    let mut start = 0;
+    while start < n {
+        let end = (start + block).min(n);
+        let mut slices: Vec<&mut [f32]> = out.iter_mut().map(|c| &mut c[start..end]).collect();
+        effect.process(&mut slices);
+        start = end;
+    }
+    out
+}
+
+/// Applies settings and lets them settle: set, then `reset()` (smoothers settle on their targets).
+pub fn apply_settings(effect: &mut dyn Effect, settings: &[(String, f32)]) {
+    for (id, v) in settings {
+        effect.set_param(id, *v);
+    }
+    effect.reset();
+}

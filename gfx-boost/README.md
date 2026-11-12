@@ -1,6 +1,6 @@
 # gfx-boost
 
-> **Status: PROPOSED** — design, no code yet.
+> **Status: CODED** (v0.1.0, 2026-11-12) — processor, VST3 wrapper, bench green at 44.1 – 192 kHz.
 
 golem's gain utility. Stands for two golem blocks that share the id `gain`
 ([golem contract](../docs/golem-contract.md)): `volume` (ReaPlugs Volume, −60 … +6 dB) and `clean-boost`

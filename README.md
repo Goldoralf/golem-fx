@@ -14,19 +14,33 @@ feature is for.
 Shared code: [gfx-dsp](gfx-dsp/), the DSP library every effect is built on (delay lines, LFOs, filters,
 dynamics, saturation, BBD model…), and `gfx-bench`, the offline render and measurement tool.
 
+## Build
+
+Rust stable (`~/.cargo/bin`).
+
+```sh
+cargo test --workspace --release              # unit tests + the bench's common checks at 48 kHz
+cargo run --release -p gfx-bench -- check gfx-boost     # full common checks, four sample rates
+cargo run --release -p gfx-bench -- render gfx-boost --in di.wav --out out.wav --set gain=6
+cargo xtask bundle gfx-boost --release        # → target/bundled/GoleM FX Boost.vst3
+```
+
+Each effect crate has a host-independent processor (`gfx_dsp::Effect`) and a nih-plug wrapper behind the
+`plugin` feature; gfx-bench links the processors.
+
 ## Roadmap
 
 In order. The golem block each effect stands for is its catalogue `type`.
 
 | # | Effect | golem block | Replaces | Status |
 |---|---|---|---|---|
-| 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | design |
+| 0 | [gfx-dsp](gfx-dsp/), [gfx-bench](gfx-bench/) | — | — | core coded |
 | 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | design |
 | 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | design |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
 | 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | design |
 | 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | design |
-| 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | design |
+| 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | **coded**, bench green, to test in golem |
 | 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
 | 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | design |
 | 9 | [gfx-drive](gfx-drive/) | `guitar-drive` | JS guitar/distortion | design |

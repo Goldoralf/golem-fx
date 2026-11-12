@@ -1,0 +1,10 @@
+[package]
+name = "gfx-dsp"
+version = "0.1.0"
+description = "Shared DSP building blocks of golem-fx (no plugin dependency)"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[dependencies]
