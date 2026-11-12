@@ -20,11 +20,11 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 1 | [gfx-gate](gfx-gate/) | `gate` | ReaGate | design |
 | 2 | [gfx-comp](gfx-comp/) | `comp` | ReaComp | design |
 | 3 | [gfx-chorus](gfx-chorus/) | `chorus` | Calf Multi Chorus / golem_chorus.jsfx | design |
-| 4 | gfx-eq | `eq` | ReaEQ | — |
+| 4 | [gfx-eq](gfx-eq/) | `eq` | ReaEQ | design |
 | 5 | [gfx-delay](gfx-delay/) | `delay` | ReaDelay | design |
 | 6 | [gfx-boost](gfx-boost/) | `clean-boost`, `volume` | JS Volume Adjustment | design |
-| 7 | gfx-killswitch | `killswitch` | golem_killswitch.jsfx | — |
-| 8 | gfx-deesser | `deesser` | golem_deesser.jsfx | — |
+| 7 | [gfx-killswitch](gfx-killswitch/) | `killswitch` | golem_killswitch.jsfx | design |
+| 8 | [gfx-deesser](gfx-deesser/) | `deesser` | golem_deesser.jsfx | design |
 | 9 | gfx-drive | `guitar-drive` | JS guitar/distortion | — |
 | 10 | gfx-flanger | `flanger-js` | JS flanger | — |
 | 11 | gfx-phaser | `phaser-js` | JS phaser | — |
