@@ -5,7 +5,7 @@
 //                       in the family's colour, the motif engraved) or "thrash" (gloss lacquer, diamond
 //                       plate, the motif in yellow lined in black). By default ("auto") the finish
 //                       follows the family (finishFor); GolemPedals.setStyle or opts.style force one.
-//                       gfx-met, gfx-emet and gfx-shem have their own "blackwork" finish: black
+//                       gfx-met, gfx-emet, gfx-shem and gfx-golem have their own "blackwork" finish: black
 //                       lacquer, white engraving, a skull whose eyes light when the pedal is on. Each effect has a motif saying what it does (MOTIF) and its glyph lit
 //                       as a rune when on. "clay", the first prototype, stays available.
 //   nam-*    "specimen" NAM captures: a steel pedal with a glass window (the captured circuit), and the
@@ -361,7 +361,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash' };
-  // the high-gain companions (Fortin's role) have their own black finish
+  // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
