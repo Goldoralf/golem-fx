@@ -34,7 +34,11 @@ struct ShemParams {
 
 impl Default for ShemParams {
     fn default() -> Self {
-        Self { grind: f(0, " dB", 1), voice: EnumParam::new("Voice", Voice::Focused), bright: f(2, " dB", 1) }
+        Self {
+            grind: f(0, " dB", 1),
+            voice: EnumParam::new("Voice", Voice::Focused),
+            bright: f(2, " dB", 1),
+        }
     }
 }
 

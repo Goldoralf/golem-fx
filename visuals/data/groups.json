@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option). `presets` holds reference settings of crates without a VOICING table (enum values as option labels).",
+  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option). Factory presets live in presets/<crate>.json.",
   "groups": {
     "gfx-boost": [],
     "gfx-gate": [
@@ -1265,156 +1265,16 @@
         "param": "harmony",
         "equals": "Scale"
       }
+    },
+    "gfx-chorus": {
+      "env_depth": {
+        "param": "mod_custom",
+        "equals": true
+      },
+      "env_mix": {
+        "param": "mod_custom",
+        "equals": true
+      }
     }
-  },
-  "presets": {
-    "gfx-emet": [
-      {
-        "name": "Clean hump",
-        "params": {
-          "gain": 0,
-          "tone_stack": 50,
-          "level": 0
-        }
-      },
-      {
-        "name": "Tighten up the gain",
-        "params": {
-          "gain": 10,
-          "tone_stack": 40,
-          "level": -3
-        }
-      },
-      {
-        "name": "Front end smash",
-        "params": {
-          "gain": 70,
-          "tone_stack": 60,
-          "level": -6
-        }
-      },
-      {
-        "name": "Classic 808",
-        "params": {
-          "gain": 50,
-          "tone_stack": 50,
-          "headroom": -13
-        }
-      }
-    ],
-    "gfx-shem": [
-      {
-        "name": "Tight boost",
-        "params": {
-          "grind": 10
-        }
-      },
-      {
-        "name": "Drop tuning",
-        "params": {
-          "grind": 14,
-          "voice": "Focused"
-        }
-      },
-      {
-        "name": "Pushed mids",
-        "params": {
-          "grind": 2
-        }
-      }
-    ],
-    "gfx-met": [
-      {
-        "name": "Zuul",
-        "params": {
-          "hold": 0,
-          "release": 0,
-          "ratio": 2.8
-        }
-      },
-      {
-        "name": "Zuul+ staccato",
-        "params": {
-          "hold": 20,
-          "release": 60
-        }
-      },
-      {
-        "name": "Breakdown gate",
-        "params": {
-          "ratio": 10,
-          "release": 30
-        }
-      }
-    ],
-    "gfx-golem": [
-      {
-        "name": "Emergence",
-        "params": {
-          "shift": -12,
-          "formant": 0,
-          "voice1": -6
-        }
-      },
-      {
-        "name": "Emergence loud",
-        "params": {
-          "shift": -12,
-          "formant": 0,
-          "voice1": 0
-        }
-      },
-      {
-        "name": "Emergence dark",
-        "params": {
-          "shift": -12,
-          "formant": -4,
-          "voice1": -6
-        }
-      },
-      {
-        "name": "Emergence dark loud",
-        "params": {
-          "shift": -12,
-          "formant": -4,
-          "voice1": 0
-        }
-      },
-      {
-        "name": "Whammy voice",
-        "params": {
-          "shift": -12,
-          "formant_link": true,
-          "voice1": -6
-        }
-      },
-      {
-        "name": "Choir",
-        "params": {
-          "shift": -12,
-          "shift2": 12,
-          "voice2": -10,
-          "pan": 60,
-          "humanize": 40
-        }
-      },
-      {
-        "name": "Unison double",
-        "params": {
-          "shift": 0,
-          "fine": 8,
-          "humanize": 60,
-          "voice1": -3
-        }
-      },
-      {
-        "name": "Harmony third",
-        "params": {
-          "harmony": "Scale",
-          "shift": 4,
-          "voice1": -6
-        }
-      }
-    ]
   }
 }

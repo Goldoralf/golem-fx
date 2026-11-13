@@ -1,0 +1,536 @@
+{
+ "crate": "gfx-gate",
+ "presets": [
+  {
+   "id": "standard",
+   "type": "gate",
+   "name": "Pedalboard standard",
+   "desc": "Hard gate just above the guitar's idle noise: open in 1 ms, closes after a short hold with a 150 ms fade",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal",
+    "punk"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "heavy-metal",
+    "punk-rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": true,
+   "params": {
+    "thresh": -50,
+    "attack": 1,
+    "hold": 20,
+    "release": 150,
+    "hyst": -3,
+    "range": -90,
+    "ratio": 100,
+    "knee": 0,
+    "follow": false
+   },
+   "notes": "golem's Standard gate kept; −3 dB hysteresis stops chatter on decaying notes without holding the noise open"
+  },
+  {
+   "id": "soft",
+   "type": "gate",
+   "name": "Soft fade gate",
+   "desc": "Low threshold and a slow 400 ms fade with follow decay: hiss goes away, ringing chords are never cut",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "pop"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "electric-blues",
+    "pop-rock"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -60,
+    "attack": 5,
+    "hold": 40,
+    "release": 400,
+    "hyst": -4,
+    "range": -90,
+    "ratio": 100,
+    "knee": 6,
+    "follow": true
+   },
+   "notes": "Follow decay stretches the release up to 4× on natural decays, so sustained crunch chords fade like an amp turned down"
+  },
+  {
+   "id": "chug-tight",
+   "type": "gate",
+   "name": "Tight chugs before the amp",
+   "desc": "Fast gate before a high-gain amp; 120 Hz sidechain low cut makes palm-mute stops snap shut in ~10 ms",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "metalcore",
+    "djent",
+    "groove-metal"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Periphery",
+     "why": "staccato riffs with dead-silent stops between mutes, gate set for it",
+     "source": "Reverb.com, Misha Mansoor outlines the ultimate metal pedalboard (undated)",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -38,
+    "attack": 0.5,
+    "hold": 8,
+    "release": 60,
+    "hpf": 120,
+    "hyst": -6,
+    "range": -90,
+    "ratio": 100,
+    "follow": true
+   },
+   "notes": "golem's Chug-tight from the design doc. hpf 120 Hz shrinks the close window to 10 ms (tighter, not just less sensitive); follow keeps held chords"
+  },
+  {
+   "id": "keyed-after-amp",
+   "type": "gate",
+   "name": "Amp-hiss gate keyed from the DI",
+   "desc": "Gate after the amp listening to the clean DI: amp hiss is cut on the guitar's own timing, at any gain",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "progressive-metal",
+    "djent",
+    "deathcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "source": "Key",
+    "thresh": -45,
+    "attack": 0.5,
+    "hold": 10,
+    "release": 40,
+    "hyst": -4,
+    "hpf": 80,
+    "range": -90,
+    "ratio": 100
+   },
+   "notes": "Needs golem to route the lane DI into the key bus; without it the gate falls back to the main input and the threshold is then too low"
+  },
+  {
+   "id": "breakdown-stop",
+   "type": "gate",
+   "name": "Breakdown stop-start",
+   "desc": "Very fast hard gate for stop-start breakdowns: 25 ms release, high sidechain cut, no follow, silence on every rest",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "punk"
+   ],
+   "subgenres": [
+    "deathcore",
+    "metalcore",
+    "beatdown-hardcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "extreme",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -40,
+    "attack": 0.2,
+    "hold": 5,
+    "release": 25,
+    "hpf": 150,
+    "hyst": -4,
+    "range": -90,
+    "ratio": 100,
+    "follow": false
+   },
+   "notes": "Follow off on purpose: every stop is a hard stop. Too aggressive for sustained chords, use chug-tight there"
+  },
+  {
+   "id": "lead-expander",
+   "type": "gate",
+   "name": "High-gain lead expander",
+   "desc": "3:1 soft-knee expander with tail damp: hiss fades first under a long lead note, the note's end is never chopped",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "heavy-metal",
+    "progressive-metal",
+    "hard-rock"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -55,
+    "attack": 2,
+    "hold": 30,
+    "release": 300,
+    "ratio": 3,
+    "knee": 12,
+    "range": -60,
+    "hyst": -3,
+    "follow": true,
+    "damp": 60
+   },
+   "notes": "From the doc's lead row. Expansion instead of switching keeps vibrato tails alive; damp 60 % takes 7 dB from the highs before the level moves"
+  },
+  {
+   "id": "single-coil-hum",
+   "type": "gate",
+   "name": "Single-coil hum guard",
+   "desc": "Notches 50 Hz mains hum out of detection so the gate can sit 6 dB lower; gentle range keeps the playing natural",
+   "inst": "guitar",
+   "genres": [
+    "blues",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "texas-blues",
+    "blues-rock",
+    "funk"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "hum": "50 Hz",
+    "thresh": -56,
+    "attack": 2,
+    "hold": 30,
+    "release": 200,
+    "hyst": -4,
+    "range": -40,
+    "ratio": 100,
+    "damp": 40
+   },
+   "notes": "Set hum to 60 Hz in the Americas. Range −40 dB rather than silence: a strat's buzz is lowered, never pumping"
+  },
+  {
+   "id": "clean-natural",
+   "type": "gate",
+   "name": "Natural clean expander",
+   "desc": "2:1 expander floored at −20 dB: lowers noise between clean funk stabs without ever fully closing",
+   "inst": "guitar",
+   "genres": [
+    "rnb",
+    "pop",
+    "jazz"
+   ],
+   "subgenres": [
+    "funk",
+    "disco",
+    "jazz-funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -60,
+    "attack": 3,
+    "hold": 20,
+    "release": 250,
+    "ratio": 2,
+    "knee": 6,
+    "range": -20,
+    "hyst": 0
+   },
+   "notes": "The doc's clean / funk row. Gentle enough for ghost notes and muted scratches to stay audible"
+  },
+  {
+   "id": "doom-sustain",
+   "type": "gate",
+   "name": "Doom sustain gate",
+   "desc": "Low threshold, long hold and an 800 ms decay-following fade: huge sustained chords ring, silence after they die",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "doom-metal",
+    "sludge-metal",
+    "stoner-metal"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -60,
+    "attack": 3,
+    "hold": 200,
+    "release": 800,
+    "hyst": -6,
+    "hpf": 40,
+    "range": -90,
+    "ratio": 100,
+    "follow": true,
+    "damp": 50
+   },
+   "notes": "Slow riffs leave long rests: follow decay lets a held chord fade on its own, damp removes the fizz first"
+  },
+  {
+   "id": "bass-gate",
+   "type": "gate",
+   "name": "Bass gate",
+   "desc": "Bass gate with a 40 ms close window (no chatter on a low B), 50 ms hold and a 250 ms fade",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal",
+    "pop"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "alternative-metal",
+    "pop-rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": true,
+   "params": {
+    "thresh": -55,
+    "attack": 5,
+    "hold": 50,
+    "release": 250,
+    "hpf": 30,
+    "lpf": 8000,
+    "hyst": -4,
+    "range": -90,
+    "ratio": 100
+   },
+   "notes": "golem's Bass gate from the doc. 5 ms attack keeps the low fundamental's first cycle clean; lpf 8 kHz ignores string noise"
+  },
+  {
+   "id": "bass-metal-tight",
+   "type": "gate",
+   "name": "Down-tuned bass, tight",
+   "desc": "Faster bass gate that stops with the guitars' chugs; low-pass detection ignores pick clank and fret noise",
+   "inst": "bass",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "djent",
+    "metalcore",
+    "deathcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -45,
+    "attack": 1,
+    "hold": 15,
+    "release": 80,
+    "hpf": 40,
+    "lpf": 3000,
+    "hyst": -6,
+    "range": -90,
+    "ratio": 100,
+    "follow": true
+   },
+   "notes": "Pair with chug-tight on the guitars so bass and guitars stop together"
+  },
+  {
+   "id": "vocal-gate",
+   "type": "gate",
+   "name": "Live mic bleed reducer",
+   "desc": "Lowers stage bleed in a vocal mic by 15 dB between phrases; long hold and release never clip a word's tail",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop",
+    "punk"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "pop-rock",
+    "punk-rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "thresh": -48,
+    "attack": 2,
+    "hold": 100,
+    "release": 300,
+    "hpf": 100,
+    "lpf": 12000,
+    "hyst": -6,
+    "range": -15,
+    "ratio": 100
+   },
+   "notes": "golem's Vocal gate from the doc. Range −15 dB reduces bleed without the pumping ambience of a full close"
+  },
+  {
+   "id": "tom-gate",
+   "type": "gate",
+   "name": "Tom mic gate",
+   "desc": "Opens on tom hits, ignores cymbals through a 6 kHz detection cut; natural decay, bleed lowered by 40 dB",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "metal",
+    "pop"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "heavy-metal",
+    "pop-rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": true,
+   "params": {
+    "thresh": -35,
+    "attack": 0.5,
+    "hold": 60,
+    "release": 180,
+    "hpf": 60,
+    "lpf": 6000,
+    "hyst": -6,
+    "range": -40,
+    "ratio": 100,
+    "follow": true
+   },
+   "notes": "Hysteresis −6 dB plus follow lets the drum's ring decay; detection band 60 Hz – 6 kHz rejects kick rumble and cymbal wash"
+  },
+  {
+   "id": "gated-drum-room",
+   "type": "gate",
+   "name": "80s gated drum room",
+   "desc": "Hard gate on a crushed room mic or reverb: full ambience for a quarter second, then a sudden 40 ms cut",
+   "inst": "drums",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "adult-contemporary",
+    "art-rock",
+    "new-wave"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "Phil Collins",
+     "song": "In the Air Tonight",
+     "why": "heavily compressed room mic gated to cut the big ambience short",
+     "source": "MusicTech, Hugh Padgham interview, 2019",
+     "verified": true
+    },
+    {
+     "artist": "Peter Gabriel",
+     "why": "Padgham found the gated room sound on Gabriel's third album at Townhouse",
+     "source": "MusicTech, Hugh Padgham interview, 2019",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "thresh": -30,
+    "attack": 0.5,
+    "hold": 250,
+    "release": 40,
+    "hyst": -6,
+    "hpf": 80,
+    "range": -90,
+    "ratio": 100,
+    "follow": false
+   },
+   "notes": "Put a heavy compressor before it on the room or reverb return. The effect is the abrupt all-to-nothing cut: hold sets the size, keep release short"
+  }
+ ]
+}

@@ -1,0 +1,110 @@
+{
+ "crate": "gfx-pitch-classic",
+ "presets": [
+  {
+   "id": "clean-octave-down",
+   "type": "pitch-shift-js",
+   "name": "Deglitched octave down",
+   "desc": "Two-head shifter an octave down with splice search, blended under the dry: a smooth lower double",
+   "inst": "any",
+   "genres": ["rock", "pop"],
+   "subgenres": ["indie-rock", "alternative-rock", "synth-pop"],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 1,
+   "tags": ["warm"],
+   "default": true,
+   "params": {"shift": -12, "window": 60, "overlap": 25, "search": true, "wet": -4, "dry": 0},
+   "notes": "Long window and splice search (the H3000 'deglitch' idea) remove most of the warble on single notes"
+  },
+  {
+   "id": "harmonizer-detune",
+   "type": "pitch-shift-js",
+   "name": "Early harmonizer thickener",
+   "desc": "Shifter 10 cents flat mixed 6 dB under the dry: the 1980s rack detune that fattens a rhythm guitar",
+   "inst": "guitar",
+   "genres": ["rock", "metal"],
+   "subgenres": ["hard-rock", "glam-metal", "arena-rock"],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [
+    {"artist": "Van Halen", "why": "Eventide harmonizer detune mixed with the dry guitar", "verified": false}
+   ],
+   "level_db": 1,
+   "tags": ["vintage", "wide"],
+   "default": true,
+   "params": {"shift": -0.1, "window": 50, "overlap": 20, "search": false, "wet": -6, "dry": 0},
+   "notes": "A tiny ratio makes the splices nearly inaudible; for a stereo ±cents pair, gfx-detune is the better tool"
+  },
+  {
+   "id": "falling-snare",
+   "type": "pitch-shift-js",
+   "name": "Pitched-down snare",
+   "desc": "Snare or kit shifted down 5 semitones and blended with the dry: a deep, metallic, processed crack",
+   "inst": "drums",
+   "genres": ["rock", "electronic"],
+   "subgenres": ["art-rock", "krautrock", "post-punk"],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {"artist": "David Bowie", "song": "Breaking Glass", "why": "Visconti pitched the snare down through an H910 Harmonizer", "source": "Red Bull Music Academy Daily, 2017", "verified": true}
+   ],
+   "level_db": 1,
+   "tags": ["vintage", "lo-fi"],
+   "default": true,
+   "params": {"shift": -5, "window": 40, "overlap": 15, "search": false, "wet": 0, "dry": 0},
+   "notes": "Low uses H910 feedback for a falling pitch; this block has no feedback, so place a short delay after it for the descent"
+  },
+  {
+   "id": "fifth-harmonizer",
+   "type": "pitch-shift-js",
+   "name": "Classic fifth harmony",
+   "desc": "A fixed fifth up with splice search, 4 dB under the dry: the old rack harmonizer on leads and synths",
+   "inst": "any",
+   "genres": ["rock", "electronic"],
+   "subgenres": ["progressive-rock", "new-wave", "synthwave"],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 1,
+   "tags": ["vintage"],
+   "default": false,
+   "params": {"shift": 7, "window": 50, "overlap": 20, "search": true, "wet": -4, "dry": 0}
+  },
+  {
+   "id": "glitch-octave-up",
+   "type": "pitch-shift-js",
+   "name": "Glitchy octave up",
+   "desc": "Octave up with short windows and hard splices, no search: a warbling, buzzing lo-fi octave",
+   "inst": "any",
+   "genres": ["experimental", "electronic", "rock"],
+   "subgenres": ["glitch", "lo-fi-indie", "noise-rock"],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": ["lo-fi", "extreme"],
+   "default": false,
+   "params": {"shift": 12, "window": 25, "overlap": 4, "search": false, "wet": -2, "dry": -3},
+   "notes": "Short window and tiny overlap make every splice audible: here the artefact is the sound"
+  },
+  {
+   "id": "splice-stutter",
+   "type": "pitch-shift-js",
+   "name": "Splice stutter",
+   "desc": "A fourth up, fully wet, 100 ms windows with 1 ms crossfades: a choppy, stuttering repeat texture",
+   "inst": "any",
+   "genres": ["experimental", "electronic"],
+   "subgenres": ["glitch", "idm", "sound-collage"],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": ["lo-fi", "extreme"],
+   "default": false,
+   "params": {"shift": 5, "window": 100, "overlap": 1, "search": false, "wet": 0, "dry": -120},
+   "notes": "Long windows repeat or skip whole fragments, and a 1 ms overlap clicks at each splice. Fully wet on purpose"
+  }
+ ]
+}

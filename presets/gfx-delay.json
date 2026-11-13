@@ -1,0 +1,983 @@
+{
+ "crate": "gfx-delay",
+ "presets": [
+  {
+   "id": "warm-analog-quarter",
+   "type": "delay",
+   "name": "Warm analog quarter",
+   "desc": "Quarter-note bucket-brigade repeats, darker each pass, sitting just behind the playing",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "pop"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "blues-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "model": "BBD",
+    "time": "1/4",
+    "feedback": 35,
+    "mix": 25,
+    "mod": 50,
+    "high_cut": 8000,
+    "low_cut": 100
+   },
+   "notes": "All-purpose starting point: BBD darkens the repeats so they never fight the pick; 35 % feedback gives four or five audible echoes"
+  },
+  {
+   "id": "dotted-eighth-arena",
+   "type": "delay",
+   "name": "Dotted-eighth arena",
+   "desc": "Dotted-eighth digital repeats as loud as the pick, turning picked eighths into a 16th-note pulse",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "post-punk",
+    "arena-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "U2",
+     "song": "Where the Streets Have No Name",
+     "why": "the Edge's dotted-eighth echo over muted eighth-note picking",
+     "source": "Premier Guitar (Electric Etudes: U2's the Edge), 2015",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/8.",
+   "tags": [
+    "bright",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "model": "Digital",
+    "time": "1/8•",
+    "feedback": 25,
+    "mix": 60,
+    "stereo": "Stereo",
+    "high_cut": 9000,
+    "low_cut": 120
+   },
+   "notes": "Little feedback and wet about level with the dry, as the lesson describes: the rhythm comes from the echo, so the playing must stay in time"
+  },
+  {
+   "id": "dotted-quarter-cascade",
+   "type": "delay",
+   "name": "Dotted plus quarter cascade",
+   "desc": "Two delays in one: dotted-eighth and quarter taps interlock into a shimmering 16th-note cascade",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "christian-rock",
+    "ccm",
+    "arena-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "U2",
+     "why": "the Edge stacks a dotted-eighth and a quarter delay for cascading parts",
+     "verified": false
+    },
+    {
+     "artist": "Hillsong United",
+     "why": "worship guitar convention: dotted-eighth plus quarter under swells",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "wide",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "model": "Digital",
+    "time": "1/4",
+    "taps": "Dotted + Quarter",
+    "feedback": 35,
+    "mix": 40,
+    "stereo": "Ping-Pong",
+    "high_cut": 7000,
+    "low_cut": 150,
+    "mod": 40
+   },
+   "notes": "The taps pattern gives both rhythms off one quarter-note time; low cut 150 Hz keeps the cascade off the bass"
+  },
+  {
+   "id": "sun-slapback",
+   "type": "delay",
+   "name": "Sun studio slapback",
+   "desc": "One tape repeat about 135 ms behind the note: the rockabilly and early rock'n'roll slap",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "rockabilly",
+    "rock-and-roll",
+    "honky-tonk"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Scotty Moore",
+     "song": "Mystery Train",
+     "why": "the Sun-era tape slap on Elvis's early singles",
+     "verified": false
+    },
+    {
+     "artist": "Sam Phillips",
+     "why": "Sun's tape slapback measured at about 134 - 137 ms",
+     "source": "Tor Halmrast, Art of Record Production conference (via Joe Bennett), 2017",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 135,
+    "feedback": 8,
+    "mix": 45,
+    "mod": 35,
+    "age": 15,
+    "high_cut": 6000
+   },
+   "notes": "Feedback near zero: one slap, not an echo. Tape loses top and adds a touch of wow like the Ampex machines"
+  },
+  {
+   "id": "chicken-pickin-slap",
+   "type": "delay",
+   "name": "Tight country slap",
+   "desc": "A very short, bright single repeat that doubles chicken-picked Telecaster lines",
+   "inst": "guitar",
+   "genres": [
+    "folk"
+   ],
+   "subgenres": [
+    "bakersfield-sound",
+    "contemporary-country",
+    "honky-tonk"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Brent Mason",
+     "why": "Nashville session sound: short slap under fast hybrid picking",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 95,
+    "feedback": 12,
+    "mix": 35,
+    "mod": 20,
+    "high_cut": 9000,
+    "low_cut": 150
+   },
+   "notes": "Shorter than a rockabilly slap so fast licks stay articulate; low mod keeps the pitch steady on double-stops"
+  },
+  {
+   "id": "echoplex-single-repeat",
+   "type": "delay",
+   "name": "Single-repeat tape skank",
+   "desc": "One loud tape repeat on the off-beat, as loud as the chord: reggae-tinged new wave chops",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "caribbean"
+   ],
+   "subgenres": [
+    "new-wave",
+    "reggae-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "The Police",
+     "song": "Walking on the Moon",
+     "why": "Andy Summers's Echoplex single repeat on sparse chords",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 330,
+    "feedback": 5,
+    "mix": 80,
+    "drive": 15,
+    "mod": 45,
+    "high_cut": 7000
+   },
+   "notes": "Guitar World's breakdown gives an EP-3 at about 330 ms, one repeat, half dry / half echo; mix 80 brings the repeat near the dry level"
+  },
+  {
+   "id": "ducked-lead-quarter",
+   "type": "delay",
+   "name": "Ducked lead echo",
+   "desc": "Quarter-note repeats that duck under the solo and bloom in the gaps between phrases",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "heavy-metal",
+    "progressive-metal",
+    "hard-rock"
+   ],
+   "gain": "high",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "Dream Theater",
+     "why": "John Petrucci's lead patches with TC 2290 style dynamic delay",
+     "verified": false
+    },
+    {
+     "artist": "Steve Lukather",
+     "why": "80s studio lead sound: 2290 delay ducked under the line",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "modern",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "model": "Digital",
+    "time": "1/4",
+    "feedback": 35,
+    "mix": 35,
+    "duck": 10,
+    "duck_thresh": -30,
+    "duck_release": 350,
+    "stereo": "Stereo",
+    "high_cut": 6500,
+    "low_cut": 150
+   },
+   "notes": "Ducking 10 dB keeps fast high-gain lines clear; high cut 6.5 kHz removes the fizz from the repeats"
+  },
+  {
+   "id": "floating-solo-440",
+   "type": "delay",
+   "name": "Floating solo echo",
+   "desc": "A 440 ms tape-like echo with darker repeats that lifts sustained bends into a big space",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "progressive-rock",
+    "blues-rock",
+    "psychedelic-rock"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "Pink Floyd",
+     "song": "Comfortably Numb",
+     "why": "David Gilmour's solo echo around 440 ms, often under a touch of reverb",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 440,
+    "feedback": 35,
+    "mix": 35,
+    "mod": 40,
+    "age": 10,
+    "high_cut": 5500,
+    "low_cut": 120
+   },
+   "notes": "440 ms is the fan-documented starting point, not a sourced setting; pair with a hall at about 2 s"
+  },
+  {
+   "id": "canon-800-1600",
+   "type": "delay",
+   "name": "Harmony canon echo",
+   "desc": "Two long repeats at 800 and 1600 ms, one each side, so a solo harmonises with itself",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "glam-rock",
+    "arena-rock"
+   ],
+   "gain": "high",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "Queen",
+     "song": "Brighton Rock",
+     "why": "Brian May's two delays at 800 and 1600 ms for live canon solos",
+     "source": "Premier Guitar Rig Rundown, 2014",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "wide",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Digital",
+    "time": "Free",
+    "time_ms": 800,
+    "stereo": "Dual",
+    "ratio": 2,
+    "feedback": 15,
+    "mix": 80,
+    "width": 100,
+    "high_cut": 9000
+   },
+   "notes": "Dual with ratio 2 gives 800 ms left and 1600 ms right; play phrases that harmonise with themselves two beats later at the song's tempo"
+  },
+  {
+   "id": "space-echo-heads",
+   "type": "delay",
+   "name": "Three-head tape rhythm",
+   "desc": "Tape echo with three playback heads at 1/3, 2/3 and 1 of the time: galloping, warbly rhythms",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "caribbean"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "space-rock",
+    "roots-reggae"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Lee \"Scratch\" Perry",
+     "why": "Space Echo multi-head echoes at the Black Ark",
+     "verified": false
+    },
+    {
+     "artist": "Radiohead",
+     "why": "Jonny Greenwood's tape echo textures on clean parts",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4.",
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "1/4•",
+    "taps": "Heads 1+2+3",
+    "feedback": 35,
+    "mix": 30,
+    "mod": 60,
+    "age": 30,
+    "drive": 15,
+    "high_cut": 5000
+   },
+   "notes": "The multi-head pattern of an RE-201 style machine; age 30 % adds wow and a little treble loss"
+  },
+  {
+   "id": "dub-runaway",
+   "type": "delay",
+   "name": "Dub runaway echo",
+   "desc": "Dark tape echo near self-oscillation: throws on a snare or a chord that swell into a roar",
+   "inst": "any",
+   "genres": [
+    "caribbean",
+    "electronic"
+   ],
+   "subgenres": [
+    "dub",
+    "roots-reggae",
+    "dub-techno"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "King Tubby",
+     "why": "live front-panel echo moves pushing the tape into runaway feedback",
+     "verified": false
+    },
+    {
+     "artist": "Lee \"Scratch\" Perry",
+     "why": "Black Ark Space Echo throws and pitch dives",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4.",
+   "tags": [
+    "extreme",
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "1/4•",
+    "feedback": 72,
+    "mix": 45,
+    "drive": 40,
+    "glide": "Glide",
+    "glide_ms": 400,
+    "low_cut": 180,
+    "high_cut": 3500,
+    "age": 30,
+    "mod": 55
+   },
+   "notes": "Put feedback on EXP up to 110 % for self-oscillation (bounded); Glide makes time changes dive in pitch like a tape speed knob"
+  },
+  {
+   "id": "reverse-solo",
+   "type": "delay",
+   "name": "Backwards solo",
+   "desc": "Each phrase comes back reversed, wet only: the backwards-guitar solo without tape tricks",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "acid-rock"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "The Jimi Hendrix Experience",
+     "song": "Are You Experienced?",
+     "why": "the reversed-tape guitar solo",
+     "verified": false
+    },
+    {
+     "artist": "The Beatles",
+     "song": "I'm Only Sleeping",
+     "why": "reversed guitar solo built from tape",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/2",
+   "tags": [
+    "extreme",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "direction": "Reverse",
+    "time": "1/2",
+    "feedback": 0,
+    "mix": 100,
+    "kill_dry": true,
+    "model": "Digital",
+    "high_cut": 9000
+   },
+   "notes": "Wet only, no feedback: one reversed copy per half-note window. Play legato; the swell of each window is the sound"
+  },
+  {
+   "id": "reverse-ambience",
+   "type": "delay",
+   "name": "Reverse halo",
+   "desc": "Reversed, diffused repeats behind the dry chord: swelling backwards ghosts of what was played",
+   "inst": "guitar",
+   "genres": [
+    "jazz",
+    "experimental",
+    "rock"
+   ],
+   "subgenres": [
+    "contemporary-jazz",
+    "free-improvisation",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Bill Frisell",
+     "why": "reverse delay and looping as part of his clean jazz palette",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "direction": "Reverse",
+    "time": "1/4",
+    "feedback": 40,
+    "diffusion": 50,
+    "mix": 35,
+    "model": "Digital",
+    "high_cut": 7000,
+    "low_cut": 150,
+    "stereo": "Stereo"
+   },
+   "notes": "Feedback 40 % keeps a few reversed passes; diffusion 50 % blurs the window seams into a wash"
+  },
+  {
+   "id": "shimmer-delay",
+   "type": "delay",
+   "name": "Rising shimmer echo",
+   "desc": "Each repeat climbs an octave and blurs into a rising pad, with pick attacks swelled out",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ccm",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Explosions in the Sky",
+     "why": "octave-climbing ambient swells behind tremolo-picked leads",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "model": "BBD",
+    "time": "1/4",
+    "loop_pitch": 12,
+    "diffusion": 60,
+    "feedback": 60,
+    "mix": 40,
+    "high_cut": 5000,
+    "low_cut": 200,
+    "swell": 200,
+    "stereo": "Stereo"
+   },
+   "notes": "The README's Ice-style recipe: shifter plus diffusion in the loop; high cut 5 kHz keeps the octaves from turning shrill"
+  },
+  {
+   "id": "ambient-wash",
+   "type": "delay",
+   "name": "Ambient echo wash",
+   "desc": "Long, diffused, dark repeats that melt into a stereo wash behind chords",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "shoegaze",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Slowdive",
+     "why": "washes of delay and reverb behind clean chords",
+     "verified": false
+    },
+    {
+     "artist": "Sigur Ros",
+     "why": "oceanic long-feedback delays under bowed guitar",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "dreamy",
+    "dark",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "model": "BBD",
+    "time": "1/4",
+    "feedback": 60,
+    "mix": 35,
+    "diffusion": 60,
+    "high_cut": 4000,
+    "low_cut": 200,
+    "mod": 65,
+    "stereo": "Stereo",
+    "width": 100
+   },
+   "notes": "Diffusion 60 % turns echoes into a smear; the 200 Hz - 4 kHz loop band keeps the wash off the dry"
+  },
+  {
+   "id": "tape-loop-accumulator",
+   "type": "delay",
+   "name": "Long tape accumulator",
+   "desc": "Four-second tape loop with high feedback: phrases pile up into a slowly decaying drone",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "tape-music",
+    "ambient",
+    "progressive-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "Robert Fripp & Brian Eno",
+     "song": "The Heavenly Music Corporation",
+     "why": "two-Revox tape delay of several seconds, layered live",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 4000,
+    "feedback": 85,
+    "mix": 60,
+    "mod": 40,
+    "age": 20,
+    "high_cut": 6000,
+    "low_cut": 120
+   },
+   "notes": "Each layer fades over a minute or so; toggle Hold to freeze the loop and play over it"
+  },
+  {
+   "id": "lofi-crunch-echo",
+   "type": "delay",
+   "name": "Crushed 8-bit echo",
+   "desc": "Early-digital echo whose repeats lose rate and bits each pass, grainier and grainier",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "rock",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "chiptune",
+    "lo-fi-indie",
+    "lo-fi-hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Lo-Fi",
+    "time": "1/8",
+    "age": 60,
+    "feedback": 45,
+    "mix": 30,
+    "high_cut": 8000
+   },
+   "notes": "Degradation accumulates per repeat, so the first echo is close to clean and the tail turns to grit"
+  },
+  {
+   "id": "vocal-throw",
+   "type": "delay",
+   "name": "Vocal quarter throw",
+   "desc": "Ping-pong quarter echoes on the voice, filtered and ducked so the words stay dry and clear",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "rock"
+   ],
+   "subgenres": [
+    "dance-pop",
+    "contemporary-r-and-b",
+    "pop-rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "modern",
+    "wide"
+   ],
+   "default": true,
+   "params": {
+    "model": "Digital",
+    "time": "1/4",
+    "feedback": 25,
+    "mix": 20,
+    "duck": 10,
+    "duck_thresh": -30,
+    "duck_release": 400,
+    "stereo": "Ping-Pong",
+    "high_cut": 5000,
+    "low_cut": 250
+   },
+   "notes": "Mix-engineer convention: band-limited, ducked throws so the echo only speaks at line ends"
+  },
+  {
+   "id": "vocal-slapback",
+   "type": "delay",
+   "name": "Fifties vocal slap",
+   "desc": "A single tape slap about 135 ms behind the voice: the Sun-era rock'n'roll vocal",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "rockabilly",
+    "rock-and-roll",
+    "honky-tonk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Elvis Presley",
+     "song": "That's All Right",
+     "why": "Sam Phillips's tape slap on the Sun singles",
+     "source": "Tor Halmrast, Art of Record Production conference (via Joe Bennett), 2017",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 135,
+    "feedback": 5,
+    "mix": 35,
+    "mod": 30,
+    "high_cut": 5500,
+    "low_cut": 200
+   },
+   "notes": "Low cut 200 Hz keeps the slap off the chest tone so it reads as room, not as a double"
+  },
+  {
+   "id": "vocal-doubler",
+   "type": "delay",
+   "name": "Tape double tracker",
+   "desc": "A 25 ms modulated copy, no feedback: artificial double tracking that thickens a single take",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "britpop",
+    "psychedelic-pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [
+    {
+     "artist": "The Beatles",
+     "why": "Abbey Road's ADT for Lennon's vocals instead of a second take",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "model": "Tape",
+    "time": "Free",
+    "time_ms": 25,
+    "feedback": 0,
+    "mod": 60,
+    "mix": 80,
+    "stereo": "Stereo",
+    "width": 70
+   },
+   "notes": "The README's ADT recipe: wow on the copy is what makes it read as a second take rather than a comb"
+  },
+  {
+   "id": "bass-eighth-halo",
+   "type": "delay",
+   "name": "Bass eighth halo",
+   "desc": "Eighth-note repeats on the bass with the lows cut from the loop: melodic lines echo, the low end stays solid",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-punk",
+    "post-rock",
+    "dub-techno"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Joy Division",
+     "why": "Peter Hook's high melodic bass lines under echo and chorus",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "dark",
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "model": "BBD",
+    "time": "1/8",
+    "feedback": 25,
+    "mix": 22,
+    "low_cut": 350,
+    "high_cut": 5000,
+    "mod": 40
+   },
+   "notes": "Low cut 350 Hz in the loop: only the mids and upper harmonics repeat, so the fundamental is never smeared"
+  },
+  {
+   "id": "keys-ping-pong",
+   "type": "delay",
+   "name": "Synth ping-pong",
+   "desc": "Dotted-eighth ping-pong across the stereo field: arpeggios bounce left and right",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "subgenres": [
+    "synthwave",
+    "synth-pop",
+    "trance"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Vangelis",
+     "why": "wide, long echoes on CS-80 leads and arpeggios",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/8.",
+   "tags": [
+    "wide",
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "model": "Digital",
+    "time": "1/8•",
+    "feedback": 40,
+    "mix": 30,
+    "stereo": "Ping-Pong",
+    "high_cut": 8000,
+    "low_cut": 150,
+    "width": 100
+   },
+   "notes": "Classic synth-pop dotted bounce; the 150 Hz loop low cut keeps bass notes mono and dry"
+  }
+ ]
+}

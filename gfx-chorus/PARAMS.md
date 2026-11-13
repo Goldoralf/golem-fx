@@ -83,6 +83,9 @@ crossfaded) · **EXP** = drivable by the expression pedal (`exp: true` in the ca
 
 ### Dynamics — envelope follower
 
+Both act only when **Modulation Custom** (`mod_custom`) is on; otherwise depth follows nothing and the
+wet follows the profile's own `env_mix` (the code, `voicing.rs`; descriptors grey them until then).
+
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `env_depth` | Env → Depth | f | −100 – +100 % | 0 % | lin | 30 | | Playing harder adds (+) or removes (−) depth |

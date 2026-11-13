@@ -1,0 +1,152 @@
+{
+ "crate": "gfx-boost",
+ "presets": [
+  {
+   "id": "solo-lift",
+   "type": "clean-boost",
+   "name": "Solo lift +4 dB",
+   "desc": "Flat +4 dB after the amp: the solo gets louder without changing its tone",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "solo",
+   "refs": [],
+   "level_db": 4,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "gain": 4,
+    "polarity": false
+   },
+   "notes": "Place after the amp (or cab): no change in saturation, only level. Click-free on a footswitch"
+  },
+  {
+   "id": "amp-push",
+   "type": "clean-boost",
+   "name": "Amp push +8 dB",
+   "desc": "Flat +8 dB before the amp: more breakup and sustain from an amp that is already crunchy",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "blues-rock"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [],
+   "level_db": 8,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "gain": 8,
+    "polarity": false
+   },
+   "notes": "Before the amp it is a gain change, not a level change: the amp's own voice gets hotter"
+  },
+  {
+   "id": "hot-front-end",
+   "type": "clean-boost",
+   "name": "Hot front end +12 dB",
+   "desc": "The full +12 dB before the amp: turns a clean amp's edge into crunch, or a crunch into a lead",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 12,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "gain": 12,
+    "polarity": false
+   },
+   "notes": "Flat boost: unlike a tight boost it also pushes the lows; for high-gain amps use gfx-shem instead"
+  },
+  {
+   "id": "unity-volume",
+   "type": "volume",
+   "name": "Unity volume",
+   "desc": "0 dB, bit-transparent: the volume-pedal block at rest, ready for an EXP pedal",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": true,
+   "params": {
+    "gain": 0,
+    "polarity": false
+   },
+   "notes": "Exactly 1.0 at 0 dB. Map EXP on gain (−60 → 0 dB) for swells or a volume pedal"
+  },
+  {
+   "id": "rhythm-drop",
+   "type": "volume",
+   "name": "Rhythm level −4 dB",
+   "desc": "Lowers the part by 4 dB: sits a rhythm scene under the lead or matches two lanes",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "gain": -4,
+    "polarity": false
+   },
+   "notes": "Level-matching tool; exact dB, smoothed so a scene change never clicks"
+  },
+  {
+   "id": "polarity-flip",
+   "type": "volume",
+   "name": "Polarity flip",
+   "desc": "Unity gain with the polarity inverted: fixes cancellation between two lanes or two mics",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": false,
+   "params": {
+    "gain": 0,
+    "polarity": true
+   },
+   "notes": "Use when a blended lane thins the low end; the 5 ms crossfade makes it switchable live"
+  }
+ ]
+}

@@ -1,0 +1,738 @@
+{
+ "crate": "gfx-comp",
+ "presets": [
+  {
+   "id": "clean-even",
+   "type": "comp",
+   "name": "Even clean guitar",
+   "desc": "Transparent 4:1 with a 6 dB knee and dual-path release: strums sit at one level, no pumping between them",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-rock",
+    "neo-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "character": "Clean",
+    "thresh": -18,
+    "ratio": 4,
+    "attack": 15,
+    "release": 150,
+    "auto_release": true,
+    "knee": 6,
+    "makeup": 3,
+    "mix": 100
+   },
+   "notes": "The doc's clean-guitar row, golem's Standard"
+  },
+  {
+   "id": "country-squash",
+   "type": "comp",
+   "name": "Chicken-picking squash",
+   "desc": "OTA pedal squash, 8:1 with a 3 ms attack: snappy pick click on top, every note of a hybrid-picked run equal",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "rock"
+   ],
+   "subgenres": [
+    "contemporary-country",
+    "honky-tonk",
+    "country-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Brent Mason",
+     "why": "Nashville session lines played through a compressor pedal",
+     "source": "Premier Guitar, Brent Mason's Gear, 2016",
+     "verified": true
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "vintage",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "character": "Pedal",
+    "thresh": -28,
+    "ratio": 8,
+    "attack": 3,
+    "release": 80,
+    "auto_release": true,
+    "knee": 0,
+    "makeup": 8,
+    "drive": 10,
+    "mix": 100
+   },
+   "notes": "The doc's funk / country row. Before the amp, into a clean Fender-type voice"
+  },
+  {
+   "id": "squash-blend",
+   "type": "comp",
+   "name": "Squash with the pick kept",
+   "desc": "Same pedal squash blended 60 % with the dry: sustain from the wet, the natural pick attack from the dry",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "americana",
+    "country-pop",
+    "pop-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "character": "Pedal",
+    "thresh": -28,
+    "ratio": 8,
+    "attack": 3,
+    "release": 80,
+    "auto_release": true,
+    "knee": 0,
+    "makeup": 6,
+    "mix": 60
+   },
+   "notes": "The doc's parallel row; the blend-knob pedals' trick. Coherent mix means no comb at 60 %"
+  },
+  {
+   "id": "funk-chop",
+   "type": "comp",
+   "name": "Funk chop, compressed clean",
+   "desc": "FET 4:1, 8 ms attack, fast release, 80 % wet: tight 16th-note scratches that pop out evenly without losing snap",
+   "inst": "guitar",
+   "genres": [
+    "rnb",
+    "pop",
+    "electronic"
+   ],
+   "subgenres": [
+    "funk",
+    "disco",
+    "french-house"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Chic",
+     "song": "Le Freak",
+     "why": "bright, even, mostly direct funk rhythm guitar",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "character": "FET",
+    "thresh": -24,
+    "ratio": 4,
+    "attack": 8,
+    "release": 100,
+    "auto_release": true,
+    "knee": 3,
+    "makeup": 5,
+    "mix": 80
+   },
+   "notes": "Accounts of Rodgers' chain disagree on compression; this is the sound in its spirit, not a documented setting"
+  },
+  {
+   "id": "singing-lead",
+   "type": "comp",
+   "name": "Singing lead sustain",
+   "desc": "Pedal-style compressor before a fuzz or drive: long notes hold and bloom, a hot front end for endless sustain",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "progressive-rock",
+    "psychedelic-rock",
+    "art-rock"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "Pink Floyd",
+     "song": "Comfortably Numb",
+     "why": "Gilmour's compressor pedal into a fuzz for the solo's sustain",
+     "source": "Guitar World feature, reprinted in Australian Guitar, 2021",
+     "verified": true
+    }
+   ],
+   "level_db": 2,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "character": "Pedal",
+    "thresh": -30,
+    "ratio": 6,
+    "attack": 5,
+    "release": 400,
+    "auto_release": true,
+    "knee": 3,
+    "makeup": 9,
+    "drive": 15,
+    "mix": 100
+   },
+   "notes": "Long release so the gain rises slowly as the note decays: sustain without an audible swell"
+  },
+  {
+   "id": "drop-tuned-rhythm",
+   "type": "comp",
+   "name": "Drop-tuned rhythm control",
+   "desc": "Clean 3:1 with a 150 Hz sidechain low cut: evens out low-tuned riffs without the low strings pumping the mix",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "nu-metal",
+    "post-grunge"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "character": "Clean",
+    "thresh": -20,
+    "ratio": 3,
+    "attack": 20,
+    "release": 150,
+    "auto_release": true,
+    "knee": 6,
+    "sc_hpf": 150,
+    "makeup": 2,
+    "mix": 100
+   },
+   "notes": "After the amp and cab. High-gain is already compressed: this only catches the open-string peaks"
+  },
+  {
+   "id": "acoustic-even",
+   "type": "comp",
+   "name": "Acoustic strum leveller",
+   "desc": "Gentle opto 3:1 with an 80 Hz sidechain cut: a piezo or mic'd acoustic stays even, body thumps don't duck it",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-folk",
+    "contemporary-folk",
+    "singer-songwriter"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "character": "Opto",
+    "thresh": -22,
+    "ratio": 3,
+    "attack": 15,
+    "release": 250,
+    "auto_release": true,
+    "knee": 8,
+    "sc_hpf": 80,
+    "makeup": 3,
+    "mix": 100
+   },
+   "notes": "Slow-ish opto keeps the strum's attack; the sidechain cut stops a palm slap from pulling the whole level down"
+  },
+  {
+   "id": "cab-glue",
+   "type": "comp",
+   "name": "Glue after amp and cab",
+   "desc": "Bus 2.5:1, 30 ms attack, 250 ms release: 2 – 3 dB of glue after the cab, transients kept",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "punk"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "indie-rock",
+    "pop-punk"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "character": "Bus",
+    "thresh": -14,
+    "ratio": 2.5,
+    "attack": 30,
+    "release": 250,
+    "auto_release": true,
+    "knee": 6,
+    "makeup": 2,
+    "mix": 100
+   },
+   "notes": "The doc's glue row"
+  },
+  {
+   "id": "bass-finger-opto",
+   "type": "comp",
+   "name": "Fingerstyle bass, smooth opto",
+   "desc": "Opto 4:1, slow attack, two-stage release: fingerstyle notes even out, warm and unobtrusive",
+   "inst": "bass",
+   "genres": [
+    "rnb",
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "classic-soul",
+    "motown",
+    "soft-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Daft Punk",
+     "why": "mixer Mick Guzauski picks a slow LA-2A for smooth vocals and bass",
+     "source": "Universal Audio blog, 10 Questions with Mick Guzauski (undated)",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "character": "Opto",
+    "thresh": -22,
+    "ratio": 4,
+    "attack": 20,
+    "release": 300,
+    "auto_release": true,
+    "knee": 6,
+    "sc_hpf": 40,
+    "makeup": 4,
+    "mix": 100
+   },
+   "notes": "Opto's release lengthens after long reduction, so a held note never swells back up audibly"
+  },
+  {
+   "id": "bass-anchor",
+   "type": "comp",
+   "name": "Anchored rock bass",
+   "desc": "FET 6:1, 35 ms attack, 120 Hz sidechain low cut: pick attack through, sustain locked, the low E doesn't pump",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal",
+    "punk"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "alternative-metal",
+    "punk-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "character": "FET",
+    "thresh": -22,
+    "ratio": 6,
+    "attack": 35,
+    "release": 200,
+    "auto_release": true,
+    "knee": 3,
+    "sc_hpf": 120,
+    "makeup": 5,
+    "drive": 20,
+    "mix": 100
+   },
+   "notes": "golem's Bass anchor from the doc's bass row; drive 20 % adds the FET's odd harmonics for small-speaker audibility"
+  },
+  {
+   "id": "bass-slap",
+   "type": "comp",
+   "name": "Slap and pop control",
+   "desc": "Fast feed-forward 8:1 with a 1 ms attack: thumb slaps and pops tamed so the ghost notes come up",
+   "inst": "bass",
+   "genres": [
+    "rnb",
+    "jazz",
+    "rock"
+   ],
+   "subgenres": [
+    "funk",
+    "jazz-funk",
+    "funk-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Marcus Miller",
+     "why": "slap pioneer whose rack held a fast dbx 160X compressor",
+     "source": "Sound On Sound, Paul Tingen, 1999",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "character": "Clean",
+    "thresh": -20,
+    "ratio": 8,
+    "attack": 1,
+    "release": 80,
+    "auto_release": true,
+    "knee": 3,
+    "makeup": 5,
+    "mix": 100
+   },
+   "notes": "Clean = feed-forward like a VCA; the full-band detector is wanted here, pops are what must trigger it"
+  },
+  {
+   "id": "vocal-opto",
+   "type": "comp",
+   "name": "Smooth vocal leveller",
+   "desc": "Opto 3:1, 25 ms attack, two-stage release: a lead vocal levelled without audible grab, warm and forward",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "ballad",
+    "indie-rock",
+    "neo-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Death Cab for Cutie",
+     "why": "mixer Carlos de la Garza starts every vocal on a Gray LA-2A",
+     "source": "Universal Audio blog, Carlos de la Garza interview (undated)",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "character": "Opto",
+    "thresh": -20,
+    "ratio": 3,
+    "attack": 25,
+    "release": 300,
+    "auto_release": true,
+    "knee": 6,
+    "sc_hpf": 80,
+    "makeup": 4,
+    "mix": 100
+   },
+   "notes": "The doc's voice row, golem's Vocal opto; sidechain cut keeps plosives and stage rumble from pumping it"
+  },
+  {
+   "id": "vocal-rock-fet",
+   "type": "comp",
+   "name": "Upfront rock vocal",
+   "desc": "FET 6:1, 2 ms attack, fast release with a little drive: a shouted vocal pinned in front of loud guitars",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "punk",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "post-hardcore",
+    "alternative-metal"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "character": "FET",
+    "thresh": -24,
+    "ratio": 6,
+    "attack": 2,
+    "release": 80,
+    "auto_release": true,
+    "knee": 2,
+    "sc_hpf": 100,
+    "makeup": 6,
+    "drive": 15,
+    "mix": 100
+   },
+   "notes": "FET shortens its times further on short peaks: every syllable stays at the front in a dense mix"
+  },
+  {
+   "id": "vocal-parallel-thick",
+   "type": "comp",
+   "name": "Thick parallel vocal",
+   "desc": "FET squeezed 7 – 10 dB and blended about 30 % under the dry vocal: thickness and punch, the dynamics stay",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "indie-pop",
+    "alternative-rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "The Shins",
+     "why": "Chiccarelli tucked a heavily squeezed parallel 1176 under the lead vocal",
+     "source": "Vintage King, Five Sounds with Joe Chiccarelli, 2022",
+     "verified": true
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "character": "FET",
+    "thresh": -32,
+    "ratio": 8,
+    "attack": 10,
+    "release": 60,
+    "auto_release": true,
+    "knee": 3,
+    "sc_hpf": 80,
+    "makeup": 9,
+    "mix": 30
+   },
+   "notes": "Slow-to-mid attack, fast-to-mid release as in the interview; mix 30 % stands for the parallel bus fader"
+  },
+  {
+   "id": "drum-bus-glue",
+   "type": "comp",
+   "name": "Drum bus glue",
+   "desc": "Bus 4:1, 30 ms attack, auto release: 2 – 4 dB on the kit, hits keep their crack, the kit sounds as one",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "pop",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "pop-rock",
+    "boom-bap"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "character": "Bus",
+    "thresh": -16,
+    "ratio": 4,
+    "attack": 30,
+    "release": 100,
+    "auto_release": true,
+    "knee": 3,
+    "sc_hpf": 60,
+    "makeup": 2,
+    "mix": 100
+   },
+   "notes": "Bus-console style settings; sidechain cut so the kick alone doesn't duck the cymbals"
+  },
+  {
+   "id": "drums-ny-parallel",
+   "type": "comp",
+   "name": "Crushed parallel drums",
+   "desc": "FET 10:1 crushing the kit, blended 35 % with the dry: sustain and room come up, the transients stay dry",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "hip-hop",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "boom-bap",
+    "alternative-metal"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 2,
+   "tags": [
+    "aggressive",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "character": "FET",
+    "thresh": -36,
+    "ratio": 10,
+    "attack": 1,
+    "release": 60,
+    "auto_release": true,
+    "knee": 0,
+    "makeup": 12,
+    "drive": 25,
+    "mix": 35
+   },
+   "notes": "New York-style parallel compression in one block; the coherent mix means no comb when blending"
+  },
+  {
+   "id": "keys-glue",
+   "type": "comp",
+   "name": "Keys glue",
+   "desc": "Bus 2:1, slow attack and release: keys and pads gently held together, playing dynamics intact",
+   "inst": "keys",
+   "genres": [
+    "pop",
+    "electronic",
+    "rnb"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "house",
+    "neo-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "character": "Bus",
+    "thresh": -16,
+    "ratio": 2,
+    "attack": 30,
+    "release": 300,
+    "auto_release": true,
+    "knee": 6,
+    "makeup": 2,
+    "mix": 100
+   },
+   "notes": "golem's Keys glue"
+  },
+  {
+   "id": "gentle-leveller",
+   "type": "comp",
+   "name": "Gentle leveller, capped",
+   "desc": "Clean 2:1 with a wide knee and reduction capped at 6 dB: evens any source, can never squash it",
+   "inst": "any",
+   "genres": [
+    "pop",
+    "rock",
+    "jazz"
+   ],
+   "subgenres": [
+    "adult-contemporary",
+    "soft-rock",
+    "vocal-jazz"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "character": "Clean",
+    "thresh": -24,
+    "ratio": 2,
+    "attack": 20,
+    "release": 200,
+    "auto_release": true,
+    "knee": 10,
+    "range": 6,
+    "makeup": 2,
+    "mix": 100
+   },
+   "notes": "The doc's range row, golem's Gentle"
+  }
+ ]
+}

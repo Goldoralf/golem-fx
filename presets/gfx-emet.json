@@ -1,0 +1,442 @@
+{
+ "crate": "gfx-emet",
+ "presets": [
+  {
+   "id": "clean-hump",
+   "type": "emet",
+   "name": "Clean mid hump",
+   "desc": "Gain at zero: a clean +8 dB mid boost that tightens and focuses a high-gain amp",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "djent",
+    "progressive-metal",
+    "metalcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 3,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "gain": 0,
+    "tone_stack": 50,
+    "level": 0,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "Fortin's 'Clean hump' setting. A boost, not a drive: the MOSFET knee is never reached, so keep it ON in high scenes"
+  },
+  {
+   "id": "tighten-up-the-gain",
+   "type": "emet",
+   "name": "Tighten up the gain",
+   "desc": "Gain low, tone a little under half: the classic Tube Screamer tightening, with more headroom",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "metalcore",
+    "groove-metal",
+    "thrash-metal"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 3,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "gain": 10,
+    "tone_stack": 40,
+    "level": -3,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "Fortin's 'Tighten up the gain' ('that classic TS thang'): still clean below the knee, so a boost for high scenes"
+  },
+  {
+   "id": "drop-tuned-tightener",
+   "type": "emet",
+   "name": "Drop-tuned tightener",
+   "desc": "Low-gain mid boost with an extra 120 Hz cut in the gain leg: keeps 7- and 8-string chugs defined",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "djent",
+    "progressive-metal",
+    "deathcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Periphery",
+     "why": "a drive at low gain as a tight boost before high-gain amps",
+     "verified": false
+    }
+   ],
+   "level_db": 7,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "gain": 15,
+    "tone_stack": 45,
+    "level": 0,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 120,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "The README's main use, with tight 120 Hz for low tunings. The amp clips, the pedal barely does: keep it ON in high"
+  },
+  {
+   "id": "metal-lead-boost",
+   "type": "emet",
+   "name": "Metal lead boost",
+   "desc": "Mid boost with presence and a few dB of level: solos jump out of a high-gain rhythm tone",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "heavy-metal",
+    "power-metal",
+    "melodic-death-metal"
+   ],
+   "gain": "high",
+   "use": "solo",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "gain": 25,
+    "tone_stack": 65,
+    "level": -5,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 60,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "Gain 25 % still sits mostly under the high knee; it is a level-and-presence boost for the lead scene"
+  },
+  {
+   "id": "front-end-smash",
+   "type": "emet",
+   "name": "Front-end smash",
+   "desc": "Gain up, tone past half: a crushing mid-range push that drives an amp's front end hard",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "groove-metal",
+    "hard-rock",
+    "alternative-metal"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 17,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "gain": 70,
+    "tone_stack": 60,
+    "level": -6,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "Fortin's 'Front end smash' (his level). It distorts by itself, so it is a drive: it turns a crunch amp into a heavy one and hits it far hotter than bypass"
+  },
+  {
+   "id": "classic-808",
+   "type": "emet",
+   "name": "Classic 808 overdrive",
+   "desc": "Tube Screamer knee and mid hump at half gain: smooth overdrive from a clean amp",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "blues-rock",
+    "classic-rock",
+    "electric-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "gain": 50,
+    "tone_stack": 50,
+    "level": -6,
+    "headroom": -13,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "headroom −13 dB puts the knee at a TS's silicon diodes: the 808 circuit, as it was"
+  },
+  {
+   "id": "808-blues-push",
+   "type": "emet",
+   "name": "808 blues push",
+   "desc": "TS knee, low gain, level full: a mid push that makes a cranked clean amp break up and sing",
+   "inst": "guitar",
+   "genres": [
+    "blues",
+    "rock"
+   ],
+   "subgenres": [
+    "texas-blues",
+    "modern-electric-blues",
+    "blues-rock"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Stevie Ray Vaughan",
+     "why": "Tube Screamer with drive low and level high into cranked amps",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "gain": 15,
+    "tone_stack": 55,
+    "level": 0,
+    "headroom": -13,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "Most of the drive comes from the amp; the pedal brings level and the mid hump"
+  },
+  {
+   "id": "presence-lead",
+   "type": "emet",
+   "name": "Presence lead drive",
+   "desc": "Mid-high gain with the tone past three-quarters: a singing, present lead over a crunchy amp",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "heavy-metal",
+    "glam-metal"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [],
+   "level_db": 8,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "gain": 55,
+    "tone_stack": 75,
+    "level": -12,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "The README's 'Lead with presence': the tone above half gives the highs back that the hump took"
+  },
+  {
+   "id": "mid-push-crunch",
+   "type": "emet",
+   "name": "Mid-push crunch",
+   "desc": "Moderate gain into a crunch amp: thicker, more saturated rhythm chords without losing the lows",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "alternative-rock",
+    "southern-rock"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 7,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "gain": 35,
+    "tone_stack": 50,
+    "level": -6,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "The plugin default gain; level −6 dB keeps the scene from jumping when it engages"
+  },
+  {
+   "id": "unmatched-pair-grit",
+   "type": "emet",
+   "name": "Unmatched-pair grit",
+   "desc": "Asymmetric, lower knee: a gritty, even-harmonic overdrive into a clean amp",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "garage-rock",
+    "alternative-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "gain": 45,
+    "tone_stack": 55,
+    "level": -8,
+    "headroom": -6,
+    "asym": 50,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0
+   },
+   "notes": "asym 50 % models a badly matched MOSFET pair, the 'irregular clipping' of the hardware"
+  },
+  {
+   "id": "bass-hex-drive",
+   "type": "emet",
+   "name": "Bass mid drive",
+   "desc": "808-style drive on bass above 120 Hz, the fundamental kept clean: growl that keeps the bottom",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "alternative-metal",
+    "stoner-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "gain": 40,
+    "tone_stack": 55,
+    "level": -9,
+    "headroom": 0,
+    "asym": 0,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 120
+   },
+   "notes": "The README's bass overdrive: bass_keep is phase-aligned, so no crossover ripple. Gain any: a bass drive stays on"
+  },
+  {
+   "id": "keys-organ-drive",
+   "type": "emet",
+   "name": "Driven organ",
+   "desc": "Input trimmed for line level, TS knee, warm tone: an organ or keys part pushed into overdrive",
+   "inst": "keys",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "progressive-rock",
+    "blues-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Deep Purple",
+     "why": "Jon Lord's Hammond pushed through Marshall amps",
+     "verified": false
+    }
+   ],
+   "level_db": 3,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "gain": 40,
+    "tone_stack": 40,
+    "level": -6,
+    "headroom": -6,
+    "asym": 0,
+    "tight": 20,
+    "input": -6,
+    "bass_keep": 0
+   },
+   "notes": "Keys arrive hotter than a pickup: input −6 dB, and a lower knee so it still clips"
+  }
+ ]
+}

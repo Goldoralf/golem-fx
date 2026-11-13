@@ -1,0 +1,1039 @@
+{
+ "crate": "gfx-drive",
+ "presets": [
+  {
+   "id": "metal-tight-boost",
+   "type": "guitar-drive",
+   "name": "Tight boost for high gain",
+   "desc": "Low-gain mid-hump boost with a 200 Hz pre-clip cut: tightens a high-gain amp's palm mutes",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "thrash-metal",
+    "groove-metal",
+    "metalcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Kirk Hammett",
+     "song": "Master of Puppets",
+     "why": "a Tube Screamer in front of the Mesa Mark IIC+ rig",
+     "verified": false
+    },
+    {
+     "artist": "James Hetfield",
+     "why": "a TS-9 used to push and tighten his high-gain amps",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 6,
+    "hardness": 3,
+    "ceiling": -6,
+    "tight": 200,
+    "tone": 20,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "A boost, not a drive: the amp distorts, this only cuts the lows and lifts the mids. Keep it ON in high scenes"
+  },
+  {
+   "id": "classic-overdrive",
+   "type": "guitar-drive",
+   "name": "Classic mid-hump overdrive",
+   "desc": "Tube-Screamer-style overdrive: tight lows, mid hump, the clean signal summed under the clipping",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "blues-rock",
+    "classic-rock",
+    "electric-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 16,
+    "hardness": 4,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": 0,
+    "blend": 0,
+    "asym": 0,
+    "sag": 10,
+    "bass_keep": 0
+   },
+   "notes": "The all-round first drive: into a clean amp it is the distortion, into a crunch amp it adds sustain"
+  },
+  {
+   "id": "texas-blues-push",
+   "type": "guitar-drive",
+   "name": "Texas blues push",
+   "desc": "Drive nearly off, level up: a mid-forward clean push that makes a crunchy amp sing for solos",
+   "inst": "guitar",
+   "genres": [
+    "blues"
+   ],
+   "subgenres": [
+    "texas-blues",
+    "electric-blues",
+    "modern-electric-blues"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Stevie Ray Vaughan",
+     "song": "Pride and Joy",
+     "why": "TS9 with drive low and level near full into a cranked Fender",
+     "verified": false
+    }
+   ],
+   "level_db": 7,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 8,
+    "hardness": 2,
+    "ceiling": -3,
+    "tight": 20,
+    "tone": -10,
+    "blend": 0,
+    "asym": 0,
+    "sag": 15,
+    "bass_keep": 0
+   },
+   "notes": "Little clipping of its own: the high ceiling and summed clean make it a level-and-mids boost; the amp breaks up"
+  },
+  {
+   "id": "transparent-edge",
+   "type": "guitar-drive",
+   "name": "Transparent edge of breakup",
+   "desc": "Low-gain drive with 45 % clean blended back: adds hair and level, keeps the guitar's own voice",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "alternative-rock",
+    "americana"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Nels Cline",
+     "why": "a Klon Centaur on his Wilco pedalboard",
+     "source": "Premier Guitar Rig Rundown, 2012",
+     "verified": true
+    }
+   ],
+   "level_db": 7,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 16,
+    "hardness": 2,
+    "ceiling": -6,
+    "tight": 20,
+    "tone": 10,
+    "blend": 45,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "The Klon recipe: soft knee plus clean blend; dynamics follow the pick. Good always-on into a clean amp"
+  },
+  {
+   "id": "country-snap",
+   "type": "guitar-drive",
+   "name": "Country chicken-pick snap",
+   "desc": "Barely-there overdrive with a bright tilt and clean blend: twang with a little hair on hard picks",
+   "inst": "guitar",
+   "genres": [
+    "folk"
+   ],
+   "subgenres": [
+    "contemporary-country",
+    "honky-tonk",
+    "bakersfield-sound"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Brad Paisley",
+     "why": "a low-gain signature overdrive into clean Dr. Z amps",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "bright",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 10,
+    "hardness": 2,
+    "ceiling": -6,
+    "tight": 20,
+    "tone": 35,
+    "blend": 35,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "Only the hardest picks clip; tone +35 % keeps a Tele's snap over the mid hump"
+  },
+  {
+   "id": "singing-lead-od",
+   "type": "guitar-drive",
+   "name": "Singing overdrive lead",
+   "desc": "Mid-gain overdrive stacked on a crunchy amp: smooth sustain and a little presence for solos",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "hard-rock",
+    "blues-rock"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [],
+   "level_db": 7,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 20,
+    "hardness": 3,
+    "ceiling": -16,
+    "tight": 20,
+    "tone": 20,
+    "blend": 0,
+    "asym": 10,
+    "sag": 20,
+    "bass_keep": 0
+   },
+   "notes": "On a crunch amp it adds sustain rather than fizz; EXP on gain makes a level-matched solo swell"
+  },
+  {
+   "id": "rat-grunge",
+   "type": "guitar-drive",
+   "name": "Slew-rounded grunge distortion",
+   "desc": "Hard op-amp distortion with slew-rounded highs: thick, raw rhythm for a clean amp",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "grunge",
+    "alternative-rock",
+    "post-grunge"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Dave Grohl",
+     "song": "Foo Fighters (1995)",
+     "why": "a ProCo RAT on the self-recorded debut",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 26,
+    "hardness": 6,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": -10,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "The Distortion voice's slew limit keeps 32 dB of gain from fizzing; tone slightly dark like a RAT's filter past noon"
+  },
+  {
+   "id": "bright-distortion-clean-amp",
+   "type": "guitar-drive",
+   "name": "Bright distortion into a clean amp",
+   "desc": "Hard-clipped distortion with a bright tilt, played into a clean channel as the dirty sound",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "punk"
+   ],
+   "subgenres": [
+    "grunge",
+    "alternative-rock",
+    "punk-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Nirvana",
+     "song": "Smells Like Teen Spirit",
+     "why": "a Boss DS-1 into a clean amp channel as the dirty sound",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "bright",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 20,
+    "hardness": 7,
+    "ceiling": -18,
+    "tight": 40,
+    "tone": 25,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "DS-1 territory: harder knee than the RAT preset, brighter tilt; the clean amp adds no gain of its own"
+  },
+  {
+   "id": "punk-buzzsaw",
+   "type": "guitar-drive",
+   "name": "Punk buzzsaw",
+   "desc": "Hard, tight distortion with the low end trimmed before the clip: fast down-picked power chords",
+   "inst": "guitar",
+   "genres": [
+    "punk"
+   ],
+   "subgenres": [
+    "punk-rock",
+    "pop-punk",
+    "hardcore-punk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 5,
+   "tags": [
+    "aggressive",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 28,
+    "hardness": 8,
+    "ceiling": -18,
+    "tight": 90,
+    "tone": 15,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "tight 90 Hz keeps fast chords from blurring; into a clean or barely crunchy amp"
+  },
+  {
+   "id": "classic-rock-crunch",
+   "type": "guitar-drive",
+   "name": "Classic rock crunch",
+   "desc": "Medium distortion, neutral tone: a cranked-stack crunch from a clean amp",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "hard-rock",
+    "arena-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Jeff Beck",
+     "why": "a ProCo RAT among the drives he used on stage",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 22,
+    "hardness": 5,
+    "ceiling": -16,
+    "tight": 20,
+    "tone": 0,
+    "blend": 0,
+    "asym": 0,
+    "sag": 10,
+    "bass_keep": 0
+   },
+   "notes": "The README's classic crunch: slew-rounded highs, no fizz; back the guitar volume off for rhythm"
+  },
+  {
+   "id": "swedish-chainsaw",
+   "type": "guitar-drive",
+   "name": "Chainsaw death metal",
+   "desc": "Maxed distortion, bass trimmed before the clip and highs pushed: the buzzing Swedish chainsaw",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "death-metal",
+    "melodic-death-metal",
+    "death-n-roll"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Entombed",
+     "song": "Left Hand Path",
+     "why": "the Boss HM-2 with every knob up, Stockholm death metal",
+     "verified": false
+    }
+   ],
+   "level_db": 7,
+   "tags": [
+    "extreme",
+    "aggressive",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 40,
+    "hardness": 9,
+    "ceiling": -18,
+    "tight": 120,
+    "tone": 80,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "The pedal is the distortion: into a clean or lightly crunchy amp, not a high-gain one. Tone is a tilt, not the HM-2's EQ"
+  },
+  {
+   "id": "sustain-fuzz-lead",
+   "type": "guitar-drive",
+   "name": "Long-sustain fuzz lead",
+   "desc": "Two-stage fuzz with a darker tone: violin-like sustain for slow melodic solos",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "progressive-rock",
+    "psychedelic-rock",
+    "art-rock"
+   ],
+   "gain": "clean",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "David Gilmour",
+     "song": "Comfortably Numb",
+     "why": "a Ram's Head Big Muff into a clean Hiwatt for the solos",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 30,
+    "hardness": 6,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": -15,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "Pair with a long delay; the clean amp keeps the fuzz smooth rather than gated"
+  },
+  {
+   "id": "wall-of-fuzz",
+   "type": "guitar-drive",
+   "name": "Wall of fuzz",
+   "desc": "Saturated two-stage fuzz with a scooped, dark top: a dense wall for heavy alt-rock chords",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "shoegaze",
+    "grunge"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "The Smashing Pumpkins",
+     "song": "Siamese Dream",
+     "why": "the op-amp Big Muff layered into Marshall heads",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "extreme",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 38,
+    "hardness": 8,
+    "ceiling": -18,
+    "tight": 60,
+    "tone": -25,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "Into a crunch amp the fuzz does the saturation and the amp the size; tight 60 Hz keeps stacked chords from booming"
+  },
+  {
+   "id": "loud-muff-stack",
+   "type": "guitar-drive",
+   "name": "Fuzz into a loud stack",
+   "desc": "Big two-stage fuzz with a neutral tone, made to hit a loud, slightly driven stack",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "noise-rock",
+    "slacker-rock"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "J Mascis",
+     "why": "his first Ram's Head Big Muff into Marshall Super Bass stacks",
+     "source": "Premier Guitar Rig Rundown, 2012",
+     "verified": true
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "vintage",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 32,
+    "hardness": 6,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": -5,
+    "blend": 0,
+    "asym": 0,
+    "sag": 10,
+    "bass_keep": 0
+   },
+   "notes": "Loud and woolly; the crunch amp gives the roar. Works for chords and for fuzzed melodic leads"
+  },
+  {
+   "id": "vintage-fuzz-cleanup",
+   "type": "guitar-drive",
+   "name": "Vintage fuzz that cleans up",
+   "desc": "Biased, saggy fuzz that cleans up when the guitar volume comes down: hairy chords, singing leads",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "classic-rock",
+    "acid-rock"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Jimi Hendrix",
+     "song": "Fire",
+     "why": "a Fuzz Face into cranked Marshalls, volume knob for cleaner tones",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 22,
+    "hardness": 4,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": 10,
+    "blend": 0,
+    "asym": 40,
+    "sag": 30,
+    "bass_keep": 0
+   },
+   "notes": "Moderate gain and asym/sag make it touch-sensitive: guitar volume at 6 gives a glassy crunch"
+  },
+  {
+   "id": "garage-blues-fuzz",
+   "type": "guitar-drive",
+   "name": "Raw garage blues fuzz",
+   "desc": "Trebly, slightly sputtering fuzz for blues riffs doubled on guitar and bass",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "blues-rock",
+    "electric-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Dan Auerbach",
+     "why": "an early-70s Ibanez fuzz on guitar and bass since the first record",
+     "source": "Premier Guitar, 2010",
+     "verified": true
+    },
+    {
+     "artist": "The White Stripes",
+     "song": "Seven Nation Army",
+     "why": "a Big Muff after the octave-down Whammy",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "lo-fi",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 26,
+    "hardness": 5,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": 20,
+    "blend": 0,
+    "asym": 35,
+    "sag": 20,
+    "bass_keep": 0
+   },
+   "notes": "The bias adds even harmonics and a little sputter; bright tilt keeps it cutting in a two-piece band"
+  },
+  {
+   "id": "gated-sputter-fuzz",
+   "type": "guitar-drive",
+   "name": "Gated, sputtering fuzz",
+   "desc": "Heavily biased fuzz that sags and chokes on hard hits: squashed, gated noise-rock texture",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "subgenres": [
+    "shoegaze",
+    "noise-rock",
+    "noise"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "Kevin Shields",
+     "song": "Loveless",
+     "why": "stacked fuzzes for a squashed, heavily gated tone",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 29,
+    "hardness": 7,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": -10,
+    "blend": 0,
+    "asym": 60,
+    "sag": 50,
+    "bass_keep": 0
+   },
+   "notes": "The README's sputter recipe: asym 60 % and sag 50 %; notes choke as they decay. Great before reverse reverb"
+  },
+  {
+   "id": "stoner-doom-fuzz",
+   "type": "guitar-drive",
+   "name": "Stoner doom fuzz",
+   "desc": "Maximum two-stage fuzz, very dark tone, full lows: slow, down-tuned riffs into a loud amp",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "stoner-metal",
+    "doom-metal",
+    "stoner-rock"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Sleep",
+     "song": "Dopesmoker",
+     "why": "fuzz into walls of cranked Orange amps",
+     "verified": false
+    },
+    {
+     "artist": "Electric Wizard",
+     "why": "dark, saturated fuzz for down-tuned doom riffs",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "dark",
+    "extreme",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 40,
+    "hardness": 7,
+    "ceiling": -18,
+    "tight": 20,
+    "tone": -45,
+    "blend": 0,
+    "asym": 10,
+    "sag": 20,
+    "bass_keep": 0
+   },
+   "notes": "Lows left in on purpose (no tight): the riff should rumble. The amp only crunches; the fuzz is the sound"
+  },
+  {
+   "id": "bass-drive-blend",
+   "type": "guitar-drive",
+   "name": "Bass overdrive, clean lows",
+   "desc": "Bass overdrive on the mids with the lows under 150 Hz kept clean and 40 % clean blend",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "hard-rock",
+    "heavy-metal"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Lemmy",
+     "why": "mid-forward, overdriven bass that still holds the low end",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 16,
+    "hardness": 4,
+    "ceiling": -12,
+    "tight": 20,
+    "tone": 10,
+    "blend": 40,
+    "asym": 0,
+    "sag": 10,
+    "bass_keep": 150
+   },
+   "notes": "bass_keep keeps the fundamental mono-solid and phase-aligned; blend restores the attack. Into a clean bass amp or DI"
+  },
+  {
+   "id": "bass-fuzz-growl",
+   "type": "guitar-drive",
+   "name": "Bass fuzz growl",
+   "desc": "Two-stage fuzz on bass above 120 Hz, clean lows and some clean blend: huge, riff-carrying bass",
+   "inst": "bass",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "garage-rock",
+    "stoner-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Muse",
+     "song": "Hysteria",
+     "why": "Wolstenholme's fuzz with clean bass blended under it",
+     "verified": false
+    },
+    {
+     "artist": "Royal Blood",
+     "why": "fuzzed bass carrying the riffs of a two-piece band",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Fuzz",
+    "gain": 34,
+    "hardness": 6,
+    "ceiling": -14,
+    "tight": 20,
+    "tone": -10,
+    "blend": 25,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 120
+   },
+   "notes": "Without bass_keep a fuzz eats the fundamental; 120 Hz keeps the low E and below untouched"
+  },
+  {
+   "id": "bass-modern-grind",
+   "type": "guitar-drive",
+   "name": "Modern metal bass grind",
+   "desc": "Hard bass distortion on the mids only, lows under 100 Hz clean: the clanky modern-metal bass",
+   "inst": "bass",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "djent",
+    "progressive-metal",
+    "metalcore"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Periphery",
+     "why": "split-band bass: clean lows under a distorted midrange",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "modern",
+    "tight",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Distortion",
+    "gain": 26,
+    "hardness": 7,
+    "ceiling": -14,
+    "tight": 80,
+    "tone": 25,
+    "blend": 30,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 100
+   },
+   "notes": "The bass rig is the amp here, so the class is any: a bass drive stays on in high-gain scenes"
+  },
+  {
+   "id": "organ-rock-growl",
+   "type": "guitar-drive",
+   "name": "Rock organ growl",
+   "desc": "Soft overdrive with a darker tone and some sag: an organ driven through a guitar stack",
+   "inst": "keys",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "progressive-rock",
+    "classic-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Jon Lord",
+     "song": "Highway Star",
+     "why": "his Hammond C3 driven straight into Marshall amps",
+     "verified": false
+    }
+   ],
+   "level_db": 6,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 16,
+    "hardness": 3,
+    "ceiling": -16,
+    "tight": 20,
+    "tone": -15,
+    "blend": 10,
+    "asym": 10,
+    "sag": 20,
+    "bass_keep": 0
+   },
+   "notes": "Keys have no amp scene of their own: gain any. Darker tone tames the drawbars' upper partials once clipped"
+  },
+  {
+   "id": "ep-bark",
+   "type": "guitar-drive",
+   "name": "Electric piano bark",
+   "desc": "Asymmetric low-gain overdrive: an electric piano barks on hard keystrokes, stays clean when soft",
+   "inst": "keys",
+   "genres": [
+    "rnb",
+    "jazz"
+   ],
+   "subgenres": [
+    "funk",
+    "neo-soul",
+    "jazz-funk"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 6,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "voice": "Overdrive",
+    "gain": 10,
+    "hardness": 2,
+    "ceiling": -10,
+    "tight": 20,
+    "tone": 0,
+    "blend": 20,
+    "asym": 25,
+    "sag": 10,
+    "bass_keep": 0
+   },
+   "notes": "Asymmetry gives the even-harmonic growl of an overdriven Rhodes; the velocity decides how much"
+  },
+  {
+   "id": "legacy-curve",
+   "type": "guitar-drive",
+   "name": "Legacy golem drive",
+   "desc": "golem's former JS drive curve at its defaults, now alias-free: old patches sound as before",
+   "inst": "any",
+   "genres": [
+    "rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 9,
+   "tags": [],
+   "default": false,
+   "params": {
+    "voice": "Legacy",
+    "gain": 20,
+    "hardness": 6,
+    "ceiling": -12,
+    "tight": 20,
+    "tone": 0,
+    "blend": 0,
+    "asym": 0,
+    "sag": 0,
+    "bass_keep": 0
+   },
+   "notes": "Compatibility only: the JS block's exact curve without its aliasing. New sounds should use another voice"
+  }
+ ]
+}

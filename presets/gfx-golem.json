@@ -1,0 +1,799 @@
+{
+ "crate": "gfx-golem",
+ "presets": [
+  {
+   "id": "emergence",
+   "type": "golem-double",
+   "name": "Emergence",
+   "desc": "Phase-locked double one octave below the voice, own formants, 6 dB under the lead, centred",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "progressive-metal",
+    "alternative-rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Sleep Token",
+     "song": "Emergence",
+     "why": "an octave-below component follows the sung chorus line note for note, centred",
+     "verified": false
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "shift": -12,
+    "formant": 0,
+    "voice1": -6,
+    "lpf": 6000,
+    "hpf": 40,
+    "fine": 0,
+    "humanize": 0,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "The reference: formants kept so the double stays a voice; −6 dB is the listening-test setting of 2026-11-13. Put a de-esser and gate before it"
+  },
+  {
+   "id": "emergence-loud",
+   "type": "golem-double",
+   "name": "Emergence loud",
+   "desc": "The octave-below double as loud as the lead voice: a heavy, two-register chorus line",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "progressive-metal"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Sleep Token",
+     "song": "Emergence",
+     "why": "the low octave carries the chorus as a full second register",
+     "verified": false
+    }
+   ],
+   "level_db": 3,
+   "tags": [
+    "modern",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "formant": 0,
+    "voice1": 0,
+    "lpf": 6000,
+    "hpf": 40,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "0 dB = double RMS equal to the dry: the chorus scene of a heavy song. Raise thresh on a loud stage (see emergence-stage)"
+  },
+  {
+   "id": "emergence-dark",
+   "type": "golem-double",
+   "name": "Emergence dark",
+   "desc": "Octave-below double with formants lowered 4 st: a bigger, darker, less human low voice",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "progressive-metal",
+    "post-metal"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Sleep Token",
+     "song": "Emergence",
+     "why": "the same octave double, voiced darker as the heavier option",
+     "verified": false
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "dark",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "formant": -4,
+    "voice1": -6,
+    "lpf": 6000,
+    "hpf": 40,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "Formant −4 moves the double's envelope down by 2^(−4/12): bigger throat, same pitch. The mix cannot tell whether the record did this; the ear decides"
+  },
+  {
+   "id": "emergence-dark-loud",
+   "type": "golem-double",
+   "name": "Emergence dark loud",
+   "desc": "Dark octave-below double at the lead's level: an inhuman low voice for the heaviest chorus",
+   "inst": "voice",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "progressive-metal",
+    "post-metal"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Sleep Token",
+     "song": "Emergence",
+     "why": "the octave double pushed darker and louder for a climax scene",
+     "verified": false
+    }
+   ],
+   "level_db": 3,
+   "tags": [
+    "dark",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "formant": -4,
+    "voice1": 0,
+    "lpf": 6000,
+    "hpf": 40,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   }
+  },
+  {
+   "id": "whammy-voice",
+   "type": "golem-double",
+   "name": "Whammy voice",
+   "desc": "Octave-below double whose formants follow the interval: the slowed-tape, pitched-down voice",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "metal",
+    "electronic"
+   ],
+   "subgenres": [
+    "chopped-and-screwed",
+    "industrial-metal",
+    "witch-house"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "DJ Screw",
+     "why": "slowed, pitched-down voices where the timbre drops with the pitch",
+     "verified": false
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "dark",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "formant": 0,
+    "formant_link": true,
+    "voice1": -6,
+    "lpf": 5000,
+    "hpf": 40,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "formant_link on: the envelope moves with the octave like a pitch pedal or a slowed tape, the opposite of the Emergence presets"
+  },
+  {
+   "id": "choir",
+   "type": "golem-double",
+   "name": "Choir",
+   "desc": "Octave below in the centre plus a softer octave above to one side, humanized: a three-register choir",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "symphonic-metal",
+    "progressive-metal",
+    "art-pop"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 2,
+   "tags": [
+    "wide",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "shift2": 12,
+    "voice1": -6,
+    "voice2": -10,
+    "pan": 60,
+    "humanize": 40,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 7000,
+    "hpf": 40,
+    "harmony": "Off"
+   },
+   "notes": "Humanize 40 % makes the doubles drift like separate singers; a second instance with pan −60 mirrors it in stereo"
+  },
+  {
+   "id": "unison-double",
+   "type": "golem-double",
+   "name": "Unison double",
+   "desc": "Same-pitch double detuned 8 cents with slow pitch and timing drift: a double-tracked vocal live",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "pop-rock",
+    "alternative-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "The Beatles",
+     "why": "double-tracked lead vocals, the sound live doubling imitates",
+     "verified": false
+    }
+   ],
+   "level_db": 2,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "shift": 0,
+    "fine": 8,
+    "humanize": 60,
+    "voice1": -3,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 9000,
+    "hpf": 80,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "Humanize 60 % (±8 ct, ±10 ms drift) keeps the double from combing with the lead; fine 8 ct thickens without sounding out of tune"
+  },
+  {
+   "id": "harmony-third",
+   "type": "golem-double",
+   "name": "Harmony third",
+   "desc": "A diatonic third above the voice in the song's key, 6 dB under the lead",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-folk",
+    "country-pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 1,
+   "tags": [],
+   "default": false,
+   "params": {
+    "harmony": "Scale",
+    "shift": 4,
+    "key": "C",
+    "scale": "Major",
+    "voice1": -6,
+    "formant": 0,
+    "formant_link": false,
+    "humanize": 20,
+    "lpf": 8000,
+    "hpf": 80,
+    "voice2": -60
+   },
+   "notes": "In Scale mode shift 4 = a third in the scale. golem sets key / scale per song; C major is only the placeholder"
+  },
+  {
+   "id": "emergence-stage",
+   "type": "golem-double",
+   "name": "Octave double, loud stage",
+   "desc": "The Emergence octave double with a higher level gate and stricter voicing: no bleed doubled between lines",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal",
+    "metalcore",
+    "progressive-metal"
+   ],
+   "gain": "high",
+   "use": "utility",
+   "refs": [],
+   "level_db": 1,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "shift": -12,
+    "formant": 0,
+    "voice1": -4,
+    "lpf": 6000,
+    "hpf": 50,
+    "thresh": -36,
+    "sens": 35,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "thresh −36 dB sits above typical wedge / backline bleed in the vocal mic; sens 35 % follows only clean sung notes, so screams and breaths stay single. Set thresh at soundcheck from state"
+  },
+  {
+   "id": "baritone-octave",
+   "type": "golem-double",
+   "name": "Baritone octave anchor",
+   "desc": "Octave-below double tracked in the Low register for baritone and bass singers, low cut at 30 Hz",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "gothic-metal",
+    "gothic-rock",
+    "neofolk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 1,
+   "tags": [
+    "dark",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "register": "Low",
+    "shift": -12,
+    "formant": 0,
+    "voice1": -8,
+    "lpf": 5000,
+    "hpf": 30,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "A 100 Hz baritone note doubled an octave down sits near 50 Hz: Low register (60 Hz detection) and hpf 30 Hz keep it. Double delay rises to ≈ 19 ms worst case"
+  },
+  {
+   "id": "head-voice-anchor",
+   "type": "golem-double",
+   "name": "High-voice octave anchor",
+   "desc": "Octave-below double for soprano and head voice, High register: puts a chest-register line under it",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alt-pop",
+    "symphonic-metal",
+    "dream-pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 1,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "register": "High",
+    "shift": -12,
+    "formant": -2,
+    "voice1": -5,
+    "lpf": 7000,
+    "hpf": 60,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "High register (150 Hz – 1.2 kHz) tracks head voice without octave errors; formant −2 makes the double read as a second, lower singer"
+  },
+  {
+   "id": "octave-up-air",
+   "type": "golem-double",
+   "name": "Airy octave above",
+   "desc": "Quiet double one octave above, own formants, highs open: a breathy top line over a pop lead",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb"
+   ],
+   "subgenres": [
+    "electropop",
+    "alternative-r-and-b",
+    "indie-pop"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0.5,
+   "tags": [
+    "bright",
+    "dreamy",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "shift": 12,
+    "formant": 0,
+    "voice1": -14,
+    "lpf": 12000,
+    "hpf": 200,
+    "humanize": 25,
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "Kept low (−14 dB) so it reads as air, not a second singer; formant 0 avoids the chipmunk timbre (see pitched-up-hook)"
+  },
+  {
+   "id": "pitched-up-hook",
+   "type": "golem-double",
+   "name": "Pitched-up hook double",
+   "desc": "Octave-above double with formants following the pitch: the sped-up, chipmunk vocal layer",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "hip-hop",
+    "electronic"
+   ],
+   "subgenres": [
+    "hyperpop",
+    "pop-rap",
+    "nightcore"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "Kanye West",
+     "song": "Through the Wire",
+     "why": "sped-up soul vocal samples, timbre raised with the pitch",
+     "verified": false
+    },
+    {
+     "artist": "100 gecs",
+     "why": "pitched-up, formant-shifted vocal layers over the lead",
+     "verified": false
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "bright",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "shift": 12,
+    "formant_link": true,
+    "formant": 0,
+    "voice1": -8,
+    "lpf": 12000,
+    "hpf": 150,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "formant_link on is what makes it sound sped-up rather than a second singer"
+  },
+  {
+   "id": "demon-voice",
+   "type": "golem-double",
+   "name": "Pitched-down alter ego",
+   "desc": "A double a fourth below with lowered, linked formants, louder than the lead: a menacing second persona",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "metal"
+   ],
+   "subgenres": [
+    "horrorcore",
+    "alternative-hip-hop",
+    "industrial-metal"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "Tyler, the Creator",
+     "why": "a pitched-down voice as a second character in the verses",
+     "verified": false
+    }
+   ],
+   "level_db": 5,
+   "tags": [
+    "dark",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "shift": -5,
+    "formant_link": true,
+    "formant": -3,
+    "voice1": 6,
+    "lpf": 8000,
+    "hpf": 50,
+    "thresh": -45,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "voice1 +6 dB lets the shifted persona dominate (the dry cannot be muted); −5 st avoids the octave so it sounds like another voice, not a double"
+  },
+  {
+   "id": "abyss-double",
+   "type": "golem-double",
+   "name": "Two-octave abyss",
+   "desc": "A double two octaves below, dark and band-limited: a sub-human drone under chanted or clean lines",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "experimental"
+   ],
+   "subgenres": [
+    "doom-metal",
+    "post-metal",
+    "drone"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 1,
+   "tags": [
+    "dark",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "shift": -24,
+    "formant": -2,
+    "voice1": -10,
+    "lpf": 3500,
+    "hpf": 30,
+    "register": "Mid",
+    "formant_link": false,
+    "harmony": "Off",
+    "voice2": -60
+   },
+   "notes": "−24 is PSOLA's hardest case (isolated grains, buzzy): low lpf hides it and −10 dB keeps it a shadow. Best on sustained notes"
+  },
+  {
+   "id": "parallel-fifth-chant",
+   "type": "golem-double",
+   "name": "Parallel fifth chant",
+   "desc": "A fifth below and an octave below, humanized: organum-like parallel chant from one voice",
+   "inst": "voice",
+   "genres": [
+    "classical",
+    "metal",
+    "world"
+   ],
+   "subgenres": [
+    "medieval",
+    "folk-metal",
+    "nordic-folk"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 2,
+   "tags": [
+    "dark",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "shift": -7,
+    "shift2": -12,
+    "voice1": -7,
+    "voice2": -9,
+    "pan": 0,
+    "humanize": 35,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 6000,
+    "hpf": 40,
+    "harmony": "Off"
+   },
+   "notes": "Fixed −7 / −12 (not Scale): parallel perfect intervals are the point of organum. Voice 2 centred"
+  },
+  {
+   "id": "three-part-harmony",
+   "type": "golem-double",
+   "name": "Three-part in-key harmony",
+   "desc": "A diatonic third and fifth above in the song's key, spread left and centre: a stacked harmony choir",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "art-pop",
+    "indie-folk",
+    "indie-pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Bon Iver",
+     "song": "715 - CRΣΣKS",
+     "why": "real-time harmonies generated from Vernon's single voice",
+     "source": "W Magazine, 2016",
+     "verified": true
+    },
+    {
+     "artist": "Imogen Heap",
+     "song": "Hide and Seek",
+     "why": "a harmonizer turning one voice into a chordal choir",
+     "verified": false
+    }
+   ],
+   "level_db": 2,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "harmony": "Scale",
+    "key": "C",
+    "scale": "Major",
+    "shift": 4,
+    "shift2": 7,
+    "voice1": -7,
+    "voice2": -9,
+    "pan": -50,
+    "humanize": 30,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 9000,
+    "hpf": 100
+   },
+   "notes": "Scale: shift 4 = a third, shift2 7 = a fifth above. The key is a placeholder golem replaces per song. Unlike those records, the intervals follow the scale, not a keyboard"
+  },
+  {
+   "id": "harmony-third-below",
+   "type": "golem-double",
+   "name": "Close harmony below",
+   "desc": "A diatonic third under the melody, humanized: the duet harmony of folk and country choruses",
+   "inst": "voice",
+   "genres": [
+    "folk",
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "americana",
+    "folk-rock",
+    "contemporary-country"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "The Everly Brothers",
+     "why": "close harmony a third away from the melody",
+     "verified": false
+    }
+   ],
+   "level_db": 1,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "harmony": "Scale",
+    "key": "G",
+    "scale": "Major",
+    "shift": -3,
+    "voice1": -6,
+    "humanize": 45,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 8000,
+    "hpf": 80,
+    "voice2": -60
+   },
+   "notes": "Scale: shift −3 = a third below. Humanize 45 % so the harmony breathes like a second singer. Key placeholder G major"
+  },
+  {
+   "id": "wide-stereo-double",
+   "type": "golem-double",
+   "name": "Wide stereo double",
+   "desc": "Two drifting unison doubles, one centred and one far to the side, detuned 10 cents: a wide pop lead",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "rock"
+   ],
+   "subgenres": [
+    "ballad",
+    "contemporary-r-and-b",
+    "pop-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 2,
+   "tags": [
+    "wide",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "shift": 0,
+    "shift2": 0,
+    "fine": 10,
+    "voice1": -9,
+    "voice2": -8,
+    "pan": 85,
+    "humanize": 70,
+    "formant": 0,
+    "formant_link": false,
+    "lpf": 10000,
+    "hpf": 100,
+    "harmony": "Off"
+   },
+   "notes": "Needs a stereo lane; mirror with a second instance at pan −85 for symmetry. Humanize 70 % stops the comb a coherent unison would make"
+  }
+ ]
+}

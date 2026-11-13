@@ -1,0 +1,51 @@
+{
+ "crate": "gfx-gapmeter",
+ "presets": [
+  {
+   "id": "probe-detector",
+   "type": "gapmeter",
+   "name": "Gap probe, standard",
+   "desc": "Passes audio unchanged and reports every silence under -45 dB lasting 10 ms or more, on slot 0",
+   "inst": "any",
+   "genres": ["other"],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": true,
+   "params": {"thresh": -45, "min_gap": 10, "port": 9071, "tone": false},
+   "notes": "The JSFX's values, which check-scene-gap.py expects; slot left at its default 0; set a distinct slot per probe"
+  },
+  {
+   "id": "probe-strict",
+   "type": "gapmeter",
+   "name": "Gap probe, micro-dropouts",
+   "desc": "Passes audio unchanged and reports silences under -60 dB as short as 2 ms: catches clicks and tiny dropouts",
+   "inst": "any",
+   "genres": ["other"],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "params": {"thresh": -60, "min_gap": 2, "port": 9071, "tone": false},
+   "notes": "Only with the steady test tone upstream: on music, natural decays and rests would count as gaps"
+  },
+  {
+   "id": "probe-tone",
+   "type": "gapmeter",
+   "name": "Test tone generator",
+   "desc": "Replaces the input with a steady 196 Hz tone at -20 dB, so the probes downstream can measure scene-change gaps",
+   "inst": "any",
+   "genres": ["other"],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "params": {"tone": true, "tone_freq": 196, "tone_level": -20, "port": 9071},
+   "notes": "196 Hz is a guitar's open G; the input is discarded, so remove it after the measurement. level_db is meaningless here"
+  }
+ ]
+}

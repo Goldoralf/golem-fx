@@ -251,8 +251,10 @@ def validate_presets(crate, presets, params, labels, blocks, errors):
             if q is None:
                 errors.append(f"{where}: unknown param {k2}")
             elif q["kind"] == "enum":
-                if v not in (labels.get(k2) or []):
-                    errors.append(f"{where}: {k2}={v!r} is not an option {labels.get(k2)}")
+                # an IntParam exposed as a choice has its values as labels (as in the descriptor)
+                opts = labels.get(k2) or [str(x) for x in range(int(q["min"]), int(q["max"]) + 1)]
+                if v not in opts:
+                    errors.append(f"{where}: {k2}={v!r} is not an option {opts}")
             elif q["kind"] == "bool":
                 if not isinstance(v, bool):
                     errors.append(f"{where}: {k2} must be true / false")
@@ -355,6 +357,8 @@ def build(manifest: dict) -> tuple:
                 "depends": None,
                 "help": help_extra.get(i) or useful(first_sentence(d["role"]) if d.get("role") else None),
             }
+            if kind == "float" and dec is None:
+                errors.append(f"{crate}: {i} has no unit / decimals: plugin.rs's constructor was not read (one field per line)")
             if kind == "enum":
                 opts = labels.get(i)
                 if opts is None and meta["ints"].get(i):

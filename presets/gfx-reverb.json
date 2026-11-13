@@ -1,0 +1,918 @@
+{
+ "crate": "gfx-reverb",
+ "presets": [
+  {
+   "id": "lush-clean-hall",
+   "type": "reverb",
+   "name": "Lush clean hall",
+   "desc": "A three-second modulated hall that wraps clean arpeggios without a metallic ring",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "dream-pop",
+    "indie-pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Hall",
+    "decay": 3,
+    "size": 32,
+    "predelay": 15,
+    "mix": 30,
+    "mod": 70,
+    "hicut": 6000,
+    "lowcut": 100
+   },
+   "notes": "The README's clean-arpeggio recipe; mod 70 % keeps a long tail smooth, hicut 6 kHz keeps it behind the pick"
+  },
+  {
+   "id": "lead-hall-ducked",
+   "type": "reverb",
+   "name": "Ducked lead hall",
+   "desc": "A 2.2 s hall with 40 ms predelay that steps back while the solo plays and blooms in the gaps",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal",
+    "blues"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "heavy-metal",
+    "blues-rock"
+   ],
+   "gain": "high",
+   "use": "solo",
+   "refs": [
+    {
+     "artist": "Pink Floyd",
+     "song": "Comfortably Numb",
+     "why": "David Gilmour's solo tone: delay into a moderate hall",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Hall",
+    "decay": 2.2,
+    "size": 30,
+    "predelay": 40,
+    "mix": 30,
+    "duck": 6,
+    "duck_sens": 50,
+    "duck_release": 400,
+    "hicut": 6000,
+    "lowcut": 150
+   },
+   "notes": "Predelay keeps the attack dry and in front; 6 dB ducking stops the tail from washing out high-gain notes"
+  },
+  {
+   "id": "eighties-digital-hall",
+   "type": "reverb",
+   "name": "Eighties digital hall",
+   "desc": "A long, slightly grainy period hall with deep chorusing modulation for 80s ballads",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "album-oriented-rock",
+    "arena-rock",
+    "synth-pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Rush",
+     "song": "Power Windows",
+     "why": "Lexicon-era big digital hall on synths and guitars",
+     "verified": false
+    },
+    {
+     "artist": "Peter Gabriel",
+     "song": "So",
+     "why": "early-digital hall reverbs across the album",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Hall",
+    "era": "80s",
+    "decay": 2.8,
+    "size": 38,
+    "predelay": 25,
+    "mix": 30,
+    "mod": 60,
+    "hicut": 7000
+   },
+   "notes": "Era 80s: reduced bandwidth and converter grain of early digital units; the README's 80s ballad recipe"
+  },
+  {
+   "id": "dark-seventies-hall",
+   "type": "reverb",
+   "name": "Dark seventies hall",
+   "desc": "A warm, band-limited early-digital hall whose tail sits low and soft behind the band",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "progressive-rock",
+    "classic-soul"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "Talking Heads",
+     "song": "Remain in Light",
+     "why": "the Lexicon 224 hall era of late-70s and early-80s records",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "dark",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Hall",
+    "era": "70s",
+    "decay": 2,
+    "size": 28,
+    "predelay": 15,
+    "mix": 25,
+    "wet_high": 35,
+    "mod": 50,
+    "hicut": 6000
+   },
+   "notes": "70s era runs the tail at 20 kHz with 10-bit input; the wet high shelf at 35 % darkens without shortening the decay"
+  },
+  {
+   "id": "octave-shimmer-hall",
+   "type": "reverb",
+   "name": "Octave shimmer hall",
+   "desc": "A long hall fed back through an octave-up shifter: each pass climbs into a glowing halo",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "ambient",
+    "post-rock",
+    "ccm"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Brian Eno & Daniel Lanois",
+     "song": "Apollo",
+     "why": "pitch shifter at +1 octave in a feedback loop with a long reverb",
+     "source": "Valhalla DSP blog (Eno/Lanois shimmer), 2010",
+     "verified": true
+    },
+    {
+     "artist": "U2",
+     "song": "The Unforgettable Fire",
+     "why": "the shimmer heard on The Unforgettable Fire",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Hall",
+    "decay": 7,
+    "size": 45,
+    "predelay": 20,
+    "mix": 40,
+    "shimmer": 40,
+    "shimmer_pitch": 12,
+    "mod": 60,
+    "hicut": 6000,
+    "lowcut": 150
+   },
+   "notes": "Shimmer 40 % with a 7 s decay: the octave grows audibly over a few seconds; for two voices and glide use gfx-shimmer"
+  },
+  {
+   "id": "cloud-drone",
+   "type": "reverb",
+   "name": "Endless cloud",
+   "desc": "A 30-second, heavily diffused cloud that turns any note into a slow drone, ducked under the playing",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "drone",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Sigur Ros",
+     "why": "bowed guitar into vast reverb, building walls of sound",
+     "verified": false
+    },
+    {
+     "artist": "Stars of the Lid",
+     "why": "endless drones of reverberated guitar and strings",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "extreme",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Cloud",
+    "decay": 30,
+    "size": 55,
+    "mix": 50,
+    "mod": 70,
+    "duck": 6,
+    "lowcut": 250,
+    "bass_mult": 0.7,
+    "hicut": 5500
+   },
+   "notes": "The README's post-rock wall: low cut and bass decay 0.7x keep 30 s of tail from turning into mud"
+  },
+  {
+   "id": "bloom-pad",
+   "type": "reverb",
+   "name": "Blooming pad",
+   "desc": "A reverb that fades in behind each note while the pick attack is removed: guitar becomes a pad",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "ccm",
+    "christian-rock",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [
+    {
+     "artist": "Hillsong United",
+     "why": "worship pad guitars: volume-swelled notes into a huge blooming verb",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Bloom",
+    "size": 30,
+    "decay": 6,
+    "swell": 400,
+    "mix": 50,
+    "mod": 60,
+    "lowcut": 200,
+    "hicut": 6000
+   },
+   "notes": "Bloom fades the tail in, swell removes the attacks from the wet: the dry still plays, the pad grows behind it"
+  },
+  {
+   "id": "surf-spring",
+   "type": "reverb",
+   "name": "Dripping surf spring",
+   "desc": "A hard-hit three-spring tank: the splashy drip of surf lead and twang",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "screen"
+   ],
+   "subgenres": [
+    "surf-rock",
+    "instrumental-rock",
+    "spaghetti-western"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Dick Dale",
+     "song": "Misirlou",
+     "why": "drenched spring reverb on staccato tremolo-picked surf leads",
+     "verified": false
+    },
+    {
+     "artist": "The Chantays",
+     "song": "Pipeline",
+     "why": "wet surf guitar drip",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Spring",
+    "springs": "3",
+    "decay": 2.5,
+    "drive": 65,
+    "diffusion": 70,
+    "mix": 45,
+    "hicut": 7000,
+    "lowcut": 100
+   },
+   "notes": "Drive is dwell on Spring: 65 % hits the springs hard for the drip; mix high, as surf players set the tank near the top"
+  },
+  {
+   "id": "amp-spring",
+   "type": "reverb",
+   "name": "Amp spring, low",
+   "desc": "A gentle two-spring amp reverb, short and low in the mix: the built-in combo reverb at 2 or 3",
+   "inst": "guitar",
+   "genres": [
+    "blues",
+    "folk",
+    "rock"
+   ],
+   "subgenres": [
+    "texas-blues",
+    "americana",
+    "country-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Spring",
+    "springs": "2",
+    "decay": 1.6,
+    "drive": 30,
+    "diffusion": 60,
+    "mix": 20,
+    "hicut": 6500,
+    "lowcut": 100
+   },
+   "notes": "Low dwell avoids the drip: the spring is felt as space, not heard as an effect"
+  },
+  {
+   "id": "dub-spring-crash",
+   "type": "reverb",
+   "name": "Dub spring crash",
+   "desc": "A dark, overdriven spring for dub: rimshots and skanks thrown into a crashing tank",
+   "inst": "any",
+   "genres": [
+    "caribbean",
+    "electronic"
+   ],
+   "subgenres": [
+    "dub",
+    "roots-reggae",
+    "dub-techno"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [
+    {
+     "artist": "King Tubby",
+     "why": "spring reverb slams and throws in the dub mix",
+     "verified": false
+    },
+    {
+     "artist": "Lee \"Scratch\" Perry",
+     "why": "Black Ark spring reverb alongside the Space Echo",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "dark",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Spring",
+    "springs": "2",
+    "decay": 3,
+    "drive": 80,
+    "diffusion": 50,
+    "mix": 40,
+    "lowcut": 250,
+    "hicut": 4500
+   },
+   "notes": "High dwell makes the tank crash on transients; put mix on EXP for throws"
+  },
+  {
+   "id": "reverse-wall",
+   "type": "reverb",
+   "name": "Reverse wall",
+   "desc": "Wet-only reverse reverb: every chord swells in backwards and melts, the dry guitar removed",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "shoegaze",
+    "dream-pop",
+    "noise-pop"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "My Bloody Valentine",
+     "song": "Loveless",
+     "why": "Kevin Shields: reverse reverb on an SPX90, no dry guitar signal",
+     "source": "Guitar World, March 1992",
+     "verified": true
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "dreamy",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Reverse",
+    "sync": "1/4",
+    "size": 40,
+    "diffusion": 80,
+    "mix": 100,
+    "kill_dry": true,
+    "hicut": 8000,
+    "lowcut": 100
+   },
+   "notes": "Shields says he uses purely the reverb, none of the dry: kill dry on, mix 100 %. Pair with tremolo-arm bends"
+  },
+  {
+   "id": "gated-drums",
+   "type": "reverb",
+   "name": "Eighties gated burst",
+   "desc": "A dense, flat burst cut dead on the eighth note: huge gated drums and stabs",
+   "inst": "drums",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "new-wave",
+    "art-rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [
+    {
+     "artist": "Phil Collins",
+     "song": "In the Air Tonight",
+     "why": "compressed room mic gated about a second after each hit",
+     "source": "MusicTech (Hugh Padgham interview), 2019",
+     "verified": true
+    },
+    {
+     "artist": "Peter Gabriel",
+     "song": "Intruder",
+     "why": "the first gated-drum sound with Padgham and Collins",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "vintage",
+    "aggressive",
+    "extreme"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Gated",
+    "sync": "1/8",
+    "diffusion": 80,
+    "mix": 60,
+    "lowcut": 120,
+    "hicut": 9000
+   },
+   "notes": "Played without cymbals, as Padgham asked Collins: the gate closes the burst on the grid. Also works on guitar stabs"
+  },
+  {
+   "id": "ambience-amp-air",
+   "type": "reverb",
+   "name": "Air around the amp",
+   "desc": "Early reflections only, no tail: always-on air and width around a dry amp sim",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "metal",
+    "pop"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "progressive-metal"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle",
+    "modern",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Ambience",
+    "size": 10,
+    "decay": 0.3,
+    "mix": 20,
+    "early": 60,
+    "width": 110
+   },
+   "notes": "Ambience is space without a tail: safe on high gain and tight rhythm, where a hall would smear the palm mutes"
+  },
+  {
+   "id": "vocal-chamber",
+   "type": "reverb",
+   "name": "Classic vocal chamber",
+   "desc": "A warm 1.8 s chamber with a short predelay: the crooner's echo room",
+   "inst": "voice",
+   "genres": [
+    "jazz",
+    "pop"
+   ],
+   "subgenres": [
+    "vocal-jazz",
+    "traditional-pop",
+    "ballad"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Frank Sinatra",
+     "song": "In the Wee Small Hours",
+     "why": "Capitol Studios' underground echo chambers on his 50s ballads",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Chamber",
+    "decay": 1.8,
+    "size": 20,
+    "predelay": 20,
+    "mix": 25,
+    "mod": 30,
+    "lowcut": 150,
+    "hicut": 8000
+   },
+   "notes": "Chamber: dense early reflections and a smooth tail; low modulation keeps sustained vowels steady in pitch"
+  },
+  {
+   "id": "keys-chamber",
+   "type": "reverb",
+   "name": "Piano chamber",
+   "desc": "A 1.5 s chamber with little modulation: space around piano and keys without pitch wobble",
+   "inst": "keys",
+   "genres": [
+    "jazz",
+    "pop",
+    "classical"
+   ],
+   "subgenres": [
+    "contemporary-jazz",
+    "singer-songwriter",
+    "solo-piano"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Chamber",
+    "decay": 1.5,
+    "size": 22,
+    "predelay": 10,
+    "mix": 22,
+    "mod": 30,
+    "lowcut": 80,
+    "hicut": 9000
+   },
+   "notes": "The README's keys recipe: low modulation, as chorusing is obvious on sustained piano"
+  },
+  {
+   "id": "vocal-plate",
+   "type": "reverb-plate",
+   "name": "Vocal plate",
+   "desc": "A bright 1.4 s plate with 20 ms predelay and low cut: dense sheen behind a lead vocal",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "psychedelic-pop",
+    "classic-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "The Beatles",
+     "why": "Abbey Road's EMT 140 plates behind mid-period vocals",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Plate",
+    "decay": 1.4,
+    "predelay": 20,
+    "lowcut": 150,
+    "hicut": 8000,
+    "mix": 25
+   },
+   "notes": "Plate gives instant density; low cut 150 Hz and predelay keep consonants clear"
+  },
+  {
+   "id": "snare-plate",
+   "type": "reverb-plate",
+   "name": "Snare plate",
+   "desc": "A one-second bright plate for snare and toms: the classic drum plate",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "pop-rock",
+    "new-wave"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Plate",
+    "decay": 1,
+    "predelay": 5,
+    "mix": 25,
+    "lowcut": 150,
+    "hicut": 9000
+   },
+   "notes": "Plate programs were all over 80s drums (Sound On Sound, 2011, on the Lexicon 224); short decay keeps the groove"
+  },
+  {
+   "id": "halo-plate",
+   "type": "reverb-plate",
+   "name": "Octave halo plate",
+   "desc": "A two-second plate with a faint octave shimmer: a glow on clean arpeggios",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "dream-pop",
+    "indie-rock",
+    "ccm"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "bright"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Plate",
+    "decay": 2,
+    "predelay": 10,
+    "shimmer": 25,
+    "shimmer_pitch": 12,
+    "hicut": 7000,
+    "lowcut": 120,
+    "mix": 28
+   },
+   "notes": "Shimmer 25 % is a colour, not the subject; the plate's instant density suits picked notes"
+  },
+  {
+   "id": "funk-plate-short",
+   "type": "reverb-plate",
+   "name": "Short soul plate",
+   "desc": "A short, tight plate low in the mix: lift for funk and soul chops without blurring the groove",
+   "inst": "guitar",
+   "genres": [
+    "rnb"
+   ],
+   "subgenres": [
+    "funk",
+    "motown",
+    "classic-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "algo": "Plate",
+    "decay": 0.8,
+    "predelay": 10,
+    "mix": 18,
+    "lowcut": 200,
+    "hicut": 8000
+   },
+   "notes": "Under a second so 16th-note scratches stay percussive"
+  },
+  {
+   "id": "amp-in-room",
+   "type": "reverb-room",
+   "name": "Amp in a room",
+   "desc": "A 0.7 s room with dense early reflections: a dry amp sim sounds miked in a real space",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "punk"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "indie-rock",
+    "punk-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Room",
+    "decay": 0.7,
+    "size": 12,
+    "mix": 25,
+    "hicut": 7000,
+    "lowcut": 100
+   },
+   "notes": "The README's room recipe; works on crunch and high gain where long tails smear"
+  },
+  {
+   "id": "drum-room",
+   "type": "reverb-room",
+   "name": "Live drum room",
+   "desc": "A 0.8 s room with strong early reflections: kit ambience for jazz, indie and rock drums",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "jazz"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "garage-rock",
+    "hard-bop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Room",
+    "decay": 0.8,
+    "size": 14,
+    "early": 70,
+    "mix": 20,
+    "hicut": 8000,
+    "lowcut": 80
+   },
+   "notes": "Early reflections at 70 % give the room mic sound; the tail stays short"
+  },
+  {
+   "id": "bass-room-touch",
+   "type": "reverb-room",
+   "name": "Bass room touch",
+   "desc": "A half-second room on the highs only: space for bass without smearing the low end",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "jazz",
+    "rnb"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "jazz-fusion",
+    "funk"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle",
+    "tight"
+   ],
+   "default": true,
+   "params": {
+    "algo": "Room",
+    "decay": 0.5,
+    "size": 10,
+    "mix": 12,
+    "lowcut": 250,
+    "hicut": 6000
+   },
+   "notes": "Low cut 250 Hz into the reverb: only the attack and harmonics reverberate"
+  }
+ ]
+}
