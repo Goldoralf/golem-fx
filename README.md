@@ -14,6 +14,10 @@ feature is for.
 Shared code: [gfx-dsp](gfx-dsp/), the DSP library every effect is built on (delay lines, LFOs, filters,
 dynamics, saturation, BBD model…), and `gfx-bench`, the offline render and measurement tool.
 
+Visuals: [visuals/](visuals/) holds golem's glyph set and the pedal renderers (golem-fx pedals, NAM
+captures and amps, a generic pedal for every other block, a lane drawn on a stage floor). Open
+[visuals/index.html](visuals/index.html) to see them all.
+
 ## Build
 
 Rust stable (`~/.cargo/bin`).
@@ -22,6 +26,7 @@ Rust stable (`~/.cargo/bin`).
 cargo test --workspace --release              # unit tests + the bench's common checks at 48 kHz
 cargo run --release -p gfx-bench -- check gfx-boost     # full common checks, four sample rates
 cargo run --release -p gfx-bench -- render gfx-boost --in di.wav --out out.wav --set gain=6
+cargo run --release -p gfx-bench -- manifest  # every effect's parameters as JSON (visuals/data/manifest.json)
 cargo xtask bundle gfx-boost --release        # → target/bundled/GoleM FX Boost.vst3 (same for gfx-gate)
 ```
 

@@ -1,0 +1,191 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>golem pedals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/visuals.css">
+<script src="data/visuals-data.js"></script>
+<script src="js/golem-pedals.js"></script>
+<script src="js/golem-stage.js"></script>
+</head>
+<body>
+<div id="defs"></div>
+<div class="wrap">
+  <header class="top">
+    <h1>golem pedals</h1>
+    <p>Every block golem can put on a lane, drawn as a pedal. The glyph is the link: the same sign sits on the block tile and on the pedal, cast as a rune on golem-fx's own effects.</p>
+  </header>
+
+  <div class="lane-bar">
+    <span><span class="seg-label">Lane</span><span class="seg" id="lane-seg"></span></span>
+    <span><span class="seg-label">Floor</span><span class="seg" id="floor-seg">
+      <button data-floor="stage" aria-pressed="true">Stage</button><button data-floor="rug" aria-pressed="false">Rug</button></span></span>
+  </div>
+  <div class="scene" id="scene"></div>
+  <div class="blocks-row" id="blocks-row"></div>
+  <p class="hint">Click a pedal or a tile to switch the block on or off: both views follow.</p>
+
+  <section id="gfx">
+    <h2>golem-fx</h2>
+    <p class="lead">Golem's own effects. Cast bodies tinted by the block's family, the glyph carved as a rune that lights with the pedal. Knobs, selectors and their default positions come from each effect's code (<code>gfx-bench manifest</code>).</p>
+    <div class="grid" id="gfx-grid"></div>
+  </section>
+
+  <section id="nam">
+    <h2>NAM captures</h2>
+    <p class="lead">Captured gear has its own line: brushed steel and glass, the captured circuit glowing behind the window. Amps take a period and a material from their family, never a maker's livery.</p>
+    <h3>Effect captures</h3>
+    <div class="grid" id="nam-pedals"></div>
+    <h3>Heads</h3>
+    <div class="amps" id="nam-heads"></div>
+    <h3>Cabs</h3>
+    <div class="amps" id="nam-cabs"></div>
+    <h3>Head + cab</h3>
+    <div class="amps" id="nam-stacks"></div>
+  </section>
+
+  <section id="generic">
+    <h2>Other golem blocks</h2>
+    <p class="lead">Every other effect golem hosts gets the same vintage enamel box. The glyph on its badge tells them apart; its colour comes from the block's family, aged.</p>
+    <div class="grid" id="generic-grid"></div>
+  </section>
+
+  <section id="glyphs">
+    <h2>Glyphs</h2>
+    <p class="lead">One glyph per catalogue type, drawn on a 24 px grid in the stroke style of golem's icons. Families share a motif: captures sit in a hexagon, reverbs open outwards, delays repeat to the right. The faded character is the former Unicode glyph, kept as a text fallback.</p>
+    <div class="glyphs" id="glyph-grid"></div>
+  </section>
+
+  <footer>
+    Generated from <code>visuals/data/</code>: rebuild with <code>python3 visuals/tools/build-data.py --manifest --golem ~/golem</code>. Catalogue version <span id="catver"></span>.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const P = GolemPedals, S = GolemStage, D = GOLEM_VISUALS;
+  const $ = id => document.getElementById(id);
+  $('defs').innerHTML = P.defs();
+  $('catver').textContent = D.catalog_version;
+
+  const pedalArch = id => (D.archetypes.pedals || []).find(p => p.id === id);
+  const ampArch = id => (D.archetypes.amps || []).find(p => p.id === id);
+  const amp = (type, id, extra) => { const a = ampArch(id) || {}; return Object.assign({ type, family: a.family, title: a.short || a.name }, extra || {}); };
+
+  const LANES = {
+    Guitar: ['gate', { type: 'pedal-nam', archetype: pedalArch('tube-screamer') }, 'guitar-drive', 'wah', 'chorus',
+             amp('amp-nam', 'plexi'), { type: 'cab', title: '1960 4x12', size: '4x12', family: 'crunch' }, 'delay', 'reverb'],
+    Clean: ['comp', 'tremolo', 'vibrato', amp('amp', 'twin-reverb', { form: 'combo' }), 'delay-tape', 'reverb-plate'],
+    Bass: ['comp', 'octaver', { type: 'pedal-nam', archetype: (D.archetypes.pedals || []).find(p => p.family === 'bass') }, amp('amp', 'ampeg-svt', { size: '8x10' })],
+    Voice: ['deesser', 'comp', 'eq', 'pitch', 'delay', 'reverb-shimmer'],
+    Keys: ['rotary', 'chorus-js', 'delay-echo', 'eq-graphic', 'reverb-room'],
+  };
+  let lane = 'Guitar', floor = 'stage';
+  const state = {}; // lane -> chain items with .on
+  const chainOf = name => state[name] || (state[name] = LANES[name].map(c => (typeof c === 'string' ? { type: c } : Object.assign({}, c))));
+
+  $('lane-seg').innerHTML = Object.keys(LANES).map(n => `<button data-lane="${n}" aria-pressed="${n === lane}">${n}</button>`).join('');
+  $('lane-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; lane = b.dataset.lane; drawLane(); };
+  $('floor-seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; floor = b.dataset.floor; drawLane(); };
+
+  function drawLane() {
+    document.querySelectorAll('#lane-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lane === lane));
+    document.querySelectorAll('#floor-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.floor === floor));
+    const chain = chainOf(lane);
+    $('scene').innerHTML = S.render(chain, { floor, minWidth: 1000 });
+    const svg = $('scene').querySelector('svg');
+    const cw = $('scene').clientWidth;
+    svg.style.width = Math.max(svg.viewBox.baseVal.width * (cw < 700 ? .5 : .86), cw) + 'px';
+    $('blocks-row').innerHTML = chain.map((it, i) => {
+      const b = P.blockByType(it.type) || { type: it.type, name: it.type };
+      return (i ? '<span class="arrow" aria-hidden="true">›</span>' : '') +
+        P.blockTile(Object.assign({}, b, it.title ? { short: it.title } : it.archetype ? { short: it.archetype.short } : {}), { on: it.on !== false }).replace('class="gp-tile', `data-idx="${i}" tabindex="0" role="button" class="gp-tile`);
+    }).join('');
+  }
+  function toggle(i) {
+    const chain = chainOf(lane), it = chain[i];
+    if (!it) return;
+    it.on = it.on === false;
+    // a head and its cab switch together
+    const next = chain[i + 1];
+    if (next && P.blockByType(it.type)?.family === 'nam-head' && P.blockByType(next.type)?.family === 'nam-cab') next.on = it.on;
+    drawLane();
+  }
+  $('scene').addEventListener('click', e => { const s = e.target.closest('[data-idx]'); if (s) toggle(+s.dataset.idx); });
+  $('blocks-row').addEventListener('click', e => { const s = e.target.closest('[data-idx]'); if (s) toggle(+s.dataset.idx); });
+  $('blocks-row').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.idx) { e.preventDefault(); toggle(+e.target.dataset.idx); } });
+  drawLane();
+
+  // a card: the pedal over its block tile; clicking the pedal switches it
+  function card(render, block, title, sub) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    let on = true;
+    const slot = document.createElement('div');
+    slot.className = 'pedal-slot';
+    slot.setAttribute('role', 'button'); slot.tabIndex = 0;
+    const draw = () => { slot.innerHTML = render(on); slot.setAttribute('aria-pressed', on); };
+    const flip = () => { on = !on; draw(); const t = el.querySelector('.gp-tile'); if (t) t.classList.toggle('is-off', !on); };
+    slot.onclick = flip;
+    slot.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } };
+    draw();
+    el.appendChild(slot);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = (block ? P.blockTile(block) : '') + `<div class="txt"><b>${P.esc(title)}</b><span>${sub}</span></div>`;
+    el.appendChild(meta);
+    return el;
+  }
+
+  // golem-fx
+  Object.values(D.gfx).forEach(g => {
+    const b = P.blockByType(g.blocks[0]) || { type: g.blocks[0], glyph: g.glyph, name: g.name, color: g.color };
+    $('gfx-grid').appendChild(card(on => P.gfxPedal(g, { on }), b, g.crate, g.blocks.join(', ')));
+  });
+
+  // NAM effect captures, one per voice
+  const firstOf = fam => (D.archetypes.pedals || []).find(p => p.family === fam);
+  [['pedal-nam', firstOf('overdrive')], ['pedal-nam', firstOf('distortion')], ['pedal-nam', firstOf('fuzz')], ['pedal-nam', firstOf('boost')],
+   ['pedal-nam', firstOf('bass')], ['preamp-nam'], ['comp-nam'], ['capture-module']].forEach(([type, arch]) => {
+    const b = P.blockByType(type);
+    $('nam-pedals').appendChild(card(on => P.namPedal(type, { on, archetype: arch }), b, arch ? arch.name : b.name,
+      `${type}${arch ? ' · ' + arch.family : ''}`));
+  });
+  const famAmp = fam => (D.archetypes.amps || []).find(a => a.family === fam);
+  const ampCard = (render, block, title, sub, small) => { const c = card(render, block, title, sub); if (small) c.classList.add('small'); return c; };
+  ['clean', 'crunch', 'high-gain', 'bass'].forEach(fam => {
+    const a = famAmp(fam);
+    $('nam-heads').appendChild(ampCard(on => P.namHead({ on, family: fam, title: a.short }), P.blockByType('amp-nam'), a.name, `amp-nam · ${fam}`));
+  });
+  [['1x12', 'clean'], ['2x12', 'crunch'], ['4x12', 'high-gain'], ['8x10', 'bass']].forEach(([size, fam]) => {
+    const c = ampCard(() => P.namCab({ family: fam, size, title: size, width: Math.round(P.cabLayout(size).w * 1.2) }), P.blockByType('cab'), `${size} cab`, `cab · ${fam} cloth`);
+    c.classList.add('natural');
+    $('nam-cabs').appendChild(c);
+  });
+  [['crunch', 'stack', '4x12'], ['high-gain', 'stack', '4x12'], ['clean', 'combo'], ['bass', 'stack', '8x10']].forEach(([fam, form, size]) => {
+    const a = famAmp(fam);
+    $('nam-stacks').appendChild(ampCard(on => P.namStack({ on, family: fam, form, size, title: a.short }), P.blockByType('amp'), a.name, `amp · ${form} · ${fam}`));
+  });
+
+  // the rest
+  D.blocks.filter(b => b.family === 'generic').forEach(b => {
+    $('generic-grid').appendChild(card(on => P.genericPedal(b, { on }), b, b.name, b.type));
+  });
+
+  // glyphs
+  const famLabel = { gfx: 'golem-fx pedal', generic: 'enamel pedal', 'nam-pedal': 'NAM pedal', 'nam-head': 'NAM head', 'nam-cab': 'cab', 'nam-stack': 'NAM head + cab', instrument: 'instrument', service: 'service' };
+  const byType = Object.fromEntries(D.blocks.map(b => [b.type, b]));
+  $('glyph-grid').innerHTML = Object.entries(D.glyphs).map(([id, g]) => {
+    const b = byType[id];
+    const fam = b ? famLabel[b.family] : 'golem-fx pedal';
+    return `<div class="glyph-cell" style="--c:${P.esc((b && b.color) || '#8a94a3')}"><span class="big">${P.glyph(id)}</span>
+      <code>${P.esc(id)} <span class="uni">${P.esc(g.uni || '')}</span></code><small>${P.esc(g.label)} · ${fam}</small></div>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>

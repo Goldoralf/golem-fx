@@ -2,6 +2,7 @@
 //! gfx-bench command line.
 //!
 //!   gfx-bench list
+//!   gfx-bench manifest            every effect's parameters as JSON (visuals/ builds the pedals from it)
 //!   gfx-bench check <effect> [--sr 48000]
 //!   gfx-bench render <effect> --in <wav> --out <wav> [--set id=value]… [--stereo] [--block 512]
 
@@ -12,7 +13,7 @@ use std::process::ExitCode;
 
 fn usage() -> ExitCode {
     eprintln!(
-        "usage:\n  gfx-bench list\n  gfx-bench check <effect> [--sr <rate>]\n  gfx-bench render <effect> --in <wav> --out <wav> [--set id=value]... [--stereo] [--block n]"
+        "usage:\n  gfx-bench list\n  gfx-bench manifest\n  gfx-bench check <effect> [--sr <rate>]\n  gfx-bench render <effect> --in <wav> --out <wav> [--set id=value]... [--stereo] [--block n]"
     );
     ExitCode::from(2)
 }
@@ -24,6 +25,10 @@ fn main() -> ExitCode {
             for e in EFFECTS {
                 println!("{e}");
             }
+            ExitCode::SUCCESS
+        }
+        Some("manifest") => {
+            print!("{}", gfx_bench::manifest_json());
             ExitCode::SUCCESS
         }
         Some("check") => check(&args[1..]),

@@ -1,0 +1,29 @@
+{
+  "_comment": "The face of each gfx pedal: which parameters are knobs, which enums are selectors, which golem blocks it stands for (catalogue types, first = its glyph). Ranges, defaults and option labels come from the code (manifest.json + plugin.rs), via tools/build-data.py. `shape`: stomp (default) or treadle. `name` is the word printed on the pedal.",
+  "faces": {
+    "gfx-gate":          {"name": "Gate",       "blocks": ["gate"],                 "knobs": ["thresh", "release", "range"]},
+    "gfx-comp":          {"name": "Comp",       "blocks": ["comp"],                 "knobs": ["thresh", "ratio", "attack", "makeup"], "selectors": ["character"]},
+    "gfx-limiter":       {"name": "Limit",      "blocks": ["limiter"],              "knobs": ["threshold", "release", "gain"], "selectors": ["style"]},
+    "gfx-deesser":       {"name": "De-ess",     "blocks": ["deesser"],              "knobs": ["thresh", "freq", "range"], "toggles": ["listen"]},
+    "gfx-boost":         {"name": "Boost",      "blocks": ["clean-boost", "volume"], "knobs": ["gain"], "toggles": ["polarity"]},
+    "gfx-drive":         {"name": "Drive",      "blocks": ["guitar-drive"],         "knobs": ["gain", "tone", "hardness", "ceiling"], "selectors": ["voice"]},
+    "gfx-wah":           {"name": "Wah",        "blocks": ["wah", "wah-color"],     "knobs": ["volume", "q"], "selectors": ["model"], "shape": "treadle", "treadle": "wah"},
+    "gfx-autowah":       {"name": "Auto-wah",   "blocks": ["autowah"],              "knobs": ["wah", "peak", "attack", "release"], "selectors": ["type"]},
+    "gfx-eq":            {"name": "EQ",         "blocks": ["eq"],                   "knobs": ["lowcut", "midgain", "midfreq", "highs"]},
+    "gfx-tremolo":       {"name": "Tremolo",    "blocks": ["tremolo"],              "knobs": ["rate", "depth", "drive"], "selectors": ["wave"]},
+    "gfx-vibrato":       {"name": "Vibrato",    "blocks": ["vibrato"],              "knobs": ["speed", "depth", "mix"], "selectors": ["model"]},
+    "gfx-chorus":        {"name": "Chorus",     "blocks": ["chorus"],               "knobs": ["rate", "depth", "warmth", "mix"], "selectors": ["profile", "mode"]},
+    "gfx-flanger":       {"name": "Flanger",    "blocks": ["flanger-js"],           "knobs": ["rate", "depth", "manual", "feedback"], "selectors": ["mode"]},
+    "gfx-phaser":        {"name": "Phaser",     "blocks": ["phaser-js"],            "knobs": ["rate", "feedback", "wet"], "selectors": ["model"]},
+    "gfx-rotary":        {"name": "Rotary",     "blocks": ["rotary"],               "knobs": ["drive", "balance", "ramp"], "selectors": ["speed", "cabinet"]},
+    "gfx-killswitch":    {"name": "Kill",       "blocks": ["killswitch"],           "knobs": ["depth", "length", "rate"], "selectors": ["trigger"]},
+    "gfx-delay":         {"name": "Delay",      "blocks": ["delay"],                "knobs": ["time_ms", "feedback", "mix", "high_cut"], "selectors": ["model"]},
+    "gfx-reverb":        {"name": "Reverb",     "blocks": ["reverb", "reverb-plate", "reverb-room"], "knobs": ["mix", "decay", "size", "hicut"], "selectors": ["algo"]},
+    "gfx-shimmer":       {"name": "Shimmer",    "blocks": ["reverb-shimmer"],       "knobs": ["mix", "decay", "shimmer", "hicut"]},
+    "gfx-octaver":       {"name": "Octave",     "blocks": ["octaver"],              "knobs": ["direct", "octave1", "octave2", "octave_up"], "selectors": ["mode"]},
+    "gfx-pitch":         {"name": "Pitch",      "blocks": ["pitch"],                "knobs": ["shift", "shift2", "mix"], "selectors": ["engine"]},
+    "gfx-pitch-classic": {"name": "Pitch Classic",  "blocks": ["pitch-shift-js"],       "knobs": ["shift", "window", "overlap", "wet"]},
+    "gfx-detune":        {"name": "Detune",     "blocks": ["detune"],               "knobs": ["detune", "delay", "wet"]},
+    "gfx-gapmeter":      {"name": "Gap",        "blocks": ["gapmeter"],             "knobs": ["thresh", "min_gap"], "selectors": ["slot"]}
+  }
+}
