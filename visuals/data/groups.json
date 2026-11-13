@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option).",
+  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option). `presets` holds reference settings of crates without a VOICING table (enum values as option labels).",
   "groups": {
     "gfx-boost": [],
     "gfx-gate": [
@@ -933,6 +933,69 @@
           "tone_level"
         ]
       }
+    ],
+    "gfx-met": [
+      {
+        "id": "expansion",
+        "name": "Expansion",
+        "custom": null,
+        "params": [
+          "ratio",
+          "range"
+        ]
+      },
+      {
+        "id": "detector",
+        "name": "Detector",
+        "custom": null,
+        "params": [
+          "smooth",
+          "adaptive"
+        ]
+      },
+      {
+        "id": "key",
+        "name": "Key",
+        "custom": null,
+        "params": [
+          "source",
+          "hpf",
+          "lpf",
+          "listen"
+        ]
+      }
+    ],
+    "gfx-emet": [
+      {
+        "id": "clipping",
+        "name": "Clipping",
+        "custom": null,
+        "params": [
+          "headroom",
+          "asym",
+          "tight"
+        ]
+      },
+      {
+        "id": "input",
+        "name": "Input and bass",
+        "custom": null,
+        "params": [
+          "input",
+          "bass_keep"
+        ]
+      }
+    ],
+    "gfx-shem": [
+      {
+        "id": "voicing",
+        "name": "Voicing",
+        "custom": null,
+        "params": [
+          "voice",
+          "bright"
+        ]
+      }
     ]
   },
   "help": {
@@ -1149,5 +1212,86 @@
         "equals": "Free"
       }
     }
+  },
+  "presets": {
+    "gfx-emet": [
+      {
+        "name": "Clean hump",
+        "params": {
+          "gain": 0,
+          "tone_stack": 50,
+          "level": 0
+        }
+      },
+      {
+        "name": "Tighten up the gain",
+        "params": {
+          "gain": 10,
+          "tone_stack": 40,
+          "level": -3
+        }
+      },
+      {
+        "name": "Front end smash",
+        "params": {
+          "gain": 70,
+          "tone_stack": 60,
+          "level": -6
+        }
+      },
+      {
+        "name": "Classic 808",
+        "params": {
+          "gain": 50,
+          "tone_stack": 50,
+          "headroom": -13
+        }
+      }
+    ],
+    "gfx-shem": [
+      {
+        "name": "Tight boost",
+        "params": {
+          "grind": 10
+        }
+      },
+      {
+        "name": "Drop tuning",
+        "params": {
+          "grind": 14,
+          "voice": "Focused"
+        }
+      },
+      {
+        "name": "Pushed mids",
+        "params": {
+          "grind": 2
+        }
+      }
+    ],
+    "gfx-met": [
+      {
+        "name": "Zuul",
+        "params": {
+          "hold": 0,
+          "release": 0,
+          "ratio": 2.8
+        }
+      },
+      {
+        "name": "Zuul+ staccato",
+        "params": {
+          "hold": 20,
+          "release": 60
+        }
+      },
+      {
+        "name": "Breakdown gate",
+        "params": {
+          "ratio": 10,
+          "release": 30
+        }
+      }
+    ]
   }
 }

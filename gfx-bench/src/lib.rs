@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -46,6 +46,9 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-pitch-classic" | "pitch-classic" => Some(Box::new(gfx_pitch_classic::PitchClassic::new())),
         "gfx-detune" | "detune" => Some(Box::new(gfx_detune::Detune::new())),
         "gfx-gapmeter" | "gapmeter" => Some(Box::new(gfx_gapmeter::GapMeter::new())),
+        "gfx-met" | "met" => Some(Box::new(gfx_met::Met::new())),
+        "gfx-emet" | "emet" => Some(Box::new(gfx_emet::Emet::new())),
+        "gfx-shem" | "shem" => Some(Box::new(gfx_shem::Shem::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -125,6 +128,15 @@ pub fn options(name: &str) -> checks::Options {
         // the dry runs through two all-passes that align it with the sub's smoothing filter: a phase
         // rotation (~0.5 ms of group delay at the bottom), no delay line, not reported (README §3)
         o.skip_latency = true;
+    }
+    if matches!(name, "gfx-emet" | "emet") {
+        // 8× minimum-phase oversampling: a few samples of group delay, no delay line, not reported
+        // (README §2, the gfx-drive precedent)
+        o.skip_latency = true;
+        // a headroom step glides the knee through the whole clipping range (−18 → +6 dB): real
+        // harmonics on the way, as gfx-drive's ceiling; a full tone sweep in 30 ms rings the tone
+        // network as a pot turned that fast would (−46 dB)
+        o.click_bound_db = -35.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

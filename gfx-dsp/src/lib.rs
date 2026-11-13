@@ -12,6 +12,7 @@
 
 pub mod adaa;
 pub mod bbd;
+pub mod circuit;
 pub mod delay;
 pub mod detect;
 pub mod vocoder;

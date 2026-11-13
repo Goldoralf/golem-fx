@@ -117,7 +117,8 @@ def main(argv):
 
         gfx[crate] = {
             "crate": crate, "name": face["name"], "blocks": face["blocks"], "glyph": face["blocks"][0],
-            "category": lead.get("category", "utility"), "color": lead.get("color") or "#8a94a3",
+            "category": face.get("category") or lead.get("category", "utility"),
+            "color": face.get("color") or lead.get("color") or "#8a94a3",
             "shape": face.get("shape", "stomp"), "treadle": face.get("treadle"),
             "knobs": pick(face.get("knobs", []), "knob"),
             "selectors": pick(face.get("selectors", []), "selector"),

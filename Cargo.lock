@@ -242,18 +242,21 @@ dependencies = [
  "gfx-detune",
  "gfx-drive",
  "gfx-dsp",
+ "gfx-emet",
  "gfx-eq",
  "gfx-flanger",
  "gfx-gapmeter",
  "gfx-gate",
  "gfx-killswitch",
  "gfx-limiter",
+ "gfx-met",
  "gfx-octaver",
  "gfx-phaser",
  "gfx-pitch",
  "gfx-pitch-classic",
  "gfx-reverb",
  "gfx-rotary",
+ "gfx-shem",
  "gfx-shimmer",
  "gfx-tremolo",
  "gfx-vibrato",
@@ -324,6 +327,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gfx-emet"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
 name = "gfx-eq"
 version = "0.1.0"
 dependencies = [
@@ -372,6 +383,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "gfx-met"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
 name = "gfx-octaver"
 version = "0.1.0"
 dependencies = [
@@ -413,6 +432,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-rotary"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-shem"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

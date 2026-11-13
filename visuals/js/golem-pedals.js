@@ -345,6 +345,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-vibrato': 'waves', 'gfx-chorus': 'waves', 'gfx-flanger': 'jet', 'gfx-phaser': 'spiral', 'gfx-rotary': 'swirl',
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
+    'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,

@@ -71,3 +71,12 @@ name = "GoleM FX Detune"
 [gfx-gapmeter]
 name = "GoleM FX Gapmeter"
 
+
+[gfx-met]
+name = "GoleM FX Met"
+
+[gfx-emet]
+name = "GoleM FX Emet"
+
+[gfx-shem]
+name = "GoleM FX Shem"

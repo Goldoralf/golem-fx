@@ -187,6 +187,17 @@ def chorus_presets(labels: dict) -> list:
 
 # ---------- build ----------
 
+def hand_presets(crate, kinds, labels, errors):
+    out = json.loads((DATA / "groups.json").read_text()).get("presets", {}).get(crate, [])
+    for p in out:
+        for pid, v in p["params"].items():
+            if pid not in kinds:
+                errors.append(f"{crate}: preset {p['name']} sets unknown {pid}")
+            elif kinds[pid] == "enum" and v not in (labels.get(pid) or []):
+                errors.append(f"{crate}: preset {p['name']}: {pid}={v!r} is not an option")
+    return out
+
+
 def display_of(curve: str, unit: str, lo, hi) -> str:
     c = curve.strip().lower()
     if c in ("lin", "log"):
@@ -286,7 +297,7 @@ def build(manifest: dict) -> tuple:
             "front": front,
             "groups": [{"id": g["id"], "name": g["name"], "custom": g.get("custom"), "params": g["params"]} for g in groups],
             "params": pout,
-            "presets": chorus_presets(labels) if crate == "gfx-chorus" else [],
+            "presets": chorus_presets(labels) if crate == "gfx-chorus" else hand_presets(crate, kinds, labels, errors),
         }
     return out, errors
 

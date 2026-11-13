@@ -37,6 +37,7 @@ its voicing and its nih-plug wrapper.
 | `bbd` | Bucket-brigade model: variable-clock sampling, anti-aliasing and reconstruction filters, clock noise, stage count | gfx-chorus (BBD engine) |
 | `dynamics` | Compander (NE570-style), envelope followers | gfx-chorus (compander) |
 | `tape` | Wow and flutter generators, tape hiss | gfx-chorus (Tape engine) |
+| `circuit` | Small linear circuits from a netlist (R, C, ideal op-amps): MNA with trapezoidal companion models (exact bilinear), pots changed without touching the state; Laplace-domain analysis for tests | gfx-shem (boost network), gfx-emet (808 tone stage) |
 | `noise` | White, pink, band-limited noise; deterministic seeds for tests | gfx-chorus |
 | `stereo` | Mid/side, width, mono-safety helpers | gfx-chorus |
 | `level` | Loudness estimate for level compensation | gfx-chorus |

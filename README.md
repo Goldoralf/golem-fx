@@ -62,6 +62,13 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 21 | [gfx-octaver](gfx-octaver/) | `octaver` | Gx OC-2 | **coded**, bench green, to test in golem |
 | 22 | [gfx-limiter](gfx-limiter/) | `limiter` | x42-dpl | **coded**, passes golem's engine checks |
 | 13 | [gfx-gapmeter](gfx-gapmeter/) | — (probe for `tools/check-scene-gap.py`) | golem_gapmeter.jsfx | **coded**, bench green, to wire in check-scene-gap.py |
+| 23 | [gfx-met](gfx-met/) | new block (keyed expander-gate) | — (Fortin Zuul's role) | **coded**, bench green, to test in golem |
+| 24 | [gfx-emet](gfx-emet/) | new block (high-headroom 808 overdrive) | — (Hexdrive's role) | **coded**, bench green, to test in golem |
+| 25 | [gfx-shem](gfx-shem/) | new block (clean shaped tight boost) | — (Fortin Grind's role) | **coded**, bench green, to test in golem |
+
+gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
+Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows
+renders.
 
 `chorus-js` is not covered by gfx-chorus: its parameters (`length`, `wet`/`dry` in dB) do not map onto
 gfx-chorus's. The roadmap numbers are the order of design; the order of implementation is in the review.
