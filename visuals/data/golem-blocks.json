@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 41,
+ "catalog_version": 42,
  "effects": [
   {
    "type": "gate",
@@ -3509,7 +3509,9 @@
    "color": "#ff5a3c",
    "brand": "EVH",
    "aliases": [
-    "5153"
+    "5153",
+    "5150 iii",
+    "5150iii"
    ]
   },
   {
@@ -3825,7 +3827,10 @@
    "aliases": [
     "6505",
     "6534",
-    "invective"
+    "invective",
+    "peavey 5150",
+    "5150 ii",
+    "5150ii"
    ]
   },
   {

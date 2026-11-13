@@ -687,11 +687,18 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
   // ---------- dispatch: any golem block, the right pedal ----------
   function blockByType(type) { return data().blocks.find(b => b.type === type); }
   // a capture's label ("EVH 5150 III Stealth", "Mesa 4x12 Celestion V30") -> its catalogue archetype
-  // (kind: 'amps' | 'cabs' | 'pedals'), by the catalogue's own `match` and `aliases`; null when none fits
+  // (kind: 'amps' | 'cabs' | 'pedals'), by the catalogue's own `match` and `aliases`, longest keyword
+  // first; null when none fits
   function archetypeFor(kind, label) {
     const l = String(label || '').toLowerCase();
     if (!l) return null;
-    return (data().archetypes[kind] || []).find(a => [a.match].concat(a.aliases || []).some(m => m && l.includes(String(m).toLowerCase()))) || null;
+    // the longest matching keyword wins (golem's rule: "peavey 5150" beats "5150")
+    let best = null, len = 0;
+    (data().archetypes[kind] || []).forEach(a => [a.match].concat(a.aliases || []).forEach(m => {
+      const k = String(m || '').toLowerCase();
+      if (k && k.length > len && l.includes(k)) { best = a; len = k.length; }
+    }));
+    return best;
   }
   // item: a catalogue type, or {type, on, archetype, family, title, size, form}
   function pedalFor(item, opts) {
