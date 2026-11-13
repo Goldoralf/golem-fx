@@ -24,6 +24,8 @@
     <span><span class="seg-label">Lane</span><span class="seg" id="lane-seg"></span></span>
     <span><span class="seg-label">Floor</span><span class="seg" id="floor-seg">
       <button data-floor="stage" aria-pressed="true">Stage</button><button data-floor="rug" aria-pressed="false">Rug</button></span></span>
+    <span><span class="seg-label">golem-fx finish</span><span class="seg" id="style-seg">
+      <button data-style="anodized" aria-pressed="true">Anodized</button><button data-style="thrash" aria-pressed="false">Thrash</button></span></span>
   </div>
   <div class="scene" id="scene"></div>
   <div class="blocks-row" id="blocks-row"></div>
@@ -31,7 +33,7 @@
 
   <section id="gfx">
     <h2>golem-fx</h2>
-    <p class="lead">Golem's own effects. Cast bodies tinted by the block's family, the glyph carved as a rune that lights with the pedal. Knobs, selectors and their default positions come from each effect's code (<code>gfx-bench manifest</code>).</p>
+    <p class="lead">Golem's own effects, in two finishes: <b>Anodized</b> (machined aluminium in the family's colour, the motif engraved in the metal) and <b>Thrash</b> (gloss lacquer, diamond plate round the switch, the motif in yellow lined in black). Each effect carries a motif that says what it does, and its glyph lights as a rune when the pedal is on. Knobs, selectors and their default positions come from each effect's code (<code>gfx-bench manifest</code>).</p>
     <div class="grid" id="gfx-grid"></div>
   </section>
 
@@ -174,10 +176,24 @@
   }
 
   // golem-fx
-  Object.values(D.gfx).forEach(g => {
-    const b = P.blockByType(g.blocks[0]) || { type: g.blocks[0], glyph: g.glyph, name: g.name, color: g.color };
-    $('gfx-grid').appendChild(card(on => P.gfxPedal(g, { on }), b, g.crate, g.blocks.join(', ')));
-  });
+  const MOTIF_LABEL = { flames: 'flames', chevrons: 'thrust chevrons', barbed: 'barbed wire', clamp: 'clamp', crescent: 'sweep',
+    curve: 'response curve', pulse: 'pulse train', waves: 'twin waves', jet: 'jet streaks', spiral: 'spiral', swirl: 'swirl',
+    bolt: 'lightning', echo: 'echoes', rays: 'rays', stars: 'sparks', diamonds: 'octave diamonds', stairs: 'stairs', ticks: 'ruler' };
+  function drawGfx() {
+    $('gfx-grid').innerHTML = '';
+    Object.values(D.gfx).forEach(g => {
+      const b = P.blockByType(g.blocks[0]) || { type: g.blocks[0], glyph: g.glyph, name: g.name, color: g.color };
+      const m = P.MOTIF[g.crate];
+      $('gfx-grid').appendChild(card(on => P.gfxPedal(g, { on }), b, g.crate, g.blocks.join(', ') + (m ? ' · ' + (MOTIF_LABEL[m] || m) : '')));
+    });
+  }
+  drawGfx();
+  $('style-seg').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    P.setStyle(b.dataset.style);
+    document.querySelectorAll('#style-seg button').forEach(x => x.setAttribute('aria-pressed', x.dataset.style === P.style));
+    drawLane(); drawGfx();
+  };
 
   // NAM effect captures, one per voice
   const firstOf = fam => (D.archetypes.pedals || []).find(p => p.family === fam);
