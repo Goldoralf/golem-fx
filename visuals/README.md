@@ -36,6 +36,9 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 | `glyphs/<type>.svg` | Each glyph as a standalone SVG (generated) |
 | `data/faces.json` | Each golem-fx pedal's face: knobs, selectors, toggles, the blocks it stands for |
 | `data/manifest.json` | Every effect's parameters, generated from the code: `cargo run -p gfx-bench -- manifest` |
+| `data/descriptors.json` | **Every pedal's complete descriptor** (generated, do not edit): plugin name and VST3 class id, the front panel (the pedal face), the expert groups with their Custom switches, and every parameter (kind, range, default, unit, display taper, step, decimals, enum labels, EXP, structural, `depends`, one-line help), plus reference presets. golem builds its block sheet from it |
+| `data/groups.json` | Hand-written: each pedal's expert groups, plus the help lines and `depends` the docs leave out |
+| `tools/build-descriptors.py` | Builds `descriptors.json` from the code (manifest, `plugin.rs`), `faces.json`, `groups.json` and the crates' parameter tables; fails if a parameter is missing, doubled, unknown or misnamed. `--check` verifies the committed file is current |
 | `data/golem-blocks.json` | Snapshot of golem's catalogue (types, colours, first parameters, pedal / amp / cab archetypes) |
 | `data/visuals-data.js` | Everything above in one script (generated), read by the gallery and by golem |
 | `js/golem-pedals.js` | The renderers: pedals of the three families, amps, block tiles, glyphs. `pedalFor(type)` picks the right one |
@@ -46,6 +49,7 @@ Rebuild after a parameter change or a catalogue change:
 
 ```sh
 python3 visuals/tools/build-data.py --manifest --golem ~/golem
+python3 visuals/tools/build-descriptors.py
 ```
 
 ## Integration in golem (later)

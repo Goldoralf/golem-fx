@@ -1,0 +1,1153 @@
+{
+  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option).",
+  "groups": {
+    "gfx-boost": [],
+    "gfx-gate": [
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "attack",
+          "hold",
+          "hyst",
+          "follow"
+        ]
+      },
+      {
+        "id": "shape",
+        "name": "Shape",
+        "custom": null,
+        "params": [
+          "ratio",
+          "knee",
+          "damp"
+        ]
+      },
+      {
+        "id": "sidechain",
+        "name": "Sidechain",
+        "custom": null,
+        "params": [
+          "source",
+          "hpf",
+          "lpf",
+          "hum",
+          "listen"
+        ]
+      }
+    ],
+    "gfx-comp": [
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "release",
+          "auto_release",
+          "knee",
+          "range"
+        ]
+      },
+      {
+        "id": "sidechain",
+        "name": "Sidechain",
+        "custom": null,
+        "params": [
+          "sc_hpf",
+          "link",
+          "sc_listen"
+        ]
+      },
+      {
+        "id": "color",
+        "name": "Color",
+        "custom": null,
+        "params": [
+          "drive",
+          "mix"
+        ]
+      }
+    ],
+    "gfx-limiter": [
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "lookahead",
+          "true_peak",
+          "link"
+        ]
+      },
+      {
+        "id": "character",
+        "name": "Character",
+        "custom": null,
+        "params": [
+          "auto_release",
+          "clip"
+        ]
+      }
+    ],
+    "gfx-deesser": [
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "detect",
+          "focus",
+          "lookahead"
+        ]
+      },
+      {
+        "id": "action",
+        "name": "Action",
+        "custom": null,
+        "params": [
+          "shape",
+          "ratio",
+          "release"
+        ]
+      }
+    ],
+    "gfx-drive": [
+      {
+        "id": "shape",
+        "name": "Shape",
+        "custom": null,
+        "params": [
+          "tight",
+          "asym",
+          "sag"
+        ]
+      },
+      {
+        "id": "mix",
+        "name": "Mix",
+        "custom": null,
+        "params": [
+          "blend",
+          "bass_keep"
+        ]
+      }
+    ],
+    "gfx-wah": [
+      {
+        "id": "pedal",
+        "name": "Pedal",
+        "custom": null,
+        "params": [
+          "wah",
+          "range",
+          "taper",
+          "heel",
+          "toe"
+        ]
+      },
+      {
+        "id": "filter",
+        "name": "Filter",
+        "custom": null,
+        "params": [
+          "freq",
+          "mode",
+          "drive",
+          "mix"
+        ]
+      },
+      {
+        "id": "auto_engage",
+        "name": "Auto-engage",
+        "custom": null,
+        "params": [
+          "auto_engage",
+          "engage_pos",
+          "engage_wait"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      }
+    ],
+    "gfx-autowah": [
+      {
+        "id": "sweep",
+        "name": "Sweep",
+        "custom": null,
+        "params": [
+          "direction",
+          "low",
+          "high",
+          "response"
+        ]
+      },
+      {
+        "id": "filter",
+        "name": "Filter",
+        "custom": null,
+        "params": [
+          "poles",
+          "drive"
+        ]
+      },
+      {
+        "id": "source",
+        "name": "Source",
+        "custom": null,
+        "params": [
+          "source",
+          "rate",
+          "sync"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "mix",
+          "level",
+          "bass_keep"
+        ]
+      }
+    ],
+    "gfx-eq": [
+      {
+        "id": "lows",
+        "name": "Lows",
+        "custom": null,
+        "params": [
+          "lowcut_slope",
+          "lows",
+          "lowfreq"
+        ]
+      },
+      {
+        "id": "mids",
+        "name": "Mids",
+        "custom": null,
+        "params": [
+          "midq",
+          "midprop",
+          "mid2gain",
+          "mid2freq",
+          "mid2q"
+        ]
+      },
+      {
+        "id": "highs",
+        "name": "Highs",
+        "custom": null,
+        "params": [
+          "highfreq",
+          "air",
+          "airfreq",
+          "tilt",
+          "highcut",
+          "highcut_slope"
+        ]
+      },
+      {
+        "id": "harshness",
+        "name": "Harshness",
+        "custom": null,
+        "params": [
+          "harsh_freq",
+          "harsh_thresh",
+          "harsh_range"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "output",
+          "auto_gain"
+        ]
+      }
+    ],
+    "gfx-tremolo": [
+      {
+        "id": "modulation",
+        "name": "Modulation",
+        "custom": null,
+        "params": [
+          "model",
+          "duty",
+          "sync"
+        ]
+      },
+      {
+        "id": "split",
+        "name": "Split",
+        "custom": null,
+        "params": [
+          "xover",
+          "blend"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "duck",
+          "stereo_phase",
+          "level"
+        ]
+      }
+    ],
+    "gfx-vibrato": [
+      {
+        "id": "modulation",
+        "name": "Modulation",
+        "custom": null,
+        "params": [
+          "shape",
+          "rise",
+          "sync"
+        ]
+      },
+      {
+        "id": "color",
+        "name": "Color",
+        "custom": null,
+        "params": [
+          "tone",
+          "drive"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "stereo_phase",
+          "level"
+        ]
+      }
+    ],
+    "gfx-chorus": [
+      {
+        "id": "crossover",
+        "name": "Crossover",
+        "custom": "xover_custom",
+        "params": [
+          "xover_custom",
+          "xover_on",
+          "xover_freq",
+          "xover_slope"
+        ]
+      },
+      {
+        "id": "color",
+        "name": "Color",
+        "custom": "color_custom",
+        "params": [
+          "color_custom",
+          "engine",
+          "interp",
+          "drive",
+          "bbd_chip",
+          "bbd_bw",
+          "emphasis",
+          "compander",
+          "noise",
+          "wow",
+          "flutter"
+        ]
+      },
+      {
+        "id": "modulation",
+        "name": "Modulation",
+        "custom": "mod_custom",
+        "params": [
+          "mod_custom",
+          "delay_base",
+          "lfo_shape",
+          "voices",
+          "voice_spread",
+          "imperfection",
+          "detune_lock",
+          "drift",
+          "crossmix",
+          "feedback",
+          "sync"
+        ]
+      },
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "env_depth",
+          "env_mix"
+        ]
+      },
+      {
+        "id": "stereo",
+        "name": "Stereo",
+        "custom": "stereo_custom",
+        "params": [
+          "stereo_custom",
+          "stereo_phase",
+          "width",
+          "mono_safe"
+        ]
+      },
+      {
+        "id": "wet_filters",
+        "name": "Wet filters",
+        "custom": "filter_custom",
+        "params": [
+          "filter_custom",
+          "wet_hpf",
+          "wet_lpf"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "mix_law",
+          "level_comp",
+          "output"
+        ]
+      }
+    ],
+    "gfx-flanger": [
+      {
+        "id": "sweep",
+        "name": "Sweep",
+        "custom": null,
+        "params": [
+          "length",
+          "shape",
+          "sweep_src",
+          "sync"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      },
+      {
+        "id": "feedback",
+        "name": "Feedback",
+        "custom": null,
+        "params": [
+          "fb_polarity",
+          "fb_hpf",
+          "fb_lpf",
+          "drive"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "wet",
+          "dry",
+          "stereo_phase",
+          "bass_keep"
+        ]
+      }
+    ],
+    "gfx-phaser": [
+      {
+        "id": "stages",
+        "name": "Stages",
+        "custom": null,
+        "params": [
+          "stages",
+          "spread",
+          "low",
+          "high",
+          "fb_polarity",
+          "color"
+        ]
+      },
+      {
+        "id": "sweep",
+        "name": "Sweep",
+        "custom": null,
+        "params": [
+          "manual",
+          "depth",
+          "shape",
+          "skew",
+          "sweep_src",
+          "sync"
+        ]
+      },
+      {
+        "id": "lfo2",
+        "name": "Second LFO",
+        "custom": null,
+        "params": [
+          "lfo2",
+          "rate2",
+          "routing"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      },
+      {
+        "id": "vibe",
+        "name": "Vibe",
+        "custom": null,
+        "params": [
+          "lamp_lag",
+          "vibe_mode"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "dry",
+          "tone",
+          "stereo_phase",
+          "bass_keep"
+        ]
+      }
+    ],
+    "gfx-rotary": [
+      {
+        "id": "mics",
+        "name": "Mics",
+        "custom": null,
+        "params": [
+          "mic",
+          "spacing",
+          "depth"
+        ]
+      },
+      {
+        "id": "horn",
+        "name": "Horn",
+        "custom": null,
+        "params": [
+          "horn_slow",
+          "horn_fast",
+          "horn_accel",
+          "horn_decel"
+        ]
+      },
+      {
+        "id": "drum",
+        "name": "Drum",
+        "custom": null,
+        "params": [
+          "drum_slow",
+          "drum_fast",
+          "drum_accel",
+          "drum_decel"
+        ]
+      },
+      {
+        "id": "motion",
+        "name": "Motion",
+        "custom": null,
+        "params": [
+          "brake",
+          "stop_angle",
+          "counter",
+          "wobble"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "bass_keep",
+          "level",
+          "mix"
+        ]
+      }
+    ],
+    "gfx-killswitch": [
+      {
+        "id": "rhythm",
+        "name": "Rhythm",
+        "custom": null,
+        "params": [
+          "sync",
+          "pattern",
+          "steps",
+          "accent",
+          "swing",
+          "offset",
+          "restart"
+        ]
+      },
+      {
+        "id": "trigger",
+        "name": "Trigger",
+        "custom": null,
+        "params": [
+          "sens",
+          "kill"
+        ]
+      },
+      {
+        "id": "shape",
+        "name": "Shape",
+        "custom": null,
+        "params": [
+          "smooth",
+          "shape"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "width",
+          "bypass"
+        ]
+      }
+    ],
+    "gfx-delay": [
+      {
+        "id": "time",
+        "name": "Time",
+        "custom": null,
+        "params": [
+          "time",
+          "glide",
+          "glide_ms",
+          "taps",
+          "direction"
+        ]
+      },
+      {
+        "id": "loop",
+        "name": "Loop",
+        "custom": null,
+        "params": [
+          "low_cut",
+          "drive",
+          "mod",
+          "diffusion",
+          "age",
+          "sweep",
+          "loop_pitch",
+          "loop_shift"
+        ]
+      },
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "swell",
+          "duck",
+          "duck_thresh",
+          "duck_release"
+        ]
+      },
+      {
+        "id": "stereo",
+        "name": "Stereo",
+        "custom": null,
+        "params": [
+          "stereo",
+          "ratio",
+          "width"
+        ]
+      },
+      {
+        "id": "routing",
+        "name": "Routing",
+        "custom": null,
+        "params": [
+          "kill_dry",
+          "hold",
+          "bypass",
+          "trails"
+        ]
+      }
+    ],
+    "gfx-reverb": [
+      {
+        "id": "space",
+        "name": "Space",
+        "custom": null,
+        "params": [
+          "predelay",
+          "sync",
+          "early",
+          "diffusion",
+          "width",
+          "era",
+          "springs"
+        ]
+      },
+      {
+        "id": "decay",
+        "name": "Decay",
+        "custom": null,
+        "params": [
+          "bass_mult",
+          "bass_xover",
+          "high_mult",
+          "lowcut"
+        ]
+      },
+      {
+        "id": "modulation",
+        "name": "Modulation",
+        "custom": null,
+        "params": [
+          "mod",
+          "mod_rate"
+        ]
+      },
+      {
+        "id": "wet_tone",
+        "name": "Wet tone",
+        "custom": null,
+        "params": [
+          "wet_low",
+          "wet_high",
+          "drive"
+        ]
+      },
+      {
+        "id": "shimmer",
+        "name": "Shimmer",
+        "custom": null,
+        "params": [
+          "shimmer",
+          "shimmer_pitch"
+        ]
+      },
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "swell",
+          "duck",
+          "duck_sens",
+          "duck_release",
+          "freeze"
+        ]
+      },
+      {
+        "id": "routing",
+        "name": "Routing",
+        "custom": null,
+        "params": [
+          "dry",
+          "kill_dry",
+          "bypass",
+          "trails"
+        ]
+      }
+    ],
+    "gfx-shimmer": [
+      {
+        "id": "voices",
+        "name": "Voices",
+        "custom": null,
+        "params": [
+          "pitch",
+          "pitch2",
+          "voice2",
+          "detune",
+          "voice_pan",
+          "glide",
+          "character",
+          "placement"
+        ]
+      },
+      {
+        "id": "space",
+        "name": "Space",
+        "custom": null,
+        "params": [
+          "space",
+          "size",
+          "predelay",
+          "bloom",
+          "bass_mult",
+          "lowcut",
+          "tone"
+        ]
+      },
+      {
+        "id": "modulation",
+        "name": "Modulation",
+        "custom": null,
+        "params": [
+          "moddepth",
+          "mod_rate"
+        ]
+      },
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "swell",
+          "duck",
+          "freeze"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "width",
+          "wet_level",
+          "kill_dry",
+          "trails",
+          "bypass"
+        ]
+      }
+    ],
+    "gfx-octaver": [
+      {
+        "id": "tracking",
+        "name": "Tracking",
+        "custom": null,
+        "params": [
+          "instrument",
+          "sensitivity",
+          "glide",
+          "range"
+        ]
+      },
+      {
+        "id": "tone",
+        "name": "Tone",
+        "custom": null,
+        "params": [
+          "sub_tone",
+          "up_tone",
+          "shape"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "level"
+        ]
+      }
+    ],
+    "gfx-pitch": [
+      {
+        "id": "voices",
+        "name": "Voices",
+        "custom": null,
+        "params": [
+          "voice2",
+          "fine",
+          "tracking",
+          "glide"
+        ]
+      },
+      {
+        "id": "harmony",
+        "name": "Harmony",
+        "custom": null,
+        "params": [
+          "harmony",
+          "key",
+          "scale"
+        ]
+      }
+    ],
+    "gfx-pitch-classic": [
+      {
+        "id": "splice",
+        "name": "Splice and mix",
+        "custom": null,
+        "params": [
+          "search",
+          "dry"
+        ]
+      }
+    ],
+    "gfx-detune": [
+      {
+        "id": "voices",
+        "name": "Voices and mix",
+        "custom": null,
+        "params": [
+          "voices",
+          "dry"
+        ]
+      }
+    ],
+    "gfx-gapmeter": [
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "port"
+        ]
+      },
+      {
+        "id": "test_tone",
+        "name": "Test tone",
+        "custom": null,
+        "params": [
+          "tone",
+          "tone_freq",
+          "tone_level"
+        ]
+      }
+    ]
+  },
+  "help": {
+    "gfx-comp": {
+      "thresh": "Level above which the compressor starts to reduce gain",
+      "attack": "How fast gain reduction sets in once the level exceeds the threshold",
+      "ratio": "How much the level above the threshold is reduced (30:1 ≈ limiting)",
+      "character": "The compressor's voicing: clean, bus glue, FET, opto or pedal"
+    },
+    "gfx-eq": {
+      "mid2freq": "Centre frequency of the second mid band",
+      "airfreq": "Corner frequency of the air shelf",
+      "harsh_freq": "Centre of the band the de-harsher watches and tames",
+      "output": "Output level after the EQ",
+      "lowcut": "High-pass filter: removes the lows below this frequency",
+      "midgain": "Boost or cut of the mid bell",
+      "lowcut_slope": "Steepness of the low cut (Butterworth)",
+      "harsh_range": "Maximum cut the de-harsher may apply"
+    },
+    "gfx-deesser": {
+      "shape": "How the sibilance is cut: high shelf, narrow bell or wide band"
+    },
+    "gfx-wah": {
+      "model": "The wah circuit whose sweep, Q and voicing are played",
+      "mix": "Wet level against the dry signal (100 % = wah only)",
+      "mode": "Manual = the pedal sweeps; auto = the envelope sweeps; alien = both",
+      "taper": "How the pedal travel maps onto the sweep; Model = the circuit's own pot",
+      "toe": "Where the sweep ends at toe down (percent of the full range)",
+      "auto_engage": "Switches the wah on when the pedal moves, off when it rests at heel",
+      "engage_wait": "How long the pedal must rest at heel before the wah switches off",
+      "env_sens": "How strongly playing dynamics move the sweep (auto and alien modes)",
+      "env_att": "How fast the envelope follows a louder note",
+      "env_rel": "How fast the envelope falls back after the note"
+    },
+    "gfx-autowah": {
+      "poles": "Filter slope: 2 poles = vocal, 4 poles = deeper, synth-like",
+      "direction": "Up = louder notes sweep upward; Down = they sweep downward",
+      "low": "Bottom of the sweep",
+      "high": "Top of the sweep",
+      "attack": "How fast the sweep follows a picked note",
+      "release": "How fast the sweep falls back after the note",
+      "mix": "Wet level against the dry signal (100 % = filter only)",
+      "source": "What moves the filter: playing dynamics, an LFO, sample and hold, or both",
+      "sync": "Locks the LFO to the host tempo; Off = the Rate control",
+      "peak": "Resonance of the filter: higher = a sharper, more vocal peak",
+      "rate": "Speed of the LFO or sample-and-hold source"
+    },
+    "gfx-tremolo": {
+      "rate": "Speed of the volume modulation (when Sync is Off)",
+      "model": "The tremolo circuit: clean VCA, valve bias, optical cell, neon or harmonic (two bands in opposition)",
+      "sync": "Locks the rate to the host tempo; Off = the Rate control",
+      "xover": "Split frequency of the Harmonic model's two bands"
+    },
+    "gfx-vibrato": {
+      "speed": "Speed of the pitch modulation (when Sync is Off)",
+      "model": "The vibrato circuit: clean delay, BBD, varistor, Uni-Vibe-style or organ scanner",
+      "sync": "Locks the speed to the host tempo; Off = the Speed control",
+      "tone": "Low-pass after the vibrato: darker as it rises"
+    },
+    "gfx-flanger": {
+      "wet": "Level of the flanged signal",
+      "dry": "Level of the direct signal",
+      "rate": "Speed of the sweep (when Sync is Off)",
+      "mode": "The flanger voicing: classic pedals, tape through-zero, barber-pole or pedal-controlled",
+      "fb_polarity": "Sign of the feedback: + = metallic peaks, − = hollow notches",
+      "sweep_src": "What sweeps the delay: the LFO, playing dynamics, the Manual control, or LFO and dynamics",
+      "env_sens": "Level at which playing dynamics start to move the sweep",
+      "env_att": "How fast the envelope follows a louder note",
+      "env_rel": "How fast the envelope falls back after the note",
+      "stereo_phase": "LFO offset between left and right (180° = opposite sweeps)",
+      "fb_hpf": "High-pass in the feedback loop: keeps the lows from building up",
+      "fb_lpf": "Low-pass in the feedback loop: softens the resonance"
+    },
+    "gfx-phaser": {
+      "rate": "Speed of the sweep (when Sync is Off)",
+      "wet": "Level of the phased signal",
+      "model": "The phaser voicing: classic pedals, Uni-Vibe-style, dual or barber-pole",
+      "fb_polarity": "Sign of the feedback: + = sharper peaks, − = hollow notches",
+      "dry": "Level of the direct signal",
+      "depth": "How much of the frequency range the sweep covers",
+      "shape": "Waveform of the sweep LFO",
+      "skew": "Tilts the LFO so the sweep rises and falls at different speeds (50 % = symmetric)",
+      "sweep_src": "What sweeps the stages: the LFO, playing dynamics, the Manual control, or LFO and dynamics",
+      "env_sens": "How strongly playing dynamics move the sweep",
+      "env_att": "How fast the envelope follows a louder note",
+      "env_rel": "How fast the envelope falls back after the note",
+      "feedback": "Resonance of the stages (closer to 0 dB = more pronounced)",
+      "lamp_lag": "Response time of the Vibe model's lamp: smoother sweep as it rises"
+    },
+    "gfx-rotary": {
+      "cabinet": "The rotary cabinet model: speaker sizes, horn and drum voicing",
+      "balance": "Level between the horn (treble) and the drum (bass)",
+      "horn_slow": "Horn rotation speed at Slow",
+      "horn_fast": "Horn rotation speed at Fast",
+      "drum_slow": "Drum rotation speed at Slow",
+      "drum_fast": "Drum rotation speed at Fast",
+      "horn_decel": "Time the horn takes to slow down from Fast to Slow",
+      "drum_accel": "Time the heavier drum takes to speed up to Fast",
+      "drum_decel": "Time the drum takes to slow down from Fast to Slow",
+      "drive": "Tube preamp drive before the speakers",
+      "horn_accel": "Time the horn takes to speed up to Fast"
+    },
+    "gfx-delay": {
+      "duck_thresh": "Playing level above which the repeats duck",
+      "ratio": "Right delay time as a multiple of the left one (Dual stereo mode)",
+      "bypass": "Bypass switch that lets the repeats ring out when Trails is on",
+      "trails": "When bypassed, let the repeats already in the loop fade out naturally",
+      "model": "The delay medium: digital, tape, bucket-brigade or lo-fi",
+      "width": "Stereo width of the repeats (the dry stays as it is)"
+    },
+    "gfx-reverb": {
+      "bass_xover": "Frequency below which Bass Mult scales the decay",
+      "diffusion": "How quickly the echoes blur into a smooth tail",
+      "width": "Stereo width of the tail (above 100 % = wider than the room)",
+      "duck": "How much the tail drops while you play",
+      "duck_release": "How fast the tail comes back once you stop",
+      "kill_dry": "Mutes the direct signal, for parallel routing",
+      "bypass": "Bypass switch that lets the tail ring out when Trails is on",
+      "trails": "When bypassed, let the tail already in the room decay naturally",
+      "decay": "Time the tail takes to fall by 60 dB in the mid band",
+      "size": "Size of the room: longer early reflections and a bigger tail",
+      "springs": "Number of springs in the Spring algorithm",
+      "dry": "Level of the direct signal"
+    },
+    "gfx-shimmer": {
+      "voice2": "Level of the second pitch voice",
+      "predelay": "Delay before the tail starts",
+      "width": "Stereo width of the tail",
+      "trails": "When bypassed, let the tail decay naturally",
+      "bypass": "Bypass switch that lets the tail ring out when Trails is on",
+      "decay": "Time the tail takes to fall by 60 dB in the mid band",
+      "pitch2": "Interval of the second pitch voice",
+      "detune": "Detunes the two sides apart for a wider, chorused shimmer",
+      "size": "Scale of the reverb tank: bigger = slower, wider space",
+      "bass_mult": "Low-frequency decay relative to the mid band",
+      "kill_dry": "Mutes the direct signal, for a parallel lane",
+      "wet_level": "Level of the shimmer tail"
+    },
+    "gfx-killswitch": {
+      "depth": "How far the signal drops when cut (100 % = silence)",
+      "sync": "Note value of the stutter at the host tempo; Free = the Rate control",
+      "trigger": "What starts the stutter: engaging the pedal, each pick attack, or the beat",
+      "shape": "Envelope of each cut: hard gate or a smoother waveform",
+      "swing": "Delays every other step for a shuffled rhythm",
+      "bypass": "Bypass switch for the stutter",
+      "sens": "Sensitivity of the pick detector (Trigger = Pick)"
+    },
+    "gfx-octaver": {
+      "octave1": "Level of the voice one octave below",
+      "octave2": "Level of the voice two octaves below",
+      "octave_up": "Level of the voice one octave above",
+      "mode": "Tracking engine and character: vintage analog, clean, synth-like or polyphonic",
+      "up_tone": "Low-pass on the octave-up voice: tames its harshness",
+      "glide": "Pitch glide between notes, for a synth-like octave",
+      "level": "Output level"
+    },
+    "gfx-pitch": {
+      "voice2": "Level of the second pitch voice"
+    },
+    "gfx-gapmeter": {
+      "tone_freq": "Frequency of the test tone",
+      "tone_level": "Level of the test tone"
+    },
+    "gfx-limiter": {
+      "style": "How peaks are held: clean, punchy (faster release) or clip (soft clipping)"
+    },
+    "gfx-chorus": {
+      "delay_base": "Centre delay the modulation swings around"
+    },
+    "gfx-drive": {
+      "voice": "The clipping circuit: overdrive, distortion, fuzz or golem's legacy curve"
+    }
+  },
+  "depends": {
+    "gfx-delay": {
+      "time_ms": {
+        "param": "time",
+        "equals": "Free"
+      },
+      "ratio": {
+        "param": "stereo",
+        "equals": "Dual"
+      }
+    },
+    "gfx-reverb": {
+      "springs": {
+        "param": "algo",
+        "equals": "Spring"
+      }
+    },
+    "gfx-phaser": {
+      "lamp_lag": {
+        "param": "model",
+        "equals": "Vibe"
+      },
+      "vibe_mode": {
+        "param": "model",
+        "equals": "Vibe"
+      }
+    },
+    "gfx-tremolo": {
+      "xover": {
+        "param": "model",
+        "equals": "Harmonic"
+      }
+    },
+    "gfx-killswitch": {
+      "sens": {
+        "param": "trigger",
+        "equals": "Pick"
+      },
+      "rate": {
+        "param": "sync",
+        "equals": "Free"
+      }
+    }
+  }
+}
