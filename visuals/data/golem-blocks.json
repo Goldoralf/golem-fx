@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 43,
+ "catalog_version": 44,
  "effects": [
   {
    "type": "gate",
@@ -2863,6 +2863,51 @@
      "max": 1,
      "default": 0.5,
      "unit": null
+    }
+   ]
+  },
+  {
+   "type": "golem-double",
+   "name": "Golem Double",
+   "short": "Golem",
+   "category": "pitch",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Golem (GoleM)",
+   "color": "#9b4dff",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "shift",
+     "name": "Interval",
+     "min": -24,
+     "max": 24,
+     "default": -12,
+     "unit": "st"
+    },
+    {
+     "id": "formant",
+     "name": "Formant",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "st"
+    },
+    {
+     "id": "voice1",
+     "name": "Double Level",
+     "min": -60,
+     "max": 6,
+     "default": -6,
+     "unit": "dB"
+    },
+    {
+     "id": "lpf",
+     "name": "Tone",
+     "min": 2000,
+     "max": 16000,
+     "default": 6000,
+     "unit": "Hz"
     }
    ]
   },

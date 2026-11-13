@@ -9093,7 +9093,7 @@
    "name": "GoleM FX Golem",
    "class_id": "GoleMFxGolem0001",
    "blocks": [
-    "golem"
+    "golem-double"
    ],
    "front": [
     "shift",

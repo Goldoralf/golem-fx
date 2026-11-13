@@ -187,6 +187,91 @@ def chorus_presets(labels: dict) -> list:
 
 # ---------- build ----------
 
+PRESETS = ROOT / "presets"
+INSTS = {"guitar", "bass", "voice", "keys", "drums", "any"}
+GAINS = {"clean", "crunch", "high", "any"}
+USES = {"rhythm", "lead", "solo", "ambient", "texture", "utility"}
+TAGS = {"vintage", "modern", "subtle", "extreme", "lo-fi", "wide", "dark", "bright", "warm", "aggressive", "dreamy", "tight"}
+
+
+def validate_presets(crate, presets, params, labels, blocks, errors):
+    """The rules of presets/README.md; appends to `errors`."""
+    genres = json.loads((PRESETS / "genres.json").read_text())["families"]
+    seen, defaults = set(), set()
+    for k, p in enumerate(presets):
+        where = f"{crate} preset {p.get('id', k)}"
+        pid = p.get("id", "")
+        if not re.fullmatch(r"[a-z0-9-]{2,48}", pid):
+            errors.append(f"{where}: bad id")
+        if pid in seen:
+            errors.append(f"{where}: duplicate id")
+        seen.add(pid)
+        if p.get("type") not in blocks:
+            errors.append(f"{where}: type {p.get('type')!r} is not one of {blocks}")
+        if not (0 < len(p.get("name", "")) <= 40):
+            errors.append(f"{where}: name missing or over 40")
+        if not (0 < len(p.get("desc", "")) <= 120):
+            errors.append(f"{where}: desc missing or over 120")
+        if p.get("inst") not in INSTS:
+            errors.append(f"{where}: inst {p.get('inst')!r}")
+        g = p.get("genres", [])
+        if not (1 <= len(g) <= 3) or any(x not in genres for x in g):
+            errors.append(f"{where}: genres {g} (1–3 family ids)")
+        sub = p.get("subgenres", [])
+        if len(sub) > 3 or any(not any(x in genres[f] for f in g) for x in sub):
+            errors.append(f"{where}: subgenres {sub} (≤ 3, of its families)")
+        if p.get("gain") not in GAINS:
+            errors.append(f"{where}: gain {p.get('gain')!r}")
+        if p.get("use") not in USES:
+            errors.append(f"{where}: use {p.get('use')!r}")
+        refs = p.get("refs", [])
+        if len(refs) > 3:
+            errors.append(f"{where}: more than 3 refs")
+        for r in refs:
+            if not r.get("artist") or not r.get("why") or len(r["why"]) > 80:
+                errors.append(f"{where}: a ref needs artist and a why ≤ 80")
+            if r.get("verified") and not r.get("source"):
+                errors.append(f"{where}: verified ref without source ({r.get('artist')})")
+            if "verified" not in r:
+                errors.append(f"{where}: ref without 'verified' ({r.get('artist')})")
+        if not isinstance(p.get("level_db"), (int, float)):
+            errors.append(f"{where}: level_db missing")
+        tags = p.get("tags", [])
+        if len(tags) > 3 or any(t not in TAGS for t in tags):
+            errors.append(f"{where}: tags {tags}")
+        if len(p.get("notes", "")) > 200:
+            errors.append(f"{where}: notes over 200")
+        if p.get("default"):
+            key = (p.get("type"), p.get("inst"))
+            if key in defaults:
+                errors.append(f"{where}: second default for {key}")
+            defaults.add(key)
+        for k2, v in p.get("params", {}).items():
+            q = params.get(k2)
+            if q is None:
+                errors.append(f"{where}: unknown param {k2}")
+            elif q["kind"] == "enum":
+                if v not in (labels.get(k2) or []):
+                    errors.append(f"{where}: {k2}={v!r} is not an option {labels.get(k2)}")
+            elif q["kind"] == "bool":
+                if not isinstance(v, bool):
+                    errors.append(f"{where}: {k2} must be true / false")
+            else:
+                if not isinstance(v, (int, float)) or isinstance(v, bool) or not (q["min"] <= v <= q["max"]):
+                    errors.append(f"{where}: {k2}={v!r} outside {q['min']}..{q['max']}")
+        if not p.get("params"):
+            errors.append(f"{where}: no params")
+
+
+def file_presets(crate, kinds, labels, blocks, errors, manifest_params):
+    f = PRESETS / f"{crate}.json"
+    if not f.exists():
+        return None
+    presets = json.loads(f.read_text()).get("presets", [])
+    validate_presets(crate, presets, manifest_params, labels, blocks, errors)
+    return presets
+
+
 def hand_presets(crate, kinds, labels, errors):
     out = json.loads((DATA / "groups.json").read_text()).get("presets", {}).get(crate, [])
     for p in out:
@@ -297,7 +382,8 @@ def build(manifest: dict) -> tuple:
             "front": front,
             "groups": [{"id": g["id"], "name": g["name"], "custom": g.get("custom"), "params": g["params"]} for g in groups],
             "params": pout,
-            "presets": chorus_presets(labels) if crate == "gfx-chorus" else hand_presets(crate, kinds, labels, errors),
+            "presets": (file_presets(crate, kinds, labels, face["blocks"], errors, {p["id"]: p for p in params})
+                        or (chorus_presets(labels) if crate == "gfx-chorus" else hand_presets(crate, kinds, labels, errors))),
         }
     return out, errors
 
@@ -309,7 +395,26 @@ def render(desc: dict) -> str:
     return json.dumps(head, ensure_ascii=False, indent=1) + "\n"
 
 
+def validate_file(path):
+    """Checks one presets/<crate>.json against the crate's code; prints the errors."""
+    bd = _load_build_data()
+    crate = Path(path).stem
+    manifest = json.loads((DATA / "manifest.json").read_text())["effects"]
+    faces = json.loads((DATA / "faces.json").read_text())["faces"]
+    if crate not in manifest or crate not in faces:
+        print(f"{crate}: unknown crate")
+        return 1
+    params = {p["id"]: p for p in manifest[crate]}
+    errors = []
+    presets = json.loads(Path(path).read_text()).get("presets", [])
+    validate_presets(crate, presets, params, bd.enum_labels(crate), faces[crate]["blocks"], errors)
+    print("\n".join(errors) if errors else f"{crate}: {len(presets)} presets OK")
+    return 1 if errors else 0
+
+
 def main(argv):
+    if "--validate" in argv:
+        return max(validate_file(f) for f in argv[argv.index("--validate") + 1:])
     if "--manifest" in argv:
         res = subprocess.run(["cargo", "run", "-q", "-p", "gfx-bench", "--", "manifest"], cwd=ROOT, capture_output=True, text=True)
         if res.returncode:

@@ -377,7 +377,7 @@
   "gfx-golem": {
    "name": "Golem",
    "blocks": [
-    "golem"
+    "golem-double"
    ],
    "knobs": [
     "shift",
