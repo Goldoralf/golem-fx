@@ -2,14 +2,14 @@
 //! gfx-pitch — golem's pitch shifter (design: README.md §2).
 //!
 //! Stands for golem's `pitch` block (ids `shift` in semitones, `mix` in % kept), replacing ReaPitch,
-//! which golem quarantined because it froze the engine. Two engines on gfx-dsp's centred splice-search
-//! shifter:
+//! which golem quarantined because it froze the engine. Two engines:
 //! `shift` glides (one-pole of `glide`, at least 10 ms) and is slew-limited to 1 st / ms.
 //!
-//! - **Whammy** (single notes): one shifter centred on 12 ms, splice search over half a low-E period,
-//!   per-sample ratio (EXP sweeps glide).
-//! - **Poly** (chords): nine Linkwitz-Riley bands (half-octave where chords sit), each its own shifter
-//!   with grains and search sized for the band. All bands share one centre delay: different delays would comb where the bands overlap.
+//! - **Whammy** (single notes): gfx-dsp's centred splice-search shifter centred on 12 ms, splice search
+//!   over half a low-E period, per-sample ratio (EXP sweeps glide).
+//! - **Poly** (chords): gfx-dsp's low-latency phase vocoder (`vocoder`): peak-locked shifting on a long
+//!   asymmetric analysis window (8192 at 48 kHz) and a short synthesis window: Fast 6.6 ms, Stable 10 ms.
+//!   Both voices share one analysis.
 //!
 //! A good shifter needs latency. Each engine reports its fixed centre at initialisation or on an engine /
 //! tracking change, never when `shift` moves; the dry is delayed by it, so the mix stays coherent.
@@ -22,26 +22,13 @@ use gfx_dsp::detect::{harmony_interval, NoteTracker, PitchDetector, SCALES};
 use gfx_dsp::exp_smooth::ExpSmoother;
 use gfx_dsp::pitch::CenteredShifter;
 use gfx_dsp::smooth::{LinearRamp, OnePole};
-use gfx_dsp::svf::{Svf, SvfMode};
+use gfx_dsp::vocoder::PvShifter;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
 mod plugin;
 
 const MAX_CH: usize = 2;
-/// Poly crossovers (Hz): half-octave bands where chords sit, so each note of a low chord gets its own
-/// shifter (two notes in one band defeat the splice search).
-const XO: [f32; 8] = [130.0, 185.0, 260.0, 370.0, 520.0, 800.0, 1500.0, 3000.0];
-const NB: usize = XO.len() + 1;
-
-/// A band's (search ms, longest grain ms) at Fast, from its lowest frequency: the search covers half a
-/// period and a little more; grains hold several periods. Stable lengthens both by 1.5.
-fn band_shape(k: usize) -> (f32, f32) {
-    let f = if k == 0 { 82.0 } else { XO[k - 1] };
-    let period_ms = 1000.0 / f;
-    ((0.6 * period_ms).clamp(0.5, 6.5), (6.0 * period_ms).clamp(8.0, 80.0))
-}
-
 pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::float("shift", "Shift", -24.0, 24.0, 12.0).with_exp(),
     ParamInfo::float("mix", "Mix", 0.0, 100.0, 50.0).with_exp(),
@@ -95,106 +82,16 @@ fn idx(v: f32, n: usize) -> usize {
     (v.round().max(0.0) as usize).min(n - 1)
 }
 
-/// The centre (ms) of an engine: Whammy 12; Poly Fast 14, Stable 22.
-pub fn centre_ms(engine: usize, tracking: usize) -> f32 {
-    match (engine, tracking) {
-        (0, _) => 12.0,
-        (_, 0) => 14.0,
-        _ => 22.0,
-    }
-}
+/// The Whammy's centre (ms).
+pub const WHAMMY_MS: f32 = 12.0;
 
-/// One voice: the whammy shifter, or four band shifters.
-#[derive(Clone, Default)]
-struct Voice {
-    whammy: CenteredShifter,
-    bands: [CenteredShifter; NB],
-    lo: [[Svf; 2]; NB - 1],
-    hi: [[Svf; 2]; NB - 1],
-    /// phase compensation: band j also passes the all-passes of every crossover above it (an LR4 pair
-    /// sums to a 2nd-order all-pass), so neighbouring bands are in phase and the bands sum flat. Without
-    /// them notes near a crossover partly cancelled even at shift 0 (−14 to −17 dB on a test chord).
-    ap: [[Svf; NB - 2]; NB - 1],
-}
-
-impl Voice {
-    /// Allocates for the largest engine (prepare only).
-    fn allocate(&mut self, sr: f32) {
-        self.whammy.allocate(sr, 12.0, 6.0);
-        for b in self.bands.iter_mut() {
-            b.allocate(sr, 22.0, 10.0);
-        }
-    }
-
-    /// Shapes the shifters for an engine (no allocation: safe on the audio thread).
-    fn configure(&mut self, sr: f32, engine: usize, tracking: usize) {
-        let c = centre_ms(engine, tracking);
-        self.whammy.configure(sr, 12.0, 6.0, 60.0);
-        let k = if tracking == 1 { 1.5 } else { 1.0 };
-        // every band splices at the same moments from the same positions (one grain length, planned with
-        // the widest search): a note shared by two neighbouring bands then stays in phase across them.
-        // Each band keeps its own search range
-        let room = (band_shape(0).0 * k).min(0.4 * c);
-        let life = band_shape(0).1 * k;
-        for (j, b) in self.bands.iter_mut().enumerate() {
-            let (search, _) = band_shape(j);
-            b.configure(sr, c, (search * k).min(0.4 * c), life);
-            b.set_room_search(sr, room);
-        }
-        for (j, f) in XO.iter().enumerate() {
-            for s in self.lo[j].iter_mut() {
-                s.set(SvfMode::LowPass, *f, std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
-            }
-            for s in self.hi[j].iter_mut() {
-                s.set(SvfMode::HighPass, *f, std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
-            }
-        }
-        for j in 0..NB - 1 {
-            for (m, k) in (j + 1..NB - 1).enumerate() {
-                self.ap[j][m].set(SvfMode::AllPass, XO[k], std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
-            }
-        }
-    }
-
-    fn reset(&mut self) {
-        self.whammy.reset();
-        for b in self.bands.iter_mut() {
-            b.reset();
-        }
-        for s in self.lo.iter_mut().chain(self.hi.iter_mut()) {
-            for f in s.iter_mut() {
-                f.reset();
-            }
-        }
-        for s in self.ap.iter_mut() {
-            for f in s.iter_mut() {
-                f.reset();
-            }
-        }
-    }
-
-    #[inline]
-    fn process(&mut self, x: f32, st: f64, poly: bool) -> f32 {
-        if !poly {
-            self.whammy.set_semitones(st);
-            return self.whammy.process(x);
-        }
-        // Linkwitz-Riley 4 tree: low | (rest → lowmid | (rest → mid | high))
-        let mut rest = x;
-        let mut y = 0.0;
-        for j in 0..NB - 1 {
-            let a = self.lo[j][0].process(rest);
-            let mut low = self.lo[j][1].process(a);
-            for m in 0..NB - 2 - j {
-                low = self.ap[j][m].process(low);
-            }
-            let h = self.hi[j][0].process(rest);
-            rest = self.hi[j][1].process(h);
-            self.bands[j].set_semitones(st);
-            y += self.bands[j].process(low);
-        }
-        self.bands[NB - 1].set_semitones(st);
-        y + self.bands[NB - 1].process(rest)
+/// Reported latency (samples) of an engine at `sr`: the Whammy's centre, or the vocoder's synthesis
+/// window (at 48 kHz: Fast 319 samples, 6.6 ms; Stable 479, 10 ms).
+pub fn latency_of(engine: usize, tracking: usize, sr: f32) -> usize {
+    if engine == 0 {
+        (WHAMMY_MS as f64 * 0.001 * sr as f64).round() as usize
+    } else {
+        2 * PvShifter::modes(sr)[tracking.min(1)].1 - 1
     }
 }
 
@@ -205,8 +102,9 @@ pub struct Pitch {
     tracking: usize,
     pending: bool,
     gate: LinearRamp,
-    v1: [Voice; MAX_CH],
-    v2: [Voice; MAX_CH],
+    v1: [CenteredShifter; MAX_CH],
+    v2: [CenteredShifter; MAX_CH],
+    pv: [PvShifter; MAX_CH],
     dry: [DelayLine; MAX_CH],
     shift: OnePole,
     shift2: OnePole,
@@ -239,6 +137,7 @@ impl Pitch {
             gate: LinearRamp::new(30.0, 1.0),
             v1: Default::default(),
             v2: Default::default(),
+            pv: Default::default(),
             dry: Default::default(),
             shift: OnePole::new(10.0, v[p::SHIFT], 1e-5),
             shift2: OnePole::new(10.0, v[p::SHIFT2], 1e-5),
@@ -258,10 +157,10 @@ impl Pitch {
         self.s
     }
 
-    /// Reported latency (samples): the engine's fixed centre. Follows a pending engine change.
+    /// Reported latency (samples). Follows a pending engine change.
     pub fn latency_samples(&self) -> usize {
         let (e, t) = if self.pending { (idx(self.s.v[p::ENGINE], 2), idx(self.s.v[p::TRACKING], 2)) } else { (self.engine, self.tracking) };
-        (centre_ms(e, t) as f64 * 0.001 * self.sr as f64).round() as usize
+        latency_of(e, t, self.sr)
     }
 
     pub fn set(&mut self, s: Settings) {
@@ -287,10 +186,13 @@ impl Pitch {
     fn apply_engine(&mut self) {
         self.engine = idx(self.s.v[p::ENGINE], 2);
         self.tracking = idx(self.s.v[p::TRACKING], 2);
-        let (sr, e, t) = (self.sr, self.engine, self.tracking);
+        let sr = self.sr;
         for v in self.v1.iter_mut().chain(self.v2.iter_mut()) {
-            v.configure(sr, e, t);
+            v.configure(sr, WHAMMY_MS, 6.0, 60.0);
             v.reset();
+        }
+        for pv in self.pv.iter_mut() {
+            pv.configure(self.tracking);
         }
     }
 
@@ -343,15 +245,27 @@ impl Pitch {
             let (dg, wg) = (mix.cos() * gs, mix.sin() * gs);
             let lat = self.lat_used;
             let poly = self.engine == 1;
+            let (r1, r2) = ((st1 / 12.0).exp2() as f32, (st2 / 12.0).exp2() as f32);
             for c in 0..nch {
                 let x = buffers[c][i];
                 // the dry, delayed by the reported latency: the mix stays coherent
                 self.dry[c].push(x);
                 let d = self.dry[c].tap(lat);
-                let mut w = self.v1[c].process(x, st1, poly);
-                if v2g > 0.0 {
-                    w += v2g * self.v2[c].process(x, st2, poly);
-                }
+                let w = if poly {
+                    let pv = &mut self.pv[c];
+                    pv.set_ratio(0, r1);
+                    pv.set_ratio(1, r2);
+                    let y = pv.process(x, if v2g > 0.0 { 2 } else { 1 });
+                    y[0] + v2g * y[1]
+                } else {
+                    self.v1[c].set_semitones(st1);
+                    let mut w = self.v1[c].process(x);
+                    if v2g > 0.0 {
+                        self.v2[c].set_semitones(st2);
+                        w += v2g * self.v2[c].process(x);
+                    }
+                    w
+                };
                 buffers[c][i] = dg * d + wg * w;
             }
         }
@@ -380,7 +294,10 @@ impl Effect for Pitch {
             d.prepare((0.03 * sample_rate as f64) as usize);
         }
         for v in self.v1.iter_mut().chain(self.v2.iter_mut()) {
-            v.allocate(sample_rate);
+            v.allocate(sample_rate, WHAMMY_MS, 6.0);
+        }
+        for pv in self.pv.iter_mut() {
+            pv.prepare(sample_rate);
         }
         self.det.prepare(sample_rate);
         self.apply_engine();

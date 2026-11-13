@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -37,6 +37,12 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-killswitch" | "killswitch" => Some(Box::new(gfx_killswitch::Killswitch::new())),
         "gfx-octaver" | "octaver" => Some(Box::new(gfx_octaver::Octaver::new())),
         "gfx-pitch" | "pitch" => Some(Box::new(gfx_pitch::Pitch::new())),
+        // gfx-pitch with its Poly engine (the phase vocoder) chosen: the same plugin, checked on both engines
+        "gfx-pitch-poly" | "pitch-poly" => {
+            let mut p = gfx_pitch::Pitch::new();
+            p.set_param("engine", 1.0);
+            Some(Box::new(p))
+        }
         "gfx-pitch-classic" | "pitch-classic" => Some(Box::new(gfx_pitch_classic::PitchClassic::new())),
         "gfx-detune" | "detune" => Some(Box::new(gfx_detune::Detune::new())),
         "gfx-gapmeter" | "gapmeter" => Some(Box::new(gfx_gapmeter::GapMeter::new())),

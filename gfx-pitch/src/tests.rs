@@ -64,10 +64,11 @@ fn whammy_is_in_tune_at_every_integer_shift() {
 }
 
 #[test]
-fn latency_is_the_engines_centre() {
-    for (e, t, ms) in [(0.0, 0.0, 12.0), (1.0, 0.0, 14.0), (1.0, 1.0, 22.0)] {
+fn latency_is_the_engines() {
+    // Whammy: its 12 ms centre; Poly: the vocoder's synthesis window (2m − 1: Fast m 160, Stable 240)
+    for (e, t, n) in [(0.0, 0.0, 576), (1.0, 0.0, 319), (1.0, 1.0, 479)] {
         let q = ps(Settings::default().with(p::ENGINE, e).with(p::TRACKING, t));
-        assert_eq!(q.latency(), (ms * 48.0f64) as usize);
+        assert_eq!(q.latency(), n);
     }
 }
 
@@ -96,17 +97,17 @@ fn poly_shifts_a_chord() {
     let x: Vec<f32> = sine(110.0, 96000).iter().zip(sine(164.8, 96000)).zip(sine(329.6, 96000)).map(|((a, b), c)| (a + b + c) / 3.0).collect();
     let y = run(&mut q, &x);
     let seg = &y[48000..];
-    // each partial is there. The band-split's limit (README §1): neighbouring bands splice on their own
-    // dominant periods, so a partial shared by two bands beats, and which one suffers moves with any detail
-    // (poly_metric: −11 to −20 dB mean over ten chords). The vocoder candidate is the fix
+    // each partial on its target at nearly its level (the vocoder: each peak moves its own region; the
+    // band-split it replaced kept −11 to −20 dB on average over ten chords, poly_metric)
     let mut mean = 0.0;
     for f in [220.0, 329.6, 659.2] {
         let up = probe(seg, f);
         let db = 20.0 * (up / 0.1).log10();
-        assert!(db > -30.0, "{f} Hz: {db:.1} dB");
+        eprintln!("{f} Hz: {db:+.1} dB");
+        assert!(db > -4.0, "{f} Hz: {db:.1} dB");
         mean += db / 3.0;
     }
-    assert!(mean > -20.0, "mean {mean:.1} dB");
+    assert!(mean > -2.5, "mean {mean:.1} dB");
     // the originals are gone (−20 dB at least)
     let orig = probe(seg, 110.0);
     assert!(orig < 0.1 * probe(seg, 220.0), "110 Hz left: {orig:.3}");
@@ -246,31 +247,17 @@ fn poly_is_transparent_at_unison() {
 }
 
 #[test]
-fn band_tree_sums_flat() {
-    // the band tree alone (no shifters): its sum must be flat in magnitude
-    let mut v = Voice::default();
-    v.allocate(SR);
-    v.configure(SR, 1, 0);
-    for f in [100.0f32, 130.0, 164.8, 220.0, 329.6, 370.0, 600.0, 1500.0, 4000.0] {
-        let x = sine(f, 48000);
-        let mut y = vec![0.0f32; x.len()];
-        for (i, &s) in x.iter().enumerate() {
-            let mut rest = s;
-            let mut acc = 0.0;
-            for j in 0..NB - 1 {
-                let a = v.lo[j][0].process(rest);
-                let mut low = v.lo[j][1].process(a);
-                for m in 0..NB - 2 - j {
-                    low = v.ap[j][m].process(low);
-                }
-                let h = v.hi[j][0].process(rest);
-                rest = v.hi[j][1].process(h);
-                acc += low;
-            }
-            y[i] = acc + rest;
-        }
-        let g = probe(&y[24000..], f as f64) / probe(&x[24000..], f as f64);
-        assert!((g - 1.0).abs() < 0.01, "{f} Hz: {g:.3}");
+fn poly_at_unison_is_the_delayed_input() {
+    // the vocoder's phase advance is scaled from peak to peak: at ratio 1 it hands back the input itself,
+    // so Poly at shift 0 mixes with the dry without combing (noise: every bin, every kind of peak)
+    for t in [0.0f32, 1.0] {
+        let mut q = ps(Settings::default().with(p::ENGINE, 1.0).with(p::TRACKING, t).with(p::SHIFT, 0.0).with(p::MIX, 100.0));
+        let lat = q.latency_samples();
+        let mut rng = gfx_dsp::lfo::Rng::new(9);
+        let x: Vec<f32> = (0..48000).map(|_| 0.5 * rng.bipolar()).collect();
+        let y = run(&mut q, &x);
+        let err = (24000..48000).map(|i| (y[i] - x[i - lat]).abs()).fold(0.0f32, f32::max);
+        assert!(err < 1e-3, "tracking {t}: {err}");
     }
 }
 

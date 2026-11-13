@@ -14,6 +14,7 @@ pub mod adaa;
 pub mod bbd;
 pub mod delay;
 pub mod detect;
+pub mod vocoder;
 pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
