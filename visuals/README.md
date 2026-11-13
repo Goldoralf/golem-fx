@@ -57,6 +57,20 @@ python3 visuals/tools/build-data.py --manifest --golem ~/golem
 - **Pedals**: the renderers are plain scripts returning SVG strings. Call `GolemPedals.defs()` once per
   page (shared gradients, textures and filters, ids prefixed `gp-`), then `GolemPedals.pedalFor({type, on,
   archetype, family, title})` for a block, or `GolemStage.render(chain, {floor})` for a lane.
+- **Splits**: `GolemStage.render` takes `{split: {mode, gain, branches}}` as a chain item (each branch an
+  array of items or `{id, mute, items}`). It draws a split box (one LED per branch), each branch in
+  series on its own lettered strip of gaffer tape (two amps stand side by side), and a merge box with
+  its gain. A muted branch is drawn off and dimmed, `B · MUTED` on its tape. A drawn block carries its
+  chain path in `data-idx` (`"3"`, or `"3.1.0"` inside a branch); a tape carries `data-split` /
+  `data-branch` / `data-b`, so the host can mute the branch from the scene.
+- **From golem's lane**: `GolemStage.fromGolem(lane.chain, laneState)` converts golem's `{pre, split,
+  post}` chain (or a flat block list) and a lane state (`blocks` on/off, `branches` mute) into
+  render items. It resolves capture labels to catalogue archetypes by their `match` / `aliases`
+  (`GolemPedals.archetypeFor`), so no maker's name reaches the scene. The gallery's *Metal* lane is
+  golem's factory "Modern Metal" in its "Chug" state.
+- **Every block appears**: a block golem drives over MIDI (`engine: "midi"`: `whammy-dt`, `midi-pedal`)
+  is an enamel pedal with a 5-pin DIN socket on top and a MIDI stamp. `whammy-dt` (pitch) is an
+  enamel treadle. Blocks with no catalogue entry fall back to a grey enamel pedal.
 - **Fonts**: the gallery loads Saira Semi Condensed, Shrikhand and Big Shoulders Display from Google
   Fonts. The rig can run offline: golem should vendor them (all three are under the OFL).
 - **Choices left to golem**: which archetype a `pedal-nam` / `amp` block shows (from the capture picked),

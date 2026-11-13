@@ -33,6 +33,11 @@ header.top p { margin: 0; color: var(--muted); max-width: 70ch; }
 .scene .gp-pedal, .scene .gp-amp { cursor: pointer; }
 .blocks-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 0 6px; align-items: center; }
 .blocks-row .arrow { color: var(--muted); }
+.blocks-row .split-tiles { display: inline-flex; flex-direction: column; gap: 6px; padding: 6px 8px; border-left: 2px solid var(--muted); border-right: 2px solid var(--muted); border-radius: 8px; }
+.blocks-row .branch { display: flex; gap: 8px; align-items: center; }
+.blocks-row .branch.is-muted .gp-tile { opacity: .35; filter: saturate(.3); }
+.blocks-row .branch-tag { font: 700 12px/1 var(--font-ui, sans-serif); width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--muted); background: transparent; color: inherit; cursor: pointer; }
+.blocks-row .branch-tag[aria-pressed="false"] { opacity: .5; text-decoration: line-through; }
 .hint { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
 
 /* golem's block tile, glyph + short name, coloured by the catalogue */

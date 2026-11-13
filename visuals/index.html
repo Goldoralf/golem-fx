@@ -83,6 +83,14 @@
     Bass: ['comp', 'octaver', { type: 'pedal-nam', archetype: (D.archetypes.pedals || []).find(p => p.family === 'bass') }, amp('amp', 'ampeg-svt', { size: '8x10' })],
     Voice: ['deesser', 'comp', 'eq', 'pitch', 'delay', 'reverb-shimmer'],
     Keys: ['rotary', 'chorus-js', 'delay-echo', 'eq-graphic', 'reverb-room'],
+    // golem's factory patch "Modern Metal" (lanes v2), state "Chug": through fromGolem, as golem will call it
+    Metal: S.fromGolem({
+      pre: [{ id: 'whammy', type: 'whammy-dt' }, { id: 'gate', type: 'gate' }, { id: 'eq', type: 'eq' }],
+      split: { mode: 'merge', gain: -3, branches: [
+        { id: 'lane-a', blocks: [{ id: 'stealth', type: 'amp-nam', label: 'EVH 5150 III Stealth' }, { id: 'v30', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] },
+        { id: 'lane-b', blocks: [{ id: 'clean', type: 'amp-nam', label: 'Peavey 5150 II' }, { id: 'v30b', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] }] },
+      post: [{ id: 'boost', type: 'clean-boost' }, { id: 'kill', type: 'killswitch' }, { id: 'dly', type: 'delay' }, { id: 'verb', type: 'reverb-plate' }],
+    }, { blocks: { boost: false, kill: false, dly: false }, branches: { 'lane-b': { mute: true } } }),
   };
   let lane = 'Guitar', floor = 'stage';
   const state = {}; // lane -> chain items with .on
@@ -100,24 +108,48 @@
     const svg = $('scene').querySelector('svg');
     const cw = $('scene').clientWidth;
     svg.style.width = Math.max(svg.viewBox.baseVal.width * (cw < 700 ? .5 : .86), cw) + 'px';
-    $('blocks-row').innerHTML = chain.map((it, i) => {
+    const tile = (it, path) => {
       const b = P.blockByType(it.type) || { type: it.type, name: it.type };
-      return (i ? '<span class="arrow" aria-hidden="true">›</span>' : '') +
-        P.blockTile(Object.assign({}, b, it.title ? { short: it.title } : it.archetype ? { short: it.archetype.short } : {}), { on: it.on !== false }).replace('class="gp-tile', `data-idx="${i}" tabindex="0" role="button" class="gp-tile`);
-    }).join('');
+      return P.blockTile(Object.assign({}, b, it.title ? { short: it.title } : it.archetype ? { short: it.archetype.short } : {}), { on: it.on !== false })
+        .replace('class="gp-tile', `data-idx="${path}" tabindex="0" role="button" class="gp-tile`);
+    };
+    const arrow = '<span class="arrow" aria-hidden="true">›</span>';
+    $('blocks-row').innerHTML = chain.map((it, i) => (i ? arrow : '') + (it.split
+      ? `<span class="split-tiles">${it.split.branches.map((br, b) => `<span class="branch${br.mute ? ' is-muted' : ''}"><button class="branch-tag" data-split="${i}" data-b="${b}" aria-pressed="${!br.mute}">${String.fromCharCode(65 + b)}</button>${
+          br.items.map((x, j) => (j ? arrow : '') + tile(x, `${i}.${b}.${j}`)).join('')}</span>`).join('')}</span>`
+      : tile(it, String(i)))).join('');
   }
-  function toggle(i) {
-    const chain = chainOf(lane), it = chain[i];
+  // data-idx is a path: "3", or "3.1.0" for the first block of branch 1 of the split at 3
+  function at(chain, path) {
+    const [i, b, j] = String(path).split('.').map(Number);
+    if (b == null) return { list: chain, i };
+    const br = chain[i] && chain[i].split && chain[i].split.branches[b];
+    return br ? { list: br.items, i: j } : {};
+  }
+  function toggle(path) {
+    const chain = chainOf(lane), { list, i } = at(chain, path), it = list && list[i];
     if (!it) return;
     it.on = it.on === false;
     // a head and its cab switch together
-    const next = chain[i + 1];
+    const next = list[i + 1];
     if (next && P.blockByType(it.type)?.family === 'nam-head' && P.blockByType(next.type)?.family === 'nam-cab') next.on = it.on;
     drawLane();
   }
-  $('scene').addEventListener('click', e => { const s = e.target.closest('[data-idx]'); if (s) toggle(+s.dataset.idx); });
-  $('blocks-row').addEventListener('click', e => { const s = e.target.closest('[data-idx]'); if (s) toggle(+s.dataset.idx); });
-  $('blocks-row').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.idx) { e.preventDefault(); toggle(+e.target.dataset.idx); } });
+  function muteBranch(i, b) {
+    const sp = chainOf(lane)[i]?.split;
+    if (!sp) return;
+    sp.branches[b].mute = !sp.branches[b].mute;
+    drawLane();
+  }
+  const onPick = e => {
+    const t = e.target.closest('[data-b]');
+    if (t) return muteBranch(+t.dataset.split, +t.dataset.b);
+    const s = e.target.closest('[data-idx]');
+    if (s) toggle(s.dataset.idx);
+  };
+  $('scene').addEventListener('click', onPick);
+  $('blocks-row').addEventListener('click', onPick);
+  $('blocks-row').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.idx) { e.preventDefault(); toggle(e.target.dataset.idx); } });
   drawLane();
 
   // a card: the pedal over its block tile; clicking the pedal switches it

@@ -364,8 +364,51 @@ ${parts}
   }
 
   // block: a catalogue entry ({type, name, short, color, category, params})
+  // a 5-pin DIN socket on the top edge: the mark of a block golem drives over MIDI (hardware in the rig)
+  function dinSocket(cx, y) {
+    const pins = [-150, -120, -90, -60, -30].map(d => polar(cx, y + 9, 4.6, d))
+      .map(([x, yy]) => `<circle cx="${x.toFixed(2)}" cy="${yy.toFixed(2)}" r=".75" fill="#9a9a9a"/>`).join('');
+    return `<g class="gp-din"><rect x="${cx - 10}" y="${y - 6}" width="20" height="8" rx="1.5" fill="#1d1d1d"/>
+  <circle cx="${cx}" cy="${y + 9}" r="8.2" fill="url(#gp-chrome)"/><circle cx="${cx}" cy="${y + 9}" r="6.6" fill="#141414"/>${pins}
+  <rect x="${cx - 1}" y="${y + 13.5}" width="2" height="1.8" fill="#9a9a9a"/></g>`;
+  }
+  const isMidi = block => block && block.engine === 'midi';
+
+  // a MIDI-driven pitch pedal (whammy-dt): an enamel treadle, the glyph on the badge, the DIN on top
+  function enamelTreadle(block, opts) {
+    const on = opts.on !== false;
+    const hue = hueOf(block.color, block.category);
+    const body = mix(mix(hue, '#77704f', .52), '#000', .08), bodyDark = mix(body, '#000', .5), cream = '#f3ead2';
+    const W = 124, H = 228;
+    const label = enamelName(block);
+    const fs = label.length > 11 ? 10.5 : label.length > 8 ? 12 : 14;
+    const lamp = on ? '#ff3b2a' : '#4a1410';
+    return `<svg class="gp-pedal gp-enamel gp-treadle gp-midi${on ? ' is-on' : ''}" viewBox="-6 -4 ${W + 12} ${H + 16}" width="${opts.width || W + 12}" role="img" aria-label="${esc(block.name)}" data-type="${esc(block.type)}">
+<g filter="url(#gp-shadow)">
+  ${jacks(W, 150, '#1d1d1d')}
+  <rect x="0" y="8" width="${W}" height="${H}" rx="8" fill="${bodyDark}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="${body}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="#fff" filter="url(#gp-hammer)" opacity=".42"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="8" fill="url(#gp-sheen)"/>
+</g>
+${dinSocket(W / 2, -2)}
+<g filter="url(#gp-shadow-small)">
+  <path d="M12 22 Q${W / 2} 13 ${W - 12} 22 L${W - 10} ${H - 50} Q${W / 2} ${H - 44} 10 ${H - 50}Z" fill="${mix(body, '#000', .25)}"/>
+  <rect x="20" y="30" width="${W - 40}" height="${H - 96}" rx="5" fill="#141110"/>
+  <rect x="20" y="30" width="${W - 40}" height="${H - 96}" rx="5" fill="url(#gp-grip)"/>
+</g>
+<g filter="url(#gp-shadow-small)"><circle cx="${W / 2}" cy="92" r="21" fill="${cream}"/></g>
+<circle cx="${W / 2}" cy="92" r="18.5" fill="none" stroke="${bodyDark}" stroke-width=".8"/>
+${glyphAt(block.type, W / 2, 92, 25, mix(hue, '#000', .35), 2)}
+<text x="${W / 2}" y="${H - 30 + fs / 3}" text-anchor="middle" font-family="${FONT.enamel}" font-size="${fs}" fill="${cream}" transform="rotate(-4 ${W / 2} ${H - 30})">${esc(label)}</text>
+<circle cx="${W - 16}" cy="${H - 14}" r="3.6" fill="#2a2a2a"/><circle cx="${W - 16}" cy="${H - 14}" r="2.8" fill="${lamp}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/><circle cx="${W - 16}" cy="${H - 14}" r="2.8" fill="url(#gp-jewel)"/>
+<text x="14" y="${H - 10}" font-family="${FONT.enamelSmall}" font-size="6" font-weight="700" letter-spacing="1" fill="${cream}" fill-opacity=".7">MIDI</text>
+</svg>`;
+  }
+
   function genericPedal(block, opts) {
     opts = opts || {};
+    if (isMidi(block) && block.category === 'pitch') return enamelTreadle(block, opts);
     const on = opts.on !== false;
     const hue = hueOf(block.color, block.category);
     // aged enamel: the hue pulled toward olive and cream, never neon
@@ -396,6 +439,7 @@ ${ks}
 <circle cx="${W / 2}" cy="92" r="16.5" fill="none" stroke="${bodyDark}" stroke-width=".8"/>
 ${glyphAt(block.type, W / 2, 92, 22, mix(hue, '#000', .35), 2)}
 <text x="${W / 2}" y="${128 + fs / 3}" text-anchor="middle" font-family="${FONT.enamel}" font-size="${fs}" fill="${cream}" transform="rotate(-4 ${W / 2} 128)">${esc(label)}</text>
+${isMidi(block) ? dinSocket(W / 2, -2) + `<text x="${W - 12}" y="${H - 8}" text-anchor="end" font-family="${FONT.enamelSmall}" font-size="5.6" font-weight="700" letter-spacing="1" fill="${cream}" fill-opacity=".7">MIDI</text>` : ''}
 <circle cx="${W / 2}" cy="152" r="4.4" fill="#2a2a2a"/>
 <circle cx="${W / 2}" cy="152" r="3.4" fill="${lamp}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
 <circle cx="${W / 2}" cy="152" r="3.4" fill="url(#gp-jewel)"/>
@@ -642,6 +686,13 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
 
   // ---------- dispatch: any golem block, the right pedal ----------
   function blockByType(type) { return data().blocks.find(b => b.type === type); }
+  // a capture's label ("EVH 5150 III Stealth", "Mesa 4x12 Celestion V30") -> its catalogue archetype
+  // (kind: 'amps' | 'cabs' | 'pedals'), by the catalogue's own `match` and `aliases`; null when none fits
+  function archetypeFor(kind, label) {
+    const l = String(label || '').toLowerCase();
+    if (!l) return null;
+    return (data().archetypes[kind] || []).find(a => [a.match].concat(a.aliases || []).some(m => m && l.includes(String(m).toLowerCase()))) || null;
+  }
   // item: a catalogue type, or {type, on, archetype, family, title, size, form}
   function pedalFor(item, opts) {
     const it = typeof item === 'string' ? { type: item } : item;
@@ -659,7 +710,7 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
 
   root.GolemPedals = {
     defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, blockTile, pedalFor,
-    blockByType, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE,
-    _parts: { stompSwitch, knobAlu, headBody, cabBody, corners },
+    blockByType, archetypeFor, enamelTreadle, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE,
+    _parts: { dinSocket, stompSwitch, knobAlu, headBody, cabBody, corners },
   };
 })(typeof window !== 'undefined' ? window : globalThis);
