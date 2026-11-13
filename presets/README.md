@@ -56,9 +56,19 @@ Written in **English** (the product and the model are). Built and checked by
 
 ## How golem loads them
 
-A preset sets **every** parameter of the block (the export is complete) and **wins over any value golem pins
-at insert** for that block type (e.g. `reverb` pinned to Hall: a Spring preset plays Spring). The user then
-changes whatever they like from there (Raph, 2026-11-13).
+A preset sets **every** parameter of the block (the export is complete): on load golem resets every setting
+to its default, then applies the preset. It **wins over any value golem pins at insert** for that block
+type (e.g. the generic `reverb`: a Spring preset plays Spring). The user then changes whatever they like
+from there (Raph, 2026-11-13).
+
+One exception, the type's **identity** (golem's engine table, field `identity`): a block type that exists to
+be one voicing keeps it, hidden from the sheet and never written by a preset. Today: `reverb-plate` = algo
+Plate, `reverb-room` = algo Room, `wah` = model GCB-95 (the other wah models are `wah-color`). golem's seed
+refuses a preset whose identity setting disagrees: a preset of those types must set it to that value (or
+leave it out).
+
+golem seeds the presets into `library/block-presets/<type>/<id>.json` (`tools/sync-golem-fx-presets.py`
+there; `--check` tells whether its copy is current). gfx-gapmeter's are not seeded: it is not a rack block.
 
 ## How they are chosen
 
