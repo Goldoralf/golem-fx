@@ -37,6 +37,16 @@
     <div class="grid" id="gfx-grid"></div>
   </section>
 
+  <section id="highgain">
+    <h2>High-gain companions</h2>
+    <p class="lead">Three pedals built for the front of a high-gain amp, designed from what three Fortin / Neural DSP
+    pedals do (as new sounds, not clones), in their own <b>Blackwork</b> finish: black lacquer, white engraving, a
+    skull whose eyes light when the pedal is on. <b>Met</b> is a keyed expander-gate that listens to the clean DI
+    (the Zuul's role); <b>Emet</b> a high-headroom 808 overdrive (the Hexdrive's); <b>Shem</b> a clean, shaped
+    tight boost (the Grind's). Try them on the <i>High gain</i> lane above.</p>
+    <div class="grid" id="hg-grid"></div>
+  </section>
+
   <section id="nam">
     <h2>NAM captures</h2>
     <p class="lead">Captured gear has its own line: brushed steel and glass, the captured circuit glowing behind the window. Amps take a period and a material from their family, never a maker's livery.</p>
@@ -85,6 +95,7 @@
     Bass: ['comp', 'octaver', { type: 'pedal-nam', archetype: (D.archetypes.pedals || []).find(p => p.family === 'bass') }, amp('amp', 'ampeg-svt', { size: '8x10' })],
     Voice: ['deesser', 'comp', 'eq', 'pitch', 'delay', 'reverb-shimmer'],
     Keys: ['rotary', 'chorus-js', 'delay-echo', 'eq-graphic', 'reverb-room'],
+    'High gain': ['met', 'emet', 'shem', amp('amp-nam', '5150'), { type: 'cab', title: '4x12', size: '4x12', family: 'high-gain' }, 'delay', 'reverb-plate'],
     // golem's factory patch "Modern Metal" (lanes v2), state "Chug": through fromGolem, as golem will call it
     Metal: S.fromGolem({
       pre: [{ id: 'whammy', type: 'whammy-dt' }, { id: 'gate', type: 'gate' }, { id: 'eq', type: 'eq' }],
@@ -110,8 +121,12 @@
     const svg = $('scene').querySelector('svg');
     const cw = $('scene').clientWidth;
     svg.style.width = Math.max(svg.viewBox.baseVal.width * (cw < 700 ? .5 : .86), cw) + 'px';
+    const gfxBlock = t => {
+      const g = Object.values(D.gfx).find(x => x.blocks.includes(t));
+      return g && { type: t, glyph: g.glyph, name: g.name, short: g.name, color: g.color, category: g.category };
+    };
     const tile = (it, path) => {
-      const b = P.blockByType(it.type) || { type: it.type, name: it.type };
+      const b = P.blockByType(it.type) || gfxBlock(it.type) || { type: it.type, name: it.type };
       return P.blockTile(Object.assign({}, b, it.title ? { short: it.title } : it.archetype ? { short: it.archetype.short } : {}), { on: it.on !== false })
         .replace('class="gp-tile', `data-idx="${path}" tabindex="0" role="button" class="gp-tile`);
     };
@@ -190,6 +205,19 @@
     });
   }
   drawGfx();
+
+  // the high-gain companions, always in their own finish
+  const HG = {
+    'gfx-met': 'Keyed expander-gate · Threshold, Hold, Release · eyes green',
+    'gfx-emet': 'High-headroom 808 overdrive · Gain, Tone, Level · eyes red',
+    'gfx-shem': 'Clean shaped tight boost · Grind · eyes amber',
+  };
+  Object.entries(HG).forEach(([crate, sub]) => {
+    const g = D.gfx[crate];
+    if (!g) return;
+    const b = { type: g.blocks[0], glyph: g.glyph, name: g.name, short: g.name, color: g.color, category: g.category };
+    $('hg-grid').appendChild(card(on => P.gfxPedal(g, { on, style: 'blackwork' }), b, `${g.name} (${crate})`, sub));
+  });
   $('style-seg').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     P.setStyle(b.dataset.style);
