@@ -247,6 +247,7 @@ dependencies = [
  "gfx-flanger",
  "gfx-gapmeter",
  "gfx-gate",
+ "gfx-golem",
  "gfx-killswitch",
  "gfx-limiter",
  "gfx-met",
@@ -360,6 +361,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-gate"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-golem"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

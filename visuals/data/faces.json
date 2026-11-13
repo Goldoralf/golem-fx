@@ -373,6 +373,20 @@
    ],
    "category": "drive",
    "color": "#f0a500"
+  },
+  "gfx-golem": {
+   "name": "Golem",
+   "blocks": [
+    "golem"
+   ],
+   "knobs": [
+    "shift",
+    "formant",
+    "voice1",
+    "lpf"
+   ],
+   "category": "pitch",
+   "color": "#9b4dff"
   }
  }
 }

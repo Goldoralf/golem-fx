@@ -481,6 +481,26 @@
       {"id": "grind", "name": "Grind", "kind": "float", "min": -8, "max": 20, "default": 10, "exp": true},
       {"id": "voice", "name": "Voice", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "bright", "name": "Bright", "kind": "float", "min": -6, "max": 6, "default": 0}
+    ],
+    "gfx-golem": [
+      {"id": "shift", "name": "Interval", "kind": "float", "min": -24, "max": 24, "default": -12, "exp": true},
+      {"id": "formant", "name": "Formant", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "voice1", "name": "Double Level", "kind": "float", "min": -60, "max": 6, "default": -6, "exp": true},
+      {"id": "lpf", "name": "Tone", "kind": "float", "min": 2000, "max": 16000, "default": 6000},
+      {"id": "shift2", "name": "Interval 2", "kind": "float", "min": -24, "max": 24, "default": 12},
+      {"id": "voice2", "name": "Voice 2 Level", "kind": "float", "min": -60, "max": 0, "default": -60},
+      {"id": "pan", "name": "Voice 2 Pan", "kind": "float", "min": -100, "max": 100, "default": 50},
+      {"id": "fine", "name": "Fine", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "humanize", "name": "Humanize", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "formant_link", "name": "Formant Follows Interval", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "glide", "name": "Glide", "kind": "float", "min": 0, "max": 1000, "default": 0},
+      {"id": "sens", "name": "Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "thresh", "name": "Threshold", "kind": "float", "min": -90, "max": 0, "default": -50},
+      {"id": "register", "name": "Register", "kind": "enum", "min": 0, "max": 2, "default": 1, "options": 3},
+      {"id": "harmony", "name": "Harmony", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "key", "name": "Key", "kind": "enum", "min": 0, "max": 11, "default": 0, "options": 12},
+      {"id": "scale", "name": "Scale", "kind": "enum", "min": 0, "max": 9, "default": 0, "options": 10},
+      {"id": "hpf", "name": "Low Cut", "kind": "float", "min": 20, "max": 200, "default": 40}
     ]
   }
 }

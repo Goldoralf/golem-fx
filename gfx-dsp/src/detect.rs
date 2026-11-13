@@ -43,18 +43,33 @@ pub struct PitchDetector {
     clarity: f32,
     voiced: bool,
     fresh: bool,
+    /// the last analysis' period estimate (Hz), voiced or not
+    raw_hz: f32,
+    /// prefer 2× / 3× lags when their dip is clearly deeper (guitar pickups); off for voices
+    harmonic_lock: bool,
+    /// the lowest lag the buffers were sized for (prepare_range's f_min)
+    tau_alloc: usize,
 }
 
 impl PitchDetector {
+    /// The instrument detector: 75 Hz – 1.5 kHz, harmonic lock on (gfx-pitch, gfx-octaver).
     pub fn prepare(&mut self, sample_rate: f32) {
+        self.prepare_range(sample_rate, F_MIN, F_MAX, true);
+    }
+
+    /// A detector for another range (a voice): buffers sized for `f_min`, the window tied to it.
+    /// [`Self::set_range`] can later narrow the range without allocating.
+    pub fn prepare_range(&mut self, sample_rate: f32, f_min: f32, f_max: f32, harmonic_lock: bool) {
         self.dec = (sample_rate / RATE).round().max(1.0) as usize;
         self.rate = sample_rate / self.dec as f32;
         let fc = (0.2 * self.rate).min(2500.0);
         for s in self.aa.iter_mut() {
             s.set(SvfMode::LowPass, fc, std::f32::consts::FRAC_1_SQRT_2, 0.0, sample_rate);
         }
-        self.tau_min = (self.rate / F_MAX).floor().max(2.0) as usize;
-        self.tau_max = (self.rate / F_MIN).ceil() as usize + 1;
+        self.harmonic_lock = harmonic_lock;
+        self.tau_alloc = (self.rate / f_min).ceil() as usize + 1;
+        self.tau_min = (self.rate / f_max).floor().max(2.0) as usize;
+        self.tau_max = self.tau_alloc;
         self.w = self.tau_max;
         let len = self.w + self.tau_max;
         self.ring = vec![0.0; len];
@@ -62,6 +77,15 @@ impl PitchDetector {
         self.d = vec![0.0; self.tau_max + 2];
         self.raw = vec![0.0; self.tau_max + 2];
         self.reset();
+    }
+
+    /// Narrows the range within what `prepare_range` allocated (no allocation: safe in `process`).
+    /// The window follows `f_min`, so a higher range also answers sooner.
+    pub fn set_range(&mut self, f_min: f32, f_max: f32) {
+        let tmax = ((self.rate / f_min).ceil() as usize + 1).min(self.tau_alloc);
+        self.tau_max = tmax.max(4);
+        self.tau_min = ((self.rate / f_max).floor().max(2.0) as usize).min(self.tau_max - 2);
+        self.w = self.tau_max;
     }
 
     pub fn reset(&mut self) {
@@ -76,6 +100,7 @@ impl PitchDetector {
         self.clarity = 0.0;
         self.voiced = false;
         self.fresh = false;
+        self.raw_hz = 0.0;
     }
 
     /// Feeds one input sample. Returns true when a new analysis is ready.
@@ -110,7 +135,7 @@ impl PitchDetector {
         self.frame[..b.len()].copy_from_slice(b);
         self.frame[b.len()..len].copy_from_slice(a);
         let (w, tmax) = (self.w, self.tau_max);
-        // the most recent `w` samples against `tau` earlier ones
+        // the most recent `w` samples against `tau` earlier ones (w + tmax ≤ the ring's length)
         let cur = &self.frame[len - w..];
         let energy: f32 = cur.iter().map(|v| v * v).sum::<f32>() / w as f32;
         if energy < 1e-7 {
@@ -164,6 +189,9 @@ impl PitchDetector {
         // harmonic lock (a strong 3rd or 2nd harmonic, bridge pickups): when a multiple of the lag has a
         // clearly deeper dip, the true period is that multiple
         for k in [3usize, 2] {
+            if !self.harmonic_lock {
+                break;
+            }
             let c = best * k;
             if c + 2 >= tmax {
                 continue;
@@ -176,6 +204,12 @@ impl PitchDetector {
         }
         let dm = self.d[best];
         self.clarity = (1.0 - dm).max(0.0);
+        if best > self.tau_min && best < tmax - 1 {
+            let (y0, y1, y2) = (self.raw[best - 1], self.raw[best], self.raw[best + 1]);
+            let den = y0 - 2.0 * y1 + y2;
+            let off = if den.abs() > 1e-12 { (0.5 * (y0 - y2) / den).clamp(-0.5, 0.5) } else { 0.0 };
+            self.raw_hz = self.rate / (best as f32 + off);
+        }
         if dm > UNVOICED || best <= self.tau_min || best >= tmax - 1 {
             self.voiced = false;
             return;
@@ -195,6 +229,11 @@ impl PitchDetector {
         } else {
             None
         }
+    }
+
+    /// The last analysis' period estimate (Hz), voiced or not (a caller with its own voicing rule).
+    pub fn period_hz(&self) -> f32 {
+        self.raw_hz
     }
 
     /// 1 − the CMNDF minimum: 1 = perfectly periodic.

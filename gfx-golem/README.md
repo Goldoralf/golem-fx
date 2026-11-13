@@ -1,7 +1,9 @@
 # gfx-golem
 
-> **Status: DESIGNED, reviewed** (2026-11-13) — Fable 5.2's design review is folded in. **Gate before any
-> plugin code: an offline prototype on a real sung phrase** (§6), listened against the reference.
+> **Status: CODED** (v0.1.0, 2026-11-13) — the prototype gate passed (Raph, on his own sung phrase: "génial");
+> the real-time engine matches it on that voice (double exactly an octave down on 98 % of the frames, level
+> −1 dB re the dry at Double Level 0 dB); 7 behaviour tests, bench green (28 checks); CPU 50 ns / sample.
+> Design reviewed by Fable 5.2 (folded in). `align` is deferred to a later version (§4).
 
 golem's **live vocal doubler**: the voice of clay. It adds one or two pitch-shifted copies of a singer's
 voice — first and foremost **a double one octave below**, tight under the lead, the sound of Sleep Token's
@@ -122,9 +124,10 @@ in ─┬───────────────────────�
     r > 1 repeated.
   - An interval change slews r per mark (1 st / ms, as gfx-pitch), extended by `glide`: no crossfade, no
     click.
-- **Formant**: each grain is read at a rate 2^(`formant` / 12) (its length scaled accordingly).
-  - Above 0 the read decimates: the grain is read through a 4× oversampled interpolator, so nothing
-    aliases.
+- **Formant**: each grain is read at a rate 2^(`formant` / 12) (its length scaled accordingly; when
+  lowering, only its right half stretches, so no extra delay).
+  - Above 0 the read decimates: the grain is read from a copy low-passed at 0.45 · fs / ratio, so
+    nothing aliases.
   - With `formant_link` on, the formant ratio is the interval's, and `formant` adds to it as an offset.
 - **Level normalisation.** At r = ½ the grains no longer overlap and the double loses ≈ 3.7 dB of RMS; a
   formant ratio α scales it by ≈ r / α. A gain law g(r, α) — computed from the grain overlap and the
@@ -142,16 +145,18 @@ in ─┬───────────────────────�
 
 ### Output
 
-- **Doubles' tone**: a fixed 60 Hz high-pass and a low-pass `lpf` (2 – 16 kHz, default 6 kHz). Note that
+- **Doubles' tone**: a high-pass `hpf` (20 – 200 Hz, default 40 Hz: the first listening voice sang around
+  143 Hz, so its octave-down double sits near 70 Hz) and a low-pass `lpf` (2 – 16 kHz, default 6 kHz). Note that
   `formant` −12 already halves their bandwidth.
 - **Layouts**: mono 1 / 1 first. In 2 / 2, voice 1 stays centred and voice 2 is placed by `pan`
   (equal-power, −100 % left … +100 % right); the dry is untouched. Mono sum stays within 1 dB of the 1 / 1
   output (no anti-phase anywhere).
 - **Latency reporting**: the dry has zero latency and the plugin reports 0 (precedents: gfx-detune,
-  gfx-pitch-classic; 4 – 19 ms is in the doubling range, not an echo). `align` delays the dry by the
-  worst-case double delay of the `register` and reports it, for studio renders. `register` and `align` are
-  **setup parameters**: latency is re-reported at initialisation or on their change only, never under
-  scene automation (the host re-syncs: the gfx-flanger finding of the design review).
+  gfx-pitch-classic; 4 – 19 ms is in the doubling range, not an echo). `register` is a **setup
+  parameter**, never scene-automated. `align` (the dry delayed to sit under the double, latency
+  reported, for studio renders) is **deferred**: with the phase-locked placement the double's content
+  lag follows the sung period, so a fixed dry delay would not line them up; it is added (a new id, never
+  renamed) once a studio use asks for it.
 - **Meter**: a read-only `state` (0 = idle, 1 = tracking, 2 = gated by level), for setting `sens` and
   `thresh` at soundcheck.
 - **Real-time**: buffers sized in `prepare` for the Low register at the highest sample rate; no allocation
@@ -171,7 +176,7 @@ Columns: **Curve** (display only, every range is linear) · **Smooth** in ms (�
 |---|---|---|---|---|---|---|---|---|
 | `shift` | Interval | f | −24 – +24 st | −12 st | lin | per mark | ✓ | Interval of the main double (−12 = one octave below) |
 | `formant` | Formant | f | −12 – +12 st | 0 st | lin | 50 | ✓ | The double's timbre: 0 = the voice's own, below = darker and bigger, above = lighter |
-| `voice1` | Double Level | f | −60 – +6 dB | 0 dB | lin | 30 | ✓ | Level of the main double; 0 dB = as loud (RMS) as the dry voice |
+| `voice1` | Double Level | f | −60 – +6 dB | −6 dB | lin | 30 | ✓ | Level of the main double; 0 dB = as loud (RMS) as the dry voice; −6 dB = the *Emergence* preset |
 | `lpf` | Tone | f | 2,000 – 16,000 Hz | 6,000 Hz | log | 30 | | Low-pass on the doubles |
 
 ### Expert
@@ -191,7 +196,7 @@ Columns: **Curve** (display only, every range is linear) · **Smooth** in ms (�
 | `harmony` | Harmony | e | Off · Scale | Off | — | — | | Scale: intervals follow `key` / `scale` |
 | `key` | Key | e | C – B | C | — | — | | For `harmony` |
 | `scale` | Scale | e | gfx-pitch's scales | Major | — | — | | For `harmony` |
-| `align` | Align Dry | b | off / on | off | — | setup | | Delays the dry by the double's worst-case delay and reports it (studio) |
+| `hpf` | Low Cut | f | 20 – 200 Hz | 40 Hz | log | 30 | | High-pass on the doubles: an octave below a low male voice sits near 70 Hz, so the default stays under it |
 
 ### Meter (read-only)
 
@@ -213,9 +218,13 @@ The pedal face shows Interval, Formant, Double Level and Tone.
 | Chorus only, per scene | verse `voice1` −60 dB, chorus `voice1` 0 dB | Smoothed changes, no click |
 | Deep, low voices | `register` Low | Detection down to 60 Hz (worst-case delay ≈ 19 ms) |
 | Loud stage | `thresh` above the bleed level (read `state`) | Bleed between phrases never doubled |
-| Studio | `align` On | Double under the lead, latency reported |
 
 golem should place gfx-deesser and any gate before gfx-golem on a voice lane.
+
+Block presets (in `visuals/data/groups.json`, exported in `descriptors.json`): *Emergence* (−12, formant 0,
+−6 dB), *Emergence loud* (0 dB), *Emergence dark* (formant −4, −6 dB), *Emergence dark loud*, *Whammy
+voice* (formants follow the interval), *Choir*, *Unison double*, *Harmony third*: the settings of the
+listening test of 2026-11-13, one preset each.
 
 ## 6. Prototype gate and bench suite
 
@@ -243,5 +252,5 @@ compensated (the double is measured against the delayed dry).
 | Vibrato | ±50 cents at 6 Hz: the double follows within ±10 cents (delay-compensated) |
 | Clicks | A scene changing `shift`, `voice1` or `register`: no click above the common bound |
 | Mono | 2 / 2 summed to mono within 1 dB of 1 / 1 |
-| Latency | Dry 0 samples, reported 0; `align` On reports the `register` worst case and matches it |
+| Latency | Dry 0 samples, reported 0 |
 | Determinism, CPU | Strict null (humanize seeded); ≤ 2 % of one core at 48 kHz, mono, two voices, Low register |

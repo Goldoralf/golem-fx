@@ -65,6 +65,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 23 | [gfx-met](gfx-met/) | new block (keyed expander-gate) | — (Fortin Zuul's role) | **coded**, bench green, to test in golem |
 | 24 | [gfx-emet](gfx-emet/) | new block (high-headroom 808 overdrive) | — (Hexdrive's role) | **coded**, bench green, to test in golem |
 | 25 | [gfx-shem](gfx-shem/) | new block (clean shaped tight boost) | — (Fortin Grind's role) | **coded**, bench green, to test in golem |
+| 26 | [gfx-golem](gfx-golem/) | new block (live vocal octave doubler) | — (the Sleep Token *Emergence* vocal) | **coded**, bench green, prototype approved by ear, to test in golem |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows

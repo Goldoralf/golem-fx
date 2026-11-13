@@ -996,6 +996,50 @@
           "bright"
         ]
       }
+    ],
+    "gfx-golem": [
+      {
+        "id": "voice2",
+        "name": "Second voice",
+        "custom": null,
+        "params": [
+          "shift2",
+          "voice2",
+          "pan"
+        ]
+      },
+      {
+        "id": "character",
+        "name": "Character",
+        "custom": null,
+        "params": [
+          "formant_link",
+          "fine",
+          "humanize",
+          "glide"
+        ]
+      },
+      {
+        "id": "tracking",
+        "name": "Tracking",
+        "custom": null,
+        "params": [
+          "register",
+          "sens",
+          "thresh",
+          "hpf"
+        ]
+      },
+      {
+        "id": "harmony",
+        "name": "Harmony",
+        "custom": null,
+        "params": [
+          "harmony",
+          "key",
+          "scale"
+        ]
+      }
     ]
   },
   "help": {
@@ -1211,6 +1255,16 @@
         "param": "sync",
         "equals": "Free"
       }
+    },
+    "gfx-golem": {
+      "key": {
+        "param": "harmony",
+        "equals": "Scale"
+      },
+      "scale": {
+        "param": "harmony",
+        "equals": "Scale"
+      }
     }
   },
   "presets": {
@@ -1290,6 +1344,75 @@
         "params": {
           "ratio": 10,
           "release": 30
+        }
+      }
+    ],
+    "gfx-golem": [
+      {
+        "name": "Emergence",
+        "params": {
+          "shift": -12,
+          "formant": 0,
+          "voice1": -6
+        }
+      },
+      {
+        "name": "Emergence loud",
+        "params": {
+          "shift": -12,
+          "formant": 0,
+          "voice1": 0
+        }
+      },
+      {
+        "name": "Emergence dark",
+        "params": {
+          "shift": -12,
+          "formant": -4,
+          "voice1": -6
+        }
+      },
+      {
+        "name": "Emergence dark loud",
+        "params": {
+          "shift": -12,
+          "formant": -4,
+          "voice1": 0
+        }
+      },
+      {
+        "name": "Whammy voice",
+        "params": {
+          "shift": -12,
+          "formant_link": true,
+          "voice1": -6
+        }
+      },
+      {
+        "name": "Choir",
+        "params": {
+          "shift": -12,
+          "shift2": 12,
+          "voice2": -10,
+          "pan": 60,
+          "humanize": 40
+        }
+      },
+      {
+        "name": "Unison double",
+        "params": {
+          "shift": 0,
+          "fine": 8,
+          "humanize": 60,
+          "voice1": -3
+        }
+      },
+      {
+        "name": "Harmony third",
+        "params": {
+          "harmony": "Scale",
+          "shift": 4,
+          "voice1": -6
         }
       }
     ]

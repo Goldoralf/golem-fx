@@ -80,3 +80,6 @@ name = "GoleM FX Emet"
 
 [gfx-shem]
 name = "GoleM FX Shem"
+
+[gfx-golem]
+name = "GoleM FX Golem"

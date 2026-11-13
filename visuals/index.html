@@ -38,12 +38,12 @@
   </section>
 
   <section id="highgain">
-    <h2>High-gain companions</h2>
+    <h2>High-gain companions and the voice</h2>
     <p class="lead">Three pedals built for the front of a high-gain amp, designed from what three Fortin / Neural DSP
     pedals do (as new sounds, not clones), in their own <b>Blackwork</b> finish: black lacquer, white engraving, a
     skull whose eyes light when the pedal is on. <b>Met</b> is a keyed expander-gate that listens to the clean DI
     (the Zuul's role); <b>Emet</b> a high-headroom 808 overdrive (the Hexdrive's); <b>Shem</b> a clean, shaped
-    tight boost (the Grind's). Try them on the <i>High gain</i> lane above.</p>
+    tight boost (the Grind's). <b>Golem</b>, for the voice lane, doubles a singer one octave below with the formants kept or moved (the Sleep Token <i>Emergence</i> sound). Try them on the <i>High gain</i> and <i>Voice</i> lanes above.</p>
     <div class="grid" id="hg-grid"></div>
   </section>
 
@@ -93,7 +93,7 @@
              amp('amp-nam', 'plexi'), { type: 'cab', title: '1960 4x12', size: '4x12', family: 'crunch' }, 'delay', 'reverb'],
     Clean: ['comp', 'tremolo', 'vibrato', amp('amp', 'twin-reverb', { form: 'combo' }), 'delay-tape', 'reverb-plate'],
     Bass: ['comp', 'octaver', { type: 'pedal-nam', archetype: (D.archetypes.pedals || []).find(p => p.family === 'bass') }, amp('amp', 'ampeg-svt', { size: '8x10' })],
-    Voice: ['deesser', 'comp', 'eq', 'pitch', 'delay', 'reverb-shimmer'],
+    Voice: ['deesser', 'comp', 'eq', 'golem', 'delay', 'reverb-shimmer'],
     Keys: ['rotary', 'chorus-js', 'delay-echo', 'eq-graphic', 'reverb-room'],
     'High gain': ['met', 'emet', 'shem', amp('amp-nam', '5150'), { type: 'cab', title: '4x12', size: '4x12', family: 'high-gain' }, 'delay', 'reverb-plate'],
     // golem's factory patch "Modern Metal" (lanes v2), state "Chug": through fromGolem, as golem will call it
@@ -194,7 +194,7 @@
   const MOTIF_LABEL = { flames: 'flames', chevrons: 'thrust chevrons', barbed: 'barbed wire', clamp: 'clamp', crescent: 'sweep',
     curve: 'response curve', pulse: 'pulse train', waves: 'twin waves', jet: 'jet streaks', spiral: 'spiral', swirl: 'swirl',
     bolt: 'lightning', echo: 'echoes', rays: 'rays', stars: 'sparks', diamonds: 'octave diamonds', stairs: 'stairs', ticks: 'ruler' };
-  const BW_LABEL = { 'gfx-met': 'barbed wire', 'gfx-emet': 'flame crown', 'gfx-shem': 'rays' };
+  const BW_LABEL = { 'gfx-met': 'barbed wire', 'gfx-emet': 'flame crown', 'gfx-shem': 'rays', 'gfx-golem': 'voice arcs' };
   function drawGfx() {
     $('gfx-grid').innerHTML = '';
     Object.values(D.gfx).forEach(g => {
@@ -211,6 +211,7 @@
     'gfx-met': 'Keyed expander-gate · Threshold, Hold, Release · eyes green',
     'gfx-emet': 'High-headroom 808 overdrive · Gain, Tone, Level · eyes red',
     'gfx-shem': 'Clean shaped tight boost · Grind · eyes amber',
+    'gfx-golem': 'Live vocal octave doubler · Interval, Formant, Double Level, Tone · eyes violet',
   };
   Object.entries(HG).forEach(([crate, sub]) => {
     const g = D.gfx[crate];
