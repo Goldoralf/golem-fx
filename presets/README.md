@@ -51,8 +51,14 @@ Written in **English** (the product and the model are). Built and checked by
 | `sync` | Only when a tempo-synced parameter is set: the note value (`1/4`, `1/8.`, `1/8T`…) |
 | `tags` | Optional, ≤ 3 of: `vintage` `modern` `subtle` `extreme` `lo-fi` `wide` `dark` `bright` `warm` `aggressive` `dreamy` `tight` |
 | `default` | `true` on at most one preset per (`type`, `inst`): the one a hand-placed block gets |
-| `params` | The pedal's own ids (descriptors.json) and values: floats within range, enums as their **labels**, bools `true` / `false`. **A parameter left out takes the plugin's default**: write every parameter the sound depends on |
+| `params` | The pedal's own ids (descriptors.json) and values: floats within range, enums as their **labels**, bools `true` / `false`. Write the parameters the sound depends on; **the export completes every other parameter with the plugin's default**, so an exported preset is always the whole sound |
 | `notes` | Optional, ≤ 200 characters: why these values (for maintainers and the AI's reasoning) |
+
+## How golem loads them
+
+A preset sets **every** parameter of the block (the export is complete) and **wins over any value golem pins
+at insert** for that block type (e.g. `reverb` pinned to Hall: a Spring preset plays Spring). The user then
+changes whatever they like from there (Raph, 2026-11-13).
 
 ## How they are chosen
 

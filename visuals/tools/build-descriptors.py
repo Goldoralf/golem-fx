@@ -265,13 +265,30 @@ def validate_presets(crate, presets, params, labels, blocks, errors):
             errors.append(f"{where}: no params")
 
 
+def complete(params, manifest_params, labels):
+    """Every parameter of the pedal: the preset's own values, the plugin's defaults for the rest. An
+    exported preset is the whole sound, whatever was loaded before it."""
+    out = {}
+    for pid, q in manifest_params.items():
+        if pid in params:
+            out[pid] = params[pid]
+        elif q["kind"] == "enum":
+            opts = labels.get(pid) or [str(x) for x in range(int(q["min"]), int(q["max"]) + 1)]
+            out[pid] = opts[int(q["default"])]
+        elif q["kind"] == "bool":
+            out[pid] = bool(q["default"])
+        else:
+            out[pid] = q["default"]
+    return out
+
+
 def file_presets(crate, kinds, labels, blocks, errors, manifest_params):
     f = PRESETS / f"{crate}.json"
     if not f.exists():
         return None
     presets = json.loads(f.read_text()).get("presets", [])
     validate_presets(crate, presets, manifest_params, labels, blocks, errors)
-    return presets
+    return [dict(p, params=complete(p.get("params", {}), manifest_params, labels)) for p in presets]
 
 
 def hand_presets(crate, kinds, labels, errors):
