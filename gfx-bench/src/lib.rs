@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-flanger-calf", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -30,7 +30,6 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-flanger" | "flanger" => Some(Box::new(gfx_flanger::Flanger::new())),
         "gfx-phaser" | "phaser" => Some(Box::new(gfx_phaser::Phaser::new())),
         "gfx-rotary" | "rotary" => Some(Box::new(gfx_rotary::Rotary::new())),
-        "gfx-flanger-calf" | "flanger-calf" => Some(Box::new(gfx_flanger_calf::CalfFlanger::new())),
         "gfx-drive" | "drive" => Some(Box::new(gfx_drive::Drive::new())),
         "gfx-delay" | "delay" => Some(Box::new(gfx_delay::Delay::new())),
         "gfx-reverb" | "reverb" => Some(Box::new(gfx_reverb::Reverb::new())),
@@ -51,7 +50,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
 /// The common checks' options for an effect (bounds its design documents).
 pub fn options(name: &str) -> checks::Options {
     let mut o = checks::Options::default();
-    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary" | "gfx-flanger-calf" | "flanger-calf") {
+    if matches!(name, "gfx-chorus" | "chorus" | "gfx-flanger" | "flanger" | "gfx-phaser" | "phaser" | "gfx-rotary" | "rotary") {
         // the profiles spread the voices left / right: stereo by nature
         o.stereo_by_nature = true;
     }

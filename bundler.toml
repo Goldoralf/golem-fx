@@ -41,9 +41,6 @@ name = "GoleM FX Phaser"
 [gfx-rotary]
 name = "GoleM FX Rotary"
 
-[gfx-flanger-calf]
-name = "GoleM FX Flanger Calf"
-
 [gfx-drive]
 name = "GoleM FX Drive"
 

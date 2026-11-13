@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! The flanger engine of gfx-flanger and gfx-flanger-calf (design: gfx-flanger/README.md).
+//! The flanger engine of gfx-flanger (design: gfx-flanger/README.md).
 //!
 //! Stands for golem's `flanger-js` block (ids `length`, `feedback` in dB, `wet`, `dry`, `rate` kept).
 //! - Fractional delay, swept **exponentially** from `manual` to `length`, so the notches move evenly in
