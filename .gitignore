@@ -3,3 +3,4 @@ target/
 !tests/**/*.wav
 .DS_Store
 bench-out/
+__pycache__/
