@@ -196,3 +196,125 @@ fn profile_blocks() {
     }
     eprintln!("whole hall {:6.1} ns   ({acc})", ns(t));
 }
+
+fn energy(y: &[f32]) -> f64 {
+    y.iter().map(|v| (*v as f64).powi(2)).sum()
+}
+
+#[test]
+fn every_tail_is_heard_at_a_comparable_level() {
+    // the plate's input filter once let 1e-6 of the energy through: every algorithm within 10 dB of the hall
+    let hall = energy(&ir(&mut rv(wet()), 2.0));
+    for algo in Algo::ALL {
+        let e = energy(&ir(&mut rv(wet().with(p::ALGO, algo as u8 as f32)), 2.0));
+        let db = 10.0 * (e / hall).log10();
+        eprintln!("{algo:?}: {db:+.1} dB");
+        assert!(db.abs() < 10.0, "{algo:?}: {db:+.1} dB against the hall");
+    }
+}
+
+#[test]
+fn era_keeps_the_decay_and_the_level() {
+    for algo in [Algo::Hall, Algo::Plate, Algo::Spring, Algo::Bloom] {
+        let modern = ir(&mut rv(wet().with(p::ALGO, algo as u8 as f32).with(p::DECAY, 2.0)), 3.5);
+        for era in [1.0f32, 2.0] {
+            let y = ir(&mut rv(wet().with(p::ALGO, algo as u8 as f32).with(p::DECAY, 2.0).with(p::ERA, era)), 3.5);
+            let (rm, re) = (rt60(&modern), rt60(&y));
+            // the level in the band every era keeps (the eras drop the air above it, by design)
+            let low = |x: &[f32]| {
+                let mut lp = [Svf::new(), Svf::new()];
+                for f in lp.iter_mut() {
+                    f.set(SvfMode::LowPass, 4000.0, 0.707, 0.0, SR);
+                }
+                let y: Vec<f32> = x.iter().map(|v| { let a = lp[0].process(*v); lp[1].process(a) }).collect();
+                energy(&y)
+            };
+            let db = 10.0 * (low(&y) / low(&modern)).log10();
+            eprintln!("{algo:?} era {era}: rt60 {rm:.2} → {re:.2} s, level {db:+.1} dB");
+            assert!((re / rm - 1.0).abs() < 0.15, "{algo:?} era {era}: rt60 {rm:.2} → {re:.2}");
+            assert!(db.abs() < 3.0, "{algo:?} era {era}: {db:+.1} dB");
+        }
+    }
+}
+
+#[test]
+fn era_runs_the_tail_in_the_period_band() {
+    // white noise in, the wet's share above the era's band: Modern keeps its air, 80s and 70s lose it
+    let band = |era: f32| {
+        let mut r = rv(wet().with(p::ERA, era));
+        let mut rng = Rng::new(7);
+        let n = 48000;
+        let mut l: Vec<f32> = (0..n).map(|_| 0.25 * rng.bipolar()).collect();
+        let mut rr = l.clone();
+        for (a, b) in l.chunks_mut(256).zip(rr.chunks_mut(256)) {
+            r.process(&mut [a, b]);
+        }
+        // energy above 14 kHz over 1 – 4 kHz, by a 4-pole high-pass and band-pass (Svf)
+        let mut hp = [Svf::new(), Svf::new()];
+        let mut bp = Svf::new();
+        for h in hp.iter_mut() {
+            h.set(SvfMode::HighPass, 14000.0, 0.707, 0.0, SR);
+        }
+        bp.set(SvfMode::BandPass, 2000.0, 0.7, 0.0, SR);
+        let (mut eh, mut eb) = (0.0f64, 0.0f64);
+        for &v in &l[n / 4..] {
+            let a = hp[0].process(v);
+            eh += (hp[1].process(a) as f64).powi(2);
+            eb += (bp.process(v) as f64).powi(2);
+        }
+        10.0 * (eh / eb).log10()
+    };
+    let (m, e80, e70) = (band(0.0), band(1.0), band(2.0));
+    eprintln!("above 14 kHz vs 2 kHz: modern {m:.1} dB, 80s {e80:.1} dB, 70s {e70:.1} dB");
+    assert!(e80 < m - 15.0 && e70 < e80, "{m:.1} / {e80:.1} / {e70:.1}");
+}
+
+#[test]
+fn era_switch_is_clean() {
+    // switching era mid-tail dips through the gate: no step, no NaN
+    let mut r = rv(Settings::default().with(p::MIX, 50.0));
+    let mut rng = Rng::new(3);
+    let mut prev = 0.0f32;
+    let mut worst = 0.0f32;
+    for k in 0..60 {
+        if k % 20 == 10 {
+            let e = ((k / 20) % 3) as f32 + 1.0;
+            r.set(r.settings().with(p::ERA, e % 3.0));
+        }
+        let mut l: Vec<f32> = (0..256).map(|_| 0.0).collect();
+        // a slow sine plus a little noise: any jump stands out against the smooth signal
+        for (i, v) in l.iter_mut().enumerate() {
+            let t = (k * 256 + i) as f32 / SR;
+            *v = 0.3 * (TAU_F * 220.0 * t).sin() + 0.001 * rng.bipolar();
+        }
+        let mut rr = l.clone();
+        r.process(&mut [&mut l, &mut rr]);
+        for &v in &l {
+            assert!(v.is_finite());
+            worst = worst.max((v - prev).abs());
+            prev = v;
+        }
+    }
+    // the sine alone moves up to 0.3 · 2π · 220 / 48000 ≈ 0.009 per sample; the wet adds its own
+    assert!(worst < 0.05, "largest step {worst}");
+}
+
+#[test]
+#[ignore]
+fn profile_era() {
+    use std::time::Instant;
+    let n = 48000 * 10;
+    let mut rng = Rng::new(1);
+    let x: Vec<f32> = (0..n).map(|_| 0.1 * rng.bipolar()).collect();
+    for algo in [Algo::Hall, Algo::Plate, Algo::Spring] {
+        for era in [0.0f32, 1.0, 2.0] {
+            let mut r = rv(Settings::default().with(p::ALGO, algo as u8 as f32).with(p::ERA, era));
+            let (mut l, mut rr) = (x.clone(), x.clone());
+            let t = Instant::now();
+            for (a, b) in l.chunks_mut(128).zip(rr.chunks_mut(128)) {
+                r.process(&mut [a, b]);
+            }
+            eprintln!("{algo:?} era {era}: {:6.1} ns / frame", t.elapsed().as_secs_f64() * 1e9 / n as f64);
+        }
+    }
+}

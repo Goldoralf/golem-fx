@@ -427,7 +427,7 @@ fn dump_tracking() {
     let path = std::env::var("GFX_DETECT_IN").expect("GFX_DETECT_IN");
     let sr: f32 = std::env::var("GFX_DETECT_SR").map_or(48000.0, |v| v.parse().unwrap());
     let bytes = std::fs::read(path).unwrap();
-    let x: Vec<f32> = bytes.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+    let x: Vec<f32> = bytes.as_chunks::<4>().0.iter().map(|b| f32::from_le_bytes(*b)).collect();
     let mut d = PitchDetector::default();
     d.prepare(sr);
     let mut t = NoteTracker::default();

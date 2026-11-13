@@ -264,6 +264,9 @@ pub struct Reverb {
     taps_key: (u32, i64, i64),
     era: usize,
     pending_era: bool,
+    /// the tail's sample rate: the host's (Modern) or the era's
+    tsr: f32,
+    era_rs: EraRate,
     wet_low: OnePole,
     wet_high: OnePole,
     tail_key: [f64; 11],
@@ -329,6 +332,8 @@ impl Reverb {
             taps_key: (u32::MAX, 0, 0),
             era: 0,
             pending_era: false,
+            tsr: 48000.0,
+            era_rs: EraRate::default(),
             wet_low: OnePole::new(30.0, 50.0, 1e-3),
             wet_high: OnePole::new(30.0, 50.0, 1e-3),
             tail_key: [f64::NAN; 11],
@@ -381,6 +386,7 @@ impl Reverb {
 
     fn control(&mut self) {
         let sr = self.sr;
+        let tsr = self.tsr;
         let v = self.s.v;
         let algo = self.algo;
         let size = self.size.next() as f64;
@@ -410,14 +416,14 @@ impl Reverb {
         self.plate.set_scale((size / 15.0).clamp(0.4, 2.0));
         let half = self.plate.half_loop_s();
         self.plate.decay = 10f64.powf(-1.5 * half / rt.max(0.05)) as f32;
-        self.plate.kd = (-TAU_F * (hicut.min(0.45 * sr as f64) as f32) / sr).exp();
-        self.plate.kb = 1.0 - (-TAU_F * v[p::BASS_XOVER] / sr).exp();
+        self.plate.kd = (-TAU_F * (hicut.min(0.45 * tsr as f64) as f32) / tsr).exp();
+        self.plate.kb = 1.0 - (-TAU_F * v[p::BASS_XOVER] / tsr).exp();
         self.plate.bass_g = (10f64.powf(-1.5 * half / (rt * v[p::BASS_MULT] as f64)) / self.plate.decay as f64) as f32;
         self.plate.excursion = 16.0 * m;
         self.plate.rate = rate * 1.8;
         self.plate.density = (0.4 + 0.6 * diff) as f32;
         }
-        let spring_len = (0.02 + 0.0012 * size) * sr as f64;
+        let spring_len = (0.02 + 0.0012 * size) * tsr as f64;
         for (j, sp) in self.springs.iter_mut().enumerate() {
             sp.set_len(spring_len * (1.0 + 0.13 * j as f64));
         }
@@ -469,11 +475,8 @@ impl Reverb {
         }
         self.filt_key = filt_key;
         let lp = (1.5 * hicut).min(0.45 * sr as f64) as f32;
-        let era_f = match era {
-            1 => 12000.0f32,
-            2 => 7000.0,
-            _ => 0.45 * sr,
-        };
+        let era_f = era_band(era, sr);
+        self.era_rs.set_band(era_f, sr);
         for c in 0..2 {
             self.out_lp[c].set(SvfMode::LowPass, lp, 0.5, 0.0, sr);
             self.era_lp[c].set(SvfMode::LowPass, era_f.min(0.45 * sr), std::f32::consts::FRAC_1_SQRT_2, 0.0, sr);
@@ -528,6 +531,16 @@ impl Reverb {
                 if self.pending_era {
                     self.era = idx(self.s.v[p::ERA], 3);
                     self.pending_era = false;
+                    // the tail restarts at the era's rate: its lengths jump into place at the dip
+                    self.apply_era_rate();
+                    self.clear_tails();
+                    self.diff.reset();
+                    self.tail_key = [f64::NAN; 11];
+                    self.filt_key = [f64::NAN; 7];
+                    self.control();
+                    self.diff.settle();
+                    self.bloom.settle();
+                    self.fdn.settle();
                 }
                 self.gate.set_target(1.0);
             }
@@ -591,85 +604,35 @@ impl Reverb {
                 self.er[c].line.push(xin[c]);
                 self.burst[c].line.push(xin[c]);
             }
-            // era: early converters (fewer bits into the tail)
-            let era = self.era;
-            if era > 0 {
-                let q = if era == 1 { 2f32.powi(-12) } else { 2f32.powi(-10) };
-                for xv in xin.iter_mut() {
-                    *xv = (*xv / q + 0.5 * self.era_rng.bipolar()).round() * q;
-                }
-            }
             // the tail's input: the dry, plus the shimmer regeneration
             let ti = self.tail_in.next();
             let feed = [(xin[0] + self.shim_fb) * ti, (xin[1] + self.shim_fb) * ti];
-            let mut d8 = [feed[0], feed[1], -feed[0], -feed[1], feed[0], -feed[1], feed[1], -feed[0]];
-            let (mut tl, mut tr) = (0.0f32, 0.0f32);
-            let (mut el, mut er) = (0.0f32, 0.0f32);
-            match self.algo {
-                Algo::Plate => {
-                    let (l, r) = self.plate.process(0.5 * (feed[0] + feed[1]), &mut self.plate_in);
-                    tl = l;
-                    tr = r;
+            // the tail: at the host's rate (Modern), or at the era's through its converters
+            let (mut tl, mut tr) = if self.era == 0 {
+                self.tail(feed, n_springs, freeze)
+            } else {
+                let ticks = self.era_rs.input(feed);
+                if let Some(u) = ticks {
+                    // early converters: fewer bits into the tail
+                    let q = if self.era == 1 { 2f32.powi(-12) } else { 2f32.powi(-10) };
+                    let mut u = u;
+                    for xv in u.iter_mut() {
+                        *xv = (*xv / q + 0.5 * self.era_rng.bipolar()).round() * q;
+                    }
+                    let y = self.tail(u, n_springs, freeze);
+                    self.era_rs.push_output(y);
                 }
-                Algo::Spring => {
-                    let coef = -0.62f32;
-                    let stages = 8 + (v[p::DIFFUSION] * 0.3) as usize;
-                    let rt = self.decay.value().max(0.1) as f64;
-                    let klp = 1.0 - (-TAU_F * (self.hicut.value() * 0.7).min(0.45 * sr) / sr).exp();
-                    let m = 0.5 * (feed[0] + feed[1]);
-                    for j in 0..n_springs {
-                        let len = (0.02 + 0.0012 * self.size.value() as f64) * sr as f64 * (1.0 + 0.13 * j as f64);
-                        let fb = if freeze != 0 { 0.999 } else { 10f64.powf(-3.0 * len / (rt * sr as f64)) as f32 };
-                        let y = self.springs[j].process(m, coef, stages.min(40), fb, klp);
-                        if j % 2 == 0 {
-                            tl += y;
-                        } else {
-                            tr += y;
-                        }
-                    }
-                    if n_springs == 1 {
-                        tr = tl;
-                    } else if n_springs == 3 {
-                        tr += 0.5 * tl;
-                    }
-                }
-                Algo::Gated | Algo::Reverse => {
-                    self.diff.process(&mut d8);
-                    let dd = v[p::DIFFUSION] * 0.01;
-                    for c in 0..2 {
-                        // the burst reads the predelayed input; diffusion blends in the diffused grain
-                        let b = self.burst[c].read(0, 1);
-                        let y = b + (d8[c] * 0.5 - b) * dd * 0.3;
-                        if c == 0 {
-                            tl = y;
-                        } else {
-                            tr = y;
-                        }
-                    }
-                }
-                _ => {
-                    self.diff.process(&mut d8);
-                    if self.algo == Algo::Bloom {
-                        // the diffuser fed back on itself: the tail fades in, then the FDN decays it
-                        let tb = 0.2 + 1.8 * ((self.size.value() - 5.0) / 55.0) as f64;
-                        let gb = 10f64.powf(-3.0 * 0.06 / tb) as f32;
-                        let mut b = [0.0f32; 8];
-                        for c in 0..8 {
-                            b[c] = d8[c] * 0.3 + gb * self.bloom_fb[c];
-                        }
-                        self.bloom.process(&mut b);
-                        self.bloom_fb = b;
-                        d8 = b;
-                    }
-                    let mut in16 = [0.0f32; 16];
-                    for c in 0..16 {
-                        in16[c] = if c < 8 { d8[c] } else { -d8[c - 8] } * 0.5;
-                    }
-                    let (l, r) = self.fdn.process(&in16);
-                    tl = l;
-                    tr = r;
-                }
+                self.era_rs.output()
+            };
+            if matches!(self.algo, Algo::Gated | Algo::Reverse) {
+                let dd = v[p::DIFFUSION] * 0.01;
+                // the burst reads the predelayed input; diffusion blends in the diffused grain
+                let b0 = self.burst[0].read(0, 1);
+                let b1 = self.burst[1].read(0, 1);
+                tl = b0 + (tl - b0) * dd * 0.3;
+                tr = b1 + (tr - b1) * dd * 0.3;
             }
+            let (mut el, mut er) = (0.0f32, 0.0f32);
             // early reflections
             let (_, _, er_level) = self.algo.early();
             if er_level > 0.0 {
@@ -692,7 +655,7 @@ impl Reverb {
             let mut wet = [el + tl * tail_g, er + tr * tail_g];
             for c in 0..2 {
                 let mut w = self.out_lp[c].process(wet[c]);
-                if era > 0 {
+                if self.era > 0 {
                     w = self.era_lp[c].process(w);
                 }
                 // the wet shelves are skipped while both sit exactly flat (50 %)
@@ -709,6 +672,78 @@ impl Reverb {
                 buffers[0][i] = 0.5 * (ol + or);
             }
         }
+    }
+
+    /// One sample of the tail at its own rate (`self.tsr`): the algorithm's network on `feed`. Gated and
+    /// Reverse return the diffused grain (the bursts are read at the host's rate).
+    #[inline]
+    fn tail(&mut self, feed: [f32; 2], n_springs: usize, freeze: usize) -> (f32, f32) {
+        let v = &self.s.v;
+        let tsr = self.tsr;
+        let mut d8 = [feed[0], feed[1], -feed[0], -feed[1], feed[0], -feed[1], feed[1], -feed[0]];
+        match self.algo {
+            Algo::Plate => self.plate.process(0.5 * (feed[0] + feed[1]), &mut self.plate_in),
+            Algo::Spring => {
+                let (mut tl, mut tr) = (0.0f32, 0.0f32);
+                let coef = -0.62f32;
+                let stages = 8 + (v[p::DIFFUSION] * 0.3) as usize;
+                let rt = self.decay.value().max(0.1) as f64;
+                let klp = 1.0 - (-TAU_F * (self.hicut.value() * 0.7).min(0.45 * tsr) / tsr).exp();
+                let m = 0.5 * (feed[0] + feed[1]);
+                for j in 0..n_springs {
+                    let len = (0.02 + 0.0012 * self.size.value() as f64) * tsr as f64 * (1.0 + 0.13 * j as f64);
+                    let fb = if freeze != 0 { 0.999 } else { 10f64.powf(-3.0 * len / (rt * tsr as f64)) as f32 };
+                    let y = self.springs[j].process(m, coef, stages.min(40), fb, klp);
+                    if j % 2 == 0 {
+                        tl += y;
+                    } else {
+                        tr += y;
+                    }
+                }
+                if n_springs == 1 {
+                    tr = tl;
+                } else if n_springs == 3 {
+                    tr += 0.5 * tl;
+                }
+                (tl, tr)
+            }
+            Algo::Gated | Algo::Reverse => {
+                self.diff.process(&mut d8);
+                (d8[0] * 0.5, d8[1] * 0.5)
+            }
+            _ => {
+                self.diff.process(&mut d8);
+                if self.algo == Algo::Bloom {
+                    // the diffuser fed back on itself: the tail fades in, then the FDN decays it
+                    let tb = 0.2 + 1.8 * ((self.size.value() - 5.0) / 55.0) as f64;
+                    let gb = 10f64.powf(-3.0 * 0.06 / tb) as f32;
+                    let mut b = [0.0f32; 8];
+                    for c in 0..8 {
+                        b[c] = d8[c] * 0.3 + gb * self.bloom_fb[c];
+                    }
+                    self.bloom.process(&mut b);
+                    self.bloom_fb = b;
+                    d8 = b;
+                }
+                let mut in16 = [0.0f32; 16];
+                for c in 0..16 {
+                    in16[c] = if c < 8 { d8[c] } else { -d8[c - 8] } * 0.5;
+                }
+                self.fdn.process(&in16)
+            }
+        }
+    }
+
+    /// The tail's engines to the era's rate (lengths take it on the next `control`).
+    fn apply_era_rate(&mut self) {
+        self.tsr = era_rate(self.era, self.sr);
+        let k = (self.tsr / self.sr) as f64;
+        self.diff.set_rate(k);
+        self.bloom.set_rate(k);
+        self.fdn.set_rate(self.tsr);
+        self.plate.set_rate(self.tsr);
+        self.era_rs.set_ratio(k);
+        self.era_rs.reset();
     }
 
     fn clear_tails(&mut self) {
@@ -735,6 +770,108 @@ impl Reverb {
         for t in self.er.iter_mut().chain(self.burst.iter_mut()) {
             t.reset();
         }
+    }
+}
+
+/// The era's internal rate: the host's (Modern), 31.25 kHz (80s: Yamaha REV7 / SPX90), 20 kHz (70s:
+/// Lexicon 224, EMT 250's bandwidth). Never above the host's.
+fn era_rate(era: usize, sr: f32) -> f32 {
+    match era {
+        1 => 31250.0f32.min(sr),
+        2 => 20000.0f32.min(sr),
+        _ => sr,
+    }
+}
+
+/// The era's converter band (its anti-alias and reconstruction filters' corner).
+fn era_band(era: usize, sr: f32) -> f32 {
+    match era {
+        1 => 12000.0f32.min(0.45 * sr),
+        2 => 8000.0f32.min(0.45 * sr),
+        _ => 0.45 * sr,
+    }
+}
+
+/// The era's converters: a 4-pole anti-alias filter, a fractional decimation to the tail's rate (linear,
+/// between host samples), and a cubic (Catmull-Rom) reconstruction back to the host's rate. Like the
+/// period's converters, not a transparent resampler: the reconstruction leaves faint images above the
+/// band, the grain. Latency: two tail samples (0.06 – 0.1 ms on the wet).
+#[derive(Clone, Default)]
+struct EraRate {
+    aa: [[Svf; 2]; 2],
+    /// tail samples per host sample (≤ 1)
+    ratio: f64,
+    /// the tail clock's phase at the current host sample, in tail periods
+    ph: f64,
+    prev: [f32; 2],
+    /// the last four tail outputs, oldest first, per channel
+    hist: [[f32; 4]; 2],
+}
+
+impl EraRate {
+    fn set_ratio(&mut self, ratio: f64) {
+        self.ratio = ratio.min(1.0);
+    }
+
+    fn set_band(&mut self, f: f32, sr: f32) {
+        // 4-pole Butterworth
+        for c in 0..2 {
+            self.aa[c][0].set(SvfMode::LowPass, f, 0.541_196_1, 0.0, sr);
+            self.aa[c][1].set(SvfMode::LowPass, f, 1.306_563, 0.0, sr);
+        }
+    }
+
+    fn reset(&mut self) {
+        for c in 0..2 {
+            for f in self.aa[c].iter_mut() {
+                f.reset();
+            }
+        }
+        self.ph = 0.0;
+        self.prev = [0.0; 2];
+        self.hist = [[0.0; 4]; 2];
+    }
+
+    /// One host sample in; the tail's input when a tail sample falls in this host period.
+    #[inline]
+    fn input(&mut self, x: [f32; 2]) -> Option<[f32; 2]> {
+        let mut y = [0.0f32; 2];
+        for c in 0..2 {
+            let u = self.aa[c][0].process(x[c]);
+            y[c] = self.aa[c][1].process(u);
+        }
+        let prev = self.prev;
+        self.prev = y;
+        self.ph += self.ratio;
+        if self.ph < 1.0 {
+            return None;
+        }
+        self.ph -= 1.0;
+        // the tail sample sat `ph / ratio` host samples before this one
+        let a = (self.ph / self.ratio) as f32;
+        Some([y[0] + (prev[0] - y[0]) * a, y[1] + (prev[1] - y[1]) * a])
+    }
+
+    #[inline]
+    fn push_output(&mut self, y: (f32, f32)) {
+        for (c, v) in [y.0, y.1].into_iter().enumerate() {
+            let h = &mut self.hist[c];
+            *h = [h[1], h[2], h[3], v];
+        }
+    }
+
+    /// The host sample now: between the 2nd and 3rd newest tail samples, at the tail clock's phase.
+    #[inline]
+    fn output(&self) -> (f32, f32) {
+        let t = (self.ph as f32).clamp(0.0, 1.0);
+        let cr = |h: &[f32; 4]| {
+            let (p0, p1, p2, p3) = (h[0], h[1], h[2], h[3]);
+            let a = -0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3;
+            let b = p0 - 2.5 * p1 + 2.0 * p2 - 0.5 * p3;
+            let c = 0.5 * (p2 - p0);
+            ((a * t + b) * t + c) * t + p1
+        };
+        (cr(&self.hist[0]), cr(&self.hist[1]))
     }
 }
 
@@ -781,6 +918,7 @@ impl Effect for Reverb {
             s.prepare(sample_rate, 40, 0x5B + j as u64);
         }
         self.shifter.prepare(sample_rate, 80.0);
+        self.apply_era_rate();
     }
 
     fn reset(&mut self) {
@@ -796,6 +934,7 @@ impl Effect for Reverb {
         self.pending = false;
         self.era = idx(v[p::ERA], 3);
         self.pending_era = false;
+        self.apply_era_rate();
         self.taps_key = (u32::MAX, 0, 0);
         self.tail_key = [f64::NAN; 11];
         self.filt_key = [f64::NAN; 7];

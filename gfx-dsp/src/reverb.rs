@@ -77,6 +77,8 @@ pub struct Diffuser {
     /// every length is on its target: the fast path reads these whole-sample delays directly
     settled: bool,
     taps: Vec<[usize; 8]>,
+    /// the running rate over the prepared one (≤ 1: a reduced internal rate fits the prepared lines)
+    rate_k: f64,
 }
 
 /// Length glide per sample (≈ 20 ms).
@@ -111,8 +113,14 @@ impl Diffuser {
             }
             self.perm[s] = p;
         }
+        self.rate_k = 1.0;
         self.set_scale(1.0);
         self.settle();
+    }
+
+    /// Runs at `rate` × the prepared sample rate (`rate` ≤ 1). Takes effect on the next `set_scale`.
+    pub fn set_rate(&mut self, rate: f64) {
+        self.rate_k = rate.min(1.0);
     }
 
     pub fn reset(&mut self) {
@@ -125,7 +133,7 @@ impl Diffuser {
     pub fn set_scale(&mut self, k: f64) {
         for (s, (t, base)) in self.target.iter_mut().zip(self.base.iter()).enumerate() {
             for c in 0..8 {
-                t[c] = (base[c] * k).round().max(1.0);
+                t[c] = (base[c] * k * self.rate_k).round().max(1.0);
                 self.taps[s][c] = t[c] as usize;
             }
         }
@@ -207,6 +215,8 @@ pub struct Fdn {
     mod_target: f64,
     mod_rate: f64,
     sr: f64,
+    /// the prepared rate: the lines hold that much
+    sr_max: f64,
     pub frozen: bool,
     /// how frozen (0 … 1, glides ~40 ms): attenuation and modulation fade with it, so freezing and
     /// thawing never jump
@@ -221,15 +231,21 @@ const FDN_MS: [f64; 16] = [31.1, 34.7, 37.9, 41.3, 44.9, 48.7, 52.1, 55.9, 60.1,
 
 impl Fdn {
     pub fn prepare(&mut self, sample_rate: f32, max_scale: f64) {
-        self.sr = sample_rate as f64;
-        let max = (97.1 * max_scale * 0.001 * self.sr) as usize + 64;
+        self.sr_max = sample_rate as f64;
+        let max = (97.1 * max_scale * 0.001 * self.sr_max) as usize + 64;
         self.lines.prepare(max);
-        for i in 0..16 {
-            self.base[i] = FDN_MS[i] * 0.001 * self.sr;
-        }
+        self.set_rate(sample_rate);
         self.rng = [Rng::new(0xF1), Rng::new(0xF2), Rng::new(0xF3), Rng::new(0xF4)];
         self.set_scale(1.0);
         self.settle();
+    }
+
+    /// Runs at `sample_rate` (at most the prepared one). Then `set_scale`, `set_decay` and `set_mod`.
+    pub fn set_rate(&mut self, sample_rate: f32) {
+        self.sr = (sample_rate as f64).min(self.sr_max);
+        for i in 0..16 {
+            self.base[i] = FDN_MS[i] * 0.001 * self.sr;
+        }
     }
 
     pub fn reset(&mut self) {
@@ -407,7 +423,13 @@ pub struct Plate {
     pub density: f32,
     pub frozen: bool,
     sr: f64,
+    sr_max: f64,
     fb: [f32; 2],
+}
+
+/// Dattorro's input bandwidth (0.9995 at 29,761 Hz: y += 0.9995 (x − y)) as the one-pole's pole at `sr`.
+fn plate_bw_pole(sr: f64) -> f32 {
+    0.0005f64.powf(29761.0 / sr) as f32
 }
 
 const PLATE_IN: [f64; 4] = [142.0, 107.0, 379.0, 277.0];
@@ -430,8 +452,19 @@ impl Plate {
             self.extra_ap[i].prepare(PLATE_EXTRA[i] * k, 8);
             self.d2[i].prepare((PLATE_LEN[4 + i] * k) as usize + 8);
         }
+        self.sr_max = self.sr;
         self.set_scale(1.0);
-        self.bw = 0.9995f32.powf((29761.0 / self.sr) as f32);
+        self.bw = plate_bw_pole(self.sr);
+    }
+
+    /// Runs at `sample_rate` (at most the prepared one). Then `set_scale` and the decay fields.
+    pub fn set_rate(&mut self, sample_rate: f32) {
+        self.sr = (sample_rate as f64).min(self.sr_max);
+        self.k = self.sr / 29761.0;
+        for (a, l) in self.in_ap.iter_mut().zip(PLATE_IN) {
+            a.len = l * self.k;
+        }
+        self.bw = plate_bw_pole(self.sr);
     }
 
     pub fn reset(&mut self) {
@@ -512,7 +545,7 @@ impl Plate {
         // Dattorro's output taps (simplified to four per side, decorrelated across the halves)
         let l = taps[0][0] + taps[0][1] - taps[0][3] + taps[0][2] - taps[1][2] - taps[1][3];
         let r = taps[1][0] + taps[1][1] - taps[1][3] + taps[1][2] - taps[0][2] - taps[0][3];
-        (0.3 * l, 0.3 * r)
+        (0.5 * l, 0.5 * r)
     }
 }
 
