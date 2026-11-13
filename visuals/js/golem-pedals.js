@@ -345,7 +345,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     dynamics: '#4a5a6e', drive: '#e04a00', utility: '#f0a500', filter: '#00a8c0', eq: '#0058e0',
     modulation: '#00a84f', delay: '#3a28f0', reverb: '#6a1fd1', pitch: '#c4148c',
   };
-  const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480' };
+  const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
   const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3' };
@@ -355,7 +355,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-vibrato': 'waves', 'gfx-chorus': 'waves', 'gfx-flanger': 'jet', 'gfx-phaser': 'spiral', 'gfx-rotary': 'swirl',
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
-    'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves',
+    'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves', 'gfx-glitch': 'bins',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -469,6 +469,22 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         let d = `M0 ${f1(y0)}`;
         for (let i = 0; i < n; i++) d += `H${f1((i + 1) * sw)}V${f1(y0 - (i + 1) * rise)}`;
         line(d);
+        break;
+      }
+      case 'bins': {
+        // a spectrum's bins either side of the rune, sliced along one line and the tops slipped
+        // sideways, as the glyph: the spectrum fractured
+        const y0 = cy + ch / 2 + 6, cut = cy + 2, slip = 2.4, gap = 2.6;
+        const tops = [.35, .62, .48, .9, .28, .74, 1, .52, .4, .66, .22, .58];
+        let k = 0;
+        for (let x = 7; x <= W - 7; x += 5) {
+          if (Math.abs(x - cx) < cw / 2 - 2) continue;
+          const t = tops[k++ % tops.length], top = y0 - (y0 - (cy - ch * .7)) * t, op = .45 + .5 * t;
+          if (top < cut - gap - 1.5) {
+            line(`M${f1(x)} ${f1(y0)}V${f1(cut)}`, op);
+            line(`M${f1(x + slip)} ${f1(cut - gap)}V${f1(top)}`, op);
+          } else line(`M${f1(x)} ${f1(y0)}V${f1(top)}`, op);
+        }
         break;
       }
       case 'ticks':

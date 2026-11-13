@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -50,6 +50,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-emet" | "emet" => Some(Box::new(gfx_emet::Emet::new())),
         "gfx-shem" | "shem" => Some(Box::new(gfx_shem::Shem::new())),
         "gfx-golem" | "golem" => Some(Box::new(gfx_golem::Golem::new())),
+        "gfx-glitch" | "glitch" => Some(Box::new(gfx_glitch::Glitch::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -104,6 +105,16 @@ pub fn options(name: &str) -> checks::Options {
         // a 4 s tail regenerated through the shifters is still at −55 dBFS three seconds after the
         // burst: the pad itself, not a residue
         o.silence_floor_db = -40.0;
+        o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-glitch" | "glitch") {
+        // Ring Hold at 40 % (the default) lets the loudest partials ring for ~2.5 s (T60): 3 s after the
+        // burst they are at −90 – −110 dBFS, the effect itself; the channels' randoms differ by `width`
+        o.silence_floor_db = -80.0;
+        // trim +24 → −24 dB drives the wet's soft limiter, then the held partials (Ring Hold) fall back
+        // through it as they decay: moving distortion for a moment (−42 dB); the Ringing window has hard
+        // frame edges by design and its engine fades in over 50 ms (−45 dB at 192 kHz)
+        o.click_bound_db = -40.0;
         o.stereo_by_nature = true;
     }
     if matches!(name, "gfx-reverb" | "reverb") {

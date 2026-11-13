@@ -1040,6 +1040,107 @@
           "scale"
         ]
       }
+    ],
+    "gfx-glitch": [
+      {
+        "id": "engine",
+        "name": "Engine",
+        "custom": null,
+        "params": [
+          "size",
+          "window",
+          "trim"
+        ]
+      },
+      {
+        "id": "spectrum",
+        "name": "Spectrum",
+        "custom": null,
+        "params": [
+          "cloud",
+          "damp",
+          "density"
+        ]
+      },
+      {
+        "id": "shift",
+        "name": "Shift",
+        "custom": null,
+        "params": [
+          "pitch",
+          "spread",
+          "drift"
+        ]
+      },
+      {
+        "id": "slot_a",
+        "name": "Slot A",
+        "custom": null,
+        "params": [
+          "lo_a",
+          "hi_a"
+        ]
+      },
+      {
+        "id": "slot_b",
+        "name": "Slot B",
+        "custom": null,
+        "params": [
+          "fx_b",
+          "amt_b",
+          "lo_b",
+          "hi_b"
+        ]
+      },
+      {
+        "id": "slot_c",
+        "name": "Slot C",
+        "custom": null,
+        "params": [
+          "fx_c",
+          "amt_c",
+          "lo_c",
+          "hi_c"
+        ]
+      },
+      {
+        "id": "lfo",
+        "name": "LFO",
+        "custom": null,
+        "params": [
+          "lfo_shape",
+          "rate",
+          "sync",
+          "lfo_depth",
+          "lfo_dest"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_sens",
+          "env_att",
+          "env_rel",
+          "env_depth",
+          "env_dest"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "wet",
+          "hpf",
+          "lpf",
+          "width",
+          "align",
+          "trails",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1274,6 +1375,12 @@
       "env_mix": {
         "param": "mod_custom",
         "equals": true
+      }
+    },
+    "gfx-glitch": {
+      "rate": {
+        "param": "sync",
+        "equals": "Off"
       }
     }
   }

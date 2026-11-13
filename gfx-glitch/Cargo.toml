@@ -1,0 +1,21 @@
+[package]
+name = "gfx-glitch"
+version = "0.1.0"
+description = "GoleM FX Glitch — golem's spectral pedal for textures and pads"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["plugin"]
+# The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
+plugin = ["dep:nih_plug"]
+
+[dependencies]
+gfx-dsp.workspace = true
+realfft = "3.5"
+nih_plug = { workspace = true, optional = true }

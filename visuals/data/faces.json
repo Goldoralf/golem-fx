@@ -387,6 +387,22 @@
    ],
    "category": "pitch",
    "color": "#9b4dff"
+  },
+  "gfx-glitch": {
+   "name": "Glitch",
+   "blocks": [
+    "glitch"
+   ],
+   "knobs": [
+    "amt_a",
+    "sustain",
+    "mix"
+   ],
+   "selectors": [
+    "fx_a"
+   ],
+   "category": "modulation",
+   "color": "#72c000"
   }
  }
 }

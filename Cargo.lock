@@ -247,6 +247,7 @@ dependencies = [
  "gfx-flanger",
  "gfx-gapmeter",
  "gfx-gate",
+ "gfx-glitch",
  "gfx-golem",
  "gfx-killswitch",
  "gfx-limiter",
@@ -365,6 +366,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-glitch"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

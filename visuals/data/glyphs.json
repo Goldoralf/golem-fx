@@ -296,6 +296,11 @@
    "uni": "⏱",
    "svg": "<path d='M2.5 12h4l1-3 1 6 1-3'/><path d='M14.5 12l1-3 1 6 1-3h4'/><path d='M10.5 7.5h3M12 7.5v1.5' opacity='.6'/><path d='M10 12h4' stroke-dasharray='1 1.6'/>"
   },
+  "glitch": {
+   "label": "Spectral glitch (gfx)",
+   "uni": "▞",
+   "svg": "<path d='M3 21v-7.5M10.5 21v-7.5M18 21v-7.5'/><path d='M6 10.5V5.5M13.5 10.5V2.5M21 10.5V8'/>"
+  },
   "vital": {
    "label": "Vital",
    "uni": "♫",

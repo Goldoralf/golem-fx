@@ -83,3 +83,6 @@ name = "GoleM FX Shem"
 
 [gfx-golem]
 name = "GoleM FX Golem"
+
+[gfx-glitch]
+name = "GoleM FX Glitch"
