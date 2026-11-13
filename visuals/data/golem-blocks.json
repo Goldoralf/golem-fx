@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 42,
+ "catalog_version": 43,
  "effects": [
   {
    "type": "gate",
@@ -2928,6 +2928,43 @@
    ]
   },
   {
+   "type": "met",
+   "name": "Met Gate",
+   "short": "Met",
+   "category": "dynamics",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Met (GoleM)",
+   "color": "#4a5a6e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "thresh",
+     "name": "Threshold",
+     "min": -90,
+     "max": 0,
+     "default": -45,
+     "unit": "dB"
+    },
+    {
+     "id": "hold",
+     "name": "Hold",
+     "min": 0,
+     "max": 500,
+     "default": 0,
+     "unit": "ms"
+    },
+    {
+     "id": "release",
+     "name": "Release",
+     "min": 0,
+     "max": 1000,
+     "default": 0,
+     "unit": "ms"
+    }
+   ]
+  },
+  {
    "type": "stretch",
    "name": "Stretch",
    "short": "Strch",
@@ -3091,6 +3128,64 @@
      "max": 2,
      "default": 2,
      "unit": null
+    }
+   ]
+  },
+  {
+   "type": "emet",
+   "name": "Emet Overdrive",
+   "short": "Emet",
+   "category": "drive",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Emet (GoleM)",
+   "color": "#e04a00",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "gain",
+     "name": "Gain",
+     "min": 0,
+     "max": 100,
+     "default": 35,
+     "unit": "%"
+    },
+    {
+     "id": "tone_stack",
+     "name": "Tone",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    }
+   ]
+  },
+  {
+   "type": "shem",
+   "name": "Shem Boost",
+   "short": "Shem",
+   "category": "drive",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Shem (GoleM)",
+   "color": "#f0a500",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "grind",
+     "name": "Grind",
+     "min": -8,
+     "max": 20,
+     "default": 10,
+     "unit": "dB"
     }
    ]
   },
