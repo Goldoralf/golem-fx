@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>golem pedals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&family=Pirata+One&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/visuals.css">
 <script src="data/visuals-data.js"></script>
 <script src="js/golem-pedals.js"></script>
@@ -25,7 +25,7 @@
     <span><span class="seg-label">Floor</span><span class="seg" id="floor-seg">
       <button data-floor="stage" aria-pressed="true">Stage</button><button data-floor="rug" aria-pressed="false">Rug</button></span></span>
     <span><span class="seg-label">golem-fx finish</span><span class="seg" id="style-seg">
-      <button data-style="auto" aria-pressed="true">By family</button><button data-style="anodized" aria-pressed="false">Anodized</button><button data-style="thrash" aria-pressed="false">Thrash</button></span></span>
+      <button data-style="auto" aria-pressed="true">By family</button><button data-style="anodized" aria-pressed="false">Anodized</button><button data-style="thrash" aria-pressed="false">Thrash</button><button data-style="blackwork" aria-pressed="false">Blackwork</button></span></span>
   </div>
   <div class="scene" id="scene"></div>
   <div class="blocks-row" id="blocks-row"></div>
@@ -33,7 +33,7 @@
 
   <section id="gfx">
     <h2>golem-fx</h2>
-    <p class="lead">Golem's own effects, in two finishes: <b>Thrash</b> (gloss lacquer, diamond plate round the switch, the motif in yellow lined in black) for the aggressive families (drive, dynamics, utility, plus the killswitch) and <b>Anodized</b> (machined aluminium in the family's colour, the motif engraved in the metal) for the rest (the gap meter included). The finish switch can force one for every pedal. Each effect carries a motif that says what it does, and its glyph lights as a rune when the pedal is on. Knobs, selectors and their default positions come from each effect's code (<code>gfx-bench manifest</code>).</p>
+    <p class="lead">Golem's own effects, in two finishes: <b>Thrash</b> (gloss lacquer, diamond plate round the switch, the motif in yellow lined in black) for the aggressive families (drive, dynamics, utility, plus the killswitch) and <b>Anodized</b> (machined aluminium in the family's colour, the motif engraved in the metal) for the rest (the gap meter included). The three high-gain companions (Met, Emet, Shem) wear <b>Blackwork</b>: black lacquer, white engraving, a skull whose eyes light when the pedal is on. The finish switch can force one for every pedal. Each effect carries a motif that says what it does, and its glyph lights as a rune when the pedal is on. Knobs, selectors and their default positions come from each effect's code (<code>gfx-bench manifest</code>).</p>
     <div class="grid" id="gfx-grid"></div>
   </section>
 
@@ -179,13 +179,14 @@
   const MOTIF_LABEL = { flames: 'flames', chevrons: 'thrust chevrons', barbed: 'barbed wire', clamp: 'clamp', crescent: 'sweep',
     curve: 'response curve', pulse: 'pulse train', waves: 'twin waves', jet: 'jet streaks', spiral: 'spiral', swirl: 'swirl',
     bolt: 'lightning', echo: 'echoes', rays: 'rays', stars: 'sparks', diamonds: 'octave diamonds', stairs: 'stairs', ticks: 'ruler' };
+  const BW_LABEL = { 'gfx-met': 'barbed wire', 'gfx-emet': 'flame crown', 'gfx-shem': 'rays' };
   function drawGfx() {
     $('gfx-grid').innerHTML = '';
     Object.values(D.gfx).forEach(g => {
       const b = P.blockByType(g.blocks[0]) || { type: g.blocks[0], glyph: g.glyph, name: g.name, color: g.color };
       const m = P.MOTIF[g.crate];
       const fin = P.style === 'auto' ? P.finishFor(g) : P.style;
-      $('gfx-grid').appendChild(card(on => P.gfxPedal(g, { on }), b, g.crate, g.blocks.join(', ') + (m ? ' · ' + (MOTIF_LABEL[m] || m) : '') + ' · ' + fin));
+      $('gfx-grid').appendChild(card(on => P.gfxPedal(g, { on }), b, g.crate, g.blocks.join(', ') + ((fin === 'blackwork' && BW_LABEL[g.crate]) ? ' · skull, ' + BW_LABEL[g.crate] : (m ? ' · ' + (MOTIF_LABEL[m] || m) : '')) + ' · ' + fin));
     });
   }
   drawGfx();
