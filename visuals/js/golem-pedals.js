@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // golem pedals: SVG renderers for every block golem can put on a lane, in three families.
 //
-//   gfx      "metal"    golem-fx's own effects, in one of two finishes (GolemPedals.setStyle, or
-//                       opts.style): "anodized" (machined aluminium in the family's colour, the motif
-//                       engraved) or "thrash" (gloss lacquer, diamond plate, the motif in yellow lined
-//                       in black). Each effect has a motif saying what it does (MOTIF) and its glyph lit
+//   gfx      "metal"    golem-fx's own effects, in one of two finishes: "anodized" (machined aluminium
+//                       in the family's colour, the motif engraved) or "thrash" (gloss lacquer, diamond
+//                       plate, the motif in yellow lined in black). By default ("auto") the finish
+//                       follows the family (finishFor); GolemPedals.setStyle or opts.style force one. Each effect has a motif saying what it does (MOTIF) and its glyph lit
 //                       as a rune when on. "clay", the first prototype, stays available.
 //   nam-*    "specimen" NAM captures: a steel pedal with a glass window (the captured circuit), and the
 //                       amp line: head, cab, head + cab (stack or combo), voiced by the amp's family.
@@ -266,7 +266,8 @@
     opts = opts || {};
     const spec = typeof crateOrSpec === 'string' ? data().gfx[crateOrSpec] : crateOrSpec;
     if (!spec) return '';
-    const style = opts.style || api.style;
+    let style = opts.style || api.style;
+    if (style === 'auto') style = finishFor(spec);
     if (METAL_STYLES.includes(style)) return spec.shape === 'treadle' ? gfxTreadleMetal(spec, opts, style) : gfxPedalMetal(spec, opts, style);
     if (spec.shape === 'treadle') return gfxTreadle(spec, opts);
     const on = opts.on !== false;
@@ -346,6 +347,11 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
+  // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
+  // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
+  const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized' };
+  const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
 
@@ -1048,12 +1054,12 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
     }
   }
 
-  // the golem-fx finish: 'anodized' (default) or 'thrash'; 'clay' is the first prototype's
+  // the golem-fx finish: 'auto' (by family, default), 'anodized', 'thrash'; 'clay' is the first prototype's
   const api = {
     defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, blockTile, pedalFor,
     blockByType, archetypeFor, enamelTreadle, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE,
     _parts: { dinSocket, stompSwitch, knobAlu, headBody, cabBody, corners },
-    style: 'anodized', STYLES: METAL_STYLES.concat('clay'), MOTIF, METAL_HUE,
+    style: 'auto', STYLES: ['auto'].concat(METAL_STYLES, 'clay'), MOTIF, METAL_HUE, FAMILY_FINISH, CRATE_FINISH, finishFor,
     setStyle(s) { if (this.STYLES.includes(s)) this.style = s; return this.style; },
   };
   root.GolemPedals = api;
