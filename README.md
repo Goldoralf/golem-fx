@@ -77,6 +77,13 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 35 | [gfx-bassdi](gfx-bassdi/) | new block `bass-di` (bass preamp / DI) | — | **designed**, reviewed by Fable 5.2 |
 | 36 | [gfx-tape](gfx-tape/) | new block `tape` (tape and media saturation) | — | **designed**, reviewed by Fable 5.2 |
 | 37 | [gfx-grit](gfx-grit/) | `grit` | Prisma | **designed**, reviewed by Fable 5.2 |
+| 38 | [gfx-transient](gfx-transient/) | new block `transient` (transient shaper) | — | **designed**, reviewed by Fable 5.2 |
+| 39 | [gfx-mbcomp](gfx-mbcomp/) | new block `mb-comp` (multiband compressor) | — | **designed**, reviewed by Fable 5.2 |
+| 40 | [gfx-ducker](gfx-ducker/) | new block `ducker` (key / self / pump ducking) | — | **designed**, reviewed by Fable 5.2 |
+| 41 | [gfx-cab](gfx-cab/) | `cab` (+ `ir-fx` as sibling crate gfx-irfx) | x42 IR Convolver Mono / Stereo | **designed**, reviewed by Fable 5.2 |
+| 42 | [gfx-acoustic](gfx-acoustic/) | new block `acoustic-sim` (electric to acoustic) | — | **designed**, reviewed by Fable 5.2 |
+| 43 | [gfx-widener](gfx-widener/) | new block `widener` (mono-safe stereo width) | — | **designed**, reviewed by Fable 5.2 |
+| 44 | [gfx-tuner](gfx-tuner/) | `tuner` | golem_tuner.jsfx | **designed**, reviewed by Fable 5.2 |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows

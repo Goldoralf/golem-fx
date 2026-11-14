@@ -1,0 +1,618 @@
+# gfx-widener
+
+> **Status: DESIGNED** (2026-11-14) — design only, no code. Design by Claude Opus 5.5; reviewed 2026-11-14
+> (Fable 5.2): verdict **Strong**, fixes applied in place (see the Review section at the end).
+
+golem's **stereo widener and imager**. It turns a mono lane (guitar, bass, voice, keys) into a stereo image,
+and it reshapes the image of a stereo source (narrow, widen, mono the lows, rotate). It is a **new golem
+block** (no catalogue entry today): proposed type `widener`, category `utility` (§3.5).
+
+The idea: **width that cannot hurt the mono sum.** Every generator writes only into the side channel
+(S = (L − R) / 2); the mid (M = (L + R) / 2) passes untouched, bit for bit. So a mono PA, a phone speaker
+or a broadcast fold-down gets **exactly the dry signal** — not "mostly", not "within 1 dB": the effect's
+contribution cancels in the sum (§2.1). That is the property Polyverse Wider advertises; here it is a
+law of the architecture, a bench test (≤ −120 dB), and a read-only meter that proves it live. Around it
+sit what the best imagers offer — four generators (velvet-noise decorrelation, all-pass network,
+Lauridsen comb, micro-pitch double), side-only bass mono (`bass_keep`), M/S width for stereo sources,
+a fold-exact balance, rotation, a correlation meter — and one switch, `mono_law`, for the classic forms
+that trade the mono guarantee for their sound (true Haas delay, L/R pitch voices).
+
+What the law does **not** promise, stated once: each channel heard alone is coloured (any side made
+from the mid is a pair of complementary filters, §2.1) — the design's second job is to make that colour
+fine and irregular (§2.2); and the fold is exact only while what follows treats both channels alike
+(§3.4).
+
+Stereo by nature: **2 / 2 first** (golem contract), 1 / 1 not offered (a mono widener has no output to
+widen into). Zero latency, nothing reported (§2.6).
+
+## 1. State of the art
+
+Survey of 2026-11-14. **[V]** read in a manual, a paper or source · **[M]** manufacturer page ·
+**[F]** forum post or review · **[A]** computed here · **[P]** prototyped at the review (numpy, §Review) ·
+**[I]** inference or from memory, not re-checked · **[U]** could not verify.
+
+### Commercial references
+
+| Product | What it does | What we take / beat |
+|---|---|---|
+| [Polyverse Wider](https://polyversemusic.com/products/wider) (free) [V, manual v2.0.0] | "A specialized array of all-pass and comb filters"; "When summed to mono, Wider simply cancels itself out, leaving your original signal fully intact"; width 100 % = "full stereo", up to 200 %; **Low Bypass** (no widening below a frequency); a Mono check button | The guarantee and the 0 – 200 % scale. Wider has one sound; its internals are not published beyond that sentence [U]; Low Bypass runs 20 Hz – 20 kHz; its default width is not in the manual [U]. KVR users find it colours the sound [F] — each channel *is* coloured (§2.1), and we let the player choose how (four generators, `variant`) |
+| [iZotope Ozone Imager](https://www.izotope.com/en/products/ozone-imager.html) (free v2) and Ozone 9 – 11 Imager [V, Ozone 9 help] | Width per band (up to 4 bands in Ozone), **Stereoize I** = "a delayed copy of the mid channel injected into the side channel" (Haas-style, mono-compatible), **Stereoize II** = a newer algorithm that "helps to preserve transients" — "Velvet Noise decorrelation and convolution to convert mid to side" [M, iZotope's Imager tips article]; "neither mode will compromise the mono compatibility" [M]; vectorscope and correlation meter. Ozone 10+ "Recover Sides" keeps side information audible in mono [M]; how is not documented [U] | Stereoize I is our Comb generator, Stereoize II the principle of our Velvet one: the field's reference already makes velvet-into-the-side its better mode. What we add: sequences optimised for the *one-channel* timbre, a two-band length, variants, the meters. Transient preservation → the two-band velvet and `transient`. A correlation meter as a read-only parameter |
+| [Waves S1 Stereo Imager](https://www.waves.com/plugins/s1-stereo-imager) [V, manual summary] | Width, **asymmetry**, **rotation**, and Blumlein **shuffling** (frequency-dependent width, phase-compensated, low frequencies) | Rotation and balance on the M/S vector. Shuffling (widening the *lows*) is the opposite of what a live lane needs: not taken |
+| Waves Center [I] | Splits a stereo mix into centre and sides with gains and a punch / transient split | Confirms the value of a transient-aware side level |
+| [Soundtoys MicroShift](https://www.soundtoys.com/product/microshift/) [V, manual] | Three styles modelled on Eventide H3000 presets and an AMS DMX 15-80 setting: two micro-pitch-shifted, slightly delayed voices L / R; `detune` and `delay` 50 – 200 %; "Focus" [I: a band limit on the effect] | Double generator, Classic law. The styles differ by delay variation and de-glitching — our shifter is gfx-dsp's splice-search one (the H3000 "deglitch" idea) |
+| Eventide H910 / H3000 doubling [I] | The original "micro-shift": ±a few cents on two voices, 10 – 30 ms | Range of `cents` and `time` |
+| Voxengo MSED, Kilohearts Haas, Softube Widener [I] | M/S gain, Haas delay with a mono-check, width with a low-frequency limit | Nothing new beyond the above |
+
+### Papers and literature
+
+- **Precedence / Haas effect**: Wallach, Newman & Rosenzweig (1949); Haas (*Acustica* 1, 1951); review
+  Litovsky et al. (*JASA* 106, 1999) [I]. A copy delayed by ~1 – 30 ms fuses with the first arrival and
+  pulls the image towards it; beyond ~30 – 40 ms (music) it splits into an echo. **Fold-down**: L = x,
+  R = x(t − τ) sums to x + x(t − τ), a comb with notches at (2k + 1) / (2τ) — 33, 100, 167 Hz … for 15 ms
+  [A]. Every "phasey in mono" complaint about Haas wideners is this comb [F].
+- **Lauridsen (1954) / Schroeder (JAES 6(2), 1958) / Orban (JAES 1970) pseudo-stereo** [V, abstracts and
+  Csound Journal 14]: L = x + g·x(t − τ), R = x − g·x(t − τ). Two complementary combs; L + R = 2x **exactly**.
+  Schroeder later found that complementary *intensity* differences, not phase alone, make the illusion
+  [V, AES abstract]. Each channel alone is a comb (±(1 + g) / (1 − g)): the "phasey" timbre when a
+  listener hears one side. Gerzon's all-pass refinement reduces artefacts but is reported not fully
+  mono-compatible in its classic form [V, Csound Journal] — our all-pass generator is used in the M/S
+  form, which is.
+- **Decorrelation**: Kendall, *The decorrelation of audio signals and its impact on spatial imagery*
+  (CMJ 19(4), 1995) [I] — all-pass / random-phase FIRs, image spread grows as correlation falls.
+  **Velvet-noise decorrelator**: Alary, Politis & Välimäki, DAFx-17 [V, abstract] — a sparse ±1 sequence
+  (velvet noise) with a decaying envelope, "comparable results without latency and at a smaller
+  computing cost", 87 % fewer operations than a white-noise FIR. **Optimized velvet-noise decorrelator**:
+  Schlecht, Alary, Välimäki & Habets, DAFx-18 [V, abstract] — pulse positions and gains optimised for a
+  flat magnitude and low cross-correlation (interior-point search from a random exponential sequence);
+  76 % fewer operations than a white-noise filter (88 % at a lower density); judged "effective and
+  colorless" in a listening test [V, abstract]. Both papers decorrelate with **one filter per channel
+  and no dry**; here the filter feeds the side and the dry is the mid, so the quantity to flatten is
+  |1 ± g·V(f)|, not |V(f)|: our sequences are designed for that (§2.2), with our own script. A Python port ([VNDecorrelate](https://ckonst.github.io/VNDecorrelate)) [V] uses 30 ms and
+  30 impulses, log-distributed towards the start, with a segmented decay "to reduce transient smearing
+  and frequency coloration".
+- **Side-only high-pass**: the "elliptical equaliser" of vinyl cutting — lows made mono by a 6 or
+  12 dB / octave high-pass on the side [I]. Zero latency forces a choice: the steeper the filter, the
+  further it rotates the side against the mid above the cut (§2.3 [P]).
+- **Correlation meters**: the broadband Pearson correlation r = Σ LR / √(Σ L² · Σ R²) over a few hundred ms,
+  as in x42-meters' phase correlation meter and the broadcast meters [I].
+
+### Open source
+
+| Project | Idea | Licence |
+|---|---|---|
+| x42-stereoroute, x42-meters (Robin Gareus) [I] | L / R / M / S routing matrix; phase correlation meter, goniometer | GPL-2+ |
+| LSP plugins (Mid-Side matrix, phase detector, analyzer correlometer) [I] | M/S matrices; correlation display | LGPL-3 |
+| Airwindows (Wider, StereoFX, Sidepass, Srsly) [I] | Side gain with a mono bass; high-pass on the side only (Sidepass) — the right place for a bass-mono filter | MIT |
+| ChowMatrix [I] | Delay trees with per-node pan: Haas-style width as a by-product | BSD-3 |
+| VNDecorrelate, Schlecht's OptimizedVelvetDecorrelators [V] | Velvet decorrelator design and optimisation | MIT / see repo [U] |
+
+### Forum feedback: what players love and hate [F]
+
+- **Hate**: "phasey", "tinny", "collapses in mono", parts that "disappear or change in tone and level when
+  mixed to mono" (Sound On Sound on Haas); comb filtering that "can really destroy your instrument" at
+  extreme settings; wideners that colour the sound (KVR on Wider); smeared pick attacks.
+- **Love**: M/S widening "inherently mono-compatible"; a low-frequency bypass; doubles that sound like a
+  second take; a mono button to check.
+- **Live**: mono or quasi-mono PAs are common in clubs, and in a stereo PA much of the audience hears one
+  side mostly. So two things must hold at once: **the mono sum** (exact here) and **the timbre of one
+  channel alone** (§2.1, the "one-side" bench row). No product we found specifies the second [U].
+- **Speakers vs headphones** [I]: on speakers each ear hears both channels, so part of the side cancels
+  acoustically (most at low frequencies) and the effect is milder than on headphones; a side louder
+  than the mid (g > 1, correlation < 0) is heard as "phasey, outside the speakers". Presets for
+  speakers stay at g ≤ 1.
+
+### What we conclude
+
+1. **Mid untouched, side generated** is the only architecture that guarantees the fold-down. Every
+   generator (Haas-as-comb, decorrelator, all-pass, double) can be expressed in it.
+2. The real trade-off is **per-channel colour**: L = M + S and R = M − S are complementary; their power sum
+   is flat when S has a flat spectrum, but each alone is coloured. Three things decide "phasey" vs
+   "airy", and the generators differ exactly there (§2.2) [P]:
+   - **grain**: the colour vanishes from a band once the side's phase turns about once inside it, i.e.
+     once the generator's time spread reaches ≈ 1 / bandwidth (≈ 20 ms for the ear's band at 200 Hz,
+     7 ms at 1 kHz, 2 ms at 5 kHz);
+   - **regularity**: a single delay gives the same fine grain but a periodic one — a pitch at 1 / τ;
+   - **smear**: that same time spread is what blurs an attack. Lows need a long spread and tolerate
+     it; highs need a short one and reveal a long one. Hence the two-band velvet.
+3. The classic non-exact forms (true Haas, L/R pitch voices) have sounds people want; they stay available
+   behind one explicit switch with a meter that shows the damage.
+4. Bass mono belongs **on the side only** (Airwindows Sidepass's place): no crossover in the dry, no
+   all-pass rotation of the mid.
+
+## 2. Design
+
+### 2.1 Signal path and the mono law
+
+Per sample (stereo in, stereo out; a mono lane arrives as L = R):
+
+```
+L, R ─▶ M = (L+R)/2 ────────────────────────────────────────────────────────────┬──▶ M (never filtered)
+        S_in = (L−R)/2 ─▶ HP 12 dB/oct (bass_keep) ───────────────────┐         │
+                                                                      ▼         ▼
+        M ─▶ generator Γ (mode) ─▶ high_cut ─▶ HP LR4 (bass_keep) ─▶ × a · d(t) ─▶ (+) ─▶ × width ─▶ − b · M ─▶ S
+
+               L = M + S,  R = M − S  ─▶ rotate ─▶ level ─▶ listen ─▶ out
+```
+
+- a = `amount` / 100 (0 – 1), d(t) = transient duck (§2.4, 1 when off), width = `width` / 100 (0 – 2),
+  b = `balance` / 100 (−1 – +1, §2.5).
+- Γ has **unit power gain**, so `amount` maps to correlation: all-pass and comb by nature; velvet by
+  Σ g_k² = 1 per sequence (a sparse filter's gain on any wide-band signal, where "unit RMS on pink
+  noise" would depend on the lows of the test signal — a random sequence measures ±3 dB that way [P]);
+  Double for uncorrelated voices.
+- Γ is **causal and starts late** (first velvet pulse ≥ 0.5 ms, comb τ, shifter centre): the first
+  instants of any attack are pure mid on both channels, so the precedence effect anchors attacks in
+  the centre and the width blooms behind them. That is why a side made from the mid reads as "wide"
+  and not as "two sources" [I].
+- **Mono law (Exact, the default)**: (L + R) / 2 = M = (L_in + R_in) / 2, independent of every generator
+  setting, `width`, `bass_keep`, `transient`, `high_cut`, `balance`. The only floating-point error is the
+  rounding of (M + S) + (M − S) in f32: measured −146 dB re the peak at g = 0.6, −140 dB at g = 2 [P].
+  For that, every stage after the matrix must be bit-transparent at its neutral value: smoothers snap
+  to their target (`rotate` 0 → cos = 1, sin = 0 exactly; `level` 0 dB → 1.0). **Exceptions, stated**:
+  `rotate` (it moves energy between M and S by definition: §2.5) and `mono_law` Classic (§2.3).
+  `level` scales the sum, it does not change its shape.
+- **Correlation** (Exact, mono source): with g = a · width and ρ the correlation between Γ and M,
+  r = (1 − g²) / √((1 + g²)² − 4 g² ρ²) [A]; ρ = 0 gives **r = (1 − g²) / (1 + g²)**: `amount` 60 % →
+  r = 0.47; 100 % → 0; `width` 200 % at `amount` 100 % → −0.6. On band-limited pink noise the law holds
+  exactly for Comb and within 0.05 for the optimised velvet [P]. It is a noise law: on one sustained
+  note ρ ≠ 0 (a comb's ρ is cos 2πfτ per partial) and the meter reads the note's own pan, by nature.
+- **Where Γ is in phase with M the image is panned, not widened.** An all-pass cascade and a comb have
+  Γ → +1 towards 0 Hz (and the comb wherever f ≪ 1 / 4τ): there L = M (1 + g), R = M (1 − g), the lows
+  lean left. `bass_keep` removes exactly that region; with `bass_keep` off, Allpass below ≈ 100 Hz and
+  Comb at τ < 3 ms pan the bass (stated; no preset does it). Velvet has no systematic lean (Σ g_k = 0),
+  but below ≈ 200 Hz no generator of 40 ms or less can turn its phase inside one auditory band: there
+  every generator pans band by band instead of widening. That, not taste, is why `bass_keep` defaults
+  to 120 Hz and Live Safe uses 200.
+- **Per-channel colour**: L = M · (1 + g·Γ), R = M · (1 − g·Γ). For an all-pass Γ of phase φ(f), each
+  channel lies between 20 log(1 − g) and 20 log(1 + g): **−8.0 / +4.1 dB at g = 0.6** [A]; |L|² + |R|² =
+  2|M|²(1 + g²): **the power sum is flat** (a broadband +1.3 dB at g = 0.6 [A]). Each frequency is panned
+  to a position set by φ(f): that is the image. How fast φ varies with f is what the generators change:
+  averaged over a band B, a channel's level is 1 + g² ± 2g·⟨cos φ⟩_B, and ⟨cos φ⟩_B → 0 once φ turns
+  about once inside B (group delay ≈ 1 / B). One-channel timbre is therefore specified **in bands**
+  (third-octave and ERB), re the channel's own mean (§5).
+- **Loudness**: stereo is +10 log(1 + g²) dB louder than the mono fold (+1.3 dB at 60 %, +3 dB at 100 %)
+  [A]. Not compensated — compensating would break the exact sum. Presets level-match with `level`.
+
+### 2.2 Generators (`mode`)
+
+| Mode | Γ (Exact: the side) | Per-channel colour | Transients | Classic form (`mono_law` Classic) |
+|---|---|---|---|---|
+| **Velvet** (default; the principle of Ozone Stereoize II) | Optimised two-band velvet filter: lows spread over `time`, highs over `time` / 4; one of 8 sequences (`variant`) | Fine, irregular ripple. One channel in bands, g = 0.6, `time` ≥ 20 ms: **−2.1 … +1.6 dB third-octave, ±1.8 – 2.3 dB ERB**, 200 Hz – 16 kHz [P]; no periodicity → the most "airy", least phasey | Highs of the side within `time` / 4 (5 ms at the default: fused with the attack), lows over `time`; `transient` removes the rest | Same as Exact (inert) |
+| **Allpass** | Cascade of 6 second-order all-passes, centres log-spaced 300 Hz – 10 kHz with seeded jitter (`variant`), Q 0.5 – 0.9 | Broad bands (≈ 6 swings across the spectrum): a "spectral pan" of whole regions; the strongest colour on one channel alone: **−7.1 … +2.6 dB third-octave** [P] | Almost none: group delay 3.3 ms at 300 Hz, 1.3 ms at 1 kHz, 0.4 ms at 3 kHz [P] | Same as Exact (inert) |
+| **Comb** (Lauridsen / Orban; = Ozone Stereoize I) | M(t − τ), τ = `time` | Regular comb, peaks every 1 / τ (67 Hz at 15 ms). In bands it is as flat as velvet from τ ≈ 20 ms (±0.5 dB third-octave; −4.0 … +2.1 at 5 ms [P]): its fault is **regularity** — a pitch at 1 / τ on noisy or sustained sounds, the classic "pseudo-stereo" timbre | One clean echo in the side: a flam on picks above τ ≈ 10 ms | **Haas**: L = M, R = (1 − a)·M + a·M(t − τ) — true precedence shift towards L; mono = comb, notches at (2k + 1) / (2τ) |
+| **Double** (micro-shift) | (V₊ − V₋) / √2, V± = M shifted ±`cents`, delayed `time` | Moving: each partial's side beats at 2f·(2^(cents / 1200) − 1) (1.1 Hz at 110 Hz, 10 Hz at 1 kHz for 9 cents), between 0 and √2·g — per channel 20 log(1 ± √2·g), deeper than Classic's 20 log(1 ± a) | Attacks stay centred (both voices leave the shifter almost equal for a few ms, their difference is small); the voices arrive `time` + 3 ms late | **MicroShift form**: L = M + a·V₊, R = M + a·V₋ — the double is heard in mono too (as a chorus) |
+| **M/S** | 0 (no generation) | — | — | Same |
+
+- `mono_law` Exact on **Double** means the double cancels in the fold: a mono listener hears the dry
+  part only, untouched. Classic keeps the double in mono at the cost of a moving comb. Both are useful;
+  the meter says which is playing (§2.7). They are **two sounds, not one sound with two fold-downs**:
+  a side-only signal is the same in both ears with opposite polarity, so Exact cannot place one voice
+  left and one right — it is a moving, detuned width around a dry centre. "Two takes, panned" is
+  Classic, and only Classic. At `cents` 0 the Exact side is zero (V₊ = V₋). Keep g ≤ 0.7 in Exact
+  (√2·g = 1 is a full moving notch per channel).
+- Velvet and Allpass have no non-exact classic form worth keeping (Kendall's L = D₁(x), R = D₂(x) loses
+  the dry centre entirely): `mono_law` is inert there, stated, no hidden remap.
+- **Velvet details** (settled at the review, [P]).
+  - **Structure**: side = V_long ∗ LP(M) + V_short ∗ (M − LP(M)), LP = one-pole at 1 kHz (the pair sums
+    to M exactly). V_long: 16 pulses over `time`; V_short: 14 pulses over `time` / 4. 30 taps and one
+    one-pole per sample. The highs' spread stays inside the fusion window (5 ms at the default), the
+    lows get the length the ear's bands need there.
+  - **Envelope**: nearly flat (≤ 6 dB of decay over each sequence), first pulse ≥ 0.5 ms. The steep
+    decays of the decorrelator papers (and VNDecorrelate's) are wrong *here*: with the dry present, an
+    early-heavy sequence is a few-tap comb. Random sequences with a 60 dB decay measure −8.5 … +4.6 dB
+    on one channel (8 seeds), and an optimiser can only meet ±2 dB with a steep decay by emptying the
+    side below ≈ 600 Hz (−6 dB) [P].
+  - **Design script** (`tools/vnd-design.py` in this crate, written from the papers, no code copied —
+    Schlecht's repository licence is [U]): optimises positions and signs for
+    (1) one-channel level, L and R, in ERB bands 200 Hz – 16 kHz at g = 0.6, re the channel's mean;
+    (2) side level per band within ±1 dB (no cheating by removing the side);
+    (3) Σ g_k = 0 on V_long (no lean of the sub-bass to one side) and Σ g_k² = 1 on each;
+    (4) pairwise correlation of the 8 variants' sides ≤ 0.2 (two random designs measured 0.19 [P]) and
+        no dominant echo (regularity row of §5: prototype 0.13 – 0.16 against a comb's 0.44 [P]);
+    (5) the worst case over `time` 20, 30, 40 ms and the tap rounding at 44.1, 48, 96 kHz.
+    A plain simulated annealing reaches the table's figures in seconds [P]; the script must reproduce
+    them or better, and its output is committed as the tables.
+  - **Length**: the figures hold for `time` ≥ 20 ms (the default). Shorter, the lows cannot be both
+    wide and uncoloured: the same tables at 15 ms give ±2.4 dB third-octave, at 10 ms −2.7 … +2.4 dB
+    (up to −5.7 dB in single ERB bands), at 5 ms −7 dB [P]. Velvet clamps `time` to **≥ 10 ms**
+    (stated); the bench reports 10 and 15 ms.
+  - Tables: (position as a fraction of the length, sign), gains from the envelope. Positions become
+    integer samples in `prepare` and on a `time` change (no allocation: tables are fixed size).
+  - A single-band version (30 pulses over `time`, flat) measures the same colour (±1.3 – 1.7 dB
+    third-octave [P]) with four times the smear in the highs: kept in the script as the A/B reference
+    for the listening bench, not shipped.
+- **Allpass details.** gfx-dsp `svf` in all-pass response (`SvfMode::AllPass`, = x − 2k·BP), coefficients
+  fixed per `variant` and sample rate. `time` is inert in Allpass (stated). It is the zero-smear
+  generator, and its price is the broadest colour: the choice for percussive parts and for bass, not a
+  second "airy" mode. More sections at a higher Q would trade that colour for a dispersive (chirping)
+  smear — velvet already covers that corner without the chirp.
+- **Double details.** Two `gfx_dsp::pitch::CenteredShifter`s, exactly as gfx-detune drives them (3 ms
+  centre, 50 ms grains, splice search) plus a `DelayLine` of `time`. ±`cents` symmetric. A pure-pitch
+  generator: no LFO wander (gfx-chorus Doubler already does wander). The shifters run only while
+  Double is selected or fading; they start from reset state at each entry (determinism).
+
+### 2.3 Frequency-dependent width
+
+- **`bass_keep`** (shared id): a **high-pass on S only**. Below it the output is mono, dry and
+  unprocessed — for a stereo source too (its lows are made mono: the live and vinyl rule). The mid
+  never sees a filter, so there is no crossover all-pass rotation in the dry and the exact law is
+  untouched. 0 = off (filters bypassed).
+  - **Generated side: 4th-order Linkwitz-Riley** (two Butterworth sections): −6 dB at the cut, −24.6 dB
+    an octave below [A]. Its phase is free: the generated side has no phase relation to keep.
+  - **Source side S_in: 2nd-order Butterworth** (12 dB / octave, the elliptical-equaliser slope).
+    A side-only filter rotates the side against the unfiltered mid above the cut, which costs a
+    stereo source its separation there. Hard-panned source, crosstalk into the other channel [P]:
+
+    | Side filter | Side at fc / 2 | Crosstalk at 2 fc | 4 fc | 8 fc | Dip of the panned channel at 2 fc |
+    |---|---|---|---|---|---|
+    | 1st order | −7.0 dB | −12.3 dB | −18.1 | −24.1 | −0.7 dB |
+    | **Butterworth 2** (chosen for S_in) | −12.3 dB | −8.0 dB | −14.8 | −21.0 | −0.8 dB |
+    | LR4 (the draft, for both) | −24.6 dB | −0.5 dB | −8.5 | −14.9 | −3.0 dB (−6.5 at 1.5 fc) |
+
+    LR4 on a stereo source would centre everything up to two octaves above the cut. The only way to
+    have both a steep slope and full separation at zero latency is to all-pass the mid, which the law
+    forbids. The seam on a stereo source is therefore a stated compromise; on a mono source (the main
+    use) there is none.
+- **`high_cut`**: a 2-pole low-pass on the *generated* side only (not S_in): keeps sibilants and pick
+  noise centred (voice), tames fizz on high-gain guitar.
+- In **Classic** law `bass_keep` is applied per form (settled at the review, [P]):
+  - **MicroShift** (Double): L = M + a·HP_LR4(V₊), R = M + a·HP_LR4(V₋). The voices are detuned and
+    late, so they hold no phase relation with the dry: a high-pass on them is all it takes, and the
+    dry stays untouched.
+  - **Haas** (Comb): a true LR4 crossover on the mid — L = LP(M) + HP(M), R = LP(M) + HP((1 − a)·M +
+    a·M(t − τ)). The lows are common to both channels; the dry is all-passed by the crossover (in
+    Classic only, where the fold is not exact anyway). The draft's form (high-pass on the *difference*
+    M(t − τ) − M) leaves R as two arrivals of similar level up to three octaves above the cut: R
+    ripples −25 … +7.6 dB between fc and 4 fc at a = 1, τ = 15 ms, fc = 120 Hz. The crossover confines
+    the seam to fc / 2 … 2 fc (one dip, ≤ 10 dB, at the cut) and R is within ±1 dB of a pure delay
+    above 2 fc; below fc / 2 the fold is flat within 0.15 dB [P].
+
+### 2.4 Transient focus (`transient`)
+
+Players hate smeared pick attacks [F]; Ozone's Stereoize II advertises transient preservation [V].
+- Onset detector on M (corrected at the review, [P]):
+  - e_f = peak follower of |M|, attack 0.5 ms, release 100 ms, in dB;
+  - e_s = e_f smoothed by a 20 ms one-pole **while rising**, equal to e_f while falling, and never more
+    than 10.5 dB under e_f;
+  - onset strength o = clamp((e_f − e_s − 1.5 dB) / 9 dB, 0, 1).
+  The slow envelope follows the *fast envelope*, not the signal: two followers of |M| with different
+  time constants (the draft's 1 ms / 30 ms) never agree on a sustained low note — on an 82 Hz note the
+  draft's o stays near 0.26 for the whole note, a permanent −2.6 dB on the side with a ripple at the
+  note's rate (the gfx-gate error again); on the DIs the draft's duck was below 0.95 for 97 – 100 %
+  of the time. The cascade reads 0.995 on the same sustain [P].
+- Duck d = 1 − (`transient` / 100) · o: instant attack, **held for the generator's own delay** (`time`
+  for Velvet, Comb and Double; 3 ms for Allpass) — the side's copy of the attack arrives that late —
+  then a 60 ms one-pole release. Applied to the generated side only.
+- Result: the attack stays centred and punchy, the sustain blooms wide. At 100 %, a pick after silence:
+  side muted for `time`, −8 dB at 40 – 80 ms, −2 dB at 100 – 150 ms; a pick over a ringing note:
+  −7.7 dB [P]. Mono law untouched (side only).
+- **gfx-dsp `onset`**: listed in the gfx-dsp README, absent from `src/`. It has four users by now —
+  gfx-killswitch (an inline detector, `src/lib.rs` ≈ line 327: fast / slow dB difference with
+  hysteresis and a refractory time), gfx-autowah, gfx-swell (detector A), gfx-ringmod — so it is
+  written **in gfx-dsp from the start**, not here: one module giving the continuous strength o (this
+  section) and the event (killswitch's hysteresis) from the same envelopes, with an optional
+  high-pass in front.
+
+### 2.5 Image controls (after the side is built)
+
+- **`balance`** b (−100 … +100 %, positive = right): **S' = S − b·M**, i.e. L = (1 − b)·M + S,
+  R = (1 + b)·M − S. L + R = 2M whatever b: the one pan law that **keeps the fold exact** (the linear,
+  sum-constant law). At ±100 % a mono source sits on one side, +6 dB there (+3 dB in power). This is
+  the control for placing a lane. (The draft's L / R gains leaked the generated side into the fold.)
+- **`rotate`** θ (−45 … +45°, positive = right): M' = M cos θ + S sin θ, S' = S cos θ − M sin θ: a true
+  rotation of the image, for stereo sources (as Waves S1). On a mono source with no generated side it
+  is a constant-power pan: θ = +45° → R = √2·M (+3.01 dB), L = 0 [A]. **Not exact**: the fold becomes
+  M cos θ + S sin θ — it loses level and takes in sin θ of the side, generator included (−9.3 dB of it
+  at 20°). `mono_err` shows it.
+- **`level`**: output trim.
+- **`listen`**: Stereo · Mono · Side — audition the fold (M on both channels) or the side alone (S on
+  both channels, so it is audible on any system). A check tool: golem does not store it (§3.5).
+
+### 2.6 Latency, smoothing, structure changes, CPU
+
+- **Latency: 0, nothing reported.** M reaches the output at sample 0 in every mode. Generated content is
+  later by nature (decorrelator taps, comb τ, shifter centre 3 ms): it is the effect, not a latency
+  (gfx-detune's precedent). The common latency check passes (dry impulse at sample 0).
+- **Smoothing**: `amount`, `width`: 20 ms one-pole, EXP-capable (`exp_smooth`); `bass_keep`, `high_cut`:
+  30 ms on the frequency (TPT SVF, safe at audio rate); `rotate`, `balance`, `level`, `transient`: 20 ms;
+  `cents`: per-sample ratio (shifter glide). Smoothers snap to their target (§2.1).
+- **Structural changes** (`mode`, `variant`, `mono_law`, Velvet `time`): 30 ms **equal-power** crossfade
+  of the *side contribution* (old generator → new: the two are uncorrelated, an equal-gain fade would
+  dip the width by 3 dB), run as two generators during the fade. A new target arriving during a fade
+  is latched at its end. The mid never moves, so even a crossfade cannot touch the fold (in Classic
+  Haas the crossover's low band is common to both sides of the fade). Comb / Double `time`: two read
+  heads crossfaded over 50 ms (gfx-delay's two-head method), no Doppler.
+- **Determinism**: velvet sequences and all-pass sets are fixed tables (seeded offline); the shifters
+  start from reset state. Bit-identical renders.
+- **CPU [A, estimate]**: one generator per instance (the side is mono): Velvet ≈ 30 MACs + a one-pole per
+  sample (twice during a fade); Allpass 6 SVFs; Comb one read; plus the side filters (3 SVFs), low-pass,
+  onset, meters, matrix: ≈ 80 –
+  150 flops per stereo frame → **≈ 30 – 60 ns per frame** at 48 kHz. Double: two CenteredShifters, as
+  gfx-detune (measure; budget 300 ns per frame).
+
+### 2.7 Meters (read-only parameters)
+
+- **`corr`** (−1 … +1): r = ⟨LR⟩ / √(⟨L²⟩⟨R²⟩) on the output, exponential averages τ = 300 ms [I: the usual
+  correlation-meter time], updated per block; 1 when silent (nothing to correlate). +1 mono, 0 fully
+  decorrelated, < 0 out of phase.
+- **`mono_err`** (−80 … +20 dB): the fold's deviation from the dry fold:
+  10 log(⟨(M_out − ℓ·M_in)²⟩ / ⟨(ℓ·M_in)²⟩), ℓ = `level`, same averages, floored at −80 dB. **Exact law,
+  `rotate` 0 → reads −80 (the floor) always**, whatever `balance`. Classic Haas reads the comb's damage;
+  a rotation reads its level loss and its leak. ℓ is the smoothed gain, sample by sample; silence
+  (⟨M_in²⟩ below −90 dBFS) reads −80. This is the guarantee made visible to golem's UI, live: the UI
+  shows "mono safe" from `mono_err` ≤ −60 dB (no separate `state` parameter).
+- Both computed before `listen` (they describe the output, not the audition).
+- The meters describe **this block's output**. A block after it that treats L and R differently
+  (unlinked limiter, dual-mono saturation, an amp per side) breaks the fold downstream, out of the
+  meter's sight (§3.4).
+
+### 2.8 gfx-dsp reuse and what is new
+
+| Reused | For |
+|---|---|
+| `svf` (TPT, all-pass / low-pass / high-pass responses) | Allpass generator, LR4 (two cascaded Butterworth sections), the 12 dB / octave side filter, `high_cut` |
+| `delay::DelayLine` (Hermite) | Comb, Double delay, two-head crossfades |
+| `pitch::CenteredShifter` | Double (as gfx-detune) |
+| `envelope::PeakFollower` | Onset detector (inside the new `onset` module) |
+| `smooth::OnePole`, `exp_smooth::ExpSmoother` | Parameter smoothing, EXP |
+| gfx-chorus's crossfade-on-structure pattern | Mode / variant changes |
+
+New, and where it goes (the gfx-dsp README lists `stereo` and `onset`; neither exists in `src/`):
+- **`gfx_dsp::onset`** — written in gfx-dsp at once (four users, §2.4); gfx-killswitch's inline detector
+  moves onto it in the same change, with its bench unchanged.
+- **`gfx_dsp::stereo`** — M/S matrix, rotation, the sum-constant balance, correlation and fold meters.
+  Written in gfx-dsp at once too: gfx-chorus already carries an inline M/S width (`src/lib.rs` ≈ line
+  638), and every stereo effect needs the same `corr` meter.
+- **`decorr`** (the two-band velvet filter and its tables) — in this crate, with its design script;
+  moved to gfx-dsp when a second effect wants a decorrelator (gfx-reverb's early field would).
+
+## 3. Parameters
+
+New block: no catalogue ids to keep. Ids chosen to match the shared table and the coded effects
+(`bass_keep`, `width`, `level`, `time` in ms, `bypass`). **Ranges linear** (contract). Names are join keys
+for golem's descriptors: fixed here, never renamed silently.
+
+### 3.1 Front panel
+
+| id | Name | Type | Range | Default | Smooth | EXP | Role |
+|---|---|---|---|---|---|---|---|
+| `mode` | Mode | e | Velvet · Allpass · Comb · Double · M/S | Velvet | 30 ms side crossfade | | The side generator (§2.2) |
+| `amount` | Amount | f | 0 – 100 % | 60 % | 20 ms | ✓ | Level of the generated side re the mid; 100 % = correlation 0 on a mono source |
+| `width` | Width | f | 0 – 200 % | 100 % | 20 ms | ✓ | Master side gain (source side + generated); 0 % = mono, 100 % = neutral for a stereo source |
+| `time` | Time | f | 1 – 40 ms | 20 ms | crossfade / two heads | | Velvet length (≥ 10 ms; its timbre figures hold from 20 ms), Comb τ, Double delay; inert in Allpass and M/S |
+| `bass_keep` | Bass Keep | f | 0 – 500 Hz | 120 Hz | 30 ms | | Shared id: below it mono, dry, unprocessed (high-pass on the side only: LR4 on the generated side, 12 dB / octave on a source's own side); 0 = off |
+
+Defaults: an inserted widener must be heard at once and stay safe: Velvet, 60 % (r ≈ 0.47), 20 ms, bass
+mono below 120 Hz. None depends on another parameter. 60 % is kept (review): one channel alone is then
+within about ±2 dB in bands and +1.3 dB louder than the fold; 100 % is a preset, not a default.
+
+### 3.2 Expert
+
+| id | Name | Type | Range | Default | Smooth | EXP | Role |
+|---|---|---|---|---|---|---|---|
+| `mono_law` | Mono Law | e | Exact · Classic | Exact | 30 ms crossfade | | Exact: the fold equals the dry. Classic: Haas (Comb) and L/R voices (Double); inert elsewhere |
+| `variant` | Variant | i | 1 – 8 | 1 | 30 ms crossfade | | Which velvet sequence / all-pass set: a different pattern of spectral panning (two lanes on two variants stay distinct) |
+| `cents` | Detune | f | 0 – 25 cents | 9 cents | per-sample glide | ✓ | Double: each voice ± this much |
+| `high_cut` | Side High Cut | f | 2,000 – 20,000 Hz | 20,000 Hz (off) | 30 ms | | 2-pole low-pass on the generated side; bypassed at the top stop (a 20 kHz pole is not "off" at 44.1 kHz) |
+| `transient` | Transient Focus | f | 0 – 100 % | 0 % | 20 ms | | Ducks the generated side on attacks (§2.4) |
+| `balance` | Balance | f | −100 – +100 % | 0 % | 20 ms | ✓ | Places the image, positive = right, with the sum-constant law: the fold stays exact (§2.5) |
+| `rotate` | Rotation | f | −45 – +45° | 0° | 20 ms | ✓ | Rotates a stereo image, positive = right; **moves the fold** (§2.5) |
+| `level` | Level | f | −12 – +12 dB | 0 dB | 20 ms | | Output trim (level-matching presets) |
+| `listen` | Listen | e | Stereo · Mono · Side | Stereo | 10 ms crossfade | | Audition the fold or the side; not stored by golem (§3.5) |
+| `bypass` | Bypass | b | off / on | off | 20 ms crossfade | | VST3 bypass (as the coded effects) |
+| `corr` | Correlation | f, read-only | −1 – +1 | — | — | | Output L / R correlation (§2.7) |
+| `mono_err` | Mono Error | f, read-only | −80 – +20 dB | — | — | | Fold vs dry fold; −80 = exact (§2.7) |
+
+`variant` is an nih-plug `IntParam` (contract). Expert groups (`visuals/data/groups.json`): **Generator**
+(`mono_law`, `variant`, `cents`, `high_cut`, `transient`), **Image** (`balance`, `rotate`, `level`),
+**Check** (`listen`, `corr`, `mono_err`).
+
+### 3.3 Layout
+
+2 / 2 first and only. On a mono lane golem turns the lane stereo here, which is the point; the mono DI
+arrives on both inputs and S_in = 0 exactly (so the source-side filter passes nothing, and M = L bit
+for bit).
+
+### 3.4 Placement
+
+After the last mono block (amp, cab IR if mono): a mono block after the widener sums it back to the dry —
+correctly, by the exact law, but the width is lost. Before stereo delay / reverb is fine (they see a
+wide source); after them it widens the dry centre of their mix too.
+
+**What keeps the fold exact downstream**: anything that applies the same linear processing to L and R
+(level, EQ, a delay or reverb whose input is L + R or that treats both alike) or the same gain to both
+(a *linked* compressor or limiter). What breaks it: a nonlinearity or a gain computed per channel —
+dual-mono saturation, an unlinked limiter, an amp per side. Then L and R distort differently and the
+side no longer cancels. golem-rack: the master limiter must be linked for the guarantee to reach the
+PA.
+
+### 3.5 Golem block
+
+- **Type `widener`, category `utility`** (settled at the review): it is an imaging tool next to volume
+  and tuner, like Ozone Imager. `modulation` fits Double only, and golem's own doublers (`detune`,
+  `golem-double`) sit in `pitch`, not there. Roles: guitar, bass, keys, voice (golem-rack's to confirm).
+- **`listen` is not stored**: golem leaves it out of block presets, scenes and saved chains and writes
+  Stereo at insert and at every preset or scene load. It stays an ordinary parameter (golem's only
+  channel to the plugin), so a host session can still save it: the plugin cannot prevent that.
+- Proposed catalogue entry (golem-rack's to add):
+  `{"type": "widener", "name": "Widener", "category": "utility", "roles": ["guitar", "bass", "keys", "voice"], "short": "Wide", "color": "#c0e0f8", "params": [amount, width, time, bass_keep with the ranges above]}`.
+
+### 3.6 Overlap and position
+
+| Neighbour | What it does | Where the widener differs |
+|---|---|---|
+| gfx-chorus Doubler | 2 voices on smoothed random delay paths (18 ms ± 1.6 ms): thickening with movement | Widener is static (no wander) and mono-exact; use the chorus for movement |
+| gfx-detune (`detune` block) | Two micro-shifted voices, up left / down right, `wet` / `dry` | = widener's Double in Classic law. Same shifter, reused. gfx-detune keeps its catalogue ids and block; the widener adds the Exact law, `bass_keep`, `transient`, meters |
+| gfx-delay Dual / Ping-Pong / `width` | Echoes ≥ 1 ms but voiced as repeats, with feedback | The widener stays under the echo threshold (≤ 40 ms, no feedback): one fused image |
+| gfx-reverb | Decorrelated tails = space | The widener adds no room; Velvet's 20 – 40 ms is below a room's perception |
+| gfx-golem | Vocal octave double | Not width; can feed the widener |
+
+## 4. Applications
+
+Reference settings become block presets (`presets/gfx-widener.json`); no artist or trademark names.
+Presets are level-matched to the bypass in stereo (±1 LU) with `level` — except **Live Safe**, which
+keeps `level` 0 dB so that a mono PA gets the bypassed level exactly.
+
+| Use / preset idea | Settings to start from | Feature that matters |
+|---|---|---|
+| **Wide Clean** (mono guitar DI → stereo, the default) | Velvet, 60 %, 20 ms, `bass_keep` 120 | Fine-grained width, exact fold |
+| **Live Safe** (club PA, unknown mono / stereo) | Velvet, 45 %, 25 ms, `bass_keep` 200, `transient` 40 %, `level` 0 | One-side timbre within ±2 dB, exact fold at the bypassed level |
+| **Tight Funk** (rhythm: centred attack, wide ring) | Allpass, 70 %, `transient` 80 %, `bass_keep` 150 | Transient focus, no smear |
+| **Wall Rhythm** (high-gain, after the cab) | Double Exact, 7 cents, 18 ms, 50 %, `high_cut` 8,000, `bass_keep` 180 | Detuned width that cannot comb the fold (not two panned takes: that is the next one) |
+| **Studio Double** (the classic micro-shift) | Double Classic, 9 cents, 12 ms, 50 % | Two voices, left and right, heard in mono too |
+| **Vocal Spread** (backing / lead voice) | Double Exact, 6 cents, 15 ms, 40 %, `high_cut` 6,000 | Sibilants stay centred |
+| **Air Pad** (keys, ambient guitar; headphones and recordings rather than a PA) | Velvet, 100 %, 35 ms, `width` 130 % | Correlation below 0 (−0.26), still exact fold |
+| **Bass Sheen** (bass: lows mono, top wide) | Allpass, 50 %, `bass_keep` 300 | Side-only crossover, dry lows |
+| **Old Pseudo-Stereo** | Comb, 80 %, 12 ms | Lauridsen comb timbre, exact |
+| **Haas Pan** (studio, stereo playback only) | Comb Classic, 100 %, 15 ms | True precedence; `mono_err` shows the comb |
+| **Narrow the Keys** (stereo keyboard too wide in the mix) | M/S, `width` 60 %, `bass_keep` 150 | M/S width, bass mono |
+| **Mono the Lows** (stereo synth / backing) | M/S, `width` 100 %, `bass_keep` 180 | Exact bass mono, dry mid untouched |
+| **Place Left** (two guitarists' lanes) | Velvet 50 %, `balance` −35 %, `variant` 2 (the other lane `variant` 3, `balance` +35 %) | Distinct images, placed without touching the fold |
+| **Turn the Keys** (a stereo keyboard, moved off-centre) | M/S, `rotate` +15° | True rotation of a stereo source (the fold changes: stated) |
+| **Width Swell** (EXP) | Velvet, EXP on `amount` 0 → 100 % | Stereo opens with the foot, no zipper |
+| **Mono Check** | any, `listen` Mono | Hear the fold = the dry |
+
+## 5. Bench suite (on top of gfx-bench's common checks)
+
+gfx-bench options: `stereo_by_nature = true`; default click bound and silence floor; no `skip_latency`.
+
+| Check | Pass |
+|---|---|
+| **Exact fold** | Every mode, `mono_law` Exact, `rotate` 0, any `amount` / `width` / `time` / `variant` / `bass_keep` / `high_cut` / `transient` / `balance`, during mode and variant crossfades and the bypass fade, on DIs, pink noise and a stereo pair: (L_out + R_out)/2 − (L_in + R_in)/2 ≤ −120 dB re the input peak (prototype: −140 dB at g = 2 [P]), at 44.1 – 192 kHz |
+| Correlation law | Mono pink noise band-limited 200 Hz – 12 kHz, `bass_keep` 0: Comb within ±0.03 of (1 − g²)/(1 + g²) for g = 0.3, 0.6, 1, 1.5; Allpass ±0.05; Velvet ±0.08 |
+| Power sum | Allpass and Comb, g = 0.6, sine sweep: |L|² + |R|² = 2(1 + g²)|M|² within ±0.1 dB, 50 Hz – 18 kHz; Velvet within ±1 dB in ERB bands, 200 Hz – 16 kHz (prototype ±0.7 [P]) |
+| One-side timbre | g = 0.6, `bass_keep` 0, each of L and R alone, level per band re the channel's own mean, 200 Hz – 16 kHz, from the impulse response. **Velvet, all 8 variants, `time` 20 / 30 / 40 ms, 44.1 / 48 / 96 kHz: ≤ ±2 dB in third-octaves, ≤ ±2.5 dB in ERB bands** (prototype: −2.1 … +1.6 and ±1.8 – 2.3 [P]); reported, not bounded: Velvet at 10 and 15 ms, Allpass (≈ −7 / +2.6 dB), Comb (≈ ±0.5 dB at 20 ms, −4 / +2 at 5 ms) |
+| Regularity | Largest normalised autocorrelation of one channel's impulse response at lags 0.5 – 40 ms, g = 0.6: Velvet ≤ 0.2 (prototype 0.13 – 0.16 [P]); Comb reported (g / (1 + g²) = 0.44: the pitch at 1 / τ) |
+| Velvet smear | Side impulse response at `time` 20 ms: 90 % of the energy above 2 kHz within 5.5 ms (prototype 4.5 [P]); below 500 Hz within 20 ms (17 – 19 [P]) |
+| Bass keep | Generated side at `bass_keep`/2 ≤ −24 dB re its level at 4 × `bass_keep`; source side −12 ± 0.5 dB at `bass_keep`/2; hard-panned source: crosstalk ≤ −14 dB at 4 × `bass_keep`; mid response flat ±0.001 dB (no filter in it) |
+| High cut | Generated side at −3 ± 0.5 dB at `high_cut` (2-pole Butterworth); S_in untouched |
+| Transient | `transient` 100 % vs 0 %. Pick after ≥ 200 ms of silence: generated-side energy in the first `time` ms −20 dB or less; pick over a ringing note: −6 dB or less. **Sustained 82 Hz note** (8 harmonics, slow decay), 250 ms after the pick onwards: duck ≥ 0.95, no component of the duck at the note's rate above −40 dB. DIs: side level 200 ms after each onset within 1 dB |
+| Classic Haas | Comb Classic, 15 ms, 100 %, `bass_keep` 0: fold matches (M + M(t − τ))/2 within −80 dB; notches at 33.3 / 100 / 166.7 Hz. `bass_keep` 120: R within ±1 dB of unity above 240 Hz, fold flat ±0.2 dB below 60 Hz |
+| Double | Exact: fold = dry (row 1). Classic: L and R pitch ±`cents` within ±1 cent (gfx-detune's test); `time` delay ± 1 sample + the 3 ms centre |
+| Rotation | Mono input, `amount` 0, θ = +45°: L ≤ −100 dB, R = +3.01 ± 0.01 dB; θ = 0 bit-exact pass |
+| Balance | Mono input, b = +100 %: L = S only (≤ −100 dB at `amount` 0), R = +6.02 ± 0.01 dB; the exact-fold row holds at b = ±35 % and ±100 % |
+| Meters | L = R → `corr` 1.00; L = −R → −1.00; independent noises → 0 ± 0.05 within 1 s; `mono_err` ≤ −80 in Exact for 60 s of DI at any `balance`, matches the analytic comb loss in Classic Haas ± 0.5 dB, reads 20 log(1 − cos θ) ± 0.5 dB for a rotation at `amount` 0 |
+| Variants | Generated sides of variants 1 – 8 pairwise |r| ≤ 0.2 on pink noise 200 Hz – 12 kHz (Velvet and Allpass) |
+| Structural changes | `mode`, `variant`, `mono_law`, `time` toggled mid-signal: no click on L or R (common bound); mid unchanged (row 1) |
+| EXP on `amount` | 50 Hz-stepped sweep: control-rate sidebands ≤ −80 dB (contract) |
+| CPU | ≤ 100 ns per stereo frame (Velvet, Allpass, Comb), ≤ 300 ns (Double) at 48 kHz |
+| Listening | `gfx-bench apps gfx-widener` on clean, crunch, high-gain, voice DIs; blind A/B against Polyverse Wider and Ozone Imager Stereoize II renders (golem-rack) at matched correlation; every render also auditioned folded to mono (must be indistinguishable from the dry fold: it is a null) and as L alone (one-side listener). Two A/Bs decide the Velvet tables by ear: two-band against the single-band reference on funk and clean picking (smear), and Velvet against Comb at 20 ms on crunch sustain (regularity) |
+
+## Visual
+
+- **Category `utility`**, but the utility family's `auto` finish is thrash (aggressive) — wrong for an
+  imaging tool: **`CRATE_FINISH['gfx-widener'] = 'anodized'`** (the gapmeter's precedent).
+- **Crate hue `#c0e0f8`, ice glass** (`METAL_CRATE_HUE['gfx-widener']`): pale sky, "air" and open space.
+  utility's amber `#f0a500` would make it look like a boost. **Approved at the review.** ΔE*ab
+  (CIELAB D65, recomputed [P]) to every body hue in `golem-pedals.js` and in this round's designs:
+  ≥ 34 to all — filter cyan `#00a8c0` 34, tape champagne `#d8c8a0` 38, gapmeter grey `#6b7480` 40,
+  dynamics slate 50; brass `#c9b000`, raspberry `#e8336f`, copper `#b0602a` and preamp violet
+  `#b316c0` are all further. The three pale bodies (grey, champagne, ice) stay 38 – 40 apart. Of lot 3,
+  only gfx-ducker has a document (the dynamics slate, no crate hue); gfx-transient, gfx-mbcomp,
+  gfx-cab, gfx-acoustic and gfx-tuner had none at the review: to check on the family sheet. golem's
+  own catalogue grey for `volume` / `tuner` (`#8a94a3`) is 28 away: a catalogue colour, not a
+  golem-fx body.
+  - Pale body, so the lit rune needs a darker light (gfx-tape's precedent):
+    **`RUNE_LIGHT['gfx-widener'] = '#3a7fc0'`**. The renderer draws the rune's core as
+    mix(light, white, .75), which is close to the body here: the glow carries the rune. To check at
+    tile size; if it is weak, the core takes the light itself for bodies of luma > .7.
+  - Ink is dark by the existing rule (luma .84 > .38).
+- **Motif `fan`** (new, in `motifParts`): the mono axis and the spread image.
+  - A **vertical centre line** from just under the rune to the bottom edge above the switch zone
+    (full opacity): the mid, untouched.
+  - Either side of the rune, **five straight rays** opening **upward** from a point 6 units below the
+    rune's centre, at ±18°, ±30°, ±42°, ±54°, ±66° from the vertical, lengths from 0.9 · ch down to
+    0.5 · ch, opacity 1 → .35 outward: the side spreading, mirror-symmetric (L = M + S, R = M − S).
+  - It must not read as gfx-reverb's `rays` (36 lines, full circle, equal, to the edges): ten short
+    rays in the upper half, unequal, plus the axis. To confirm on the family sheet.
+  - Drawn with `line()` (works engraved in anodized, yellow lined in black if thrash is forced); clear of
+    the knob grid (rays stop at cy − ch).
+- **Face** (`visuals/data/faces.json`):
+
+  ```json
+  "gfx-widener": {"name": "Wide", "blocks": ["widener"], "knobs": ["amount", "width", "time", "bass_keep"],
+                  "selectors": ["mode", "mono_law"], "category": "utility", "color": "#c0e0f8"}
+  ```
+- **Glyph** `widener.svg` (24 × 24, `fill="none" stroke="currentColor" stroke-width="1.8"`, round caps and
+  joins, as `glitch.svg`): the centre line and two chevrons opening outward — "kept centre, sides out".
+
+  ```
+  <path d='M12 4v16'/>
+  <path d='M7.5 7L3 12l4.5 5M16.5 7L21 12l-4.5 5'/>
+  <path d='M8.5 12h-3M15.5 12h3' opacity='.45'/>
+  ```
+- No maker's livery, logo or trademark on the pedal; "Wide" is a plain word.
+
+## Open questions for review
+
+All answered at the review (2026-11-14); details in the sections named.
+
+1. **Category** → `utility`. golem's doublers live in `pitch`, not `modulation`; the widener is an
+   imaging tool. Roles: golem-rack (§3.5).
+2. **Defaults** → `amount` 60 %, `bass_keep` 120 Hz kept. Wider's own default is not in its manual [U].
+   Below 200 Hz no generator can widen without panning (§2.1): 120 Hz is a floor, not a taste.
+3. **Double in Exact law** → Exact stays the default of `mono_law` (no mode-dependent default, and the
+   law is the product). Exact Double and Classic Double are two sounds (§2.2): the presets carry the
+   choice (Wall Rhythm / Vocal Spread: Exact; Studio Double: Classic).
+4. **`listen`** → an ordinary parameter that golem never stores and resets to Stereo at insert and at
+   every preset or scene load (§3.5).
+5. **Velvet one-side ripple** → settled by prototype: ≤ ±2 dB in third-octaves is met (−2.1 … +1.6 dB)
+   by optimised, nearly flat, two-band sequences at `time` ≥ 20 ms; random or steeply decaying ones
+   miss it by 6 dB. **Velvet stays the default**; the Allpass fallback is dropped (it measures
+   −7 / +2.6 dB).
+6. **gfx-detune overlap** → keep both. gfx-detune holds the catalogue's `detune` block and ids; the
+   widener's Double shares the shifter in gfx-dsp, nothing more. No merge.
+7. **Meters** → 300 ms kept; `mono_err` stays a dB value, golem's UI derives "mono safe" from
+   ≤ −60 dB; no `state` parameter (§2.7).
+8. **Hue** → ice glass approved, ≥ 34 from every hue of the round (Visual).
+9. **Classic `bass_keep`** → the draft's split is replaced: high-pass on the voices for MicroShift, a
+   true LR4 crossover for Haas (§2.3). The seam of Exact law on a *stereo source* was the larger one:
+   the source's side now gets a 12 dB / octave filter (§2.3).
+
+## Review (Fable 5.2, 2026-11-14)
+
+**Verdict: Strong.** The architecture is right and its central claims hold when measured: the fold is
+the dry to −140 dB in f32, the correlation law and the flat power sum are exact for an all-pass side,
+and iZotope's own better Stereoize mode turns out to be the same principle (velvet noise into the
+side) — so the default generator is the field's reference, here with a specified one-channel timbre.
+The question the design left open — can Velvet be the default — is answered yes, but not with the
+sequences it described. Four mechanisms around the core were wrong or unproven and are corrected; none
+touches the law. Prototypes: `proto-gfx-widener/` in the review scratchpad (`core.py`, `vnd.py`,
+`vnd2.py`, `vnd3.py`, `misc.py`, `onset*.py`); they are throwaway numpy, to be redone as
+`tools/vnd-design.py` and bench rows.
+
+Changes made, and why:
+
+| # | Change | Why |
+|---|---|---|
+| 1 | **Velvet re-specified**: optimised for the one-channel level |1 ± g·V|, nearly flat envelope, **two bands** (lows over `time`, highs over `time` / 4), 16 + 14 pulses; figures and design constraints written (§2.2) | The decorrelator papers flatten |V| with no dry and use a steep decay. With the dry present that is a few-tap comb: random 60 dB-decay sequences measure −8.5 … +4.6 dB on one channel; optimised flat ones −2.1 … +1.6 dB. The two-band form keeps that figure with the highs inside 5 ms |
+| 2 | **Velvet `time` ≥ 10 ms**, timbre figures stated from 20 ms | At 10 ms the same tables reach −5.7 dB in single ERB bands: physics (time spread ≥ 1 / bandwidth), not tuning |
+| 3 | **One-channel timbre defined in bands, re the channel's mean**; new **Regularity** and **Smear** bench rows; Comb's column rewritten | In third-octaves a 20 ms comb is *flatter* than velvet (±0.5 dB): the draft's metric could not tell them apart. A comb's fault is its periodicity (0.44 against 0.13 – 0.16) |
+| 4 | **Transient detector replaced** (slow envelope follows the fast one, bounded; hold = the generator's delay) | The draft's two followers of |M| never agree on a low note: a permanent −2.6 dB duck with ripple at the note's rate, and a duck active 97 – 100 % of the time on the DIs. Without a hold, a 40 ms comb's echo of the attack arrived after the duck had released |
+| 5 | **`bass_keep`: LR4 on the generated side, 12 dB / octave on the source's side** | A side-only LR4 rotates the side against the mid: a hard-panned source at twice the cut came out centred (crosstalk −0.5 dB, −3 dB dip). Table in §2.3 |
+| 6 | **Classic `bass_keep`**: high-pass on the voices (MicroShift), LR4 crossover (Haas) | The draft's high-pass on the difference left R rippling −25 … +7.6 dB up to four times the cut; the crossover confines the seam to one dip at the cut (question 9) |
+| 7 | **`balance` is now the sum-constant pan** (S' = S − b·M), EXP-capable; `rotate` kept for stereo sources and declared the only non-exact image control; Place Left uses `balance` | L / R gains and rotation both leak the generated side into the fold (−9 dB of it at 20°): the preset for placing a lane broke the product's one promise |
+| 8 | **`rotate` sign fixed**: positive = right | §2.5 sent +45° to the left while Place Left used −20° for left |
+| 9 | Correlation law given with its condition (ρ) and its limits; Γ normalised by Σ g² = 1, not "unit RMS on pink noise" | The pink-noise gain of a random sequence varies ±3 dB with its lows, and r then misses the law by 0.2 |
+| 10 | **Lows are panned, not widened** — stated, with the all-pass and short-comb lean to the left when `bass_keep` is off | Γ → +1 towards 0 Hz for both; below 200 Hz no generator of ≤ 40 ms can do better |
+| 11 | Double: unit-power form written (V₊ − V₋) / √2, per-channel depth 20 log(1 ± √2·g) stated, Wall Rhythm 70 → 50 %, "two sounds" paragraph | At 70 % the Exact double is a full moving notch in each ear; and a side-only double cannot be "one voice left, one right" |
+| 12 | Allpass figures measured: −7.1 … +2.6 dB one-channel, group delay 3.3 ms at 300 Hz | "< 1 ms above 300 Hz" was wrong by a factor of 3 |
+| 13 | Structural crossfades equal-power; smoothers must snap (bit-transparent neutral stages); `transient` smoothed; `high_cut` bypassed at its top stop; `listen` Side on both channels | Details the exact-fold row depends on, or would click |
+| 14 | §3.4: what keeps the fold exact downstream; meters' scope; speakers vs headphones; Live Safe keeps `level` 0 | The guarantee ends at the first per-channel nonlinearity; level-matching in stereo makes the mono PA 1.3 dB quieter than bypass |
+| 15 | Survey: Stereoize II = velvet noise mid → side [M]; Wider's manual re-read (quotes hold; default width not stated); optimisation method and listening result of Schlecht et al.; the elliptical-equaliser precedent | Accuracy |
+| 16 | `onset` and `stereo` go **straight into gfx-dsp** | Four designs want `onset` (killswitch has it inline), gfx-chorus has an inline M/S: "written here, moved later" would make a third copy |
+| 17 | Bench: fold row covers `balance` and the bypass fade; correlation on band-limited noise; balance, sustained-note, Haas-crossover and source-separation rows; meters row for rotation | Follows the changes above |
+| 18 | Visual: ΔE values recomputed (champagne 38, grey 40, not 34 / 37); rays open upward and must differ from `rays`; rune core noted | Accuracy; the motif's direction was ambiguous |
+
+Still open:
+
+| Point | Owner |
+|---|---|
+| `tools/vnd-design.py` must reproduce the prototype's figures for 8 variants across 20 – 40 ms and 44.1 – 96 kHz; if it cannot hold ±2 dB at 96 kHz rounding or for all 8, the bound is revised from its output, not assumed | golem-fx, first coding task |
+| Two-band against single-band velvet, and the 1 kHz split, by ear on picked DIs; the amount at which the side's 20 ms low spread is heard as "soft" on bass | Bench (listening) |
+| `balance` as the sum-constant law (+6 dB on one side at ±100 %): keep (reviewer's change), or add a level compensation outside the Exact law | Raph |
+| Source-side filter at 12 dB / octave: a stereo source's lows are less mono than the contract's "Linkwitz-Riley" wording suggests (−12 dB at half the cut). Accept, or word the shared id's row for side-only filters | Raph (contract) |
+| Exact Double: whether it earns its place next to Velvet once heard, or Double becomes Classic-only in a later version (enum options cannot be removed, the law switch can stay inert) | Raph, after the bench |
+| Catalogue entry `widener` (utility, roles), `listen` never stored and reset to Stereo, "mono safe" badge from `mono_err` ≤ −60 dB, master limiter linked, blind A/B renders against Wider and Stereoize II | golem-rack |
+| `fan` motif against reverb's `rays`, the lit rune on a pale body, ice glass beside the lot-3 designs not yet written | Raph, on the family sheet |
+| Schlecht's repository licence [U] (irrelevant if the script is written from the papers, as specified) | — |
