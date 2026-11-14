@@ -58,6 +58,9 @@
     <div class="amps" id="nam-cabs"></div>
     <h3>Head + cab</h3>
     <div class="amps" id="nam-stacks"></div>
+    <h3>Outboard (19" rack)</h3>
+    <p class="note">NAM captures of preamps, compressors and EQs as rack units (<code>namRack</code>), one per pack. The controls show the setting the capture was taken at, read from its name (gain, hard, channel, ratio); unknown gear gets a generic unit voiced by kind.</p>
+    <div class="rack" id="nam-rack"></div>
   </section>
 
   <section id="generic">
@@ -249,6 +252,11 @@
     const a = famAmp(fam);
     $('nam-stacks').appendChild(ampCard(on => P.namStack({ on, family: fam, form, size, title: a.short }), P.blockByType('amp'), a.name, `amp · ${form} · ${fam}`));
   });
+
+  // outboard: every archetype, then the generic units
+  (D.archetypes.outboard || []).map(a => ({ archetype: a, label: { '1073': '1073MP - 60 dB Hard - B', '1176': '1176 L' }[a.id] || '' }))
+    .concat(['preamp', 'comp', 'eq'].map(kind => ({ kind })))
+    .forEach(o => { const d = document.createElement('div'); d.className = 'rack-unit'; d.innerHTML = P.namRack(o); $('nam-rack').appendChild(d); });
 
   // the rest
   D.blocks.filter(b => b.family === 'generic').forEach(b => {

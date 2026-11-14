@@ -89,3 +89,7 @@ footer code { color: var(--text); }
 @media (prefers-reduced-motion: no-preference) {
   .gp-pedal .gp-switch { transition: transform .08s; }
 }
+
+/* outboard: a 19" rack */
+.rack { max-width: 720px; padding: 12px 24px; border-radius: 8px; background: #0a0b0d; box-shadow: inset 0 0 0 1px #2a2f37, inset 0 10px 30px rgba(0,0,0,.7); display: flex; flex-direction: column; gap: 3px; }
+.rack-unit svg { width: 100%; height: auto; display: block; }

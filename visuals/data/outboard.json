@@ -1,0 +1,96 @@
+{
+  "_comment": "Outboard archetypes (19-inch rack units) for NAM captures of preamps, compressors and EQs. golem matches a capture's label to one by `match` and `aliases` (the longest keyword wins, as for amps and pedals); `kind` voices the unit (preamp, comp, eq); `look` is a period and a material, never a maker's livery; `u` is the height in rack units; `controls` are drawn left to right. A control with `bind` shows the capture's own setting, read from its label by GolemPedals.outboardSetting (gain in dB, hard, channel, ratio). Hand-written: tools/build-data.py copies it into visuals-data.js as archetypes.outboard.",
+  "outboard": [
+    {"id": "1073", "name": "1073 mic preamp / EQ", "short": "1073", "kind": "preamp", "sub": "mic pre · eq", "look": "console-60s", "u": 2,
+     "match": "1073", "aliases": ["neve 1073", "bae 1073", "1073mp", "1073 mp", "1073dpa", "1084"],
+     "controls": [
+       {"type": "stepped", "bind": "gain", "label": "gain", "values": [40, 50, 60, 70], "default": 60, "unit": "dB", "cap": "red"},
+       {"type": "knob", "label": "high", "cap": "blue"},
+       {"type": "knob", "label": "mid", "cap": "blue"},
+       {"type": "knob", "label": "low", "cap": "blue"},
+       {"type": "toggle", "bind": "hard", "label": "hard"},
+       {"type": "badge", "bind": "channel", "label": "ch"},
+       {"type": "knob", "label": "output", "cap": "grey"}
+     ]},
+    {"id": "1176", "name": "1176 FET limiter", "short": "1176", "kind": "comp", "sub": "limiting amplifier", "look": "black-60s", "u": 2,
+     "match": "1176", "aliases": ["urei 1176", "ua 1176", "1176ln", "1176 ln", "1176 rev a"],
+     "controls": [
+       {"type": "knob", "label": "input", "size": "big", "cap": "black"},
+       {"type": "knob", "label": "output", "size": "big", "cap": "black"},
+       {"type": "knob", "label": "attack", "cap": "black"},
+       {"type": "knob", "label": "release", "cap": "black"},
+       {"type": "buttons", "bind": "ratio", "label": "ratio", "values": [4, 8, 12, 20], "default": 4},
+       {"type": "vu", "label": "gr"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "la-2a", "name": "LA-2A optical leveler", "short": "LA-2A", "kind": "comp", "sub": "leveling amplifier", "look": "hammertone-60s", "u": 3,
+     "match": "la-2a", "aliases": ["la2a", "la 2a", "teletronix", "la-2", "opto leveler"],
+     "controls": [
+       {"type": "knob", "label": "gain", "size": "big", "cap": "black"},
+       {"type": "vu", "label": "gr"},
+       {"type": "toggle", "bind": "limit", "label": "limit"},
+       {"type": "knob", "label": "peak red.", "size": "big", "cap": "black"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "eqp-1a", "name": "EQP-1A program EQ", "short": "EQP-1A", "kind": "eq", "sub": "program equalizer", "look": "enamel-50s", "u": 3,
+     "match": "eqp-1a", "aliases": ["pultec", "eqp1a", "eqp 1a", "eqp-1", "program eq"],
+     "controls": [
+       {"type": "knob", "label": "low boost", "cap": "chicken"},
+       {"type": "knob", "label": "low atten", "cap": "chicken"},
+       {"type": "knob", "label": "low freq", "cap": "chicken"},
+       {"type": "knob", "label": "high boost", "cap": "chicken"},
+       {"type": "knob", "label": "bandwidth", "cap": "chicken"},
+       {"type": "knob", "label": "high atten", "cap": "chicken"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "bus-comp", "name": "Console bus compressor", "short": "BUS COMP", "kind": "comp", "sub": "quad bus compressor", "look": "console-80s", "u": 1,
+     "match": "bus comp", "aliases": ["ssl bus", "ssl comp", "ssl g", "g-comp", "g comp", "bus compressor", "glue"],
+     "controls": [
+       {"type": "knob", "label": "threshold", "cap": "grey"},
+       {"type": "buttons", "bind": "ratio", "label": "ratio", "values": [2, 4, 10], "default": 4, "row": true},
+       {"type": "knob", "label": "attack", "cap": "blue"},
+       {"type": "knob", "label": "release", "cap": "blue"},
+       {"type": "knob", "label": "make-up", "cap": "red"},
+       {"type": "vu", "label": "gr"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "api-512", "name": "512 mic preamp", "short": "512", "kind": "preamp", "sub": "mic pre", "look": "module-70s", "u": 1,
+     "match": "api 512", "aliases": ["512c", "api512", "512 pre"],
+     "controls": [
+       {"type": "stepped", "bind": "gain", "label": "gain", "values": [20, 30, 40, 50, 60], "default": 40, "unit": "dB", "cap": "black"},
+       {"type": "toggle", "bind": "hard", "label": "pad"},
+       {"type": "leds", "label": "level"},
+       {"type": "knob", "label": "output", "cap": "blue"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "api-550", "name": "550 three-band EQ", "short": "550", "kind": "eq", "sub": "3-band eq", "look": "module-70s", "u": 1,
+     "match": "api 550", "aliases": ["550a", "550b", "api550"],
+     "controls": [
+       {"type": "knob", "label": "low", "cap": "black"},
+       {"type": "knob", "label": "mid", "cap": "black"},
+       {"type": "knob", "label": "high", "cap": "black"},
+       {"type": "toggle", "label": "in", "on": true},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "distressor", "name": "Modern character compressor", "short": "DISTRESSOR", "kind": "comp", "sub": "compressor", "look": "modern-90s", "u": 2,
+     "match": "distressor", "aliases": ["el8", "el-8", "empirical labs"],
+     "controls": [
+       {"type": "knob", "label": "input", "cap": "alu"},
+       {"type": "knob", "label": "attack", "cap": "alu"},
+       {"type": "knob", "label": "release", "cap": "alu"},
+       {"type": "buttons", "bind": "ratio", "label": "ratio", "values": [1, 2, 3, 4, 6, 10, 20], "default": 4},
+       {"type": "leds", "label": "gr"},
+       {"type": "knob", "label": "output", "cap": "alu"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "fairchild", "name": "Variable-mu tube limiter", "short": "670", "kind": "comp", "sub": "variable-mu limiter", "look": "tube-50s", "u": 4,
+     "match": "fairchild", "aliases": ["fairchild 670", "fairchild 660", "variable mu", "vari-mu", "varimu"],
+     "controls": [
+       {"type": "knob", "label": "input", "size": "big", "cap": "black"},
+       {"type": "stepped", "bind": "time", "label": "time", "values": [1, 2, 3, 4, 5, 6], "default": 2, "cap": "black"},
+       {"type": "vu", "label": "gr"},
+       {"type": "knob", "label": "threshold", "size": "big", "cap": "black"},
+       {"type": "badge", "bind": "channel", "label": "ch"}
+     ]}
+  ]
+}
