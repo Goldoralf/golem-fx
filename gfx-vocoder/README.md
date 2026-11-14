@@ -793,3 +793,8 @@ Log earns its place only through the vintage presets.
   - `key` / `scale` song-bound by id in the engine table.
   - Phase 2: `key_from`; a binding for `PluginInsert::add_sidechain (n_audio, n_midi)` and the check
     of a build with a MIDI input on both engines; REAPER's MIDI send.
+
+**Note (2026-11-14, after the gfx-polysynth review):** the shared gfx-dsp `filterbank` takes an explicit band
+list (centres and widths) rather than a spacing law, so gfx-polysynth can ask for one band per partial.
+Width convention: gfx-polysynth states full pole widths, twice the half-width this design uses — the module
+takes full widths and this design converts.

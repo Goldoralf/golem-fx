@@ -701,3 +701,8 @@ automatic vibrato (the DF-2's fault), an amp saturation inside the pedal (questi
 | Touch-noise and mute-drop levels on quiet DIs; the weak-fundamental rule; CPU of 32 partials | Bench |
 | Catalogue entry, footswitch rule (question 8), glyph and motif `modes`; `bloom` and `duck` also exist in gfx-shimmer / gfx-delay with other meanings | golem-rack |
 | Natural competing across a chord's notes; an external (key) pitch reference from another lane | v2 |
+
+**Note (2026-11-14, after the gfx-polysynth review):** `multipitch` is shared with gfx-polysynth, whose
+review fixed its API (gfx-polysynth/README.md §2.3): `prepare(sample_rate, f_min, max_notes)` — this pedal
+passes `max_notes` 4 and its results are unchanged; `notes()` returns confirmed readings only; `early()` is
+reserved for research and never starts a sound. `track` is unchanged.
