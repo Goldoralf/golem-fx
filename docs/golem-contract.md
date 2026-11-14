@@ -16,6 +16,15 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
   the catalogue's **unit**. Ranges may be a little wider than the catalogue's. The display name is free;
   golem maps catalogue id → parameter on its side (engine table).
 - **Real units**: dB, ms, Hz, %, semitones, or the catalogue's own scale (e.g. 0 – 1).
+- **Catalogue ids on a third-party 0 – 1 scale** (decided by Raph, 2026-11-14). When the block's current
+  plugin exposes a normalized 0 – 1 parameter:
+  - **keep the 0 – 1 scale** when its law is already linear in a real unit (mda RingMod's `freq` is
+    linear in Hz, Surge's cut-offs linear in semitones): presets stay as they are, the display shows the
+    real unit (gfx-ringmod);
+  - **switch to real units** when the law is non-linear or misleading (mda Degrade's `nonlin` 0 = the
+    strongest curve; Surge's exponential delay `time`): the design gives the conversion formula, golem's
+    presets and saved chains are converted once, and the catalogue entry changes with golem-rack's
+    agreement (gfx-crusher, gfx-freqshift).
 - **Linear ranges only.** Ardour converts plain values through the plugin's controller, but REAPER's path
   (golem_rig) writes the normalized value as (v − min) / (max − min) — measured on gfx-boost 2026-11-12. A
   skewed range would land on the wrong value in REAPER. Knob feel is golem's UI's business, not the

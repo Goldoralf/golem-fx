@@ -66,6 +66,12 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 24 | [gfx-emet](gfx-emet/) | new block (high-headroom 808 overdrive) | — (Hexdrive's role) | **coded**, bench green, to test in golem |
 | 25 | [gfx-shem](gfx-shem/) | new block (clean shaped tight boost) | — (Fortin Grind's role) | **coded**, bench green, to test in golem |
 | 26 | [gfx-golem](gfx-golem/) | new block (live vocal octave doubler) | — (the Sleep Token *Emergence* vocal) | **coded**, bench green, prototype approved by ear, to test in golem |
+| 27 | [gfx-glitch](gfx-glitch/) | new block (spectral freeze / glitch) | — | **coded**, bench green, to test in golem |
+| 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **designed**, reviewed by Fable 5.2 |
+| 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **designed**, reviewed by Fable 5.2 |
+| 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **designed**, reviewed by Fable 5.2 |
+| 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **designed**, reviewed by Fable 5.2 |
+| 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **designed**, reviewed by Fable 5.2 |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows
