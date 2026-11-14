@@ -129,6 +129,9 @@ const SPACE_SCALE: [f64; 4] = [1.3, 2.2, 3.4, 1.0];
 pub struct Shimmer {
     s: Settings,
     sr: f32,
+    // per-sample coefficients fixed in time, not in samples (0.999 / 0.9995 at 48 kHz, as before; they were that at every rate)
+    duck_k: f32,
+    dc_k: f32,
     space: usize,
     character: usize,
     pending: bool,
@@ -192,6 +195,8 @@ impl Shimmer {
         Self {
             s,
             sr: 48000.0,
+            duck_k: 0.999,
+            dc_k: 0.9995,
             space: 0,
             character: 0,
             pending: false,
@@ -441,7 +446,7 @@ impl Shimmer {
             } else {
                 1.0
             };
-            self.duck_gr = dt + (self.duck_gr - dt) * 0.999;
+            self.duck_gr = dt + (self.duck_gr - dt) * self.duck_k;
             let mut sw = 1.0;
             if swell_ms > 0.0 {
                 let a = 0.5 * (x0.abs() + x1.abs());
@@ -531,7 +536,7 @@ impl Shimmer {
                 let amt = 0.95 * shimmer * regen / (1.0 + self.decay.value()).sqrt();
                 let z = (amt * y).tanh();
                 let (dx, dy) = &mut self.loop_dc[c];
-                let o = z - *dx + 0.9995 * *dy;
+                let o = z - *dx + self.dc_k * *dy;
                 *dx = z;
                 *dy = o;
                 self.fb[c] = o;
@@ -574,6 +579,8 @@ impl Effect for Shimmer {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate;
+        self.duck_k = 0.999f64.powf(48000.0 / sample_rate as f64) as f32;
+        self.dc_k = 0.9995f64.powf(48000.0 / sample_rate as f64) as f32;
         for e in [&mut self.mix, &mut self.decay, &mut self.shimmer, &mut self.hicut, &mut self.duck] {
             e.prepare(sample_rate);
         }

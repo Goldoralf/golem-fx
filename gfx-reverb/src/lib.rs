@@ -210,6 +210,8 @@ fn idx(v: f32, n: usize) -> usize {
 pub struct Reverb {
     s: Settings,
     sr: f32,
+    // ducking smoother, fixed in time (0.999 per sample at 48 kHz, as before; it was that at every rate)
+    duck_k: f32,
     algo: Algo,
     pending: bool,
     gate: LinearRamp,
@@ -284,6 +286,7 @@ impl Reverb {
         Self {
             s,
             sr: 48000.0,
+            duck_k: 0.999,
             algo: Algo::Hall,
             pending: false,
             gate: LinearRamp::new(40.0, 1.0),
@@ -576,7 +579,7 @@ impl Reverb {
             } else {
                 1.0
             };
-            self.duck_gr = dt + (self.duck_gr - dt) * 0.999;
+            self.duck_gr = dt + (self.duck_gr - dt) * self.duck_k;
             // swell: a pick attack restarts the swell from silence
             let mut sw = 1.0;
             if swell_ms > 0.0 {
@@ -890,6 +893,7 @@ impl Effect for Reverb {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate;
+        self.duck_k = 0.999f64.powf(48000.0 / sample_rate as f64) as f32;
         for e in [&mut self.mix, &mut self.decay, &mut self.hicut, &mut self.shimmer, &mut self.duck] {
             e.prepare(sample_rate);
         }

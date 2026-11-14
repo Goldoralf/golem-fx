@@ -247,3 +247,25 @@ fn follow_decay_cuts_staccato_and_lets_rings_ring() {
     let ratio = (fast.ln() / slow.ln()).abs();
     assert!(ratio > 8.0, "release ratio {ratio} (expected ~16)");
 }
+
+/// The gfx-transient review (2026-11-14) found that a note under the sidechain high-pass corner is only
+/// 7–10 dB down, so a window of one period of `hpf` ripples at the note's period. Here: does the gate
+/// chatter on a decaying low note when `hpf` sits above it?
+#[test]
+fn no_chatter_on_low_notes_under_the_sidechain_highpass() {
+    for (f, hpf) in [(82.4f32, 120.0f32), (82.4, 200.0), (41.2, 100.0), (61.7, 150.0)] {
+        let mut g = gate(|s| {
+            s.thresh = -40.0;
+            s.hold = 0.0;
+            s.hyst = 0.0;
+            s.attack = 0.5;
+            s.release = 50.0;
+            s.hpf = hpf;
+        });
+        let n = ms(3000.0);
+        let x = sine(n, f, |i| 10f32.powf((-10.0 - 70.0 * i as f32 / n as f32) / 20.0));
+        let (_, open) = run(&mut g, &x);
+        let openings = open.windows(2).filter(|w| !w[0] && w[1]).count() + usize::from(open[0]);
+        assert_eq!(openings, 1, "{f} Hz under hpf {hpf} chattered ({openings} openings)");
+    }
+}

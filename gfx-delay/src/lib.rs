@@ -288,6 +288,9 @@ impl Loop {
 pub struct Delay {
     s: Settings,
     sr: f32,
+    // per-sample coefficients fixed in time, not in samples (0.999 / 0.9995 at 48 kHz, as before; they were that at every rate)
+    duck_k: f32,
+    dc_k: f32,
     lp_: [Loop; 2],
     transport: TransportInfo,
     feedback: ExpSmoother,
@@ -342,6 +345,8 @@ impl Delay {
         Self {
             s,
             sr: 48000.0,
+            duck_k: 0.999,
+            dc_k: 0.9995,
             lp_: [Loop::new(0xD1), Loop::new(0xD2)],
             transport: TransportInfo::default(),
             feedback: ExpSmoother::new(0.0, 110.0, v[p::FEEDBACK]),
@@ -495,6 +500,7 @@ impl Delay {
     #[inline]
     fn run_loop(&mut self, k: usize, write: f32, target: f64, glide_k: f64, xf_step: f64, mod_d: f64, hold: f32, fb: f32, drive: f32, diff: f32, pitch: (f32, f32), shift: (f64, f32), age: f32) -> f32 {
         let sr = self.sr;
+        let dc_k = self.dc_k;
         let model = self.model;
         let taps = TAPS[self.taps];
         let reverse = self.reverse;
@@ -595,7 +601,7 @@ impl Delay {
             _ => 0.6,
         } + 3.0 * drive;
         let sat = l.adaa.process(Shaper::Tanh, c * kd) / kd;
-        let yd = sat - l.dc_x + 0.9995 * l.dc_y;
+        let yd = sat - l.dc_x + dc_k * l.dc_y;
         l.dc_x = sat;
         l.dc_y = yd;
         let colored = yd;
@@ -691,7 +697,7 @@ impl Delay {
             let edb = 20.0 * e.max(1e-6).log10();
             let over = ((edb - duck_th) / 6.0).clamp(0.0, 1.0);
             let duck_target = 10f32.powf(-duck_db * over / 20.0);
-            self.duck_gr = duck_target + (self.duck_gr - duck_target) * 0.999;
+            self.duck_gr = duck_target + (self.duck_gr - duck_target) * self.duck_k;
             let swell = |l: &mut Loop, x: f32| -> f32 {
                 if swell_ms <= 0.0 {
                     return x;
@@ -757,6 +763,8 @@ impl Effect for Delay {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate;
+        self.duck_k = 0.999f64.powf(48000.0 / sample_rate as f64) as f32;
+        self.dc_k = 0.9995f64.powf(48000.0 / sample_rate as f64) as f32;
         for e in [&mut self.feedback, &mut self.mix, &mut self.time_ms, &mut self.high_cut, &mut self.duck] {
             e.prepare(sample_rate);
         }

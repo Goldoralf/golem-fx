@@ -230,6 +230,8 @@ struct Channel {
 pub struct Drive {
     s: Settings,
     sr: f32,
+    // the slew envelope's decay, fixed in time (0.999 per sample at 48 kHz, as before; it was that at every rate)
+    slew_k: f32,
     ch: [Channel; MAX_CH],
     gain: ExpSmoother,
     hardness: ExpSmoother,
@@ -258,6 +260,7 @@ impl Drive {
         Self {
             s,
             sr: 48000.0,
+            slew_k: 0.999,
             ch: Default::default(),
             gain: ExpSmoother::new(0.0, 50.0, v[p::GAIN]),
             hardness: ExpSmoother::new(1.0, 10.0, v[p::HARDNESS]),
@@ -425,6 +428,7 @@ impl Drive {
                 // pre-clip filters: the voice's own high-pass, the user's tight, the voice's low-pass
                 let t = ch.tight_user.process(hi);
                 let srf = self.sr;
+                let slew_k = self.slew_k;
                 let run = |voice: Voice, e: &mut Engine| -> f32 {
                     // the voice's own first-order high-pass (the TS's 720 Hz gain-leg corner) and low-pass
                     let vhp = voice.filters().0;
@@ -441,7 +445,7 @@ impl Drive {
                     if voice == Voice::Distortion {
                         // slew: the bigger the swing, the lower the corner (6 kHz at the clip level)
                         let a = (pre * g_eff / c_lin).abs();
-                        e.slew_env = a.max(e.slew_env * 0.999);
+                        e.slew_env = a.max(e.slew_env * slew_k);
                         let fc = (6000.0 / e.slew_env.max(1.0)).clamp(800.0, 0.45 * srf);
                         let k = 1.0 - (-std::f32::consts::TAU * fc / srf).exp();
                         e.slew_lp += k * (pre - e.slew_lp);
@@ -521,6 +525,7 @@ impl Effect for Drive {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate;
+        self.slew_k = 0.999f64.powf(48000.0 / sample_rate as f64) as f32;
         for e in [&mut self.gain, &mut self.hardness, &mut self.tone, &mut self.blend] {
             e.prepare(sample_rate);
         }
