@@ -1798,7 +1798,7 @@ ${r.svg}
   // A drum set is a photograph, one per kind of kit, generated for golem (Nano Banana, 2026-11-15) from the
   // drummer's throne, raised, looking across the kit: no maker's livery, no lettering. The files live in
   // `assets/kits/` (`<type>.webp` 1600 px, `<type>-sm.webp` 600 px for the compact tile); KIT_ASSETS is the
-  // path prefix the page serves them from. `lit` draws a warm glow over the pieces that play, from the
+  // path prefix the page serves them from. `lit` draws a soft warm glow (no outline) over the pieces that play, from the
   // hotspots below (fractions of the image: centre x, centre y, half-width, half-height).
   const KIT_TYPES = ['rock', 'jazz', 'metal', 'vintage', 'electronic', 'hybrid'];
   const KIT_HUES = ['#b3121f', '#1f4fa3', '#2b2b2e', '#e8e2d0', '#2f7a3a', '#6e3aa0', '#c47a1c', '#7a4a26', '#0f6f7a', '#8a1e4a'];
@@ -1840,12 +1840,11 @@ ${r.svg}
     const lit = new Set([].concat(opts.lit || []).filter(p => KIT_PIECES.includes(p)));
     const k = W / 700, spots = KIT_SPOTS[type];
     const glow = on ? [...lit].flatMap(p => spots[p] || []).map(([x, y, rx, ry]) =>
-      `<ellipse cx="${(x * k).toFixed(1)}" cy="${(y * k).toFixed(1)}" rx="${(rx * k * 1.08).toFixed(1)}" ry="${(ry * k * 1.12).toFixed(1)}" fill="${LIT}" opacity=".42" filter="url(#${id}-glow)"/>
-  <ellipse cx="${(x * k).toFixed(1)}" cy="${(y * k).toFixed(1)}" rx="${(rx * k).toFixed(1)}" ry="${(ry * k).toFixed(1)}" fill="none" stroke="${LIT}" stroke-width="${compact ? 1 : 1.6}" opacity=".85"/>`).join('') : '';
+      `<ellipse cx="${(x * k).toFixed(1)}" cy="${(y * k).toFixed(1)}" rx="${(rx * k).toFixed(1)}" ry="${(ry * k).toFixed(1)}" fill="#ffc66b" opacity=".38" filter="url(#${id}-glow)"/>`).join('') : '';
     const accent = mix(KIT_HUES[hashOf(type) % KIT_HUES.length], '#fff', .45);
     return `<svg class="gp-kit gp-kit-${type}${compact ? ' gp-kit-compact' : ''}${on ? ' is-on' : ''}" viewBox="0 0 ${W} ${H}" width="${opts.width || W}" role="img" aria-label="drum kit — ${esc(title)}" data-type="${type}">
 <defs><clipPath id="${id}-frame"><rect x="0" y="0" width="${W}" height="${H}" rx="${compact ? 7 : 9}"/></clipPath>
-<filter id="${id}-glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${compact ? 3 : 6}"/></filter></defs>
+<filter id="${id}-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="${compact ? 4 : 9}"/></filter></defs>
 <g clip-path="url(#${id}-frame)">
 <rect x="0" y="0" width="${W}" height="${H}" fill="#121214"/>
 <image href="${esc(href)}" x="0" y="0" width="${W}" height="${IH}" preserveAspectRatio="xMidYMid slice"${on ? '' : ' opacity=".45"'}/>
