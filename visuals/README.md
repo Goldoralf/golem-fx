@@ -83,3 +83,10 @@ python3 visuals/tools/build-descriptors.py
   (Blackwork names) from Google Fonts. The rig can run offline: golem should vendor them (all three are under the OFL).
 - **Choices left to golem**: which archetype a `pedal-nam` / `amp` block shows (from the capture picked),
   the amp's family (from the archetype), the stack/combo form.
+
+## Checking the drawings
+
+`node visuals/tools/check-svg.js` renders every drawing variant (466 today: every gfx pedal in every finish,
+every catalogue block, amps, racks and modules, keys, drum kits and pad kits with each lit piece) and checks
+that each SVG is well-formed XML: no attribute twice on an element, tags balanced. Run it before every
+visuals commit; golem embeds these drawings as files as well as through `innerHTML`.

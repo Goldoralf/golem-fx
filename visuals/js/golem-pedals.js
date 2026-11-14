@@ -1830,7 +1830,9 @@ ${r.svg}
     return `<rect ${r} fill="${F.wrap === 'wood' ? mix(F.hue, '#6b3e1e', .55) : F.hue}"/>${over}<rect ${r} fill="url(#${id}-shade)"/>`;
   }
   const LIT = '#ffd27a';
-  const litStroke = (on, lit) => on && lit ? ` stroke="${LIT}" stroke-width="2.4" filter="url(#gp-glow-soft)"` : '';
+  // the stroke of a hoop or a pad: its own, or the lit gold one (never both: an attribute twice is invalid XML)
+  const litStroke = (on, lit, stroke, width) => on && lit ? ` stroke="${LIT}" stroke-width="2.4" filter="url(#gp-glow-soft)"`
+    : stroke ? ` stroke="${stroke}" stroke-width="${width}"` : '';
 
   // a shell seen slightly from above: body w × h under its top head
   function shell(id, F, cx, top, w, h, o) {
@@ -1842,7 +1844,7 @@ ${r.svg}
     return `<g class="gp-drum">${o.mesh ? `<rect x="${x}" y="${top}" width="${w}" height="${h}" fill="#1b1c1f"/><rect x="${x}" y="${top}" width="${w}" height="${h}" fill="url(#${id}-shade)"/>` : wrapFill(id, F, x, top, w, h)}
   <ellipse cx="${cx}" cy="${top + h}" rx="${w / 2}" ry="${ry}" fill="#000" opacity=".25"/>${lugs}
   <ellipse cx="${cx}" cy="${top}" rx="${w / 2}" ry="${ry}" fill="${head}"/>${o.mesh ? `<ellipse cx="${cx}" cy="${top}" rx="${w / 2}" ry="${ry}" fill="url(#${id}-mesh)"/>` : ''}
-  <ellipse cx="${cx}" cy="${top}" rx="${w / 2}" ry="${ry}" fill="none" stroke="url(#gp-chrome)" stroke-width="${o.detail ? 2.6 : 1.8}"${litStroke(o.on, o.lit)}/></g>`;
+  <ellipse cx="${cx}" cy="${top}" rx="${w / 2}" ry="${ry}" fill="none"${litStroke(o.on, o.lit, 'url(#gp-chrome)', o.detail ? 2.6 : 1.8)}/></g>`;
   }
   function cymbal(id, cx, cy, rx, o) {
     o = o || {};
@@ -1874,7 +1876,7 @@ ${r.svg}
   <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gp-sheen)" opacity=".35"/>
   ${vint ? `<circle cx="${cx}" cy="${cy}" r="${r * .62}" fill="none" stroke="${ink}" stroke-width="1.2" opacity=".6"/>` : ''}${port}
   <text x="${cx}" y="${cy + fs * .36}" text-anchor="middle" font-family="${vint ? FONT.enamel : FONT.nam}" font-size="${fs.toFixed(1)}" font-weight="800" letter-spacing="${vint ? .5 : 1.4}" fill="${ink}">${esc(vint ? t : t.toUpperCase())}</text>
-  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#gp-chrome)" stroke-width="${o.detail ? 3 : 2}"${litStroke(o.on, o.lit)}/></g>`;
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"${litStroke(o.on, o.lit, 'url(#gp-chrome)', o.detail ? 3 : 2)}/></g>`;
   }
   // an electronic kit's kick tower
   function kickTower(id, cx, base, w, h, title, o) {
