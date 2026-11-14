@@ -11,8 +11,8 @@
 > - **Tests**: 5 behaviour tests pass; the bench is green (28 / 28).
 > - **CPU**: 317 ns per stereo frame at default settings (1.5 % of a core). 3.3 % with three slots,
 >   density, sustain, pitch and cloud all on.
-> - **Listening**: renders on golem's DI takes are in `bench-out/glitch/`. Raph's ear is still to come;
->   factory presets follow it (§5).
+> - **Listening**: renders on golem's DI takes are in `bench-out/glitch/`. 17 factory presets (§5);
+>   Raph's ear is still to come.
 
 golem's **spectral pedal**. It cuts the guitar into frequency bins and lets you play with them:
 - sustain the partials into a pad;
@@ -318,8 +318,9 @@ Rendered with `gfx-bench render` on golem's guitar DI takes (`library/di-refs/gu
 | 09-metal-bells | drift +150 Hz, Thin 50 %, sustain 3,000 ms, mix 50 % |
 | 10-ghost-partials | Quiet Cut 60 %, Peak Only 30 %, sustain 800 ms, mix 60 % |
 
-About fifteen factory presets go in `presets/gfx-glitch.json` (format of presets/README.md) once Raph
-has listened. They are designed, not copied from any third-party pack.
+17 factory presets are in `presets/gfx-glitch.json` (format of presets/README.md), default `ringing-partials`.
+They are designed, not copied from any third-party pack. Each is rendered on both DI takes in
+`bench-out/glitch/presets/<take>-<id>.wav`; Raph's listening is still to come.
 
 ## 6. Measurements
 
