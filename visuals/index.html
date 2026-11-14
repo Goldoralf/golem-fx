@@ -66,6 +66,12 @@
     <div class="grid" id="nam-modules"></div>
   </section>
 
+  <section id="keys">
+    <h2>Keys</h2>
+    <p class="lead">golem's keys sounds (<code>keysUnit</code>), one drawing per family, for golem.fm's <code>/library/keys</code>: a black-lacquer upright for the acoustic piano, a graphite 80s FM keyboard for the E-Piano, a walnut tonewheel organ with its drawbars, and a synth whose panel takes the preset's style colour, its screen the style's wave and its knobs the preset's four macros. The name on the panel comes from <code>title</code>; a period and a material, never a maker's livery. On, the keys hold a chord.</p>
+    <div class="keys" id="keys-grid"></div>
+  </section>
+
   <section id="generic">
     <h2>Other golem blocks</h2>
     <p class="lead">Every other effect golem hosts gets the same vintage enamel box. The glyph on its badge tells them apart; its colour comes from the block's family, aged.</p>
@@ -264,6 +270,12 @@
       const t = (o.archetype && o.archetype.name) || `generic ${o.kind}`;
       $('nam-modules').appendChild(card(on => P.namModule(Object.assign({}, o, { on })), P.blockByType(o.archetype && o.archetype.kind === 'comp' || o.kind === 'comp' ? 'comp-nam' : 'preamp-nam'), t, `outboard · ${(o.archetype && o.archetype.kind) || o.kind}`));
     });
+
+  // keys: the built-in instruments, then one synth per style
+  [{ kind: 'piano', title: 'Concert Grand' }, { kind: 'epiano', title: 'Tine Ballad' }, { kind: 'organ', title: 'Gospel Drawbars', drawbars: '888800000' }]
+    .concat(Object.keys(P.KEYS_STYLE_HUE).map((style, i) => ({ kind: 'synth', style, title: `${style} preset`,
+      macros: ['tone', 'space', 'motion', 'drive'].map((name, j) => ({ name, value: ((i * 3 + j * 5) % 9) / 8 })) })))
+    .forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.keysUnit(o); $('keys-grid').appendChild(d); });
 
   // the rest
   D.blocks.filter(b => b.family === 'generic').forEach(b => {
