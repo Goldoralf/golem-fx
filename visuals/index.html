@@ -75,6 +75,14 @@
     <div class="keys-compact" id="keys-compact"></div>
   </section>
 
+  <section id="kits">
+    <h2>Kits</h2>
+    <p class="lead">golem's drum kits, for Library ▸ Kits: drum sets (<code>drumKit</code>) seen from the front, one layout per kind of kit (rock, jazz, metal, vintage, electronic, hybrid), the title on the kick head and a finish (a hue and a wrap: gloss, sparkle, pearl, wood, satin) picked from the title when not given, so two kits never look the same; and pad kits (<code>padKit</code>), a 4 × 4 controller with one label and colour per pad. <code>lit</code> lights what plays (kick, snare, hats, ride, crash, toms; or pad indexes). Never a maker's livery.</p>
+    <div class="keys" id="kits-grid"></div>
+    <h3>Compact (a wall of kits)</h3>
+    <div class="keys-compact" id="kits-compact"></div>
+  </section>
+
   <section id="generic">
     <h2>Other golem blocks</h2>
     <p class="lead">Every other effect golem hosts gets the same vintage enamel box. The glyph on its badge tells them apart; its colour comes from the block's family, aged.</p>
@@ -286,6 +294,16 @@
     { kind: 'epiano', title: 'Clavinet 1' }, { kind: 'epiano', title: 'Harpsich 2' }, { kind: 'epiano', title: 'Vibe 1' }, { kind: 'organ', title: 'Tonewheel' }]
     .concat(['Pad', 'Sequence', 'Percussion', ''].map(style => ({ kind: 'synth', style, title: style ? `${style} preset` : 'Init', macros: [{ value: .3 }, { value: .8 }, { value: .5 }, { value: 1 }] })))
     .forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.keysUnit(Object.assign({ compact: true }, o)); $('keys-compact').appendChild(d); });
+
+  // kits: one drum set per type, then pad kits
+  const kitDemo = [{ type: 'rock', title: 'Red Zeppelin', lit: ['snare', 'hats'] }, { type: 'jazz', title: 'Blonde Bop', lit: 'ride' }, { type: 'vintage', title: 'Black Pearl' },
+    { type: 'metal', title: 'Aasimonster', lit: 'kick' }, { type: 'electronic', title: 'Mesh Kit', lit: ['kick', 'hats'] }, { type: 'hybrid', title: 'Megakit' }];
+  const padDemo = [['House', ['kick', 'snare', 'clap', 'ch', 'oh', 'rim', 'tom', 'perc', 'kick 2', 'snr 2', 'shaker', 'ride', 'crash', 'fx', 'vox', 'bass']], ['Lo-fi', []], ['Trap', []]]
+    .map(([title, labels], k) => ({ title, lit: [0, 4, 9][k], pads: Array.from({ length: 16 }, (_, i) => ({ label: labels[i] || `p${i + 1}`, hue: labels.length ? ['#ff5a3c', '#e0b23a', '#2ecc71', '#5ec8e0', '#7a6cf0', '#e06ac0'][i % 6] : undefined })) }));
+  kitDemo.forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.drumKit(o); $('kits-grid').appendChild(d);
+    const c = document.createElement('div'); c.className = 'keys-unit'; c.innerHTML = P.drumKit(Object.assign({ compact: true }, o)); $('kits-compact').appendChild(c); });
+  padDemo.forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.padKit(o); $('kits-grid').appendChild(d);
+    const c = document.createElement('div'); c.className = 'keys-unit'; c.innerHTML = P.padKit(Object.assign({ compact: true }, o)); $('kits-compact').appendChild(c); });
 
   // the rest
   D.blocks.filter(b => b.family === 'generic').forEach(b => {
