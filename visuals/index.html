@@ -61,6 +61,9 @@
     <h3>Outboard (19" rack)</h3>
     <p class="note">NAM captures of preamps, compressors and EQs as rack units (<code>namRack</code>), one per pack. The controls show the setting the capture was taken at, read from its name (gain, hard, channel, ratio); unknown gear gets a generic unit voiced by kind.</p>
     <div class="rack" id="nam-rack"></div>
+    <h3>Outboard in the Designer (pedal footprint)</h3>
+    <p class="note">The same units as 500-series-style modules (<code>namModule</code>), at a pedal's size, for the Designer's pedal mode: the capture's own setting first, then the meter and the other controls while the column has room.</p>
+    <div class="grid" id="nam-modules"></div>
   </section>
 
   <section id="generic">
@@ -256,7 +259,11 @@
   // outboard: every archetype, then the generic units
   (D.archetypes.outboard || []).map(a => ({ archetype: a, label: { '1073': '1073MP - 60 dB Hard - B', '1176': '1176 L' }[a.id] || '' }))
     .concat(['preamp', 'comp', 'eq'].map(kind => ({ kind })))
-    .forEach(o => { const d = document.createElement('div'); d.className = 'rack-unit'; d.innerHTML = P.namRack(o); $('nam-rack').appendChild(d); });
+    .forEach(o => {
+      const d = document.createElement('div'); d.className = 'rack-unit'; d.innerHTML = P.namRack(o); $('nam-rack').appendChild(d);
+      const t = (o.archetype && o.archetype.name) || `generic ${o.kind}`;
+      $('nam-modules').appendChild(card(on => P.namModule(Object.assign({}, o, { on })), P.blockByType(o.archetype && o.archetype.kind === 'comp' || o.kind === 'comp' ? 'comp-nam' : 'preamp-nam'), t, `outboard · ${(o.archetype && o.archetype.kind) || o.kind}`));
+    });
 
   // the rest
   D.blocks.filter(b => b.family === 'generic').forEach(b => {

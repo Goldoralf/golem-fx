@@ -1315,6 +1315,73 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
 </svg>`;
   }
 
+  // the same outboard unit at the pedal footprint (Designer, pedal mode): a 500-series-style vertical
+  // module, its controls in a narrow column. Same opts as namRack; the rack stays in the Library.
+  function namModule(opts) {
+    opts = opts || {};
+    const on = opts.on !== false;
+    const arch = opts.archetype || archetypeFor('outboard', opts.label || opts.title) || RACK_GENERIC[opts.kind] || RACK_GENERIC.preamp;
+    const L = RACK_LOOK[arch.look] || RACK_LOOK['console-60s'];
+    const voice = NAM_VOICE[arch.kind] || NAM_VOICE.preamp;
+    const set = Object.assign({}, outboardSetting(opts.label), opts.setting || {});
+    const W = 112, H = 200, title = opts.title || arch.short || arch.name || 'outboard';
+    const top = 42, bottom = H - 34;
+    // rows: a wide control alone, small ones in pairs; bound controls first in priority
+    const ctls = (arch.controls || []).filter(c => c.type !== 'leds' && (c.type !== 'badge' || (c.bind && set[c.bind] != null)))
+      .map(c => c.type === 'buttons' && (c.values || []).length * 21 > W - 16 ? Object.assign({}, c, { type: 'stepped' }) : c);
+    const wide = c => c.type === 'stepped' || c.type === 'vu' || c.type === 'buttons' || c.size === 'big';
+    const rowH = r => r.wide ? (r.items[0].type === 'buttons' ? 34 : r.items[0].type === 'vu' ? 40 : 54) : 44;
+    const layout = list => {
+      const rows = [];
+      list.forEach(c => {
+        const last = rows[rows.length - 1];
+        if (!wide(c) && last && !last.wide && last.items.length < 2) last.items.push(c);
+        else rows.push({ wide: wide(c), items: [c] });
+      });
+      return rows;
+    };
+    const height = rows => rows.reduce((a, r) => a + rowH(r), 0);
+    // the capture's own setting first, then the meter, then the rest, while the column has room;
+    // drawn in the unit's own order
+    const flat = ctls.map((c, i) => Object.assign({}, c, { size: undefined, _i: i }));
+    const prio = flat.filter(c => c.bind).concat(flat.filter(c => !c.bind && c.type === 'vu'), flat.filter(c => !c.bind && c.type !== 'vu'));
+    let chosen = [];
+    prio.forEach(c => {
+      const next = chosen.concat(c).sort((a, b) => a._i - b._i);
+      if (height(layout(next)) <= bottom - top) chosen = next;
+    });
+    const rows = layout(chosen);
+    const used = () => height(rows);
+    const spare = Math.max(0, (bottom - top - used()) / (rows.length + 1));
+    let y = top + spare;
+    const body = rows.map(r => {
+      const h = rowH(r), cy = y + h / 2 - 5;
+      y += h + spare;
+      if (r.wide) return rackControl(r.items[0], W / 2, cy, h + 6, set, L, on, W - 12);
+      if (r.items.length === 1) return rackControl(r.items[0], W / 2, cy, h, set, L, on, W - 12);
+      return r.items.map((c, i) => rackControl(c, W * (i ? .73 : .27), cy, h, set, L, on, W / 2)).join('');
+    }).join('');
+    const screws = [[W / 2, 7], [W / 2, H - 7]].map(([x, yy]) => `<rect x="${x - 7}" y="${yy - 3.4}" width="14" height="6.8" rx="3.4" fill="#0b0c0e"/><circle cx="${x}" cy="${yy}" r="2.5" fill="#9aa3ad"/><circle cx="${x - .5}" cy="${yy - .5}" r=".9" fill="#eef1f4"/>`).join('');
+    const tsize = String(title).length > 7 ? 11 : 15;
+    return `<svg class="gp-pedal gp-nam-module${on ? ' is-on' : ''}" viewBox="-6 -4 ${W + 12} ${H + 16}" width="${opts.width || W + 12}" role="img" aria-label="NAM outboard — ${esc(title)}" data-archetype="${esc(arch.id || '')}">
+<g filter="url(#gp-shadow)">
+  <rect x="0" y="5" width="${W}" height="${H}" rx="3" fill="#0b0c0e"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="${L.panel}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="url(#${L.tex})" opacity="${L.tex === 'gp-brush-lines' ? .55 : .35}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="url(#gp-sheen)" opacity=".45"/>
+</g>
+${screws}
+<text x="${W / 2}" y="28" text-anchor="middle" font-family="${FONT.nam}" font-size="${tsize}" font-weight="800" letter-spacing="1.2" fill="${L.ink}">${esc(String(title).toUpperCase().slice(0, 11))}</text>
+<text x="${W / 2}" y="38" text-anchor="middle" font-family="${FONT.gfx}" font-size="5.6" font-weight="600" letter-spacing="1.1" fill="${L.sub}">${esc(String(arch.sub || voice.label).toUpperCase().slice(0, 22))}</text>
+${body}
+<circle cx="${W / 2 - 18}" cy="${H - 18}" r="5" fill="#26282b"/>
+<circle cx="${W / 2 - 18}" cy="${H - 18}" r="3.6" fill="${on ? L.lamp : mix(L.lamp, '#000', .7)}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
+<circle cx="${W / 2 - 18}" cy="${H - 18}" r="3.6" fill="url(#gp-jewel)"/>
+<text x="${W / 2 - 8}" y="${H - 15.5}" font-family="${FONT.nam}" font-size="6.4" font-weight="700" letter-spacing="1.2" fill="${L.sub}">NAM</text>
+${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'preamp-nam', W / 2 + 26, H - 18, 10, L.sub, 2)}
+</svg>`;
+  }
+
   // ---------- block mode ----------
   function blockTile(block, opts) {
     opts = opts || {};
@@ -1359,7 +1426,7 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
 
   // the golem-fx finish: 'auto' (by family, default), 'anodized', 'thrash'; 'clay' is the first prototype's
   const api = {
-    defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, namRack, outboardSetting, blockTile, pedalFor,
+    defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, namRack, namModule, outboardSetting, blockTile, pedalFor,
     blockByType, archetypeFor, enamelTreadle, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE, RACK_LOOK, RACK_GENERIC,
     _parts: { dinSocket, stompSwitch, knobAlu, headBody, cabBody, corners, rackKnob, rackControl },
     layout: 'fixed', rune: 'engraved',
