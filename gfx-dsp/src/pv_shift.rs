@@ -486,7 +486,7 @@ mod profile {
 
     #[test]
     #[ignore]
-    fn profile_vocoder() {
+    fn profile_pv_shift() {
         let sr = 48000.0f32;
         let n = 48000 * 5;
         let mut rng = crate::lfo::Rng::new(2);

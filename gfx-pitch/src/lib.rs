@@ -7,7 +7,7 @@
 //!
 //! - **Whammy** (single notes): gfx-dsp's centred splice-search shifter centred on 12 ms, splice search
 //!   over half a low-E period, per-sample ratio (EXP sweeps glide).
-//! - **Poly** (chords): gfx-dsp's low-latency phase vocoder (`vocoder`): peak-locked shifting on a long
+//! - **Poly** (chords): gfx-dsp's low-latency phase vocoder (`pv_shift`): peak-locked shifting on a long
 //!   asymmetric analysis window (8192 at 48 kHz) and a short synthesis window: Fast 6.6 ms, Stable 10 ms.
 //!   Both voices share one analysis.
 //!
@@ -22,7 +22,7 @@ use gfx_dsp::detect::{harmony_interval, NoteTracker, PitchDetector, SCALES};
 use gfx_dsp::exp_smooth::ExpSmoother;
 use gfx_dsp::pitch::CenteredShifter;
 use gfx_dsp::smooth::{LinearRamp, OnePole};
-use gfx_dsp::vocoder::PvShifter;
+use gfx_dsp::pv_shift::PvShifter;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
