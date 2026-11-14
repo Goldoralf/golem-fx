@@ -68,8 +68,11 @@
 
   <section id="keys">
     <h2>Keys</h2>
-    <p class="lead">golem's keys sounds (<code>keysUnit</code>), one drawing per family, for golem.fm's <code>/library/keys</code>: a black-lacquer upright for the acoustic piano, a graphite 80s FM keyboard for the E-Piano, a walnut tonewheel organ with its drawbars, and a synth whose panel takes the preset's style colour, its screen the style's wave and its knobs the preset's four macros. The name on the panel comes from <code>title</code>; a period and a material, never a maker's livery. On, the keys hold a chord.</p>
+    <p class="lead">golem's keys sounds (<code>keysUnit</code>), one drawing per family, for golem.fm's <code>/library/keys</code>: a black-lacquer upright for the acoustic piano, a graphite 80s FM keyboard for the E-Piano, a walnut tonewheel organ with its drawbars, and a synth whose panel takes the preset's style colour, its screen the style's wave and its knobs the preset's four macros. Electric pianos take a family from <code>family</code> or from the program's title (<code>keysFamily</code>): FM, tine, reed, clav, harpsichord, mallet. The name on the panel comes from <code>title</code>; a period and a material, never a maker's livery. On, the keys hold a chord.</p>
     <div class="keys" id="keys-grid"></div>
+    <h3>Compact (a wall of sounds)</h3>
+    <p class="note"><code>keysUnit({compact: true})</code>: a 300-wide tile, readable at ~230 px. The title large on the family's material, two octaves of keys (bars for a mallet sound), the synth's style wave and its four macros as bars.</p>
+    <div class="keys-compact" id="keys-compact"></div>
   </section>
 
   <section id="generic">
@@ -272,10 +275,17 @@
     });
 
   // keys: the built-in instruments, then one synth per style
-  [{ kind: 'piano', title: 'Concert Grand' }, { kind: 'epiano', title: 'Tine Ballad' }, { kind: 'organ', title: 'Gospel Drawbars', drawbars: '888800000' }]
+  [{ kind: 'piano', title: 'Concert Grand' }, { kind: 'epiano', title: 'FM Ballad' }, { kind: 'epiano', title: 'Tine E.Piano' },
+    { kind: 'epiano', title: 'Wurli Trem' }, { kind: 'epiano', title: 'Clav Funk' }, { kind: 'epiano', title: 'Harpsichord' },
+    { kind: 'epiano', title: 'Vibe Motor' }, { kind: 'organ', title: 'Gospel Drawbars', drawbars: '888800000' }]
     .concat(Object.keys(P.KEYS_STYLE_HUE).map((style, i) => ({ kind: 'synth', style, title: `${style} preset`,
       macros: ['tone', 'space', 'motion', 'drive'].map((name, j) => ({ name, value: ((i * 3 + j * 5) % 9) / 8 })) })))
     .forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.keysUnit(o); $('keys-grid').appendChild(d); });
+  // the compact tiles, for a wall of sounds
+  [{ kind: 'piano', title: 'Upright' }, { kind: 'epiano', title: 'E.Piano 1' }, { kind: 'epiano', title: 'Rhodes 1' }, { kind: 'epiano', title: 'Wurlitzer' },
+    { kind: 'epiano', title: 'Clavinet 1' }, { kind: 'epiano', title: 'Harpsich 2' }, { kind: 'epiano', title: 'Vibe 1' }, { kind: 'organ', title: 'Tonewheel' }]
+    .concat(['Pad', 'Sequence', 'Percussion', ''].map(style => ({ kind: 'synth', style, title: style ? `${style} preset` : 'Init', macros: [{ value: .3 }, { value: .8 }, { value: .5 }, { value: 1 }] })))
+    .forEach(o => { const d = document.createElement('div'); d.className = 'keys-unit'; d.innerHTML = P.keysUnit(Object.assign({ compact: true }, o)); $('keys-compact').appendChild(d); });
 
   // the rest
   D.blocks.filter(b => b.family === 'generic').forEach(b => {

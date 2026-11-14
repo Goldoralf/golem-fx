@@ -1389,6 +1389,7 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
   const KEYS_STYLE_HUE = {
     pad: '#7a6cf0', lead: '#ff5a3c', keys: '#e0b23a', bass: '#3d9be9', pluck: '#2ecc71',
     arp: '#00a8c0', sfx: '#e06ac0', drone: '#5a7cff', experiment: '#72c000',
+    sequence: '#18c4a8', percussion: '#f08a24',
   };
 
   // a keybed at (x, y), w x h; `held` lists the white-key indices pressed (a chord when on)
@@ -1400,12 +1401,13 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
     let whites = '', blacks = '';
     for (let i = 0; i < n; i++) {
       const kx = x + i * kw, down = held.has(i);
-      whites += `<rect x="${kx.toFixed(2)}" y="${y}" width="${(kw - .8).toFixed(2)}" height="${h - (down ? 0 : 1.5)}" rx="1.6" fill="${down ? mix('#f6f1e4', tint, .35) : opts.ivory || '#f6f1e4'}" stroke="#000" stroke-opacity=".25" stroke-width=".6"/>`;
+      const nat = opts.reverse ? '#2a1d14' : opts.ivory || '#f6f1e4';
+      whites += `<rect x="${kx.toFixed(2)}" y="${y}" width="${(kw - .8).toFixed(2)}" height="${h - (down ? 0 : 1.5)}" rx="1.6" fill="${down ? mix(nat, tint, .35) : nat}" stroke="#000" stroke-opacity=".25" stroke-width=".6"/>`;
       if (!down) whites += `<rect x="${kx.toFixed(2)}" y="${y + h - 4}" width="${(kw - .8).toFixed(2)}" height="2.5" fill="#000" opacity=".12"/>`;
       if (black.has(i % 7) && i < n - 1) {
         const bw = kw * .6, bx = kx + kw - bw / 2 - .4;
-        blacks += `<rect x="${bx.toFixed(2)}" y="${y}" width="${bw.toFixed(2)}" height="${(h * .6).toFixed(1)}" rx="1.2" fill="#141416"/>
-  <rect x="${(bx + bw * .18).toFixed(2)}" y="${y + 1}" width="${(bw * .64).toFixed(2)}" height="${(h * .6 - 5).toFixed(1)}" rx="1" fill="#3a3b40" opacity=".55"/>`;
+        blacks += `<rect x="${bx.toFixed(2)}" y="${y}" width="${bw.toFixed(2)}" height="${(h * .6).toFixed(1)}" rx="1.2" fill="${opts.reverse ? '#efe6d2' : '#141416'}"/>
+  <rect x="${(bx + bw * .18).toFixed(2)}" y="${y + 1}" width="${(bw * .64).toFixed(2)}" height="${(h * .6 - 5).toFixed(1)}" rx="1" fill="${opts.reverse ? '#fffaf0' : '#3a3b40'}" opacity=".55"/>`;
       }
     }
     return `<g class="gp-keybed"><rect x="${x - 1}" y="${y - 2}" width="${w + 2}" height="${h + 3}" fill="#0b0b0c"/>${whites}${blacks}
@@ -1525,6 +1527,8 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
         case 'bass': v = Math.sin(ph) > 0 ? .85 : -.85; break;
         case 'pluck': v = Math.sin(ph * 2) * Math.exp(-t * 4); break;
         case 'arp': v = [-.6, .1, .7, .1][Math.floor(t * 8) % 4]; break;
+        case 'sequence': v = [-.7, -.2, .5, -.2, .8, .2, -.4, .3][Math.floor(t * 16) % 8] * (((t * 16) % 1) < .6 ? 1 : .15); break;
+        case 'percussion': { const k = (t * 4) % 1; v = Math.sin(k * 45) * Math.exp(-k * 7) * .95; break; }
         case 'sfx': v = Math.sin(ph * 3.3 + Math.sin(ph * 7.1) * 2) * .9; break;
         case 'drone': v = Math.sin(ph * .4) * .7; break;
         case 'experiment': v = Math.sin(ph * 1.7) * Math.cos(ph * 4.3) ; break;
@@ -1537,8 +1541,8 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
   }
 
   function keysSynth(W, title, on, opts) {
-    const style = String(opts.style || 'pad').toLowerCase();
-    const hue = KEYS_STYLE_HUE[style] || KEYS_STYLE_HUE.pad;
+    const style = synthStyle(opts.style);
+    const hue = KEYS_STYLE_HUE[style] || '#8a94a3';
     const H = 214, K = 66, ky = H - K - 10, cheek = 22, wheels = 46;
     const panel = mix(hue, '#16181b', .72), ink = mix(hue, '#ffffff', .65);
     const macros = (opts.macros && opts.macros.length ? opts.macros : [1, 2, 3, 4].map(i => ({ name: `macro ${i}`, value: .5 }))).slice(0, 4);
@@ -1578,18 +1582,214 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
   ${glyphAt('piano', sx + sw + 16, 20, 8, ink, 2)}` };
   }
 
+  // the electric-piano families a program falls into, from its title (golem's curated FM programs:
+  // "TINE E.PNO", "WURLI/TREM", "CLAVINET 1", "HARPSICH 2", "VIBE 1"…); 'fm' when none fits
+  const EP_FAMILIES = ['fm', 'tine', 'reed', 'clav', 'harpsichord', 'mallet'];
+  function keysFamily(title) {
+    const t = String(title || '').toLowerCase();
+    if (/harpsi|cemb/.test(t)) return 'harpsichord';
+    if (/clav/.test(t)) return 'clav';
+    if (/wurl|reed/.test(t)) return 'reed';
+    if (/vibe|vibra|marimba|xylo|mallet|glock|celest/.test(t)) return 'mallet';
+    if (/rhodes|tine|suitcase|stage/.test(t)) return 'tine';
+    return 'fm';
+  }
+  // golem's Vital `preset_style` names that differ from ours
+  const STYLE_ALIAS = { sequence: 'sequence', seq: 'sequence', percussion: 'percussion', perc: 'percussion', arpeggio: 'arp' };
+  const synthStyle = s => { s = String(s || '').toLowerCase().trim(); s = STYLE_ALIAS[s] || s; return KEYS_STYLE_HUE[s] ? s : 'synth'; };
+
+  // a tolex-covered body (the tine piano's case)
+  const tolexRect = (x, y, w, h, rx, fill) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="#fff" filter="url(#gp-tolex)" opacity=".5"/>`;
+  const smallKnob = (cx, cy, r, v, label, ink, cap) => {
+    const a = -135 + 270 * v, [px, py] = polar(cx, cy, r * .82, a);
+    return `<circle cx="${cx}" cy="${cy + 1}" r="${r}" fill="#000" opacity=".35"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="${cap || '#17191b'}"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gp-sheen)" opacity=".45"/>
+  <path d="M${cx} ${cy}L${px.toFixed(1)} ${py.toFixed(1)}" stroke="${luma(cap || '#17191b') > .5 ? '#222' : '#eee'}" stroke-width="1.4" stroke-linecap="round"/>
+  ${label ? keysText(cx, cy + r + 9, label.toUpperCase(), 5.8, ink, { font: FONT.gfx, weight: 700, ls: .8 }) : ''}`;
+  };
+
+  function keysTine(W, title, on) {
+    const H = 206, K = 72, ky = H - K - 12, cheek = 18;
+    const kn = Math.round((W - 2 * cheek) / 16);
+    return { H, svg: `<g filter="url(#gp-shadow-small)">${tolexRect(0, 0, W, H, 9, '#1c1c1e')}
+  <rect x="0" y="0" width="${W}" height="${H}" rx="9" fill="url(#gp-sheen)" opacity=".35"/></g>
+  <rect x="${cheek}" y="16" width="${W - 2 * cheek}" height="${ky - 40}" rx="3" fill="url(#gp-brushed)"/>
+  <rect x="${cheek}" y="16" width="${W - 2 * cheek}" height="${ky - 40}" rx="3" fill="url(#gp-brush-lines)" opacity=".6"/>
+  ${keysText(cheek + 18, 16 + (ky - 40) / 2 + 6, String(title).toUpperCase().slice(0, 18), 16, '#202226', { anchor: 'start', ls: 3 })}
+  ${smallKnob(W - 190, 16 + (ky - 40) / 2 - 3, 10, .7, 'volume', '#202226')}${smallKnob(W - 150, 16 + (ky - 40) / 2 - 3, 10, .45, 'bass', '#202226')}
+  ${smallKnob(W - 110, 16 + (ky - 40) / 2 - 3, 10, on ? .35 : 0, 'vibrato', '#202226')}
+  ${keysLamp(W - 60, 16 + (ky - 40) / 2 - 3, '#ff3b2a', on)}
+  <rect x="${cheek}" y="${ky - 14}" width="${W - 2 * cheek}" height="10" fill="#0e0e0f"/>
+  ${keybed(cheek, ky, W - 2 * cheek, K, { keyW: 16, held: on ? triad(kn) : [], rail: '#7a1414', tint: '#ffb03a' })}
+  ${glyphAt('ep', W - 38, 32, 9, '#202226', 2)}` };
+  }
+
+  function keysReed(W, title, on) {
+    const H = 214, K = 70, ky = H - K - 12, cheek = 24, body = '#d6c6a3', ink = '#4a3622';
+    const kn = Math.round((W - 2 * cheek) / 16);
+    const grille = Array.from({ length: 6 }, (_, r) => Array.from({ length: 9 }, (_, c) =>
+      `<circle cx="${cheek + 22 + c * 7 + (r % 2) * 3.5}" cy="${34 + r * 7}" r="1.8" fill="#2a2016" opacity=".7"/>`).join('')).join('');
+    return { H, svg: `<g filter="url(#gp-shadow-small)">
+  <path d="M0 ${ky - 6}V40Q0 6 40 6H${W - 40}Q${W} 6 ${W} 40V${H - 6}a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6Z" fill="${body}"/>
+  <path d="M0 ${ky - 6}V40Q0 6 40 6H${W - 40}Q${W} 6 ${W} 40V${H - 6}a6 6 0 0 1-6 6H6a6 6 0 0 1-6-6Z" fill="url(#gp-sheen)" opacity=".55"/></g>
+  <path d="M10 ${ky - 30}H${W - 10}" stroke="#b9a681" stroke-width="2"/>
+  ${grille}
+  <rect x="${W / 2 - 110}" y="34" width="220" height="30" rx="4" fill="url(#gp-chrome)"/>
+  ${keysText(W / 2, 54, String(title).toUpperCase().slice(0, 18), 14, ink, { ls: 3 })}
+  ${smallKnob(W - 120, 50, 9, .6, 'volume', ink, '#f1ece0')}${smallKnob(W - 84, 50, 9, on ? .5 : 0, 'vibrato', ink, '#f1ece0')}
+  ${keysLamp(W - 48, 50, '#ff5a3c', on)}
+  <rect x="${cheek - 4}" y="${ky - 8}" width="${W - 2 * cheek + 8}" height="8" fill="#2a2016"/>
+  ${keybed(cheek, ky, W - 2 * cheek, K, { keyW: 16, held: on ? triad(kn) : [], rail: '#2a2016', tint: '#ff5a3c' })}
+  ${glyphAt('ep', cheek + 100, 52, 9, ink, 2)}` };
+  }
+
+  function keysClav(W, title, on) {
+    const H = 196, K = 66, ky = H - K - 12, cheek = 22, wood = '#a8743f';
+    const kn = Math.round((W - 2 * cheek) / 16);
+    const tabs = ['brill', 'treble', 'medium', 'soft', 'a·b', 'c·d'].map((l, i) => {
+      const x = W - 300 + i * 34, down = on ? i === 0 || i === 4 : false;
+      return `<rect x="${x}" y="30" width="24" height="30" rx="2" fill="${i < 4 ? '#e9dcc4' : '#c9452e'}"/><rect x="${x}" y="${down ? 30 : 45}" width="24" height="15" rx="2" fill="#000" opacity=".16"/>
+  ${keysText(x + 12, 72, l.toUpperCase(), 5.6, '#e9dcc4', { font: FONT.gfx, weight: 700, ls: .5 })}`;
+    }).join('');
+    return { H, svg: `<g filter="url(#gp-shadow-small)">
+  <rect x="0" y="0" width="${W}" height="${H}" rx="5" fill="${wood}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="5" fill="url(#gp-brush-lines)" opacity=".55"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="5" fill="url(#gp-sheen)" opacity=".4"/></g>
+  <rect x="${cheek}" y="16" width="${W - 2 * cheek}" height="${ky - 30}" rx="3" fill="#18181a"/>
+  ${keysText(cheek + 18, 52, String(title).toUpperCase().slice(0, 16), 14, '#e9dcc4', { anchor: 'start', ls: 2.6 })}
+  ${tabs}
+  <rect x="${W - 82}" y="36" width="6" height="34" rx="3" fill="#0b0b0c"/><rect x="${W - 86}" y="${on ? 40 : 58}" width="14" height="9" rx="2" fill="#9aa0a7"/>
+  ${keysText(W - 79, 82, 'MUTE', 5.6, '#e9dcc4', { font: FONT.gfx, weight: 700, ls: .6 })}
+  ${keysLamp(W - 48, 44, '#ff3b2a', on)}
+  ${keybed(cheek, ky, W - 2 * cheek, K, { keyW: 16, held: on ? triad(kn) : [], rail: '#18181a', tint: '#c9452e' })}
+  ${glyphAt('ep', cheek + 12, 28, 8, '#e9dcc4', 2)}` };
+  }
+
+  function keysHarpsichord(W, title, on) {
+    const H = 236, K = 62, ky = H - K - 14, cheek = 30, wood = '#6b4226', gold = '#d9b25a';
+    const kn = Math.round((W - 2 * cheek) / 15);
+    const strings = Array.from({ length: 28 }, (_, i) => { const x = cheek + 16 + i * ((W - 2 * cheek - 32) / 27);
+      return `<path d="M${x.toFixed(1)} ${ky - 22}L${(x + 30 - i * 1.6).toFixed(1)} 30" stroke="${gold}" stroke-width=".6" opacity="${on ? .7 : .4}"/>`; }).join('');
+    return { H, svg: `<g filter="url(#gp-shadow-small)">
+  <rect x="0" y="0" width="${W}" height="${H}" rx="4" fill="${wood}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="4" fill="url(#gp-brush-lines)" opacity=".5"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="4" fill="url(#gp-sheen)" opacity=".4"/></g>
+  <rect x="6" y="6" width="${W - 12}" height="${H - 12}" rx="3" fill="none" stroke="${gold}" stroke-width="1.2" opacity=".8"/>
+  <path d="M${cheek} ${ky - 18}L${cheek + 40} 22H${W - cheek - 40}L${W - cheek} ${ky - 18}Z" fill="#c9a77a"/>
+  <path d="M${cheek} ${ky - 18}L${cheek + 40} 22H${W - cheek - 40}L${W - cheek} ${ky - 18}Z" fill="url(#gp-brush-lines)" opacity=".4"/>
+  ${strings}
+  <rect x="${W / 2 - 100}" y="${ky - 50}" width="200" height="22" rx="2" fill="#2a1a10" stroke="${gold}" stroke-width=".8"/>
+  ${keysText(W / 2, ky - 34, String(title).toUpperCase().slice(0, 20), 11, gold, { ls: 3 })}
+  <rect x="${cheek - 4}" y="${ky - 14}" width="${W - 2 * cheek + 8}" height="12" fill="#3a2414"/>
+  ${keybed(cheek, ky, W - 2 * cheek, K, { keyW: 15, held: on ? triad(kn) : [], rail: '#3a2414', tint: gold, reverse: true })}
+  ${glyphAt('ep', W - cheek - 20, ky - 39, 8, gold, 2)}` };
+  }
+
+  // a vibraphone: graduated bars over resonators, in keyboard order
+  function malletBars(x, y, w, h, n, on, accent) {
+    const bw = w / n, held = on ? new Set(triad(n)) : new Set();
+    const black = new Set([0, 1, 3, 4, 5]);
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      const len = h * (1 - .38 * i / n), bx = x + i * bw, by = y + h * .42 + (h - len) / 2;
+      s += `<rect x="${(bx + bw * .3).toFixed(1)}" y="${(by + len).toFixed(1)}" width="${(bw * .4).toFixed(1)}" height="${(h * .32).toFixed(1)}" fill="#55595f" opacity=".6"/>
+  <rect x="${(bx + 1).toFixed(1)}" y="${(by).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${(len * .55).toFixed(1)}" rx="1.5" fill="${held.has(i) ? mix('#cfd3d8', accent, .45) : '#c9ced4'}"${held.has(i) ? ' filter="url(#gp-glow-soft)"' : ''}/>
+  <rect x="${(bx + 1).toFixed(1)}" y="${(by).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${(len * .55).toFixed(1)}" rx="1.5" fill="url(#gp-brush-lines)" opacity=".5"/>`;
+      if (black.has(i % 7) && i < n - 1) {
+        const ax = bx + bw * .55, alen = len * .45;
+        s += `<rect x="${ax.toFixed(1)}" y="${(y + (h * .42 - alen) / 2).toFixed(1)}" width="${(bw * .9).toFixed(1)}" height="${alen.toFixed(1)}" rx="1.5" fill="#b8bec5"/>
+  <rect x="${ax.toFixed(1)}" y="${(y + (h * .42 - alen) / 2).toFixed(1)}" width="${(bw * .9).toFixed(1)}" height="${alen.toFixed(1)}" rx="1.5" fill="url(#gp-brush-lines)" opacity=".5"/>`;
+      }
+    }
+    return `<g class="gp-bars"><path d="M${x} ${y + h * .2}H${x + w}M${x} ${y + h * .62}H${x + w}" stroke="#8a2a1a" stroke-width="1.2" opacity=".7"/>${s}</g>`;
+  }
+  function keysMallet(W, title, on) {
+    const H = 200, cheek = 18, top = 46;
+    return { H, svg: `<g filter="url(#gp-shadow-small)">
+  <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="#26282c"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="url(#gp-sheen)" opacity=".4"/></g>
+  ${keysText(cheek + 8, 30, String(title).toUpperCase().slice(0, 18), 13, '#e2e6ea', { anchor: 'start', ls: 2.6 })}
+  <circle cx="${W - 92}" cy="25" r="11" fill="#17181a" stroke="#55595f"/>
+  <path d="M${W - 92} 25l${on ? 7 : 0} ${on ? -6 : -9}M${W - 92} 25l${on ? -8 : 0} ${on ? 3 : 9}" stroke="#9aa0a7" stroke-width="2" stroke-linecap="round"/>
+  ${keysText(W - 92, 44, 'MOTOR', 5.6, '#9aa0a7', { font: FONT.gfx, weight: 700, ls: .8 })}
+  ${keysLamp(W - 48, 25, '#ffb03a', on)}
+  ${malletBars(cheek, top, W - 2 * cheek, H - top - 10, 30, on, '#ffb03a')}
+  ${glyphAt('ep', cheek + 4, 14, 7, '#e2e6ea', 2)}` };
+  }
+
+  // ---------- compact: a tile for a wall of sounds (~230 px wide) ----------
+  const KEYS_COMPACT = {
+    piano: { body: '#111214', panel: '#0c0d0e', ink: '#d9c08a', rail: '#7a1414' },
+    fm: { body: '#2b2c2f', panel: '#1d1e20', ink: '#cfd3d8', rail: '#c96a52', lcd: '#5fd4c4' },
+    tine: { body: '#1c1c1e', panel: 'url(#gp-brushed)', ink: '#202226', rail: '#7a1414', tolex: true },
+    reed: { body: '#d6c6a3', panel: '#e6d9bd', ink: '#4a3622', rail: '#2a2016' },
+    clav: { body: '#a8743f', panel: '#18181a', ink: '#e9dcc4', rail: '#18181a', wood: true },
+    harpsichord: { body: '#6b4226', panel: '#2a1a10', ink: '#d9b25a', rail: '#3a2414', wood: true, reverse: true },
+    mallet: { body: '#26282c', panel: '#26282c', ink: '#e2e6ea', rail: '#26282c' },
+    organ: { body: '#5b3a22', panel: '#1a120b', ink: '#e9dcc4', rail: '#1a120b', wood: true },
+  };
+  function keysCompact(kind, family, title, on, opts) {
+    const W = 300, H = 176, K = 58, ky = H - K - 8, side = 10;
+    let M = KEYS_COMPACT[kind === 'epiano' ? family : kind] || KEYS_COMPACT.fm, hue = null, style = null;
+    if (kind === 'synth') {
+      style = synthStyle(opts.style); hue = KEYS_STYLE_HUE[style] || '#8a94a3';
+      M = { body: mix(hue, '#16181b', .72), panel: '#07080a', ink: mix(hue, '#fff', .65), rail: '#0b0c0d', wood: false };
+    }
+    const T = String(title).toUpperCase().slice(0, 16);
+    const py = 10, ph = ky - 18;
+    let emblem = '';
+    if (kind === 'synth') {
+      emblem = `<rect x="${side + 6}" y="${py + 4}" width="${W - 2 * side - 12}" height="${ph - 8}" rx="3" fill="${on ? mix(hue, '#05070a', .82) : '#0a0c0e'}"/>
+  <path d="${styleWave(style, side + 150, py + 12, W - 2 * side - 166, ph - 24)}" fill="none" stroke="${on ? mix(hue, '#fff', .25) : mix(hue, '#000', .55)}" stroke-width="1.8"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
+  ${keysText(side + 16, py + 26, T, 15, on ? '#eef0f2' : '#5a5f66', { anchor: 'start', ls: 1.2 })}
+  ${keysText(side + 16, py + 42, style.toUpperCase(), 9, on ? hue : mix(hue, '#000', .5), { anchor: 'start', font: FONT.gfx, weight: 700, ls: 1.6 })}
+  ${(opts.macros || []).slice(0, 4).map((m, i) => { const v = Math.max(0, Math.min(1, +m.value || 0));
+    return `<rect x="${side + 16 + i * 30}" y="${py + ph - 22}" width="24" height="4" rx="2" fill="#000" opacity=".5"/><rect x="${side + 16 + i * 30}" y="${py + ph - 22}" width="${(24 * v).toFixed(1)}" height="4" rx="2" fill="${on ? hue : mix(hue, '#000', .5)}"/>`; }).join('')}`;
+    } else if (kind === 'organ') {
+      const reg = String(opts.drawbars || '888000000').replace(/\D/g, '').padEnd(9, '0').slice(0, 9).split('').map(Number);
+      const tips = ['#5a3418', '#5a3418', '#f1ece0', '#f1ece0', '#141414', '#f1ece0', '#141414', '#141414', '#f1ece0'];
+      emblem = keysText(side + 14, py + 28, T, 15, M.ink, { anchor: 'start', ls: 1.4 }) + reg.map((v, i) => { const x = W - side - 128 + i * 13, len = 4 + v * 4.2;
+        return `<rect x="${x - 1.6}" y="${py + 6}" width="3.2" height="${len}" fill="url(#gp-chrome)"/><rect x="${x - 4.5}" y="${py + 6 + len}" width="9" height="9" rx="2" fill="${tips[i]}"/>`; }).join('');
+    } else if (kind === 'epiano' && family === 'fm') {
+      emblem = `<rect x="${side + 8}" y="${py + 8}" width="${W - 2 * side - 70}" height="${ph - 18}" rx="2" fill="#0d1314"/>
+  <rect x="${side + 12}" y="${py + 12}" width="${W - 2 * side - 78}" height="${ph - 26}" rx="1" fill="${on ? M.lcd : '#1f3b38'}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
+  ${keysText(side + 20, py + 12 + (ph - 26) / 2 + 5, T, 14, on ? '#0b2522' : '#2f5a55', { anchor: 'start', font: FONT.gfx, weight: 700, ls: .8 })}
+  ${[0, 1, 2].map(i => `<rect x="${W - side - 52 + i * 15}" y="${py + 12}" width="11" height="8" rx="1" fill="${['#c96a52', '#5f7f86', '#8b8f95'][i]}"/>`).join('')}`;
+    } else if (kind === 'epiano' && family === 'clav') {
+      emblem = keysText(side + 14, py + 30, T, 14, M.ink, { anchor: 'start', ls: 1.2 }) + [0, 1, 2, 3, 4, 5].map(i => `<rect x="${W - side - 98 + i * 15}" y="${py + 12}" width="11" height="18" rx="1.5" fill="${i < 4 ? '#e9dcc4' : '#c9452e'}"/>`).join('');
+    } else {
+      emblem = keysText(W / 2, py + ph / 2 + 6, T, 16, M.ink, { ls: 2.4 });
+    }
+    const lamp = keysLamp(W - side - 12, py + ph - 10, hue || '#ff3b2a', on);
+    const lower = kind === 'epiano' && family === 'mallet'
+      ? malletBars(side, ky - 4, W - 2 * side, K + 4, 18, on, '#ffb03a')
+      : keybed(side, ky, W - 2 * side, K, { keyW: 14, held: on ? triad(Math.round((W - 2 * side) / 14)) : [], rail: M.rail, tint: hue || '#ffd27a', reverse: M.reverse });
+    const panelFill = M.panel;
+    return { W, H, svg: `<g filter="url(#gp-shadow-small)">${M.tolex ? tolexRect(0, 0, W, H, 7, M.body) : `<rect x="0" y="0" width="${W}" height="${H}" rx="7" fill="${M.body}"/>`}
+  ${M.wood ? `<rect x="0" y="0" width="${W}" height="${H}" rx="7" fill="url(#gp-brush-lines)" opacity=".5"/>` : ''}
+  <rect x="0" y="0" width="${W}" height="${H}" rx="7" fill="url(#gp-sheen)" opacity=".4"/></g>
+  <rect x="${side}" y="${py}" width="${W - 2 * side}" height="${ph}" rx="3" fill="${panelFill}"/>
+  ${kind === 'piano' ? `<rect x="${side}" y="${py}" width="${W - 2 * side}" height="${ph}" rx="3" fill="url(#gp-gloss)" opacity=".4"/>` : ''}
+  ${emblem}${lamp}${lower}` };
+  }
+
   // a keys sound: golem's built-in instruments and synth presets. opts: kind ('piano' | 'epiano' |
-  // 'organ' | 'synth'), title (the name on the panel), style (synth: pad, lead, keys, bass, pluck, arp,
-  // sfx, drone, experiment — the panel's colour and the screen's wave), macros ([{name, value 0..1}],
-  // up to 4, synth), drawbars ('888000000', organ), on, width
+  // 'organ' | 'synth'), title (the name on the panel), family (epiano: 'fm' · 'tine' · 'reed' · 'clav' ·
+  // 'harpsichord' · 'mallet'; found from the title by keysFamily when absent), style (synth: pad, lead,
+  // keys, bass, pluck, arp, sequence, percussion, sfx, drone, experiment, golem's Vital preset_style
+  // names included; empty or unknown = a neutral synth), macros ([{name, value 0..1}], up to 4, synth),
+  // drawbars ('888000000', organ), compact (a 300-wide tile for a wall of sounds), on, width
   function keysUnit(opts) {
     opts = opts || {};
     const kind = ['piano', 'epiano', 'organ', 'synth'].includes(opts.kind) ? opts.kind : 'synth';
-    const on = opts.on !== false, W = 600;
+    const on = opts.on !== false;
+    const family = kind === 'epiano' ? (EP_FAMILIES.includes(opts.family) ? opts.family : keysFamily(opts.title)) : '';
     const title = opts.title || { piano: 'Grand', epiano: 'E-Piano', organ: 'Tonewheel', synth: 'Synth' }[kind];
-    const r = kind === 'piano' ? keysPiano(W, title, on) : kind === 'epiano' ? keysEpiano(W, title, on)
-      : kind === 'organ' ? keysOrgan(W, title, on, opts) : keysSynth(W, title, on, opts);
-    return `<svg class="gp-keys gp-keys-${kind}${on ? ' is-on' : ''}" viewBox="-4 -4 ${W + 8} ${r.H + 10}" width="${opts.width || W + 8}" role="img" aria-label="${esc(kind)} — ${esc(title)}" data-kind="${kind}"${kind === 'synth' ? ` data-style="${esc(String(opts.style || 'pad').toLowerCase())}"` : ''}>
+    let r, W = 600;
+    if (opts.compact) { r = keysCompact(kind, family, title, on, opts); W = r.W; }
+    else if (kind === 'epiano') r = { fm: keysEpiano, tine: keysTine, reed: keysReed, clav: keysClav, harpsichord: keysHarpsichord, mallet: keysMallet }[family](W, title, on);
+    else r = kind === 'piano' ? keysPiano(W, title, on) : kind === 'organ' ? keysOrgan(W, title, on, opts) : keysSynth(W, title, on, opts);
+    const data = kind === 'synth' ? ` data-style="${esc(synthStyle(opts.style))}"` : kind === 'epiano' ? ` data-family="${family}"` : '';
+    return `<svg class="gp-keys gp-keys-${kind}${opts.compact ? ' gp-keys-compact' : ''}${on ? ' is-on' : ''}" viewBox="-4 -4 ${W + 8} ${r.H + 10}" width="${opts.width || W + 8}" role="img" aria-label="${esc(kind)} — ${esc(title)}" data-kind="${kind}"${data}>
 ${r.svg}
 </svg>`;
   }
@@ -1638,8 +1838,8 @@ ${r.svg}
 
   // the golem-fx finish: 'auto' (by family, default), 'anodized', 'thrash'; 'clay' is the first prototype's
   const api = {
-    defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, namRack, namModule, keysUnit, outboardSetting, blockTile, pedalFor,
-    blockByType, archetypeFor, enamelTreadle, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE, RACK_LOOK, RACK_GENERIC, KEYS_STYLE_HUE,
+    defs, glyph, glyphAt, gfxPedal, genericPedal, namPedal, namHead, namCab, namStack, namRack, namModule, keysUnit, keysFamily, outboardSetting, blockTile, pedalFor,
+    blockByType, archetypeFor, enamelTreadle, ampLook, cabLayout, hueOf, mix, luma, esc, FONT, AMP_LOOK, NAM_VOICE, RACK_LOOK, RACK_GENERIC, KEYS_STYLE_HUE, EP_FAMILIES,
     _parts: { dinSocket, stompSwitch, knobAlu, headBody, cabBody, corners, rackKnob, rackControl },
     layout: 'fixed', rune: 'engraved',
     style: 'auto', STYLES: ['auto'].concat(METAL_STYLES, 'blackwork', 'clay'), MOTIF, METAL_HUE, FAMILY_FINISH, CRATE_FINISH, finishFor,
