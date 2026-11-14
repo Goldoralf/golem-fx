@@ -1,0 +1,10 @@
+[package]
+name = "fourstep"
+version = "0.1.0"
+edition = "2021"
+[dependencies]
+realfft = "3.5"
+rustfft = "6"
+[workspace]
+[profile.release]
+lto = "thin"

@@ -88,6 +88,9 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 46 | [gfx-formant](gfx-formant/) | new block `formant` (formant shifter) | — | **designed**, reviewed by Fable 5.2 |
 | 47 | [gfx-vocoder](gfx-vocoder/) | new block `vocoder` (channel vocoder) | — | **designed**, reviewed by Fable 5.2 |
 | 48 | [gfx-radio](gfx-radio/) | new block `radio` (telephone, megaphone, AM, walkie…) | — | **designed**, reviewed by Fable 5.2 |
+| 49 | [gfx-grains](gfx-grains/) | `granular` | ZamGrains | **designed**, reviewed by Fable 5.2 |
+| 50 | [gfx-stretch](gfx-stretch/) | `stretch` | PaulXStretch | **designed**, reviewed by Fable 5.2 |
+| 51 | [gfx-sustainer](gfx-sustainer/) | new block `sustainer` (controlled feedback / sustain) | — | **designed**, reviewed by Fable 5.2 |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows

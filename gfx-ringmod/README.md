@@ -713,3 +713,10 @@ no reference to copy and no proof yet.
 | New `ringmod` glyph, face, brass crate hue | golem-rack, with the release |
 | External carrier (aux bus) once golem routes key inputs | golem-rack, later |
 | Parker's own figure for oversampling, to read in the paper | golem-fx, before quoting it |
+
+**Note (2026-11-14, after the gfx-sustainer review):** the tracker this design specifies (a band-pass pair
+ahead of the PLL) delays the string's pitch modulation by about 2.5 periods; on a ±30 ¢, 6 Hz vibrato the
+locked carrier sat 0.9–1.8 rad off the string, and lock was lost at ±50 ¢ on the 3rd harmonic. The shared
+gfx-dsp `track` module is respecified in `gfx-sustainer/README.md` §2.7 (complex demodulation at the NCO's
+phase, the filter inside the loop, bandwidth f0/5, partials at k·ψ with a ratio trim). gfx-ringmod's Track
+carrier uses that module; align this section when `track` is coded.
