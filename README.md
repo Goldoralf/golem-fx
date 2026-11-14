@@ -70,7 +70,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **designed**, reviewed by Fable 5.2 |
 | 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **designed**, reviewed by Fable 5.2 |
 | 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **designed**, reviewed by Fable 5.2 |
-| 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **designed**, reviewed by Fable 5.2 |
+| 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **coded** (Accurate mode; Pedal mode waits for its voicing), bench green, to test in golem |
 | 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **designed**, reviewed by Fable 5.2 |
 | 33 | [gfx-fuzz](gfx-fuzz/) | new block `fuzz` (circuit fuzzes, guitar in the netlist) | — | **designed**, reviewed by Fable 5.2 |
 | 34 | [gfx-dist](gfx-dist/) | new block `dist` (circuit distortions and overdrives) | — | **designed**, reviewed by Fable 5.2 |

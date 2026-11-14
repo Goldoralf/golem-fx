@@ -59,6 +59,7 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | `motor` | First-order inertia with separate accelerate / decelerate constants, angle integration | rotary, vibrato rise |
 | `onset` | Zero-latency pick detector (high-passed fast / slow envelope difference) | killswitch, autowah |
 | `divider` | Adaptive Schmitt trigger + flip-flops (analog octave divider) | octaver |
+| `geq` | Accurate graphic EQ (ACGE with fill-in sections): fill-in rule, Q from the edge gain, monotone cubic (PCHIP) target, fixed-centre matched bell (cached fitting grid), per-layout plan (interaction matrix, regularised pseudo-inverse) with cold solve and warm-started chord correction, all fixed-size | geq |
 
 Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter
 at 192 kHz loses precision in `f32`). Multi-line structures (FDN, filterbanks, multi-voice) are written for

@@ -42,6 +42,11 @@ for (const a of (P.RACK_GENERIC ? Object.keys(P.RACK_GENERIC) : [])) {
 const D = window.GOLEM_VISUALS;
 for (const crate of Object.keys(D.gfx || {})) for (const style of P.STYLES) { P.setStyle(style); cases.push([`gfxPedal ${crate} ${style}`, P.gfxPedal(crate, { on: true })]); }
 P.setStyle('auto');
+// slider faces: every fader set (by the enum's rank), on and off
+for (const crate of Object.keys(D.gfx || {})) {
+  const fs = D.gfx[crate].fader_sets;
+  if (fs && fs.param) fs.sets.forEach((_, rank) => [true, false].forEach(on => cases.push([`gfxPedal ${crate} set ${rank} on=${on}`, P.gfxPedal(crate, { on, values: { [fs.param.id]: rank, level: 6 } })])));
+}
 for (const b of D.blocks || []) cases.push([`pedalFor ${b.type}`, P.pedalFor(b.type)]);
 for (const fam of Object.keys(P.AMP_LOOK)) cases.push([`namHead ${fam}`, P.namHead({ family: fam, title: 'Head' })], [`namStack ${fam}`, P.namStack({ family: fam, title: 'Stack' })]);
 

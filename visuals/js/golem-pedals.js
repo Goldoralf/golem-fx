@@ -277,6 +277,8 @@
     if (!spec) return '';
     let style = opts.style || api.style;
     if (style === 'auto') style = finishFor(spec);
+    // the wide stomp (sliders) has no clay or blackwork drawing: those finishes fall back to anodized
+    if (spec.shape === 'wide') return gfxWide(spec, opts, style === 'thrash' ? 'thrash' : 'anodized');
     if (style === 'blackwork') return gfxPedalBlackwork(spec, opts);
     if (METAL_STYLES.includes(style)) return spec.shape === 'treadle' ? gfxTreadleMetal(spec, opts, style) : gfxPedalMetal(spec, opts, style);
     if (spec.shape === 'treadle') return gfxTreadle(spec, opts);
@@ -356,6 +358,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
     'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves', 'gfx-glitch': 'bins',
+    'gfx-geq': 'scale',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -487,6 +490,11 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         }
         break;
       }
+      case 'scale':
+        // a screen-printed fader scale: rules at 0 (stronger), ±5, ±10, ±15 dB across the slider field
+        // (the wide face's slots run y 16 – 100, 0 dB at 58)
+        for (let db = -15; db <= 15; db += 5) line(`M4 ${f1(WIDE_SLOT.mid - db / 15 * WIDE_SLOT.half)}H${W - 4}`, db === 0 ? 1 : .5);
+        break;
       case 'ticks':
         for (let y = 14; y < H - 40; y += 7) { const long = Math.round((y - 14) / 7) % 4 === 0; line(`M5 ${y}h${long ? 7 : 4}M${W - 5} ${y}h${long ? -7 : -4}`, long ? 1 : .6); }
         break;
@@ -667,6 +675,124 @@ ${rune}
 ${nameSvg}
 ${led}
 ${stompSwitch(W / 2, H - 21, 8.5)}
+<text x="${W - 8}" y="${H - 4}" text-anchor="end" font-family="${FONT.gfx}" font-size="5" font-weight="700" fill="${style === 'thrash' ? '#fff' : c.ink}" fill-opacity=".6">golem fx</text>
+</svg>`;
+  }
+
+  // ---------- gfx: the wide stomp (sliders) ----------
+  // The graphic EQ's face (faces.json `shape: "wide"`, `faders`, `fader_sets`, `level_fader`): a box of
+  // fixed width (168, never driven by a parameter: the pedalboard must not reflow), one slider per fader
+  // of the set the enum picks, the level slider set apart, a line through the caps when on.
+  const WIDE_SLOT = { top: 16, bottom: 100, mid: 58, half: 42 };
+  const valueOf = (p, values) => {
+    let v = values && values[p.id] != null ? values[p.id] : p.value != null ? p.value : p.default;
+    if (typeof v === 'string' && p.options) v = Math.max(0, p.options.indexOf(v));
+    return typeof v === 'number' && isFinite(v) ? v : (p.min + p.max) / 2;
+  };
+  // a monotone cubic through points equally spaced in x (Fritsch – Carlson), as Bézier segments
+  function monotonePath(pts) {
+    const n = pts.length;
+    if (n < 2) return '';
+    const m = [], d = [];
+    for (let i = 0; i < n - 1; i++) m.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
+    d[0] = m[0];
+    d[n - 1] = m[n - 2];
+    for (let i = 1; i < n - 1; i++) d[i] = m[i - 1] * m[i] <= 0 ? 0 : 2 / (1 / m[i - 1] + 1 / m[i]);
+    let s = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+    for (let i = 0; i < n - 1; i++) {
+      const h = (pts[i + 1][0] - pts[i][0]) / 3;
+      s += `C${f1(pts[i][0] + h)} ${f1(pts[i][1] + d[i] * h)} ${f1(pts[i + 1][0] - h)} ${f1(pts[i + 1][1] - d[i + 1] * h)} ${f1(pts[i + 1][0])} ${f1(pts[i + 1][1])}`;
+    }
+    return s;
+  }
+  function gfxWide(spec, opts, style) {
+    const on = opts.on !== false, values = opts.values;
+    const c = metalColors(spec, style), id = 'gpm' + (++metalCount);
+    const W = 168, H = 200, rx = style === 'thrash' ? 7 : 10;
+    const accent = style === 'thrash' ? '#ffd400' : c.light;
+    // the set drawn: the one the enum's value picks (by rank), else `faders`
+    const fs = spec.fader_sets;
+    const rank = fs && fs.param ? Math.round(valueOf(fs.param, values)) : 0;
+    const faders = (fs && fs.sets[rank]) || spec.faders || [];
+    const lvl = spec.level_fader;
+    // 11 bands + level at a 12.5 px pitch with 6 px margins; fewer bands centred at an 18 px pitch
+    const pitch = faders.length > 7 ? 12.5 : 18, gap = lvl ? 6 : 0;
+    const span = pitch * (faders.length + (lvl ? 1 : 0)) + gap, x0 = (W - span) / 2;
+    const S = WIDE_SLOT;
+    const capY = p => S.bottom - (S.bottom - S.top) * Math.max(0, Math.min(1, (valueOf(p, values) - p.min) / ((p.max - p.min) || 1)));
+    const slider = (p, x, label, capFill, lineCol) => {
+      const y = capY(p);
+      return `<g class="gp-fader" data-param="${esc(p.id)}">
+  <path d="M${f1(x)} ${S.top}V${S.bottom}" stroke="#000" stroke-opacity=".75" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M${f1(x + .8)} ${S.top}V${S.bottom}" stroke="${c.engraveLight}" stroke-opacity=".35" stroke-width=".4"/>
+  <rect x="${f1(x - 4.5)}" y="${f1(y - 2.4)}" width="9" height="6" rx="1" fill="#000" opacity=".45"/>
+  <rect x="${f1(x - 4.5)}" y="${f1(y - 3)}" width="9" height="6" rx="1" fill="${capFill}" stroke="#000" stroke-opacity=".55" stroke-width=".5"/>
+  <path d="M${f1(x - 3.6)} ${f1(y)}H${f1(x + 3.6)}" stroke="${lineCol}" stroke-width=".9"/>
+  <text x="${f1(x)}" y="${S.bottom + 8}" text-anchor="middle" font-family="${FONT.gfx}" font-size="4.5" font-weight="700" fill="${c.ink}">${esc(label)}</text></g>`;
+    };
+    const capFill = style === 'thrash' ? '#141414' : 'url(#gp-knob-alu)';
+    const capLine = style === 'thrash' ? '#ffd400' : mix(c.light, '#000', .15);
+    let sliders = '';
+    const pts = [];
+    faders.forEach((p, i) => {
+      const x = x0 + pitch * (i + .5);
+      sliders += slider(p, x, p.label || shortLabel(p.name), capFill, capLine);
+      pts.push([x, capY(p)]);
+    });
+    if (lvl) sliders += slider(lvl, x0 + pitch * (faders.length + .5) + gap, 'LVL', accent, style === 'thrash' ? '#000' : mix(c.hue, '#000', .6));
+    const curve = on && pts.length > 1
+      ? `<path d="${monotonePath(pts)}" fill="none" stroke="${c.light}" stroke-width="1.6" opacity=".55" filter="url(#gp-glow-soft)"/><path d="${monotonePath(pts)}" fill="none" stroke="${mix(c.light, '#fff', .5)}" stroke-width=".7"/>` : '';
+
+    const body = style === 'thrash'
+      ? `<rect x="0" y="5" width="${W}" height="${H}" rx="${rx}" fill="${c.base}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="${rx}" fill="url(#${id}-b)"/>`
+      : `<rect x="0" y="5" width="${W}" height="${H}" rx="${rx}" fill="${c.base}"/>
+  <rect x="0" y="0" width="${W}" height="${H}" rx="${rx}" fill="url(#${id}-b)"/>
+  <rect x="4" y="4" width="${W - 8}" height="${H - 8}" rx="${rx - 3}" fill="url(#${id}-f)"/>
+  <rect x="4" y="4" width="${W - 8}" height="${H - 8}" rx="${rx - 3}" fill="url(#gp-brush-lines)"/>`;
+    const finish = style === 'thrash'
+      ? `<rect x="0" y="0" width="${W}" height="${H}" rx="${rx}" fill="url(#gp-gloss)"/>
+<rect x="5" y="${H - 40}" width="${W - 10}" height="34" rx="3" fill="url(#gp-plate)" stroke="#000" stroke-width=".8"/>
+${[[9, H - 36], [W - 9, H - 36], [9, H - 10], [W - 9, H - 10]].map(([x, yy]) => `<circle cx="${x}" cy="${yy}" r="1.4" fill="url(#gp-chrome)"/>`).join('')}`
+      : `<rect x="0" y="0" width="${W}" height="${H}" rx="${rx}" fill="url(#gp-anod-sheen)"/>
+<rect x=".6" y=".6" width="${W - 1.2}" height="${H - 1.2}" rx="${rx - .6}" fill="none" stroke="${c.rim}" stroke-opacity=".7" stroke-width="1"/>
+<rect x="4" y="4" width="${W - 8}" height="${H - 8}" rx="${rx - 3}" fill="none" stroke="${c.base}" stroke-opacity=".5" stroke-width=".8"/>`;
+
+    // below the sliders: the name, then the rune (left of the switch), the switch and the LED (right)
+    const sy = H - 21, gx = W / 2 - 46, gsize = 18, ch = gsize + 10, cw = gsize + 22;
+    const g = { x: gx, y: sy, cw, ch };
+    const rune = (style === 'thrash'
+      ? `<path d="${pill(gx - cw / 2, sy - ch / 2, cw, ch)}" fill="#0b0707" stroke="#000" stroke-width="2"/>`
+      : `<path d="${pill(gx - cw / 2, sy - ch / 2, cw, ch)}" fill="${mix(c.hue, '#000', .88)}" stroke="${c.rim}" stroke-opacity=".6" stroke-width="1"/>`) +
+      (on ? glyphAt(spec.glyph, gx, sy, gsize, c.light, 2.6, 'filter="url(#gp-glow)" opacity=".95"') + glyphAt(spec.glyph, gx, sy, gsize, mix(c.light, '#fff', .75), 1.2)
+        : glyphAt(spec.glyph, gx, sy, gsize, mix(c.hue, '#000', .45), 1.8));
+    const name = spec.name.toUpperCase();
+    const nameY = S.bottom + 34;
+    const nameSvg = style === 'thrash'
+      ? `<text x="${W / 2}" y="${nameY}" text-anchor="middle" font-family="${FONT.nam}" font-size="15" font-weight="900" letter-spacing="1" fill="#fff" stroke="#000" stroke-width="1.8" paint-order="stroke" transform="rotate(-3 ${W / 2} ${nameY - 4})">${esc(name)}</text>`
+      : `<text x="${W / 2}" y="${nameY}" text-anchor="middle" font-family="${FONT.nam}" font-size="14" font-weight="900" letter-spacing="2.5" fill="${c.ink}">${esc(name)}</text>`;
+    const ledX = W / 2 + 46;
+    const led = `<circle cx="${ledX}" cy="${sy}" r="3" fill="#000" opacity=".7"/><circle cx="${ledX}" cy="${sy}" r="2.3" fill="${on ? c.light : mix(c.hue, '#000', .7)}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>${on ? `<circle cx="${ledX}" cy="${sy}" r="1.3" fill="#fff"/>` : ''}`;
+
+    return `<svg class="gp-pedal gp-gfx gp-wide gp-${style}${on ? ' is-on' : ''}" viewBox="-6 -4 ${W + 12} ${H + 16}" width="${opts.width || W + 12}" ` +
+      `role="img" aria-label="${esc(spec.name)} — golem-fx ${esc(spec.crate)}" data-crate="${esc(spec.crate)}" data-style="${style}" data-layout="${rank}">
+<defs>
+  <linearGradient id="${id}-b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c.top}"/><stop offset=".48" stop-color="${c.hue}"/><stop offset="1" stop-color="${c.bottom}"/></linearGradient>
+  <linearGradient id="${id}-f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c.faceTop}"/><stop offset="1" stop-color="${c.faceBottom}"/></linearGradient>
+  <clipPath id="${id}-c"><rect x="${style === 'thrash' ? 0 : 4}" y="${style === 'thrash' ? 0 : 4}" width="${style === 'thrash' ? W : W - 8}" height="${style === 'thrash' ? H : H - 8}" rx="${style === 'thrash' ? rx : rx - 3}"/></clipPath>
+</defs>
+<g filter="url(#gp-shadow)">
+  ${jacks(W, 40)}
+  ${body}
+</g>
+<g clip-path="url(#${id}-c)">${motifSvg(MOTIF[spec.crate], style, W, H, g, c)}</g>
+${finish}
+${sliders}
+${curve}
+${nameSvg}
+${rune}
+${led}
+${stompSwitch(W / 2, sy, 8.5)}
 <text x="${W - 8}" y="${H - 4}" text-anchor="end" font-family="${FONT.gfx}" font-size="5" font-weight="700" fill="${style === 'thrash' ? '#fff' : c.ink}" fill-opacity=".6">golem fx</text>
 </svg>`;
   }
