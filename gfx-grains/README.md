@@ -791,3 +791,14 @@ the working hold.
 | Reproduce [P] in gfx-bench: kernel stop bands, the alias table, the level table. The half-band's 80 dB is still a Kaiser estimate | Bench |
 | By ear: the measured level on note changes at 64 grains and small `spray` (the gain may move up to 16 dB in 400 ms there; fallback: the model alone); the first second of a hold pressed early (short grains), and whether the hold should keep capturing for a moment after the press; `skip`'s 40 ms and 100 ms; Hold Chord against a spectral hold | Raph, on `gfx-bench apps gfx-grains` |
 | Flux and pitch-jump onsets for Strum on legato playing; key-aware pitch sets | Later, after listening |
+
+### Decisions by Raph (2026-11-14)
+
+- **`live` is kept** (0 % = silent until `freeze`, the hold-pedal gesture).
+- **Blind-test reference, chosen by Claude on Raph's delegation**: Mutable Instruments **Clouds** in its
+  Granular mode, played through VCV Rack's free Audible Instruments port (MIT-licensed firmware, runs on
+  Linux, Windows and macOS, so the comparison is reproducible by anyone). Rationale: it is the open
+  reference every granular pedal of the survey is measured against (Beads and several pedals descend from
+  it), it covers cloud, freeze and pitched grains, and its parameters (position, size, pitch, density,
+  texture) map onto ours for a matched A/B. The test: the guitar DIs through both at matched loudness, at
+  four settings (sparse cloud, dense cloud, freeze, +12 st grains), blind to Raph.
