@@ -393,13 +393,11 @@ needs a log-feeling knob there: the range itself stays linear (contract).
   say "attack" and "aggression". This pedal removes attacks to make violins and pads. The crate overrides
   its family, as gfx-killswitch (thrash) and gfx-gapmeter (anodized) already do:
   `CRATE_FINISH['gfx-swell'] = 'anodized'`.
-- **Crate hue**: `METAL_CRATE_HUE['gfx-swell'] = '#d81e5b'`, a saturated dusk rose (bow rosin, a slow
-  sunrise).
-  - Hue 340°, in the middle of the only wide gap left on the wheel: pitch's magenta (`#c4148c`, 319°) on
-    one side, the drive's thrash red (`#c8160e`, 3°) and orange (`#e04a00`) on the other.
-  - Saturation 76 %, as the other metal hues ("no grey mixed into the hue"); the first proposal
-    (`#c2365f`, 56 %) would have looked dusty beside them.
-  - The dynamics slate (`#4a5a6e`) reads grey once anodized.
+- **Crate hue: none — the dynamics slate (`#4a5a6e`), anodized, with a rose rune light** (changed
+  2026-11-14 after the gfx-grit review). The first choice, dusk rose `#d81e5b` (340°), sits on the same hue
+  as the `lofi` family's raspberry `#e8336f` (gfx-crusher, gfx-grit), and that gap holds only one hue; the
+  orchid the gfx-grit review proposed (`#bf1dd7`, 292°) collides with gfx-bassdi's `preamp` violet
+  (`#b316c0`, 295°). The slate keeps the pedal in its family; the rose stays in the rune and the motif.
   - `RUNE_LIGHT['gfx-swell'] = '#ffd0dc'`: without a crate entry the rune would take the dynamics
     family's blue (`#5fb0ff`).
 - **Motif `swells`** (new case in `motifParts`):
@@ -412,7 +410,7 @@ needs a log-feeling knob there: the range itself stays linear (contract).
   - The plateaus rise slightly left to right (yTop − 3k) and the opacity goes .45 → 1: a crescendo.
   - All drawn with `line`, so it is engraved on anodized and yellow-on-black on thrash if forced.
 - **Face** (`visuals/data/faces.json`):
-  `"gfx-swell": {"name": "Swell", "blocks": ["swell"], "knobs": ["rise", "sens", "legato", "depth"], "selectors": ["curve"], "category": "dynamics", "color": "#d81e5b"}`.
+  `"gfx-swell": {"name": "Swell", "blocks": ["swell"], "knobs": ["rise", "sens", "legato", "depth"], "selectors": ["curve"], "category": "dynamics"}`.
 - **Glyph** `swell` (24 × 24, single colour, stroke 1.8, round caps; title "Auto swell"):
   ```
   <path d='M2.5 20h19' opacity='.4'/>            baseline

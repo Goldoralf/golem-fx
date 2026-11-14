@@ -74,6 +74,13 @@ Decided at the design review of 2026-11-12, to keep 22 effects coherent.
 - **Every document ends with an Applications section**: what each feature is for, with starting settings.
   The coding agent implements features for those uses, and the bench listens to them.
 
+## Circuit simulations (decided by Raph, 2026-11-14)
+
+Effects solved as circuits (gfx-fuzz, gfx-dist, and those that follow on gfx-dsp's `circuit_nl`):
+- **Aliasing**: worst alias ≤ −70 dB for a 1.2 kHz sine at full gain (≤ −65 dB in the worst model or
+  part swap). The oversampling factor is chosen per model from the measured aliases, not fixed globally.
+- **CPU**: up to about 20 % of a core per mono instance is accepted for a pedal used once per lane.
+
 ## Audio
 
 - **VST3 only.**

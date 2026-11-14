@@ -72,6 +72,11 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **designed**, reviewed by Fable 5.2 |
 | 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **designed**, reviewed by Fable 5.2 |
 | 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **designed**, reviewed by Fable 5.2 |
+| 33 | [gfx-fuzz](gfx-fuzz/) | new block `fuzz` (circuit fuzzes, guitar in the netlist) | — | **designed**, reviewed by Fable 5.2 |
+| 34 | [gfx-dist](gfx-dist/) | new block `dist` (circuit distortions and overdrives) | — | **designed**, reviewed by Fable 5.2 |
+| 35 | [gfx-bassdi](gfx-bassdi/) | new block `bass-di` (bass preamp / DI) | — | **designed**, reviewed by Fable 5.2 |
+| 36 | [gfx-tape](gfx-tape/) | new block `tape` (tape and media saturation) | — | **designed**, reviewed by Fable 5.2 |
+| 37 | [gfx-grit](gfx-grit/) | `grit` | Prisma | **designed**, reviewed by Fable 5.2 |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows
