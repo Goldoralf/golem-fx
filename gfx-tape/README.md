@@ -161,7 +161,7 @@ starting point **[I]** unless marked, to be tuned against references (§7).
 | **VHS** (linear audio track, SP) | J-A, ferric | 33.35 mm/s | 3180 + 120 µs | 100 Hz – 10 kHz | — | capstan → ~2 Hz; tension servo 0.5 – 1 Hz | −42 dB | — |
 | **Vinyl** (LP, 33⅓) | cutter / stylus: tracing distortion (even order, rising with frequency) [I] | — | RIAA | 30 Hz – 16 kHz | — | **eccentricity at 0.556 Hz** (ε = e / r: 0.2 mm off-centre = 0.14 % at the rim, 0.33 % at r = 60 mm [A]); warp 0.556 Hz + harmonics; belt motor ~5 Hz | −60 dB surface noise | crackle, rumble 10 – 40 Hz |
 | **Shellac 78** | acoustic / early electric limits, heavy tracing | — | early 78 curve (≈ 500 Hz turnover, no treble roll-off) [I] | 100 Hz – 5 kHz | — | rotation 1.3 Hz | −35 dB | loud crackle |
-| *AM Radio* (appended when coded) | broadcast limiter + envelope detection | — | — | 100 Hz – 4.5 kHz | — | slow selective fading 0.05 – 0.5 Hz (level, not pitch) | static | heterodyne whistle |
+| *AM Radio* (moved to gfx-radio, 2026-11-14: never appended here) | broadcast limiter + envelope detection | — | — | 100 Hz – 4.5 kHz | — | slow selective fading 0.05 – 0.5 Hz (level, not pitch) | static | heterodyne whistle |
 
 - **Speed** (`speed`: Model · 1⅞ · 3¾ · 7½ · 15 · 30 ips) applies to every tape model: the physics scales
   (losses and bump move an octave per doubling, EQ standard follows the table, transport component
@@ -516,7 +516,7 @@ from the first ship and never change (descriptor rules). All ranges linear; enum
 | `flutter` | Flutter | f | 0 – 1 % | 0.05 % | 50 ms | ✓ | Peak fast speed deviation (4 – 200 Hz) |
 | `wear` | Wear | f | 0 – 100 % | 0 % | 50 ms | ✓ | Age and failures per the model's profile: dulling, dropouts, crinkles, snags / crackle |
 | `mix` | Mix | f | 0 – 100 % | 100 % | 20 ms | ✓ | Dry ↔ wet crossfade, dry aligned (50 % + wow = tape chorus) |
-| `model` | Model | e | Studio Reel · Home Reel · Cassette · Portable Cassette · Microcassette · VHS · Vinyl · Shellac 78 (· AM Radio) | Studio Reel | 30 ms wet dip | | The medium and machine (§2.1) |
+| `model` | Model | e | Studio Reel · Home Reel · Cassette · Portable Cassette · Microcassette · VHS · Vinyl · Shellac 78 | Studio Reel | 30 ms wet dip | | The medium and machine (§2.1) |
 | `speed` | Speed | e | Model · 1⅞ ips · 3¾ ips · 7½ ips · 15 ips · 30 ips | Model | 30 ms wet dip | | Tape speed: losses, bump, EQ, transport scale; inert on Vinyl / Shellac / Radio |
 | `noise` | Noise | b | off / on | on | 20 ms | | Hiss, mechanical noise, crackle (per `noise_mode`) |
 
@@ -763,3 +763,7 @@ Still open:
 | Champagne against the family sheet; `RUNE_LIGHT`; the `ribbon` motif at tile size. gfx-fuzz's copper is itself still a proposal: if it is refused, ferric brown is free again | Raph |
 | New type `tape` in `lofi`, `role_blocks.drums`; EXP on expert ids (`spacing`, `bias`, `dropouts`); `wf_out` display; D0 offset against parallel lanes | golem-rack |
 | Add `input` and `level` to the contract's shared-ids table | Raph (contract) |
+
+**Note (2026-11-14, after the gfx-radio review):** AM radio lives in gfx-radio, whose channel is simulated in
+complex baseband (detuning distortion, fading, static, whistle). It is no longer a deferred `model` option of
+this pedal and is never appended to the enum.

@@ -577,3 +577,8 @@ Still open:
 | Kernel group delay (the dry's alignment), Console FIR coefficients, CVSD time constant, 2-bit ADPCM table, ladder magnitude: all [I] / [A] until measured | Bench |
 | YIN range down to 40 Hz for bass lanes: only if the CPU bound holds | Bench |
 | Raspberry against drive's thrash red at tile size | Raph, on the family sheet |
+
+**Note (2026-11-14, after the gfx-radio review):** the virtual converter and the minBLEP renderer start life in
+gfx-dsp (`converter`, `blep`), not in this crate, with the ADC and DAC halves callable separately: gfx-radio's
+cell-phone codec runs between them at the converter's virtual 8 kHz rate, and gfx-delay's Lo-Fi model and the
+BBD engine may use `blep` later.

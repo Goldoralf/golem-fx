@@ -84,6 +84,10 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 42 | [gfx-acoustic](gfx-acoustic/) | new block `acoustic-sim` (electric to acoustic) | — | **designed**, reviewed by Fable 5.2 |
 | 43 | [gfx-widener](gfx-widener/) | new block `widener` (mono-safe stereo width) | — | **designed**, reviewed by Fable 5.2 |
 | 44 | [gfx-tuner](gfx-tuner/) | `tuner` | golem_tuner.jsfx | **designed**, reviewed by Fable 5.2 |
+| 45 | [gfx-correct](gfx-correct/) | `pitch-correct` | x42-Autotune (Zita-AT1) | **designed**, reviewed by Fable 5.2 |
+| 46 | [gfx-formant](gfx-formant/) | new block `formant` (formant shifter) | — | **designed**, reviewed by Fable 5.2 |
+| 47 | [gfx-vocoder](gfx-vocoder/) | new block `vocoder` (channel vocoder) | — | **designed**, reviewed by Fable 5.2 |
+| 48 | [gfx-radio](gfx-radio/) | new block `radio` (telephone, megaphone, AM, walkie…) | — | **designed**, reviewed by Fable 5.2 |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows
