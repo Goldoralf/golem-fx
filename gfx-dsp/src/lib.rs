@@ -20,6 +20,7 @@ pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
 pub mod flanger;
+pub mod geq;
 pub mod lfo;
 pub mod matched;
 pub mod oversample;

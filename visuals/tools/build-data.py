@@ -59,6 +59,15 @@ def enum_labels(crate: str) -> dict:
     return out
 
 
+def fader_label(pid: str, given: dict) -> str:
+    """A slider's label: the face's own (catalogue labels), else the frequency in a frequency-named id
+    (`gt_1k6` → 1.6k, `gb_10k` → 10k)."""
+    if pid in given:
+        return given[pid]
+    f = pid.split("_", 1)[-1]
+    return re.sub(r"^(\d+)k(\d+)$", r"\1.\2k", f)
+
+
 def main(argv):
     if "--manifest" in argv:
         cargo = shutil.which("cargo") or str(Path.home() / ".cargo/bin/cargo")
@@ -112,6 +121,10 @@ def main(argv):
                     if len(opts) != p.get("options", len(opts)):
                         errors.append(f"{crate}: {pid} has {p.get('options')} options, plugin.rs {len(opts)}")
                     q["options"] = opts
+                if kind == "fader":
+                    if p["kind"] != "float":
+                        errors.append(f"{crate}: fader {pid} is {p['kind']}")
+                    q["label"] = fader_label(pid, face.get("fader_labels", {}))
                 out.append(q)
             return out
 
@@ -124,6 +137,17 @@ def main(argv):
             "selectors": pick(face.get("selectors", []), "selector"),
             "toggles": pick(face.get("toggles", []), "toggle"),
         }
+        if face.get("faders"):
+            # sliders (the graphic EQ): the drawn set follows an enum's value, by option rank
+            gfx[crate]["faders"] = pick(face["faders"], "fader")
+            fs = face.get("fader_sets")
+            if fs:
+                sel = pick([fs["param"]], "selector")
+                if sel and len(fs["sets"]) != len(sel[0]["options"]):
+                    errors.append(f"{crate}: fader_sets has {len(fs['sets'])} sets, {fs['param']} {len(sel[0]['options'])} options")
+                gfx[crate]["fader_sets"] = {"param": sel[0] if sel else None, "sets": [pick(s, "fader") for s in fs["sets"]]}
+            if face.get("level_fader"):
+                gfx[crate]["level_fader"] = (pick([face["level_fader"]], "fader") or [None])[0]
         for b in face["blocks"]:
             block_to_gfx[b] = crate
     for crate in manifest:

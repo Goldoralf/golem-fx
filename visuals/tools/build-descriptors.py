@@ -325,7 +325,10 @@ def build(manifest: dict) -> tuple:
         if face is None:
             errors.append(f"{crate}: no face in faces.json")
             continue
-        face_ids = set(face["knobs"]) | set(face.get("selectors", [])) | set(face.get("toggles", []))
+        face_ids = set(face.get("knobs", [])) | set(face.get("selectors", [])) | set(face.get("toggles", []))
+        # sliders: every set the face can draw, and the level slider
+        face_ids |= set(face.get("faders", [])) | {i for s in face.get("fader_sets", {}).get("sets", []) for i in s}
+        face_ids |= {face["level_fader"]} if face.get("level_fader") else set()
         ids = [p["id"] for p in params]
         kinds = {p["id"]: p["kind"] for p in params}
         front = [i for i in ids if i in face_ids]

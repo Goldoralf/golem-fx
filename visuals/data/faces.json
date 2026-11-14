@@ -1,5 +1,5 @@
 {
- "_comment": "The face of each gfx pedal: which parameters are knobs, which enums are selectors, which golem blocks it stands for (catalogue types, first = its glyph). Ranges, defaults and option labels come from the code (manifest.json + plugin.rs), via tools/build-data.py. `shape`: stomp (default) or treadle. `name` is the word printed on the pedal.",
+ "_comment": "The face of each gfx pedal: which parameters are knobs, which enums are selectors, which golem blocks it stands for (catalogue types, first = its glyph). Ranges, defaults and option labels come from the code (manifest.json + plugin.rs), via tools/build-data.py. `shape`: stomp (default), treadle or wide (the graphic EQ's wider box). `faders`: parameters drawn as vertical sliders; `fader_sets` {param, sets}: one fader list per option of an enum parameter, by rank (the drawn set follows its value); `fader_labels`: a slider's label where its id does not give it; `level_fader`: the output slider, set apart. `name` is the word printed on the pedal.",
  "faces": {
   "gfx-gate": {
    "name": "Gate",
@@ -403,6 +403,78 @@
    ],
    "category": "modulation",
    "color": "#72c000"
+  },
+  "gfx-geq": {
+   "name": "Graphic",
+   "blocks": [
+    "eq-graphic"
+   ],
+   "category": "eq",
+   "shape": "wide",
+   "knobs": [],
+   "faders": [
+    "g1",
+    "g2",
+    "g3",
+    "g4",
+    "g5",
+    "g6",
+    "g7",
+    "g8",
+    "g9",
+    "g10",
+    "g11"
+   ],
+   "fader_sets": {
+    "param": "layout",
+    "sets": [
+     [
+      "g1",
+      "g2",
+      "g3",
+      "g4",
+      "g5",
+      "g6",
+      "g7",
+      "g8",
+      "g9",
+      "g10",
+      "g11"
+     ],
+     [
+      "gt_100",
+      "gt_200",
+      "gt_400",
+      "gt_800",
+      "gt_1k6",
+      "gt_3k2",
+      "gt_6k4"
+     ],
+     [
+      "gb_50",
+      "gb_120",
+      "gb_400",
+      "gb_500",
+      "gb_800",
+      "gb_4k5",
+      "gb_10k"
+     ]
+    ]
+   },
+   "fader_labels": {
+    "g1": "30",
+    "g2": "60",
+    "g3": "125",
+    "g4": "250",
+    "g5": "500",
+    "g6": "1k",
+    "g7": "2k",
+    "g8": "4k",
+    "g9": "8k",
+    "g10": "12k",
+    "g11": "16k"
+   },
+   "level_fader": "level"
   }
  }
 }

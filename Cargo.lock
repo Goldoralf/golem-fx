@@ -247,6 +247,7 @@ dependencies = [
  "gfx-flanger",
  "gfx-gapmeter",
  "gfx-gate",
+ "gfx-geq",
  "gfx-glitch",
  "gfx-golem",
  "gfx-killswitch",
@@ -362,6 +363,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-gate"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-geq"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

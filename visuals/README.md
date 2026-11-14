@@ -8,7 +8,7 @@ Open [index.html](index.html) in a browser (it works from disk, no server needed
 - **a lane drawn for real**: the pedals on a stage floor or a rug, patch cables, the guitar cable coming
   in, and the amp (or a stage box when the lane has no amp) at the end. Under it, the same lane in block
   mode (golem's tiles). Clicking a pedal or a tile switches the block on or off in both views;
-- **the golem-fx pedals** (29), **the NAM line** (effect captures, heads, cabs, head + cab), **the generic
+- **the golem-fx pedals** (30), **the NAM line** (effect captures, heads, cabs, head + cab), **the generic
   pedal** for every other block golem hosts, and **the glyph set** (79 glyphs).
 
 ## The idea: the glyph is the link
@@ -38,7 +38,7 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 |---|---|
 | `data/glyphs.json` | **The glyph set**: one per catalogue type (+ `gapmeter`, `glitch`: golem-fx pedals golem's catalogue does not list yet), inner SVG on a 24 × 24 grid, stroked in `currentColor` like golem's `app/icons.js`; `uni` = the former Unicode glyph, kept as a text fallback |
 | `glyphs/<type>.svg` | Each glyph as a standalone SVG (generated) |
-| `data/faces.json` | Each golem-fx pedal's face: knobs, selectors, toggles, the blocks it stands for |
+| `data/faces.json` | Each golem-fx pedal's face: knobs, selectors, toggles, the blocks it stands for; a slider face (`shape: "wide"`, gfx-geq) lists `faders`, `fader_sets` (one set per option of an enum, by rank: the drawn set follows its value, never the box's width), `fader_labels` and `level_fader`. `gfxPedal(crate, {values})` draws given values (an enum by index or label) |
 | `data/manifest.json` | Every effect's parameters, generated from the code: `cargo run -p gfx-bench -- manifest` |
 | `data/descriptors.json` | **Every pedal's complete descriptor** (generated, do not edit): plugin name and VST3 class id, the front panel (the pedal face), the expert groups with their Custom switches, and every parameter (kind, range, default, unit, display taper, step, decimals, enum labels, EXP, structural, `depends`, one-line help), plus reference presets. golem builds its block sheet from it |
 | `data/groups.json` | Hand-written: each pedal's expert groups, plus the help lines and `depends` the docs leave out |
@@ -86,7 +86,7 @@ python3 visuals/tools/build-descriptors.py
 
 ## Checking the drawings
 
-`node visuals/tools/check-svg.js` renders every drawing variant (466 today: every gfx pedal in every finish,
+`node visuals/tools/check-svg.js` renders every drawing variant (477 today: every gfx pedal in every finish, each fader set of a slider face,
 every catalogue block, amps, racks and modules, keys, drum kits and pad kits with each lit piece) and checks
 that each SVG is well-formed XML: no attribute twice on an element, tags balanced. Run it before every
 visuals commit; golem embeds these drawings as files as well as through `innerHTML`.

@@ -1,7 +1,15 @@
 # gfx-geq
 
-> **Status: DESIGNED** (2026-11-14) — not coded. Design by Claude Opus 5.5, reviewed and amended by
-> Claude Fable 5.2 the same day (the Review section at the end lists every change and what is still open).
+> **Status: CODED** (v0.1.0, 2026-11-15). Design by Claude Opus 5.5, reviewed and amended by Claude
+> Fable 5.2 (the Review section lists every change), coded to the Review. **Accurate mode** is built as
+> designed: ACGE with fill-in sections, c = 0.4, a warm-started correction per 1.33 ms tick, the whole
+> cascade bypassed when flat, two engine slots and a 20 ms crossfade on a layout change (shared solver
+> in gfx-dsp `geq`). The prototype's accuracy table is reproduced in Rust on 10,000 draws at 44.1, 48,
+> 96 and 192 kHz and meets every bench threshold (0.19 dB worst at a fader on Octave 11, 0.10 on
+> Guitar 7, 0.12 on Bass 7). Bench 28 / 28, 12 behaviour tests; 138 ns per mono sample on a busy
+> Octave 11 curve at 48 kHz (0.7 % of a core), a solver tick of 8 µs on average. **Pedal mode is not
+> in v1**: with the stated constants its network cannot reach its own ±15 dB, so `mode` is left out
+> until it is voiced (see "As coded" at the end, with the numbers).
 
 golem's **graphic equalizer**, in pedal form. It stands for golem's `eq-graphic` block (today guitarix's
 GxGraphicEQ: 11 bands, `g1` … `g11`, ±12 dB) and keeps its eleven ids, its dB unit and its band order
@@ -572,3 +580,117 @@ Still open for the owner:
 | Add `level` to the contract's shared-ids table | Raph (contract) |
 | `faders` / `fader_sets` / `shape: "wide"` in the renderer; the wide stomp on golem's pedalboard | visuals / golem rack session |
 | Upstream guitarix now limits its ports to +5.2 dB (installed build: +20); no effect on us, noted for golem's catalogue | golem rack session |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.** `gfx-dsp/src/geq.rs` (the solver, shared: fill-in rule, Q law, PCHIP, fixed-centre matched
+bell, per-layout `Plan` with cold solve and warm-started correction; 5 unit tests), `gfx-geq/src/lib.rs`
+(the processor: two engine slots, cuts, auto gain, level), `src/plugin.rs` (VST3 class id
+`GoleMFxGeq000001`, mono 1 / 1 first, stereo 2 / 2, zero latency), `src/tests.rs` (§7 on synthetic
+signals), `presets/gfx-geq.json` (19 presets: golem's seven `eq-graphic` presets with their ids and
+values, and the §6 ideas), the face in `visuals/` (below).
+
+**Accuracy table** (`GEQ_DRAWS=10000 cargo test -p gfx-geq --release accuracy -- --nocapture`: 10,000
+random settings per case at each of 44.1, 48, 96 and 192 kHz, worst over all rates; the default run
+uses 1,000). The prototype's figures (§3.3) are reproduced:
+
+| Layout | Faders ±12 dB: worst at a fader | Outside the two neighbouring faders | All faders +12 | Zigzag ±12 | Largest filter gain (±12 / ±15) | Faders ±15 dB: worst at a fader | Cold-start corrections |
+|---|---|---|---|---|---|---|---|
+| Octave 11 | 0.19 dB (bound 0.25) | ≤ 0.73 dB (0.75) | +12 ± 0.65 dB (0.75) | 0.21 dB (0.3) | 21.8 / 27.6 dB | 0.27 dB (0.35), zigzag 0.30 (0.4) | ≤ 4 |
+| Guitar 7 | 0.10 dB | ≤ 0.47 dB (0.75) | +12 ± 0.35 dB (0.5) | 0.11 dB | 16.7 / 21.1 dB | 0.16 dB, zigzag 0.18 | ≤ 4 |
+| Bass 7 | 0.12 dB | ≤ 1.15 dB (1.25) | +12 ± 0.71 dB (0.75) | 0.13 dB | 24.1 / 30.0 dB | 0.18 dB, zigzag 1.07 (1.5) | ≤ 4 |
+
+No ±12 draw reaches the ±30 dB clamp; ±15 draws on Bass 7 do (as the prototype found). c stays 0.4
+and the weights stay (1, 0.15, 0.05): every threshold holds, so nothing was tuned.
+
+**Other §7 rows** (`cargo test -p gfx-geq`):
+- Flat: every layout at 0, and `amount` 0 under a ±9 dB curve, are bit-identical; back to flat while
+  running, the output is bit-identical again once the 50 ms hold and 5 ms fade are over.
+- Lone fader: `g6` +12 gives +12.0 ± 0.1 at 1 kHz, 0 ± 0.1 at 500 Hz and 2 kHz, never below −0.5 dB,
+  at every rate. Top band: 16 kHz at 44.1 kHz, ±12 dB, within 0.25 dB.
+- Realisation: the running plugin's impulse response (DFT) matches the designed cascade within
+  0.05 dB on a ±15 zigzag at 48 and 192 kHz; a 30 dB section at 31.25 Hz at 192 kHz in the SVF matches
+  its design within 0.05 dB.
+- Modulation: an EXP-stepped `g6` sweep −15 → +15 dB in 50 ms on a busy curve keeps the warm-started
+  gains within 0.023 dB of the converged ones (`amount` 0 → 100 % on a ±12 zigzag: 0.075 dB); no fade
+  is triggered; control-rate sidebands of a 1 kHz sine −89 dB.
+- Switches: two layout changes under a 1 kHz sine (the second one asked during the first crossfade):
+  the HF burst is −82 dB re the peak.
+- Auto gain: pink noise on nine random ±12 curves (three per layout): loudness within 0.44 dB.
+- Cost: a solver tick on Octave 11 (20 sections, 39 points) takes 7.8 µs on average, 42 µs worst
+  (alone on the test machine). Audio, mono, Octave 11 busy curve: 138 ns / sample at rest and 270 ns
+  while a fader moves at 48 kHz; 135 and 186 ns at 192 kHz. Flat (the bench's default settings):
+  18.7 ns mono, 25.3 ns stereo.
+
+**Bench** (`gfx-bench check gfx-geq`): 28 / 28 at every rate, no exemption. Worst parameter step: the
+high cut 22 kHz → 1 kHz, −65 to −68 dB re peak.
+
+**Not measured here**: switches under noise, the golem presets on the DI takes (the bench's
+listening rows), Pedal mode (not built).
+
+### Deviations from the spec, and why
+
+1. **Pedal mode is not in v1, and `mode` is left out** (33 parameters; §4's "31" miscounted, it lists
+   34 with `mode`). The §3.4 network with its stated constants (β = 4.62, ρ = 20, Q_max = 1.8) does
+   not do what §3.4 says. Measured on the analog formula:
+   - a lone band at full travel, the other bands at their centre detent, reaches only +9.6 to
+     +12.6 dB at its centre, not +15;
+   - the closed-form fader law is up to 5.4 dB off when the other bands sit at the detent;
+   - no β gives ±15 with ρ = 20 and Q_max = 1.8. A scan of ρ 0 – 20 and Q_max 1.8 – 5 at β = 4.62 (Guitar 7)
+     tops out at +14.3 dB.
+
+   The cause: a branch at its detent still loads the node (a = b ≠ 0), and the lone-branch law
+   ignores that. Making it work means choosing ρ and Q_max (and probably a fader law solved
+   numerically with the other bands at the detent), which is the voicing §9.5 leaves to the
+   schematics and a SPICE run. An enum with a single option cannot be exposed cleanly either: a host
+   normalises an enum as index / (n − 1). **When Pedal is voiced**, `mode` (Accurate · Pedal, default
+   Accurate) is appended at the end of PARAMS, so sessions saved without it keep Accurate.
+2. **Display names of the pedal sets**: "Guitar 100" … "Guitar 6.4k" and "Bass 50" … "Bass 10k",
+   instead of §4's "100 … 6.4k". The spec's names collide (400 and 800 Hz are in both sets), and a
+   name is golem's join key. `g1` … `g11` keep G1 … G11.
+3. gfx-eq's fade and `curve_average_db` are **not** lifted into gfx-dsp. gfx-eq stays untouched (a
+   shipped effect), and gfx-geq has its own copies. The auto-gain average takes 64 points (7 per
+   octave) instead of gfx-eq's 24: with 24, an octave zigzag aliases (0.56 dB on the auto-gain test).
+4. Corrections continue while the last one moved a gain by 0.005 dB or more, in addition to the
+   4 ticks after the target stops. This catches a large jump that has not converged in 4 ticks.
+5. A layout change asked during a running crossfade waits for it to end (at most 20 ms). The spec
+   says nothing about it.
+6. The 12 dB / oct cuts are Butterworth (Q 0.707), as the spec says. gfx-eq's 12 dB low cut is
+   Q 0.667, a voicing for golem's `eq` presets.
+7. No `Svf` band-pass accessor was added (it was for Pedal mode).
+
+### Visual (as built)
+
+- **Face**, `visuals/data/faces.json` `gfx-geq`: `shape: "wide"`, `faders`, `fader_sets` by `layout`
+  rank, `level_fader`, plus `fader_labels` (the catalogue labels 30 … 16k; the frequency-named ids
+  give their own: `gt_1k6` → 1.6k).
+- **Renderer**, `js/golem-pedals.js` `gfxWide`:
+  - W 168 × H 200, whatever the layout: 11 + level at a 12.5 px pitch, 7 + level centred at 18 px;
+  - slots y 16 – 100, 9 × 6 caps with a centre line, 4.5 px labels;
+  - `LVL` set apart with the accent cap;
+  - the `scale` motif: rules at 0, ±5, ±10, ±15 dB;
+  - a monotone line through the caps when on;
+  - name, then the rune left of the footswitch and the LED right of it.
+
+  The drawn set follows `layout` (`opts.values`, an index or a label). Anodized by default and thrash;
+  a page forced to clay or blackwork draws this face anodized. `golem-stage.js` draws it 1.5 × a stomp
+  wide.
+- **Glyph** `eq-graphic`: the proposed refresh, five slots, caps and the curve line through them.
+- **Tools**: `build-data.py` exports `faders` / `fader_sets` / `level_fader` (it checks they are
+  floats, and that there are as many sets as options). `build-descriptors.py` puts every set and the
+  level on the front panel. In `groups.json`, each fader has `depends` on its layout and a help line.
+  `check-svg.js` also draws every fader set, on and off (477 drawings, 0 invalid).
+- The catalogue snapshot was **not** refreshed. `build-data.py --golem ~/golem` stops on a new golem
+  block, `ir-fx`, which has no glyph yet. The committed snapshot was kept.
+
+### Left for the owner
+
+- Pedal mode: ρ, Q_max, the 6.4 kHz branch and a detent-aware fader law, from the schematics. Then
+  append `mode`.
+- Listen to the presets (golem's seven play at 12 and 16 kHz up top now) on the DI takes.
+- Announce to golem-rack before shipping:
+  - the new crate and its ids, and the pedal-set display names;
+  - the ±15 dB range (the catalogue says ±12);
+  - the one-block-with-`depends` or three-blocks choice;
+  - the refreshed `eq-graphic` glyph, and the missing `ir-fx` glyph.
+- `amount` (keep or drop) and `level` in the contract's shared ids, as listed in the Review.
