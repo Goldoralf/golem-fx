@@ -442,7 +442,8 @@ impl LoopShifter {
     }
 }
 
-/// Niemitalo's Hilbert pair: path A and path B (B one sample behind) are 90° apart.
+/// Niemitalo's Hilbert pair: path A one sample behind and path B are 90° apart. (Until 2026-11-14 the
+/// delay sat on path B: image only −18 dB at 1 kHz and a wrong-way shift above ~6 kHz at 48 kHz.)
 const HA: [f64; 4] = [0.6923878, 0.936_065_432_295_9, 0.988_229_522_686_0, 0.998_748_845_273_7];
 const HB: [f64; 4] = [0.402_192_116_242_6, 0.856_171_088_242_0, 0.972_290_954_565_1, 0.995_288_479_127_8];
 
@@ -472,7 +473,7 @@ impl Ap2 {
 pub struct Hilbert {
     a: [Ap2; 4],
     b: [Ap2; 4],
-    b_delay: f64,
+    a_delay: f64,
 }
 
 impl Hilbert {
@@ -491,9 +492,9 @@ impl Hilbert {
         for (s, a) in self.b.iter_mut().zip(HB) {
             q = s.run(a, q);
         }
-        let qd = self.b_delay;
-        self.b_delay = q;
-        (i, qd)
+        let id = self.a_delay;
+        self.a_delay = i;
+        (id, q)
     }
 }
 
@@ -501,7 +502,7 @@ impl Hilbert {
 pub struct FreqShifter {
     a: [Ap2; 4],
     b: [Ap2; 4],
-    b_delay: f64,
+    a_delay: f64,
     phase: f64,
 }
 
@@ -526,11 +527,11 @@ impl FreqShifter {
         for (s, a) in self.b.iter_mut().zip(HB) {
             q = s.run(a, q);
         }
-        let qd = self.b_delay;
-        self.b_delay = q;
+        let id = self.a_delay;
+        self.a_delay = i;
         self.phase = (self.phase + hz / sample_rate as f64).rem_euclid(1.0);
         let (s, c) = (std::f64::consts::TAU * self.phase).sin_cos();
-        (i * c + qd * s) as f32
+        (id * c + q * s) as f32
     }
 }
 
@@ -621,5 +622,33 @@ mod tests {
         let pk: Vec<f32> = y[4800..].chunks(1600).map(|c| c.iter().fold(0.0f32, |m, v| m.max(v.abs()))).collect();
         let (lo, hi) = pk.iter().fold((f32::MAX, 0.0f32), |(a, b), v| (a.min(*v), b.max(*v)));
         assert!(hi / lo < 1.05, "{lo} {hi}");
+    }
+
+    /// level of `f` in `y` (single-bin DFT, Hann window), dB
+    fn level_db(y: &[f32], f: f64, sr: f64) -> f64 {
+        let n = y.len();
+        let (mut re, mut im) = (0.0f64, 0.0f64);
+        for (k, v) in y.iter().enumerate() {
+            let w = 0.5 - 0.5 * (std::f64::consts::TAU * k as f64 / n as f64).cos();
+            let a = std::f64::consts::TAU * f * k as f64 / sr;
+            re += *v as f64 * w * a.cos();
+            im -= *v as f64 * w * a.sin();
+        }
+        20.0 * ((re * re + im * im).sqrt() * 4.0 / n as f64).max(1e-12).log10()
+    }
+
+    #[test]
+    fn freq_shifter_rejects_the_image() {
+        // the wanted sideband up, the image under −40 dB, across the band (82 Hz – 15 kHz at 48 kHz)
+        let sr = 48000.0;
+        for (f0, hz) in [(82.0, 40.0), (1000.0, 200.0), (5000.0, 200.0), (15000.0, 200.0), (1000.0, -200.0)] {
+            let mut fs = FreqShifter::new();
+            let y: Vec<f32> = (0..96000).map(|i| fs.process((std::f64::consts::TAU * f0 * i as f64 / sr).sin() as f32, hz, sr as f32)).collect();
+            let y = &y[48000..];
+            let want = level_db(y, f0 + hz, sr);
+            let image = level_db(y, f0 - hz, sr);
+            assert!(want > -1.0, "{f0} {hz}: wanted {want:.1} dB");
+            assert!(image - want < -40.0, "{f0} {hz}: image {:.1} dB", image - want);
+        }
     }
 }
