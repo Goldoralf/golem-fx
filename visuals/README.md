@@ -8,8 +8,8 @@ Open [index.html](index.html) in a browser (it works from disk, no server needed
 - **a lane drawn for real**: the pedals on a stage floor or a rug, patch cables, the guitar cable coming
   in, and the amp (or a stage box when the lane has no amp) at the end. Under it, the same lane in block
   mode (golem's tiles). Clicking a pedal or a tile switches the block on or off in both views;
-- **the golem-fx pedals** (30), **the NAM line** (effect captures, heads, cabs, head + cab), **the generic
-  pedal** for every other block golem hosts, and **the glyph set** (81 glyphs).
+- **the golem-fx pedals** (31), **the NAM line** (effect captures, heads, cabs, head + cab), **the generic
+  pedal** for every other block golem hosts, and **the glyph set** (82 glyphs).
 
 ## The idea: the glyph is the link
 

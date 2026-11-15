@@ -349,11 +349,13 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     modulation: '#00a84f', delay: '#3a28f0', reverb: '#6a1fd1', pitch: '#c4148c',
     // raspberry: golem's lofi orange sits too close to drive's; free between pitch's magenta and the thrash red
     lofi: '#e8336f',
+    // orchid violet: the free gap between reverb / shimmer (265°) and pitch's magenta (319°)
+    preamp: '#b316c0',
   };
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000', 'gfx-ringmod': '#c9b000' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -366,6 +368,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-swell': 'swells',
     'gfx-crusher': 'pixels',
     'gfx-ringmod': 'sidebands',
+    'gfx-bassdi': 'parallel',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -552,6 +555,28 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
           line(`M${f1(x0)} ${f1(y0)}V${f1(y0 - 8)}`, .35);
           line(`M${f1(x0)} ${f1(y0)}Q${f1(x0 + .75 * w)} ${f1(y0)} ${f1(x0 + .92 * w)} ${f1(yTop)}H${f1(x0 + w)}V${f1(y0)}`, op);
         }
+        break;
+      }
+      case 'parallel': {
+        // the blend, drawn: one line splits into two tracks, a clipped wave above and the same wave
+        // round below (its crests under the flats), and the tracks rejoin into one line
+        const x0 = W * .12, x1 = W * .88, ya = cy - ch * .9, yb = cy + ch * .9, a = ch * .35, s = 6;
+        line(`M0 ${f1(cy)}H${f1(x0)}L${f1(x0 + s)} ${f1(ya)}M${f1(x0)} ${f1(cy)}L${f1(x0 + s)} ${f1(yb)}`);
+        line(`M${f1(x1 - s)} ${f1(ya)}L${f1(x1)} ${f1(cy)}H${W}M${f1(x1 - s)} ${f1(yb)}L${f1(x1)} ${f1(cy)}`);
+        // trapezoids from the middle level, rising: rise 4, flat 7, fall 4, flat 7 (period 22)
+        const xs = x0 + s, xe = x1 - s;
+        let d = `M${f1(xs)} ${f1(ya)}`, x = xs;
+        const steps = [[2, -1], [7, -1], [4, 1], [7, 1], [2, 0]];
+        while (x < xe - .01) {
+          for (const [dx, lv] of steps) {
+            const nx = Math.min(x + dx, xe);
+            d += `L${f1(nx)} ${f1(ya + a * lv)}`;
+            x = nx;
+            if (x >= xe - .01) break;
+          }
+        }
+        line(d);
+        line(sine(xs, xe, yb, -a, 22, -2 * Math.PI * xs / 22), .6);
         break;
       }
       case 'pixels': {

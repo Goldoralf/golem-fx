@@ -227,6 +227,10 @@ pub struct Comp {
     hp_on: bool,
     clock: u64,
     gr_meter: f32,
+    /// Library-only setting (not a plugin parameter): `false` keeps the characters' dynamics and drops
+    /// their colour stage (shaper, 2× oversampler, Pedal's hiss). The engine is then a pure gain with
+    /// zero latency, coherent with any path that does not run through it (gfx-bassdi's dirt path).
+    colour: bool,
 }
 
 impl Comp {
@@ -260,6 +264,17 @@ impl Comp {
             hp_on: false,
             clock: 0,
             gr_meter: 0.0,
+            colour: true,
+        }
+    }
+
+    /// Turns the colour stage on (the default, the plugin's behaviour) or off (dynamics only).
+    /// Off is a library setting for engines embedding the compressor: `drive` is ignored too.
+    pub fn set_colour(&mut self, on: bool) {
+        self.colour = on;
+        self.colour_mix.set_target(if self.colour_amount() > 0.0 { 1.0 } else { 0.0 });
+        if !on {
+            self.colour_mix.settle();
         }
     }
 
@@ -312,6 +327,9 @@ impl Comp {
     }
 
     fn colour_amount(&self) -> f32 {
+        if !self.colour {
+            return 0.0;
+        }
         self.s.character.colour().0 + self.s.drive / 100.0
     }
 

@@ -230,10 +230,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "gfx-bassdi"
+version = "0.1.0"
+dependencies = [
+ "gfx-comp",
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
+]
+
+[[package]]
 name = "gfx-bench"
 version = "0.1.0"
 dependencies = [
  "gfx-autowah",
+ "gfx-bassdi",
  "gfx-boost",
  "gfx-chorus",
  "gfx-comp",

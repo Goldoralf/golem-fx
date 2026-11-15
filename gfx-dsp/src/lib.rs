@@ -15,6 +15,7 @@ pub mod bbd;
 pub mod blep;
 pub mod circuit;
 pub mod converter;
+pub mod crossover;
 pub mod delay;
 pub mod detect;
 pub mod pv_shift;

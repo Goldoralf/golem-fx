@@ -545,6 +545,25 @@
    ],
    "category": "modulation",
    "color": "#c9b000"
+  },
+  "gfx-bassdi": {
+   "name": "Bass DI",
+   "blocks": [
+    "bass-di"
+   ],
+   "knobs": [
+    "gain",
+    "mix",
+    "level",
+    "bass",
+    "treble"
+   ],
+   "selectors": [
+    "model",
+    "cab"
+   ],
+   "category": "preamp",
+   "color": "#b316c0"
   }
  }
 }

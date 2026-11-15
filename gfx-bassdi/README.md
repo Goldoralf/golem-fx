@@ -1,6 +1,86 @@
 # gfx-bassdi
 
-> **Status: DESIGNED** (2026-11-14). Design only, no code yet. Reviewed 2026-11-14 (last section).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, last section).
+> Built as designed on the new gfx-dsp `crossover` (split, band-gain with its all-pass twin, tree): three
+> engines (Modern, Classic, Vintage) whose dirt runs pre band-gains, 8× ADAA stages with the interstage
+> LR4 low-pass and a post low-pass, while the clean runs the same twins, half-bands and half samples;
+> gfx-comp's engine before the dirt with its colour off (a new library-only setting, gfx-comp's renders
+> bit-identical); `bass_keep`, the range-scaled subsonic high-pass, the EQ, the five-way cab, `level`,
+> model and cab crossfades. Measured: at small signals the blend is a crossfade of magnitudes to 0.0000 dB
+> (dirt / clean phase ≤ 0.023°, every model, `grunt` / `attack` corners, `low_note` 27.5 – 82.4 Hz, `comp`
+> 50 %); worst alias −97.5 dBFS at full gain (bound −70), driven fundamentals lose ≤ 0.18 dB in the blend.
+> Bench 28 / 28, 13 behaviour tests (+ 7 gfx-dsp `crossover` tests), CPU 920 – 1,025 ns / sample mono at defaults over five runs
+> (bound 1 µs), 1.64 µs during model crossfades (bound 2 µs). Deviations and what stays [A]: "As coded".
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp `crossover.rs` (`Split`, `Twin`, `BandGain`, `Tree`); gfx-comp gains
+`Comp::set_colour(false)` (library only: the FET / Opto / Pedal dynamics without their shaper, 2×
+oversampler and hiss; 50 bench renders of gfx-comp, 5 characters × 5 settings, mono and stereo at
+block 77, bit-identical before / after); here `lib.rs` (the processor, PARAMS, the one-knob comp map, the
+loudness tables), `engine.rs` (models, voicings, the dirt and its clean twin, 8× oversampling),
+`post.rs` (EQ and cab designs), `plugin.rs` (class id `GoleMFxBassDi001`, mono 1 / 1 then 2 / 2, latency 0,
+`bypass` = the VST3 bypass parameter, `gr` read-only meter), `tests.rs`.
+
+**Measured** (tests on synthetic notes, and `gfx-bench check gfx-bassdi`):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| `crossover` identities | phase of section = twin within 1e−5 rad, monotone, bit-identical at g = 1 | ≤ 4.1e−9 rad (LR2 / 4 / 8, 44.1 – 192 kHz, g 0 – +12 dB, 120 Hz / 1.5 / 12 kHz); monotone; bit-identical. LR2 −12 dB shelf at 200 Hz: −7.9 / −4.1 / −1.4 dB at 100 / 200 / 400 Hz |
+| Coherence, small signal (−74 dBFS per partial, `gain` 0, 3 models × 5 `grunt` / `attack` / `low_note` corners, `comp` 50 % Dirt) | crossfade of magnitudes within 0.1 dB, 25 Hz – 15 kHz | 0.0000 dB; dirt / clean phase ≤ 0.023° |
+| Coherence, driven, single tone (41 Hz – 1 kHz, −30 – 0 dBFS, `gain` 0 / 50 / 100) | within 2° | Vintage 0.01°; Classic 3.3°, Modern 6.5° (both at 1 kHz, 0 dBFS, `gain` 100): see deviations |
+| Coherence, driven notes (16 weak-fundamental notes B0 – G2, Modern, `gain` 70 %) | median ≤ 0.3 dB, 90th ≤ 1.5 dB | fundamentals 0.03 / 0.18 dB (worst 0.18); every partial below 200 Hz 0.03 / 3.1 dB (worst 9.5 dB, a weak 4th harmonic); with `bass_keep` 2.5 L the fundamental within 0.15 dB of the clean |
+| Tight low end (low B at `gain` 80 %, 1 kHz probe) | 31 Hz within 0.5 dB of the clean; probe sidebands ≥ 20 dB lower | 31 Hz −0.05 dB; sidebands of a bare B fundamental −60 vs −37 dB (23 dB lower); of a six-harmonic B −7.5 vs −1.0 dB: see deviations |
+| Range scaling (41.2 → 30.87 Hz) | each corner × 0.749 within 1 % | responses at 0.6 L, 0.85 L (Smooth), 4 L (pre section), 2 L (bass shelf) unchanged within 0.1 dB |
+| Aliasing (10 sines 1 – 5.2 kHz, −12 dBFS, dirt only, cab Off) | `gain` 100: worst ≤ −70, median ≤ −85; `gain` 35: ≤ −100 dBFS | `gain` 100: −97.5 / −110.0 (Modern), −109.2 / −111.9 (Classic), −108.4 / −111.2 (Vintage); `gain` 35: ≤ −106.4 |
+| Level (synthetic −18 dBFS-RMS bass line, K-weighted) | ±1.5 LU over `gain`, ±2 LU across models | within ±1.5 LU (the tables are fitted on the same line) |
+| EQ (44.1 – 192 kHz, 8 frequencies, all four bands moved) | ±0.5 dB of the analog targets; flat = sections not run | within 0.5 dB; flat is the identity |
+| Cab | Off bit-transparent; `cab_lows` off within ±0.3 dB below 100 Hz; Smooth no notch deeper than 3 dB | Off identity; within ±0.3 dB (all four models, 30 – 100 Hz); Smooth ≥ −3 dB 150 Hz – 2 kHz. 8×10: −6.0 dB at 40 Hz, +0.1 at 58 Hz, −2.0 at 5 kHz (anchor −10 dB at 40 Hz not reached: [A]) |
+| Compressor | `comp` 0 bit-transparent; make-up holds −18 dBFS within 1 dB; FET / Opto no filter; `gr` within 0.5 dB | not run at 0 (path Both = clean alone, bit-exact); within 1 dB in all three characters; FET / Opto vs Clean on a steady tone within 0.3 dB and 0.1°; `gr` within 0.5 dB of the curve |
+| Onset thump (Vintage, `gain` 100 %, `sag` 100 %, gated 82 Hz) | report | energy below 29 Hz −27 dB re the note, first 100 ms |
+| Common checks, 44.1 – 192 kHz | — | 28 / 28; worst parameter step −78 dB re peak (`gain` 100 → 0), so the README's −30 dB allowance was not needed |
+| CPU (48 kHz, blocks of 128) | ≤ 1 µs / sample mono; ≤ 2 µs in a crossfade | 920 – 1,025 ns mono over five runs (1.78 – 1.90 µs stereo frame): at the bound, the 4× fallback not taken; 1.64 µs with the engines always crossfading |
+
+**Deviations from the design, and why.**
+
+- **`bass_keep` also high-passes the dirt's input.** §2.1 wrote out = LP(clean) + HP(mix), which keeps the
+  output's lows clean but leaves them in the clipper: the low B's AM of a 1 kHz probe was unchanged
+  (−1.0 dB both ways). §1's conclusion and the bench row ask that "the lows never reach the clipper", so
+  the dirt now enters through a second LR4 split's high band and the clean through its twin, before the
+  engines; after them the post split is as designed. Both paths carry both all-passes, so the blend stays
+  coherent; the price is twice the `bass_keep` dispersion (≈ 9 ms at 110 Hz instead of 4.6).
+- **Tight low end with a real note.** With the lows out of the clipper, the B's harmonics above 110 Hz
+  (93 Hz at −6 dB, 124, 155 Hz…) still clip with the probe and modulate it at the B's period: sidebands
+  fall 6.5 dB, not 20. A bare fundamental falls 23 dB. Meeting 20 dB on a full note would need a
+  `bass_keep` above the note's harmonics, which is not a bass DI any more.
+- **Driven single tone, two-stage models.** The interstage shelf and low-pass filter stage 1's harmonics
+  before stage 2 re-clips them, so the fundamental rotates up to 3.3° (Classic) and 6.5° (Modern) at full
+  gain and 1 kHz (≤ 2.5° at 330 Hz and below). The prototype's ≤ 1° was a bare clipper. Test bound 8° for
+  those two, 2° kept for Vintage.
+- **Driven notes**: the README's bound is met on the fundamentals (the prototype's measure); over every
+  partial below 200 Hz the 90th percentile is 3.1 dB (weak 3rd – 5th harmonics rebuilt by the clipper,
+  also in the one-stage Vintage: 2.5 dB). `bass_keep` remains the guarantee.
+- **The sag / bias envelope** is a mean square (x² smoothed by two 1 ms one-poles, then the 5 / 150 ms
+  follower, read as a sine's peak), not a peak follower on the samples: the latter switched attack /
+  release with the sampling phase of a 3 kHz note and modulated the sag inharmonically (−90 dBFS
+  aliases-like components in Classic and Vintage at `gain` 35 %; now ≤ −106).
+- **Choices where the design was silent** [A]: Classic's power stage +6 dB; full sag envelope = stage 1's
+  input at peak 1 (its clipping point); bells of the mid bands = gfx-eq's law at its defaults (Q 0.67,
+  50 % proportional); Smooth's 4th-order low-pass = sections Q 0.54 and 0.6 (no peak); bass_keep below
+  1 Hz is off, its split never below 10 Hz; `comp` at exactly 0 (settled) does not run the compressor
+  (bit-transparent; ratio 1 would otherwise enter gfx-comp's knee with a = 0).
+- **Cab models**: the box alignments and bodies of §2.7 are designed values, voiced by numbers only; the
+  8×10 reaches −6 dB at 40 Hz, not the manual's −10 (a sealed 2nd-order box with Q 1.1 cannot drop 10 dB
+  in the 0.54 octave from 58 to 40 Hz while holding 58 Hz within 3 dB). All four wait for the licensed IRs.
+- **Loudness tables** are fitted on a synthetic plucked line (10 notes E1 – G3 and B0, partials to 8 kHz),
+  K-weighted; they are to be refitted on golem's bass DIs.
+- The EXP-sideband row is covered by gfx-dsp `exp_smooth`'s own tests (the EXP parameters use it); the
+  naive-build diagnostic row is not re-run (the prototype's −0.9 / −4.2 dB stand).
+
+**Open for the owner.** Every [A] voicing by ear once the bass DIs and the NAM references exist (model
+gains and corners, b, sag depths, the comp map, Classic's stage 2); cab targets from licensed IRs; the
+loudness tables refitted on real DIs; LR2 vs LR4 for the low pre section (A / B on a low B); golem-rack:
+the `bass-di` catalogue entry, `init` writing `low_note` and `cab` Off.
 
 golem's **bass preamp / DI**. It is a new block: one box that does the job of the tube-emulation DI, the
 modern CMOS-grind preamp and the valve-grit DI. It has a compressor before the dirt, a clean path and a

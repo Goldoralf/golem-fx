@@ -43,3 +43,4 @@ gfx-golem = { path = "../gfx-golem", default-features = false }
 gfx-freqshift = { path = "../gfx-freqshift", default-features = false }
 gfx-crusher = { path = "../gfx-crusher", default-features = false }
 gfx-ringmod = { path = "../gfx-ringmod", default-features = false }
+gfx-bassdi = { path = "../gfx-bassdi", default-features = false }

@@ -1397,6 +1397,59 @@
           "level"
         ]
       }
+    ],
+    "gfx-bassdi": [
+      {
+        "id": "dirt",
+        "name": "Dirt",
+        "custom": null,
+        "params": [
+          "grunt",
+          "attack",
+          "dirt_level",
+          "sag"
+        ]
+      },
+      {
+        "id": "eq",
+        "name": "EQ",
+        "custom": null,
+        "params": [
+          "lo_mid",
+          "lo_mid_freq",
+          "hi_mid",
+          "hi_mid_freq"
+        ]
+      },
+      {
+        "id": "low-end",
+        "name": "Low end",
+        "custom": null,
+        "params": [
+          "bass_keep",
+          "low_note",
+          "cab_lows"
+        ]
+      },
+      {
+        "id": "comp",
+        "name": "Comp",
+        "custom": null,
+        "params": [
+          "comp",
+          "comp_char",
+          "comp_path"
+        ]
+      },
+      {
+        "id": "gain",
+        "name": "Gain",
+        "custom": null,
+        "params": [
+          "input",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1610,6 +1663,16 @@
       "env_sens": "How loud the playing must be to move the envelope",
       "env_att": "How fast the envelope rises",
       "env_rel": "How fast the envelope falls back"
+    },
+    "gfx-bassdi": {
+      "low_note": "The lowest open string: golem sets it from the lane's tuning; every low corner follows it",
+      "bass_keep": "Below this frequency the bass stays clean, mono and out of the clipper (0 = off)",
+      "cab_lows": "Off: the speaker emulation acts only above the bass",
+      "comp_path": "Dirt: compress the driven path only; Both: compress before the clean / dirt split",
+      "sag": "50 % = the model's own sag; 0 = none, 100 % = double (no effect in Modern)",
+      "model": "Modern: CMOS grind; Classic: tube-emulation DI push; Vintage: valve-preamp grit",
+      "lo_mid_freq": "Centre of the Lo Mid band (the hardware positions: 250, 500, 1,000 Hz)",
+      "hi_mid_freq": "Centre of the Hi Mid band, the growl (the hardware positions: 750, 1,500, 3,000 Hz)"
     }
   },
   "depends": {
