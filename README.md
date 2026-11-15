@@ -69,7 +69,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 27 | [gfx-glitch](gfx-glitch/) | new block (spectral freeze / glitch) | — | **coded**, bench green, to test in golem |
 | 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **designed**, reviewed by Fable 5.2 |
 | 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **coded**, bench green, to test in golem |
-| 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **designed**, reviewed by Fable 5.2 |
+| 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **coded** (Linear, µ-law, Float; ADPCM and Delta later), bench green, to test in golem |
 | 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **coded** (Accurate mode; Pedal mode waits for its voicing), bench green, to test in golem |
 | 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **coded**, bench green, to test in golem |
 | 33 | [gfx-fuzz](gfx-fuzz/) | new block `fuzz` (circuit fuzzes, guitar in the netlist) | — | **designed**, reviewed by Fable 5.2 |

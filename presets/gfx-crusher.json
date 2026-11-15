@@ -1,0 +1,541 @@
+{
+ "crate": "gfx-crusher",
+ "presets": [
+  {
+   "id": "eight-bit-lead",
+   "type": "bitcrusher",
+   "name": "8-bit lead",
+   "desc": "Classic crush: 8-bit words at 16 kHz, aliasing kept, quiet tails faded to clean instead of fizzing",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "chiptune",
+    "indie-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": true,
+   "params": {
+    "quant": 8,
+    "rate": 16000,
+    "model": "Raw",
+    "tails": "Clean"
+   },
+   "notes": "The default: heard at once on insert. Tails Clean keeps a gain stage after it from turning the sputter into fizz"
+  },
+  {
+   "id": "rack-sampler-12",
+   "type": "bitcrusher",
+   "name": "Rack sampler 12-bit",
+   "desc": "Warm 12-bit grit at 26 kHz through steep anti-alias and reconstruction filters",
+   "inst": "keys",
+   "genres": [
+    "hip-hop",
+    "electronic"
+   ],
+   "subgenres": [
+    "boom-bap",
+    "lo-fi-hip-hop",
+    "instrumental-hip-hop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "vintage",
+    "lo-fi"
+   ],
+   "default": true,
+   "params": {
+    "quant": 12,
+    "rate": 26040,
+    "model": "Sampler"
+   },
+   "notes": "The rack sampler's warmth is its filters, not its bits: 6th-order Butterworth either side of the converter"
+  },
+  {
+   "id": "rack-sampler-guitar",
+   "type": "bitcrusher",
+   "name": "Sampled guitar 12-bit",
+   "desc": "Clean guitar through a 12-bit sampler at 26 kHz: softened top, grainy tails",
+   "inst": "guitar",
+   "genres": [
+    "hip-hop",
+    "rnb"
+   ],
+   "subgenres": [
+    "boom-bap",
+    "lo-fi-hip-hop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "quant": 12,
+    "rate": 26040,
+    "model": "Sampler"
+   },
+   "notes": "Rack Sampler 12 for a clean guitar part played as if sampled from a record"
+  },
+  {
+   "id": "hot-sampled-26k",
+   "type": "bitcrusher",
+   "name": "Hot-sampled 26k",
+   "desc": "Drum-machine 12-bit at 26 kHz, sampled with no input filter: ringing aliases, softened images",
+   "inst": "drums",
+   "genres": [
+    "hip-hop",
+    "electronic"
+   ],
+   "subgenres": [
+    "boom-bap",
+    "east-coast-hip-hop"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": true,
+   "params": {
+    "quant": 12,
+    "rate": 26040,
+    "model": "Drum Machine"
+   },
+   "notes": "Aliasing kept on purpose, a 4-pole ladder on the output: the drum-machine voicing [to tune by ear]"
+  },
+  {
+   "id": "companded-8",
+   "type": "bitcrusher",
+   "name": "Companded 8-bit",
+   "desc": "µ-law 8-bit words at 28 kHz: grain on loud notes, clean quiet tails, no fizz",
+   "inst": "drums",
+   "genres": [
+    "electronic",
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "new-wave"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "law": "µ-law",
+    "quant": 8,
+    "rate": 28000,
+    "model": "Raw"
+   },
+   "notes": "Eight bits through a µ-law DAC: about 12 bits of dynamic range, the 80s drum machines' trick"
+  },
+  {
+   "id": "phone-line",
+   "type": "bitcrusher",
+   "name": "Phone line",
+   "desc": "Telephone voice: µ-law 8-bit at 8 kHz, band-limited 300 – 3,400 Hz",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "hip-hop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "law": "µ-law",
+    "quant": 8,
+    "rate": 8000,
+    "model": "Clean",
+    "low_cut": 300,
+    "high_cut": 3400,
+    "level": 1.0
+   },
+   "notes": "G.711's word and band; Clean decimation so nothing folds back into the voice"
+  },
+  {
+   "id": "am-radio",
+   "type": "bitcrusher",
+   "name": "AM radio",
+   "desc": "Narrow, slightly thickened voice: µ-law 8-bit at 11 kHz, 300 – 4,500 Hz",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "law": "µ-law",
+    "quant": 8,
+    "rate": 11025,
+    "model": "Clean",
+    "low_cut": 300,
+    "high_cut": 4500,
+    "nonlin": 30,
+    "level": 1.0
+   },
+   "notes": "The old catalogue \"AM radio\" by intent: band-limited, a touch of DAC curve for density"
+  },
+  {
+   "id": "one-bit-fuzz",
+   "type": "bitcrusher",
+   "name": "1-bit fuzz",
+   "desc": "A one-bit square of the input, gated cleanly as the note decays",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic",
+    "experimental"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "chiptune"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "quant": 1,
+    "quantizer": "Riser",
+    "tails": "Gate",
+    "rate": 48000,
+    "high_cut": 6000,
+    "input": 24,
+    "level": 8.5
+   },
+   "notes": "Riser at 1 bit is a square whatever the level; input +24 dB sets where the gate closes (about −18 dBFS of DI)"
+  },
+  {
+   "id": "tuned-crush",
+   "type": "bitcrusher",
+   "name": "Tuned crush",
+   "desc": "Rate locked to a multiple of the played note: the aliases land on its harmonics, in tune",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "chiptune",
+    "math-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "track": true,
+    "rate": 4000,
+    "quant": 6,
+    "tails": "Raw",
+    "model": "Raw",
+    "level": -0.5
+   },
+   "notes": "Monophonic lines: chords hold the last rate. Best at R ≤ 8 kHz where the pitch error beats slowly"
+  },
+  {
+   "id": "tuned-arpeggio",
+   "type": "bitcrusher",
+   "name": "Tuned arpeggio",
+   "desc": "Pitch-locked crush stepped through harmonic multiples by an eighth-note LFO",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "track": true,
+    "rate": 2000,
+    "mod": "LFO",
+    "sync": "1/8",
+    "mod_depth": 40,
+    "level": -0.5
+   },
+   "notes": "The LFO moves the target rate; track rounds it to whole multiples of f0: an arpeggio of crushes"
+  },
+  {
+   "id": "sample-rate-sweep",
+   "type": "bitcrusher",
+   "name": "Sample-rate sweep",
+   "desc": "Expression-pedal sweep of the clock from 48 kHz down to 750 Hz: a glide, no zipper",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "rate": 48000,
+    "rate_shift": 0,
+    "model": "Raw"
+   },
+   "notes": "Assign EXP to rate_shift (0 → −72 st): pitch-like travel, the fractional clock glides between every rate"
+  },
+  {
+   "id": "pick-harder-crush",
+   "type": "bitcrusher",
+   "name": "Pick-harder crush",
+   "desc": "The rate drops as the attack rises: harder picking crunches more",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "mod": "Envelope",
+    "mod_depth": -60,
+    "rate": 16000
+   },
+   "notes": "Envelope on the clock, negative depth: dynamics play the crush"
+  },
+  {
+   "id": "synced-wobble",
+   "type": "bitcrusher",
+   "name": "Synced wobble",
+   "desc": "Clock swept by an eighth-note sine around 8 kHz, locked to the tempo",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "mod": "LFO",
+    "sync": "1/8",
+    "mod_depth": 50,
+    "rate": 8000
+   },
+   "notes": "Deterministic and host-synced: the same wobble on every take"
+  },
+  {
+   "id": "dusty-jitter",
+   "type": "bitcrusher",
+   "name": "Dusty jitter",
+   "desc": "10-bit sampler at 12 kHz with a wandering clock: aliases smeared into dust",
+   "inst": "keys",
+   "genres": [
+    "hip-hop",
+    "electronic"
+   ],
+   "subgenres": [
+    "lo-fi-hip-hop",
+    "trip-hop"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "warm",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "jitter": 60,
+    "quant": 10,
+    "rate": 12000,
+    "model": "Sampler"
+   },
+   "notes": "Clock jitter turns the images and aliases into noise while the pitch stays put"
+  },
+  {
+   "id": "parallel-grit",
+   "type": "bitcrusher",
+   "name": "Parallel grit",
+   "desc": "Six-bit crush at 6 kHz blended under the dry: grit on top, the low end kept",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "electronic",
+    "hip-hop"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "lo-fi"
+   ],
+   "default": true,
+   "params": {
+    "mix": 40,
+    "quant": 6,
+    "tails": "Raw",
+    "rate": 6000
+   },
+   "notes": "The dry runs through the kernels' own response: no comb in the blend below the rate"
+  },
+  {
+   "id": "old-ladder-dac",
+   "type": "bitcrusher",
+   "name": "Old ladder DAC",
+   "desc": "12-bit sampler whose ladder DAC mis-steps at mid-scale: crossover grit on quiet notes",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "quant": 12,
+    "ladder": 70,
+    "model": "Sampler"
+   },
+   "notes": "R-2R bit-weight errors: quiet signals cross the wrong-sized mid-scale step [magnitude to tune by ear]"
+  },
+  {
+   "id": "hit-the-converter",
+   "type": "bitcrusher",
+   "name": "Hit the converter",
+   "desc": "Input pushed 12 dB into a 10-bit converter: hard digital clipping, level compensated",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal",
+    "electronic"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "input": 12,
+    "quant": 10,
+    "rate": 48000,
+    "level": 0.5
+   },
+   "notes": "Rate Off: the clip runs at the host rate, as a real overloaded ADC"
+  },
+  {
+   "id": "clean-decimate",
+   "type": "bitcrusher",
+   "name": "Clean decimate",
+   "desc": "Bandwidth only: 16-bit at 8 kHz through elliptic filters, no foldover",
+   "inst": "any",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "model": "Clean",
+    "quant": 16,
+    "rate": 8000
+   },
+   "notes": "A brick-wall \"small speaker\": the Clean model removes every alias"
+  }
+ ]
+}

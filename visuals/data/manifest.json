@@ -622,6 +622,33 @@
       {"id": "fire", "name": "Fire", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-crusher": [
+      {"id": "quant", "name": "Quant", "kind": "float", "min": 1, "max": 16, "default": 8, "exp": true},
+      {"id": "rate", "name": "Rate", "kind": "float", "min": 50, "max": 48000, "default": 16000, "exp": true},
+      {"id": "nonlin", "name": "Non-Lin", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "model", "name": "Model", "kind": "enum", "min": 0, "max": 5, "default": 0, "options": 6},
+      {"id": "law", "name": "Format", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "quantizer", "name": "Quantizer", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "dither", "name": "Dither", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "tails", "name": "Tails", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "input", "name": "Input", "kind": "float", "min": -24, "max": 24, "default": 0},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "low_cut", "name": "Low Cut", "kind": "float", "min": 20, "max": 1000, "default": 20},
+      {"id": "high_cut", "name": "High Cut", "kind": "float", "min": 1000, "max": 20000, "default": 20000, "exp": true},
+      {"id": "asym", "name": "Asymmetry", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "ladder", "name": "DAC Error", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "rate_shift", "name": "Rate Shift", "kind": "float", "min": -72, "max": 0, "default": 0, "exp": true},
+      {"id": "jitter", "name": "Jitter", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "track", "name": "Track", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "mod", "name": "Rate Mod", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "mod_depth", "name": "Mod Depth", "kind": "float", "min": -100, "max": 100, "default": 0, "exp": true},
+      {"id": "mod_rate", "name": "Mod Rate", "kind": "float", "min": 0.05, "max": 10, "default": 0.5, "exp": true},
+      {"id": "sync", "name": "Sync", "kind": "enum", "min": 0, "max": 16, "default": 0, "options": 17},
+      {"id": "env_sens", "name": "Envelope Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "env_att", "name": "Envelope Attack", "kind": "float", "min": 1, "max": 100, "default": 5},
+      {"id": "env_rel", "name": "Envelope Release", "kind": "float", "min": 20, "max": 2000, "default": 200}
     ]
   }
 }

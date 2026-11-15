@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -54,6 +54,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-geq" | "geq" => Some(Box::new(gfx_geq::Geq::new())),
         "gfx-freqshift" | "freqshift" => Some(Box::new(gfx_freqshift::FreqShift::new())),
         "gfx-swell" | "swell" => Some(Box::new(gfx_swell::Swell::new())),
+        "gfx-crusher" | "crusher" => Some(Box::new(gfx_crusher::Crusher::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -164,6 +165,17 @@ pub fn options(name: &str) -> checks::Options {
         // harmonics on the way, as gfx-drive's ceiling; a full tone sweep in 30 ms rings the tone
         // network as a pot turned that fast would (−46 dB)
         o.click_bound_db = -35.0;
+    }
+    if matches!(name, "gfx-crusher" | "crusher") {
+        // minimum-phase kernels (sampling and rendering) and the hold's T / 2: a few samples of group
+        // delay, no delay line, not reported; the Off setting measures exactly 0 (README §5)
+        o.skip_latency = true;
+        // a `quant` step 16 → 1 bit or a `rate` jump creates real high-frequency content: the effect,
+        // not a click (README §5). Measured: a `rate` / `rate_shift` glide 50 ↔ 48,000 Hz passes
+        // the 1 kHz tone through every rate, whose Raw images and steps stand −4 dB re peak above
+        // 10 kHz (96 kHz), `quant` 16 → 1 −11 dB, `input` ±24 dB −26 dB; the README's −30 dB cannot
+        // hold. Every other parameter stays below −35 dB (gfx-crusher's own parameter-step test).
+        o.click_bound_db = -3.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

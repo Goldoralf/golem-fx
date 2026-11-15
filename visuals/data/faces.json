@@ -507,6 +507,26 @@
     "curve"
    ],
    "category": "dynamics"
+  },
+  "gfx-crusher": {
+   "name": "Crush",
+   "blocks": [
+    "bitcrusher"
+   ],
+   "knobs": [
+    "quant",
+    "rate",
+    "nonlin",
+    "mix"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "toggles": [
+    "track"
+   ],
+   "category": "lofi",
+   "color": "#e8336f"
   }
  }
 }

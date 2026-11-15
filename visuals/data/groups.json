@@ -1275,6 +1275,55 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-crusher": [
+      {
+        "id": "converter",
+        "name": "Converter",
+        "custom": null,
+        "params": [
+          "law",
+          "quantizer",
+          "dither",
+          "tails",
+          "ladder"
+        ]
+      },
+      {
+        "id": "gain",
+        "name": "Gain",
+        "custom": null,
+        "params": [
+          "input",
+          "level"
+        ]
+      },
+      {
+        "id": "tone",
+        "name": "Tone",
+        "custom": null,
+        "params": [
+          "low_cut",
+          "high_cut",
+          "asym"
+        ]
+      },
+      {
+        "id": "clock",
+        "name": "Clock",
+        "custom": null,
+        "params": [
+          "rate_shift",
+          "jitter",
+          "mod",
+          "mod_depth",
+          "mod_rate",
+          "sync",
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      }
     ]
   },
   "help": {
@@ -1473,6 +1522,12 @@
       "gb_800": "Bass 7 fader at 800 Hz: the EQ's gain there, in dB",
       "gb_4k5": "Bass 7 fader at 4.5 kHz: the EQ's gain there, in dB",
       "gb_10k": "Bass 7 fader at 10 kHz: the EQ's gain there, in dB"
+    },
+    "gfx-crusher": {
+      "sync": "Locks the rate LFO to the host tempo (Off: Mod Rate sets it)",
+      "env_sens": "How strongly the playing level drives the rate modulation",
+      "env_att": "How fast the envelope follows a rising level",
+      "env_rel": "How fast the envelope falls back after a note"
     }
   },
   "depends": {
@@ -1656,6 +1711,28 @@
       "rise": {
         "param": "sync",
         "equals": "Off"
+      }
+    },
+    "gfx-crusher": {
+      "sync": {
+        "param": "mod",
+        "equals": "LFO"
+      },
+      "mod_rate": {
+        "param": "sync",
+        "equals": "Off"
+      },
+      "env_sens": {
+        "param": "mod",
+        "equals": "Envelope"
+      },
+      "env_att": {
+        "param": "mod",
+        "equals": "Envelope"
+      },
+      "env_rel": {
+        "param": "mod",
+        "equals": "Envelope"
       }
     }
   }

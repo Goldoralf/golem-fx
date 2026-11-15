@@ -93,3 +93,5 @@ name = "GoleM FX Graphic EQ"
 name = "GoleM FX Freqshift"
 [gfx-swell]
 name = "GoleM FX Swell"
+[gfx-crusher]
+name = "GoleM FX Crusher"
