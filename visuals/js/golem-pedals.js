@@ -396,6 +396,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-cab': 'cone',
     'gfx-irfx': 'impulse',
     'gfx-correct': 'staff',
+    'gfx-vocoder': 'bank',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -625,6 +626,19 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         const [g1, w1] = gaps[1], r = .6;
         [[g1 - 2.2, 3.4], [g1 + w1 + 1.8, -3.3], [g1 + w1 / 2, 4.2]].forEach(([x, dy]) =>
           shape(`M${f1(x - r)} ${f1(yAt(x) + dy)}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`, .8));
+        break;
+      }
+      case 'bank': {
+        // a filterbank raised by a vowel: nine overlapping bells on one baseline just under the
+        // cartouche, each reaching its neighbours' centres; low under the rune (2 px under it), tall
+        // beside it (up to the cartouche's top). Closed arches only, no envelope line (gfx-formant's)
+        const y0 = cy + ch / 2 + 8, w = W / 9;
+        const e = [1, .55, .85, .45, .3, .5, .9, .6, .7];
+        for (let i = 0; i < 9; i++) {
+          const x = W * (i + .5) / 9, room = Math.abs(x - cx) < cw / 2 ? 6 : ch + 6, h = e[i] * room;
+          line(`M${f1(x - w)} ${f1(y0)}C${f1(x - w / 3)} ${f1(y0)} ${f1(x - w / 3)} ${f1(y0 - h)} ${f1(x)} ${f1(y0 - h)}` +
+            `S${f1(x + w / 3)} ${f1(y0)} ${f1(x + w)} ${f1(y0)}`, .45 + .5 * e[i]);
+        }
         break;
       }
       case 'bins': {

@@ -1,8 +1,15 @@
 # gfx-vocoder
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Design by Claude Opus 5.5, reviewed by Claude
-> Fable 5.2 on 2026-11-14 (see the Review at the end). It needs two new gfx-dsp modules, `filterbank` and
-> `osc`, plus a small `noise` (§2.9). It is a new golem block (`vocoder`): there are no catalogue ids to keep.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Claude
+> Fable 5.2 the same day (Review section), coded as reviewed with the deviations listed in "As coded". A
+> complex 4th-order bank on the ERB / Log scale with the 40 Hz floor, the width law, edge trims and G_Σ
+> (gfx-dsp's new `filterbank`, which takes explicit band lists in full pole widths for gfx-polysynth), the
+> Tracked / Drone / Noise / Self carriers on gfx-dsp's new `osc` (PolyBLEP saw and pulse, closed-form buzz,
+> supersaw) and `noise`, flatten, the V/UV switch to a separate noise bank, the gated sibilance path,
+> freeze, formant remap and tilt. Zero latency. Measured: summed ripple 1.8 dB at 24 ERB bands, lag ≤ 15.6
+> ms in every band at every setting, wet level within 1 dB of the modulator at 8 – 40 bands, V/UV on in
+> 2 ms, tracking within 0.1 ¢, bench 28 / 28 at 44.1 – 192 kHz; CPU 487 – 594 ns per sample at the
+> defaults (over the 450 ns budget, see "As coded"). The voice-DI rows of §5 wait for Raph's recordings.
 
 golem's **channel vocoder**. A bank of band-pass filters measures the spectral envelope of a
 **modulator** (a voice, or a guitar) and imposes it, band by band, on a **carrier** (a synth, a guitar, or
@@ -798,3 +805,101 @@ Log earns its place only through the vintage presets.
 list (centres and widths) rather than a spacing law, so gfx-polysynth can ask for one band per partial.
 Width convention: gfx-polysynth states full pole widths, twice the half-width this design uses — the module
 takes full widths and this design converts.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `filterbank.rs` (new): `ComplexBank` (an explicit `BandSpec` list: centre, **full** pole width
+  B, order 1 – 4; r = e^(−πB / fs); f64 structure-of-arrays state; unit gain and zero phase at each
+  centre), `band_response`, `real_response` (image included), `noise_power` (closed form), `GammaDesign`
+  (this design's scale, width law, trims and G_Σ; half-widths b, banks get B = 2b; `index_of` /
+  `freq_of`), `BankFade` (40 ms). 5 unit tests.
+- gfx-dsp `osc.rs` (new): `Phasor` (f64), `poly_blep`, `saw`, `pulse`, `buzz`, `Supersaw`. 4 unit tests.
+  gfx-ringmod is untouched (its wavetables can adopt `Phasor` later).
+- gfx-dsp `noise.rs` (new): `White` (seeded xorshift, uniform on [−1, 1)). 1 unit test.
+- `src/lib.rs`: the processor (`Vocoder`, `PARAMS`, labels, `REGISTERS`, `METERS`). `src/plugin.rs`: the
+  VST3, class id `GoleMFxVocoder01`, mono 1 / 1 first then 2 / 2, each with a 1- or 2-channel key bus
+  (declared, unread in v1), no MIDI input, latency 0, `bypass` = `make_bypass`, `f0` and `state`
+  read-only. `src/tests.rs`: 16 behaviour tests (§5) + `cpu_report`, ignored.
+- gfx-bench: the crate in `EFFECTS` / `make()`; `options()` skips the latency correlation (the wet is the
+  internal carrier, uncorrelated with the input; IIR banks, no lookahead: 0 by construction).
+- `presets/gfx-vocoder.json`: 12 presets from §4 (v1 carriers only). Visuals: the face, groups, help,
+  depends (`register` / `quantize` / `glide` with Tracked, `degree` with Drone), the `bank` motif
+  (modulation green, anodized, no crate hue), the `vocoder` glyph.
+
+**Measured** (48 kHz unless stated; synthetic signals: pink noise, two-formant sung vowels, a fricative
+of white noise high-passed at 3.5 kHz).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Flat sum (analytic, the bank's own response) | ripple ≤ 1.7 dB at 24 – 40 bands (Log 24 ≤ 2.3), ≤ 2.5 at 16 – 20, ≤ 5 at 8 – 12; mean ±0.3 dB | ERB 24 / 32 / 40: 1.76 / 2.02 / 1.85 dB; Log 24: 2.49; ERB / Log 16: 2.21 / 2.64; 8 bands 5.26 / 6.43; 11 – 12 Log 3.6 – 4.6. Above 500 Hz: 0.9 – 1.2 dB at 24 – 40 ERB bands. Mean −0.10 … +0.10 dB (44.1 – 96 kHz) |
+| Bank edges | ±0.5 dB | −0.33 … +0.17 dB (trims −1.2 … −2.6 dB) |
+| Band selectivity | neighbours ≤ −13, next ≤ −25 dB | 16 / 24 / 40 bands: −15.1 / −14.4 / −13.9 dB, next ≤ −29.7 dB |
+| Lag | ≤ 4 / (2π b) + 1.5 ms, ≤ 17.5 ms | ≤ 15.6 ms in every band (24 / 40 ERB, Log 8 / 24 / 40, `low` 50 and 100 Hz), on 2 \|z\|. With a 20 ms-release follower the envelope's 10 Hz modulation lags up to 23 ms |
+| Bank design | ≤ 50 µs at 40 bands | 15 µs (test profile), no allocation |
+| Self identity (pink in place of the DI) | ±3 dB third-octave | mean −1.2 dB, worst band 1.3 dB off the mean |
+| Level (pink, Drone saw, flatten 100 %) | ±1.5 dB at 16 – 40, ±2.5 at 8 | 8 / 16 / 24 / 40 bands: −0.97 / −0.48 / −0.76 / +0.39 dB |
+| Level vs flatten (100 / 50 / 0 %) | > 3 dB → per-wave trim, then ≤ 2 dB | before the trim: saw +3.4, pulse +2.2 (with a 50 % dip: spread 3.5), supersaw +3.1, buzz 1.5, noise 0.7 dB. With the trims: spread saw 1.2, pulse 2.4, buzz 1.5, supersaw 1.7, noise 0.7 dB |
+| Flatten | saw vs buzz within ±2 dB at 100 %; differ by the tilt at 0 % | 0.4 dB; at 0 % the saw's 5 kHz band falls 26.4 dB more than the buzz's |
+| Carrier purity (B5, 988 Hz, steady envelope) | ≤ −60 dB | saw −60.4, pulse −67.2, buzz −71.2 dB. 4 kHz (`octave` +2 Tracked) not run: Drone tops at B5 and a 4 kHz sung tone is outside every register |
+| Formant +12 st | peaks up one octave ± 1 band | first formant's band 8 → 12 (one octave = 12.2) |
+| V/UV (synthetic) | u ≥ 0.5 within 6 ms; vowels < 0.5 on 97 % | 2 ms; 0 % of vowel frames unvoiced. The DI rows (labelled fricatives, plosives, ≥ 90 %) wait for the recordings |
+| V/UV edges (`unvoiced` 100 %) | ≤ 2 dB per band | whole output, 5 ms windows: +2.0 dB over the louder steady level |
+| Gate | wet ≤ −90 dBFS on bleed; no chatter on 70 Hz 3 dB over | bleed with peaks at −66 dBFS (−78 dBFS RMS): wet exactly 0, sibilance path included; 70 Hz at −57 dBFS: the gate opens once and stays open |
+| Tracking (synthetic, Mid) | within 10 ¢; pending −12 ± 1 dB | first voiced frame 11 ms after the onset, f0 and carrier +0.1 ¢; pending carrier −11.4 dB |
+| Quantize | one note, no trill | 220 Hz ± 60 ¢ at 5.5 Hz, Chromatic: one note |
+| Chords | every note in the scale | Triad, Key quantize, A minor scale sung 10 ¢ sharp: 0 of 5,979 voice-frames out of A minor |
+| Freeze | — | held vowel −0.0 dB against the sung level; released: silent |
+| Edges | common bound −50 dB | bench steps: worst −50 dB (formant −12 → +12 at 44.1 kHz), −56 / −60 / −59 dB at 48 / 96 / 192 kHz; `bands` 24 → 8 → 40 under a vowel: 5 ms windows −5.2 … +2.3 dB |
+| Common checks | — | 28 / 28 at 44.1 – 192 kHz (pink noise as the modulator: no voice DI in the repository) |
+| CPU, 48 kHz | ≤ 450 ns (24 bands, Tracked Saw, noise bank); ≤ 1.4 µs (40 bands Supersaw Ninth, stereo carrier) | bench (pink: pending all the time, noise bank always on) 594 ns mono, 634 ns stereo; a sung vowel 487 ns; Drone without the noise bank 451 ns; 40 bands Supersaw Ninth stereo carrier 1.13 µs (the machine shared, ±10 %) |
+
+Not run here: the V/UV, sibilance and tracking rows on voice and guitar DIs (no recordings yet), the EXP
+sideband row (the EXP parameters run on `exp_smooth`, tested there), the listening row.
+
+**Deviations from the design, and why.**
+- **CPU over the 450 ns budget** (487 ns on a vowel, 594 ns on the bench's pink noise, where Tracked stays
+  pending and the noise bank never stops). The three f64 banks cost ≈ 95 ns each at 24 bands on the
+  baseline x86-64 target (SSE2: two f64 lanes; `target-cpu=native` measured no faster); §2.10's
+  130 – 200 ns assumed 4-lane f64 SIMD. Left for the owner: f32 for the noise bank, or a run-time AVX path.
+- **Flat-sum ripple** 0.1 – 0.3 dB over the [P] targets (2.6 dB at Log 24, 6.4 at Log 8): the excess sits in
+  the floor's linear bands under 200 Hz; above 500 Hz the sum is within 0.9 – 1.2 dB. Bounds in the tests
+  are the measured values.
+- **Flatten's divisor** is max(2 |z_k| now, C_k, C̄ / 100), not max(C_k, floor): the band's own
+  instantaneous envelope keeps the gain from overshooting while C_k (5 ms attack) catches up after a note
+  change (a +20 – 40 dB burst on the bench's step check). (C̄ / den)^`flatten` per sample (fast log2 / exp2;
+  plain division at 100 %); C̄, 1 / C̄ and the presence fade per tick.
+- **Noise bands at −2.7 dB** under a unit envelope: measured level of a flattened noise carrier band (its
+  divisor rides the envelope's peaks); at unit envelope the V/UV crossfade rose 4.7 dB.
+- **Per-wave trims** at low `flatten`: saw −3.4, pulse −2.2, supersaw −3.1, buzz 0 dB, × (1 − `flatten`) ×
+  the oscillators' share of the carrier, crossfaded with `wave`. Pulse still spreads 2.4 dB (its 50 % point
+  dips): above §5's 2 dB.
+- **Remap weights** (`formant`, `tilt`) are interpolated across one tick (a step per tick buzzed: −17 dB on
+  the step check); **`flatten`** is read per sample.
+- **`octave` glides over 20 ms**, not 5: a ±4-octave sweep in 5 ms (or a step) left −38 dB bursts at 96 /
+  192 kHz through the flattened bands.
+- **Pending onset**: the carrier's −12 dB and the noise share both follow a 5 ms ramp (down and up); a
+  stepped noise share clicked when the first voiced frame arrived.
+- **Bank crossfade**: the new core inherits the old one's C̄ (the same carrier), otherwise its 200 ms C̄
+  settling dipped the level after every `bands` / `low` / `high` change.
+- **`REGISTERS` and the octave guard stay in this crate** (gfx-golem's values and rule, Instrument
+  appended), not moved into `detect`: moving them touches gfx-golem (a null-guarded change for the owner).
+  Two YIN detectors: the voice ranges without harmonic lock (60 – 1,200 Hz, narrowed by `set_range`), and
+  Instrument's 75 – 1,500 Hz with it (the lock is fixed at `prepare_range`).
+- **Quantize** uses its own hysteresis (a new note 0.3 st nearer than the held one in 3 analyses running):
+  `NoteTracker` gives pitch classes only, and the root needs the octave.
+- **Infeasible scales** (e.g. 40 bands in 500 – 2,000 Hz, where 40 Hz-wide bands cannot fit) fall back to a
+  linear layout at w0 0.90, narrower than the floor.
+- **Gate bleed row**: the gate reads peaks (one period's maximum), so the bleed is set by its peak, 6 dB
+  under `thresh`; −70 dBFS RMS of pink noise has peaks near −58 dBFS and opens a −60 dBFS gate.
+- **Spread** 100 %: the bands' pans are constant power, but the total rises 2.7 dB (neighbouring bands,
+  partly out of phase where they cross, no longer cancel once on different sides).
+- **Level trim**: −1.5 dB at every `flatten` (the per-wave trim covers the rest).
+- The `vocoder.rs` → `pv_shift.rs` rename had already been made before this crate.
+
+**Left for the owner.** The voice DIs (male, female, spoken and sung, with labelled fricatives and stage
+bleed) for the V/UV, sibilance, tracking and gate rows; listening (24 vs 40 bands on fast phrases, the
+40 Hz floor, the pending onset's −12 dB / 80 ms, the octave's 20 ms glide); the CPU decision; moving
+`REGISTERS` and the octave guard into `detect`; golem-rack's catalogue entry `vocoder` (modulation),
+`register` set at insert, `key` / `scale` song-bound.
+

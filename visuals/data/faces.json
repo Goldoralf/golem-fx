@@ -779,6 +779,26 @@
    ],
    "category": "pitch",
    "color": "#7a1450"
+  },
+  "gfx-vocoder": {
+   "name": "Vocoder",
+   "blocks": [
+    "vocoder"
+   ],
+   "knobs": [
+    "formant",
+    "env_rel",
+    "sib",
+    "mix"
+   ],
+   "selectors": [
+    "source",
+    "chord"
+   ],
+   "toggles": [
+    "freeze"
+   ],
+   "category": "modulation"
   }
  }
 }

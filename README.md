@@ -86,7 +86,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 44 | [gfx-tuner](gfx-tuner/) | `tuner` | golem_tuner.jsfx | **coded**, bench green, to test in golem |
 | 45 | [gfx-correct](gfx-correct/) | `pitch-correct` | x42-Autotune (Zita-AT1) | **coded**, bench green, to test in golem |
 | 46 | [gfx-formant](gfx-formant/) | new block `formant` (formant shifter) | — | **designed**, reviewed by Fable 5.2 |
-| 47 | [gfx-vocoder](gfx-vocoder/) | new block `vocoder` (channel vocoder) | — | **designed**, reviewed by Fable 5.2 |
+| 47 | [gfx-vocoder](gfx-vocoder/) | new block `vocoder` (channel vocoder) | — | **coded** (Tracked, Drone, Noise, Self carriers), bench green, to test in golem |
 | 48 | [gfx-radio](gfx-radio/) | new block `radio` (telephone, megaphone, AM, walkie…) | — | **designed**, reviewed by Fable 5.2 |
 | 49 | [gfx-grains](gfx-grains/) | `granular` | ZamGrains | **designed**, reviewed by Fable 5.2 |
 | 50 | [gfx-stretch](gfx-stretch/) | `stretch` | PaulXStretch | **designed**, reviewed by Fable 5.2 |

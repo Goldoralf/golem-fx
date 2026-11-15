@@ -56,3 +56,4 @@ gfx-tuner = { path = "../gfx-tuner", default-features = false }
 gfx-irfx = { path = "../gfx-irfx", default-features = false }
 gfx-cab = { path = "../gfx-cab", default-features = false }
 gfx-correct = { path = "../gfx-correct", default-features = false }
+gfx-vocoder = { path = "../gfx-vocoder", default-features = false }

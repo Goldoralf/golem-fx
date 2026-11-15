@@ -130,3 +130,5 @@ name = "GoleM FX Cab"
 name = "GoleM FX IR FX"
 [gfx-correct]
 name = "GoleM FX Correct"
+[gfx-vocoder]
+name = "GoleM FX Vocoder"

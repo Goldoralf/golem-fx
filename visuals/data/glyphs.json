@@ -445,6 +445,11 @@
    "label": "Fuzz (circuit-simulated fuzz, the guitar included)",
    "uni": "⊓",
    "svg": "<path d='M2 17V6h5v11h2.5V8.5H13V17h2.5v-6h2.5v6h2v-3.5h1.5V17H22'/>"
+  },
+  "vocoder": {
+   "label": "Vocoder (gfx)",
+   "uni": "⌢",
+   "svg": "<path d='M2.5 20.5c1.5 0 2-9 3.5-9s2 9 3.5 9M8.5 20.5c1.5 0 2-16.5 3.5-16.5s2 16.5 3.5 16.5M14.5 20.5c1.5 0 2-6 3.5-6s2 6 3.5 6'/>"
   }
  }
 }

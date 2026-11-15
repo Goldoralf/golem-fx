@@ -1,0 +1,352 @@
+{
+ "crate": "gfx-vocoder",
+ "presets": [
+  {
+   "id": "robot-talk",
+   "type": "vocoder",
+   "name": "Robot talk",
+   "desc": "The voice's own melody stepped to the nearest semitone on a saw, words kept clear by flatten and sibilance",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "source": "Tracked",
+    "chord": "Unison",
+    "quantize": "Chromatic",
+    "wave": "Saw",
+    "bands": 24,
+    "sib": 40
+   },
+   "notes": "No keyboard: the carrier follows the singer. Chromatic quantize gives the robot steps; 24 bands keep vowel onsets within 8 ms"
+  },
+  {
+   "id": "choir-of-one",
+   "type": "vocoder",
+   "name": "Choir of one",
+   "desc": "A three-part supersaw harmony that follows the singer in the song's key, vowels from the voice",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "source": "Tracked",
+    "chord": "Triad",
+    "quantize": "Key",
+    "wave": "Supersaw",
+    "env_rel": 120,
+    "bands": 20
+   },
+   "notes": "golem sets key / scale per song. The added notes are diatonic thirds and fifths above the sung note"
+  },
+  {
+   "id": "monotone",
+   "type": "vocoder",
+   "name": "Monotone machine",
+   "desc": "A fixed-pitch buzz an octave down speaks every word: harsh, flat and fully intelligible",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "source": "Drone",
+    "chord": "Unison",
+    "octave": -1,
+    "wave": "Buzz",
+    "bands": 32,
+    "sib": 60
+   },
+   "notes": "Buzz is the flattest carrier; 32 bands for spoken precision (slower vowel onsets: keep it for slow lines)"
+  },
+  {
+   "id": "key-pad",
+   "type": "vocoder",
+   "name": "Song-key pad",
+   "desc": "A vocoded seventh chord in the song key sings under the dry voice; scenes move the degree",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "source": "Drone",
+    "chord": "Seventh",
+    "wave": "Supersaw",
+    "env_rel": 400,
+    "mix": 35
+   },
+   "notes": "Mix 35 % keeps the dry voice in front; golem changes `degree` per scene (verse vi, chorus IV)"
+  },
+  {
+   "id": "hold-the-ahh",
+   "type": "vocoder",
+   "name": "Hold the ahh",
+   "desc": "Sing a vowel, stomp freeze: the vowel stays on a supersaw triad while you sing over it",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "source": "Drone",
+    "chord": "Triad",
+    "wave": "Supersaw",
+    "env_rel": 200,
+    "mix": 50
+   },
+   "notes": "Freeze on a foot switch; the held vowel ignores the gate, the sibilance stays live"
+  },
+  {
+   "id": "whisper-wind",
+   "type": "vocoder",
+   "name": "Whisper",
+   "desc": "A breathy, pitchless voice: the words imposed on noise, sibilance well up",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "experimental",
+    "screen"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "source": "Noise",
+    "bands": 32,
+    "sib": 70,
+    "env_rel": 30
+   },
+   "notes": "Good for spoken intros; the noise carrier needs no unvoiced switch"
+  },
+  {
+   "id": "small-voice",
+   "type": "vocoder",
+   "name": "Small voice",
+   "desc": "The voice's formants raised four semitones at the same pitch: a smaller, brighter singer",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "source": "Self",
+    "formant": 4,
+    "flatten": 100,
+    "sib": 0,
+    "unvoiced": 0,
+    "bands": 20,
+    "width": 160,
+    "mix": 100
+   },
+   "notes": "Few, wide analysis bands follow the formants, not the harmonics. A coarse colour; gfx-formant is the clean shifter"
+  },
+  {
+   "id": "big-voice",
+   "type": "vocoder",
+   "name": "Big voice",
+   "desc": "The voice's formants lowered four semitones at the same pitch: a bigger, darker singer",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "source": "Self",
+    "formant": -4,
+    "flatten": 100,
+    "sib": 0,
+    "unvoiced": 0,
+    "bands": 20,
+    "width": 160,
+    "mix": 100
+   },
+   "notes": "Sib 0: with Self the pass-through and the top band are the same signal and would comb"
+  },
+  {
+   "id": "synth-guitar",
+   "type": "vocoder",
+   "name": "Synth guitar",
+   "desc": "Single notes played on a supersaw fifth that follows the guitar, shaped by the pick's attack and decay",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "source": "Tracked",
+    "register": "Instrument",
+    "chord": "Fifth",
+    "wave": "Supersaw",
+    "env_att": 1,
+    "env_rel": 150,
+    "bands": 16,
+    "sib": 0,
+    "unvoiced": 0
+   },
+   "notes": "Instrument register (75 Hz – 1.5 kHz, harmonic lock); single notes, not chords"
+  },
+  {
+   "id": "strings-vocoder",
+   "type": "vocoder",
+   "name": "Strings vocoder",
+   "desc": "Eleven wide log bands on an ensemble'd triad: the few-band, smeared choir of late-70s keyboard vocoders",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "electronic",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "source": "Tracked",
+    "chord": "Triad",
+    "wave": "Supersaw",
+    "bands": 11,
+    "spacing": "Log",
+    "width": 130,
+    "flatten": 0,
+    "unvoiced": 20
+   },
+   "notes": "Flatten 0 is the vintage carrier × voice response; the 4 dB gaps between bands are part of the sound"
+  },
+  {
+   "id": "robot-octaves",
+   "type": "vocoder",
+   "name": "Robot octaves",
+   "desc": "The sung note and the octave below on a pulse wave, stepped to semitones: a thick robot lead",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "electronic",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "source": "Tracked",
+    "chord": "Octave",
+    "quantize": "Chromatic",
+    "wave": "Pulse",
+    "sib": 50
+   },
+   "notes": "The added octave sits under the melody, so the tune stays on top"
+  },
+  {
+   "id": "talking-chords",
+   "type": "vocoder",
+   "name": "Talking chords",
+   "desc": "The keys' rhythm and timbre carve a song-key triad drone: the chord speaks with the playing",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": true,
+   "params": {
+    "source": "Drone",
+    "chord": "Triad",
+    "wave": "Supersaw",
+    "bands": 16,
+    "env_rel": 80,
+    "sib": 0,
+    "unvoiced": 0
+   },
+   "notes": "The keys are the modulator; scenes move `degree` with the progression"
+  }
+ ]
+}
