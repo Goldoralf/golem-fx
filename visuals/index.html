@@ -87,9 +87,15 @@
     <div class="keys-compact" id="kits-compact"></div>
   </section>
 
+  <section id="features">
+    <h2>golem features</h2>
+    <p class="lead">golem's service blocks are golem's own devices, not effects, and get a family of their own (<code>featureUnit</code>, the Console look): Rec, Tuner, Click, Backing Track, Looper, Riff, Drum Machine, Standard, Arrangement and Sample. A graphite unit the size of a pedal, a light bar in the block's colour, a screen that shows what the feature is doing, and a ribbed rubber pad in a lit well. No knobs, no chrome stomp. <code>pedalFor</code> draws them so. Click a unit to switch it off.</p>
+    <div class="grid" id="features-grid"></div>
+  </section>
+
   <section id="generic">
     <h2>Other golem blocks</h2>
-    <p class="lead">Every other effect golem hosts gets the same vintage enamel box. The glyph on its badge tells them apart; its colour comes from the block's family, aged.</p>
+    <p class="lead">Every other effect golem hosts gets the same vintage enamel box. The glyph on its badge tells them apart (golem's own features excepted: see above); its colour comes from the block's family, aged.</p>
     <div class="grid" id="generic-grid"></div>
   </section>
 
@@ -326,7 +332,11 @@
     const c = document.createElement('div'); c.className = 'keys-unit'; c.innerHTML = P.padKit(Object.assign({ compact: true }, o)); $('kits-compact').appendChild(c); });
 
   // the rest
-  D.blocks.filter(b => b.family === 'generic').forEach(b => {
+  P.FEATURE_TYPES.forEach(t => {
+    const b = P.blockByType(t) || { type: t, name: t };
+    $('features-grid').appendChild(card(on => P.featureUnit(t, { on }), b, b.name, t));
+  });
+  D.blocks.filter(b => b.family === 'generic' && !P.isFeature(b.type)).forEach(b => {
     $('generic-grid').appendChild(card(on => P.genericPedal(b, { on }), b, b.name, b.type));
   });
 
