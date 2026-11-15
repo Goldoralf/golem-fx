@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -74,6 +74,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-radio" | "radio" => Some(Box::new(gfx_radio::Radio::new())),
         "gfx-stretch" | "stretch" => Some(Box::new(gfx_stretch::Stretch::new())),
         "gfx-grains" | "grains" => Some(Box::new(gfx_grains::Grains::new())),
+        "gfx-sustainer" | "sustainer" => Some(Box::new(gfx_sustainer::Sustainer::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -337,6 +338,10 @@ pub fn options(name: &str) -> checks::Options {
         // The silence floor stays −140 dBFS at the defaults (no feedback: the wet has nothing left to
         // read 0.72 s after the burst), the latency check runs (the unity dry dominates lag 0)
         o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-sustainer" | "sustainer") {
+        // README §5: defaults. `feed`, `trigger` and `carry` are gestures and rules, not levels
+        o.skip_steps = vec!["feed", "trigger", "carry"];
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

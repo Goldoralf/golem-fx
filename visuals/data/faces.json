@@ -879,6 +879,23 @@
    ],
    "category": "modulation",
    "color": "#00a84f"
+  },
+  "gfx-sustainer": {
+   "name": "Feedback",
+   "blocks": [
+    "sustainer"
+   ],
+   "knobs": [
+    "delay",
+    "rise",
+    "bloom",
+    "dry"
+   ],
+   "selectors": [
+    "harmonic",
+    "mode"
+   ],
+   "category": "pitch"
   }
  }
 }

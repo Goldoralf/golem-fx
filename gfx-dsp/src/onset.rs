@@ -677,13 +677,27 @@ impl PitchJump {
         self.analyse(clarity_min)
     }
 
+    /// A reading from the caller's own YIN instead of this detector's (gfx-sustainer runs one for its
+    /// notes already): `elapsed` host samples since the previous reading. The internal detector is
+    /// not used; its range-following has no effect. Same rules as [`Self::next`].
+    pub fn feed(&mut self, hz: Option<f32>, clarity: f32, elapsed: u64, clarity_min: f32) -> Option<Jump> {
+        self.clock += elapsed;
+        self.fresh = true;
+        self.analyse_with(hz, clarity, clarity_min)
+    }
+
     fn analyse(&mut self, clarity_min: f32) -> Option<Jump> {
+        let (hz, clarity) = (self.det.hz(), self.det.clarity());
+        self.analyse_with(hz, clarity, clarity_min)
+    }
+
+    fn analyse_with(&mut self, det_hz: Option<f32>, det_clarity: f32, clarity_min: f32) -> Option<Jump> {
         let t = self.clock;
         // a glide drags the reference along through every voiced analysis that continues the path, at
         // any clarity: on a low E the 13.3 ms window smears a ±100 cent vibrato down to clarity 0.65 –
         // 0.8, and with stable pairs alone the reference stayed behind until the vibrato's peak stood
         // 70 cents away. A legato change crosses unvoiced or garbled analyses instead, and lands at once.
-        match self.det.hz() {
+        match det_hz {
             Some(h) => {
                 let c = cents(h);
                 if let (Some(pv), Some(r)) = (self.path, self.reference) {
@@ -697,8 +711,8 @@ impl PitchJump {
             }
             None => self.path = None,
         }
-        let hz = match self.det.hz() {
-            Some(h) if self.det.clarity() >= clarity_min => h,
+        let hz = match det_hz {
+            Some(h) if det_clarity >= clarity_min => h,
             _ => {
                 self.prev = None;
                 if self.ms(t - self.last_voiced) > Self::SILENT_MS {

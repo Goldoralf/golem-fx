@@ -350,6 +350,7 @@ dependencies = [
  "gfx-shem",
  "gfx-shimmer",
  "gfx-stretch",
+ "gfx-sustainer",
  "gfx-swell",
  "gfx-tape",
  "gfx-transient",
@@ -704,6 +705,14 @@ dependencies = [
  "half",
  "nih_plug",
  "realfft",
+]
+
+[[package]]
+name = "gfx-sustainer"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
 ]
 
 [[package]]

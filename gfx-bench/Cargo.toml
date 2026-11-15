@@ -61,3 +61,4 @@ gfx-acoustic = { path = "../gfx-acoustic", default-features = false }
 gfx-radio = { path = "../gfx-radio", default-features = false }
 gfx-stretch = { path = "../gfx-stretch", default-features = false }
 gfx-grains = { path = "../gfx-grains", default-features = false }
+gfx-sustainer = { path = "../gfx-sustainer", default-features = false }

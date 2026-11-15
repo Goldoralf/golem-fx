@@ -2328,6 +2328,60 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-sustainer": [
+      {
+        "id": "trigger",
+        "name": "Trigger",
+        "custom": null,
+        "params": [
+          "trigger",
+          "feed",
+          "release",
+          "max_time"
+        ]
+      },
+      {
+        "id": "natural",
+        "name": "Natural loop",
+        "custom": null,
+        "params": [
+          "distance",
+          "drift"
+        ]
+      },
+      {
+        "id": "voice",
+        "name": "Voice",
+        "custom": null,
+        "params": [
+          "duck",
+          "color",
+          "tone"
+        ]
+      },
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "chord",
+          "carry",
+          "mute_sens",
+          "lowest",
+          "thresh",
+          "source"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "bypass",
+          "trails"
+        ]
+      }
     ]
   },
   "help": {
@@ -2705,6 +2759,9 @@
     },
     "gfx-grains": {
       "trails": "With bypass: on, the cloud finishes its grains and a hold releases in its decay; off, the wet fades out in 20 ms"
+    },
+    "gfx-sustainer": {
+      "mode": "Feedback: one harmonic blooms out of the note · Sustain: every partial held at its level · Both: the note held, its harmonic blooming on it"
     }
   },
   "depends": {
@@ -3074,6 +3131,12 @@
       "regular": {
         "param": "mode",
         "equals": "Cloud"
+      }
+    },
+    "gfx-sustainer": {
+      "feed": {
+        "param": "trigger",
+        "equals": "Switch"
       }
     }
   }

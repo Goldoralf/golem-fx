@@ -141,3 +141,5 @@ name = "GoleM FX Stretch"
 
 [gfx-grains]
 name = "GoleM FX Grains"
+[gfx-sustainer]
+name = "GoleM FX Sustainer"
