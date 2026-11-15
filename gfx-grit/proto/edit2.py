@@ -1,5 +1,6 @@
+import os
 import sys
-p='/home/raph/code/golem-fx/gfx-grit/README.md'
+p=os.path.expanduser('~/code/golem-fx/gfx-grit/README.md')
 t=open(p).read()
 R=[]
 def r(a,b): R.append((a,b))
@@ -81,7 +82,7 @@ r("""- **Category: `lofi`** (the catalogue's). Body hue: the family's — `METAL
 """- **Category: `lofi`** (the catalogue's). Body hue: the family's — `METAL_HUE.lofi` `#e8336f`
   (raspberry), as proposed by gfx-crusher; **no crate hue**: the motif sets it apart from gfx-crusher, as
   gfx-freqshift is set apart in the pitch family.
-- **Hue clash with gfx-swell, resolved at review (proposal for Raph)**. `#e8336f` and gfx-swell's crate
+- **Hue clash with gfx-swell, resolved at review (proposal for the maintainer)**. `#e8336f` and gfx-swell's crate
   hue `#d81e5b` are the same hue (340.1° and 340.3°). The gap they both chose, pitch's magenta (319°) to
   the thrash drive red (3°), is 44° wide: it holds one hue 20° from its neighbours, not two.
   - **lofi keeps raspberry**: a family hue carried by two pedals (gfx-crusher, gfx-grit; gfx-tape may

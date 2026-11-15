@@ -1,5 +1,6 @@
+import os
 import sys
-p='/home/raph/code/golem-fx/gfx-grit/README.md'
+p=os.path.expanduser('~/code/golem-fx/gfx-grit/README.md')
 t=open(p).read()
 R=[]
 def r(a,b): R.append((a,b))

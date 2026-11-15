@@ -1,4 +1,5 @@
-p='/home/raph/code/golem-fx/gfx-grit/README.md'
+import os
+p=os.path.expanduser('~/code/golem-fx/gfx-grit/README.md')
 t=open(p).read()
 i=t.index("## Open questions for review")
 new = """## Open questions for review
@@ -25,7 +26,7 @@ Each answered at the review of 2026-11-14.
    (§2.4, licence hygiene). The slot may call the lot-3 cab engine later, under the same six names.
 8. **Drive / Focus**. **Additive points kept, with a weight per module family** (§2.5): one weight
    drove three of the four catalogue presets to silence or to a 240 Hz hold.
-9. **Hue**. **lofi keeps raspberry; gfx-swell is proposed orchid `#bf1dd7`** (Visual). Raph decides on
+9. **Hue**. **lofi keeps raspberry; gfx-swell is proposed orchid `#bf1dd7`** (Visual). The maintainer decides on
    the family sheet.
 10. **Tube / Fuzz now, Tape later**. **Agreed.** The list need not be closed before release, but every
     append is a joint plugin + catalogue change (§2.4).
@@ -77,7 +78,7 @@ Still open:
 |---|---|
 | Type-keyed conversion of `*_v1/_v2` in the engine table (else the §3.2 fallback); `*_gain` in dB; option lists at 25; the note's "Keep Quality OFF live" removed; count of saved chains using `grit` | golem-rack |
 | Showing the plugin's formatted value (dB, bits, Hz) for `*_v*`; EXP on `drive` / `focus` (non-catalogue ids) | golem-rack |
-| gfx-swell's hue (`#d81e5b` → `#bf1dd7`), to carry into gfx-swell's README if accepted; raspberry against drive's thrash red at tile size | Raph, on the family sheet |
+| gfx-swell's hue (`#d81e5b` → `#bf1dd7`), to carry into gfx-swell's README if accepted; raspberry against drive's thrash red at tile size | The maintainer, on the family sheet |
 | Which of gfx-bassdi / gfx-grit creates gfx-dsp `crossover` layer (1); moving gfx-drive's shapers without changing its sound | golem-fx, at coding order |
 | Aliasing bounds with the real half-bands; fizz on a driven top band → ADAA2 or 8× | Bench |
 | Reference level of the compensation; Drive weights; loudness of a square against a sine (+2 – 3 LU expected) | Bench, by ear |

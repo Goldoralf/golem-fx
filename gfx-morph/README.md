@@ -875,7 +875,7 @@ envelope).
 | Stereo | 2 / 2 with equal inputs: L = R bit-exact; linked detectors | — |
 | Determinism | Rasp noise, Ring phase, Decimate clock from fixed states: two renders null | — |
 | CPU (48 kHz, mono, blocks of 128) | defaults ≤ 350 ns; with box, comp, echo ≤ 450 ns; Three 2×, one-stage types ≤ 750 ns; worst (Three, 4×, Fuzz in six slots, morph and box moving) ≤ 2.2 µs; stereo ≤ 1.8 × mono | 239 – 272 / 448 – 496 / 646 – 693 ns / 2.1 – 2.2 µs before the coding rules (§2.10) |
-| Listening | Raph's sung phrase (gfx-golem's), a scream take, a spoken phrase, guitar DIs, a drum loop, through every preset; in-ears with the default and with Three bands (the low-frequency dispersion, §2.10); a stage test of the guard against a wedge | Raph |
+| Listening | The maintainer's sung phrase (gfx-golem's), a scream take, a spoken phrase, guitar DIs, a drum loop, through every preset; in-ears with the default and with Three bands (the low-frequency dispersion, §2.10); a stage test of the guard against a wedge | The maintainer |
 
 ## 6. What golem-rack must provide
 
@@ -987,7 +987,7 @@ Each question is the draft's; the decision is the review's (details in the Revie
     tables byte-identical; (2) `modal` written new in gfx-dsp (f64 lanes); (3) this crate. gfx-radio:
     nothing to move. gfx-acoustic: not touched now. All by the agent that codes this crate (§2.11).
 11. **Hue**: deep crimson `#9a0d2a` thrash, ember rune light, against raspberry (ΔE 29) at tile size.
-    → ΔE figures confirmed (29 / 34 / 35, `proto/hue.py` re-run). **Raph, on the family sheet.**
+    → ΔE figures confirmed (29 / 34 / 35, `proto/hue.py` re-run). **The maintainer, on the family sheet.**
 
 ## Review (Fable 5.2, 2026-11-15)
 
@@ -1111,17 +1111,17 @@ B = blocking: apply before coding. R = recommended.
 
 | Point | Owner |
 |---|---|
-| The guard against a real wedge: the cap with an object and `reso` on, the latch when a howl exceeds T, the threshold procedure at soundcheck | Raph, stage test |
-| **Worst-case CPU 2.2 µs** (Fuzz in six slots, Three, 4×, morph moving): accept as a corner, or forbid 4× with more than three two-stage slots | Raph |
+| The guard against a real wedge: the cap with an object and `reso` on, the latch when a howl exceeds T, the threshold procedure at soundcheck | The maintainer, stage test |
+| **Worst-case CPU 2.2 µs** (Fuzz in six slots, Three, 4×, morph moving): accept as a corner, or forbid 4× with more than three two-stage slots | The maintainer |
 | golem's voice lane level: the block expects sung notes near −18 dBFS RMS | golem-rack |
 | S(type, d) and the make-up tables for the nine types the prototype does not run; their aliasing at `drive` 100 % (shorten the law, as Fold's, if a type fails −45 dB) | golem-fx, at coding; bench |
 | The cap end to end in Rust: third-octave bleed test with each object, `reso`, `comp`, echo, `tilt`; the peak table against `decay` and `size` | golem-fx, at coding; bench |
-| De-fizz by ear on screams and on a brighter microphone than the test take: the −14 dB threshold, the 30 ms release, 50 % or 30 % as the default | Raph |
-| Object voicings from the owner's measurements (question 3); the Tin Can's 100 Hz wall mode first | Raph, then golem-fx |
+| De-fizz by ear on screams and on a brighter microphone than the test take: the −14 dB threshold, the 30 ms release, 50 % or 30 % as the default | The maintainer |
+| Object voicings from the owner's measurements (question 3); the Tin Can's 100 Hz wall mode first | The maintainer, then golem-fx |
 | The level table's 26,325 values: generated at build time by the Rust port of `objects.py`, checked against the Python on a few hundred points | golem-fx, at coding |
 | `shapers` move: gfx-grit's renders and tables byte-identical before and after, in its own commit | golem-fx, before this crate |
 | Catalogue entry: block `morph`, 45 parameters, `depends` as §3.2, pins `guard` −90 and `defizz` 0 on non-vocal lanes, the soundcheck step for `guard` | golem-rack |
-| Hue at tile size against raspberry; the glyph at 16 px | Raph, on the family sheet |
+| Hue at tile size against raspberry; the glyph at 16 px | The maintainer, on the family sheet |
 
 ## As coded (v0.1.0, 2026-11-15)
 

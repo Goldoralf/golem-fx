@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! Behaviour tests (README §5) on synthetic signals: the reference vowel and phrase of src/voice.rs,
 //! pink bleed, sines. The real voice DI, the scream take, the drum loop and the stage test stay with
-//! the bench and with Raph. Tests that print figures for the README run with `--nocapture`.
+//! the bench and with the maintainer. Tests that print figures for the README run with `--nocapture`.
 
 #![allow(clippy::type_complexity)]
 
