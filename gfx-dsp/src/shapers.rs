@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! The memoryless curves of the dirt modules and their antiderivatives (for ADAA1), the Amount laws
-//! (README §2.4) and the static level compensation (§2.6). Plain `std` only: build.rs includes this
-//! file to generate the compensation tables at build time.
+//! The memoryless curves of gfx-grit's dirt modules and their antiderivatives (for ADAA1), gfx-grit's
+//! Amount laws (gfx-grit README §2.4) and its static level compensation (§2.6). Moved here verbatim
+//! from gfx-grit's `curves.rs` (gfx-morph README §2.11): gfx-grit's renders and generated tables are
+//! byte-identical before and after. gfx-morph calls the same curves under its own laws.
 //!
-//! Every curve is written from the README's formulas; nothing comes from Prisma's source.
+//! Plain `std` only: gfx-grit's build.rs includes this file to generate its compensation tables at
+//! build time.
+//!
+//! Every curve is written from gfx-grit's README formulas; nothing comes from Prisma's source.
 
 #![allow(dead_code)]
 
@@ -342,4 +346,56 @@ pub fn makeup_db(c: Comp, a: f64) -> f64 {
 /// The table of one family: [`COMP_POINTS`] make-ups (dB) at a = 100 k / (COMP_POINTS − 1).
 pub fn comp_table(c: Comp) -> [f64; COMP_POINTS] {
     std::array::from_fn(|k| makeup_db(c, 100.0 * k as f64 / (COMP_POINTS - 1) as f64))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn antiderivatives_match_their_curves() {
+        let curves = [
+            Curve::Lin,
+            Curve::Tanh(3.0),
+            Curve::Clip(4.0),
+            Curve::Heavy(0.3),
+            Curve::Asym(0.3),
+            Curve::Rectify(0.6, 1.0),
+            Curve::Rectify(0.6, -1.0),
+            Curve::Fold(5.0),
+            Curve::SineFold(5.0),
+            Curve::ZeroCross(0.05),
+            Curve::Crush(0.125),
+            Curve::Tube(4.0),
+            Curve::BiasClip(3.0, 0.2),
+        ];
+        for c in curves {
+            for i in -1500..=1500 {
+                let x = i as f64 * 0.001 + 3.7e-5;
+                let h = 1e-7;
+                let d = (c.af(x + h) - c.af(x - h)) / (2.0 * h);
+                assert!((d - c.f(x)).abs() < 2e-4, "{c:?} at {x}: F' {d} vs f {}", c.f(x));
+            }
+        }
+    }
+
+    #[test]
+    fn constants_hold() {
+        assert!((TANH_TUBE_BIAS - TUBE_BIAS.tanh()).abs() < 1e-15);
+        for i in -400..400 {
+            let x = i as f64 * 0.05;
+            assert!((ln_cosh(x) - x.cosh().ln()).abs() < 1e-13, "{x}");
+        }
+    }
+
+    #[test]
+    fn makeup_is_bounded_and_soft_starts_near_unity() {
+        for c in COMPS {
+            for v in comp_table(c) {
+                assert!((COMP_MIN_DB..=COMP_MAX_DB).contains(&v), "{c:?} {v}");
+            }
+        }
+        // tanh at 0 dB of drive is nearly linear at −18 dBFS peak
+        assert!(makeup_db(Comp::Soft, 0.0).abs() < 0.05);
+    }
 }
