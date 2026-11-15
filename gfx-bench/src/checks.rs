@@ -37,11 +37,14 @@ pub struct Options {
     /// Resonant filters (wah): the noise cross-correlation finds the resonance's group delay, not a
     /// latency. Their latency is checked by construction (no delay line; reported 0).
     pub skip_latency: bool,
+    /// Parameter steps left out of the click check, as (id, value stepped to): a value that starts a
+    /// self-oscillation on purpose (its onset is the effect, not a click).
+    pub step_exempt: Vec<(&'static str, f32)>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false }
+        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, step_exempt: Vec::new() }
     }
 }
 
@@ -194,6 +197,9 @@ pub fn param_steps(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let mut worst = (f32::MIN, String::new());
     for p in params {
         for (from, to) in [(p.min, p.max), (p.max, p.min)] {
+            if opts.step_exempt.iter().any(|&(id, v)| id == p.id && v == to) {
+                continue;
+            }
             let mut e = fresh(name, sr, 1, 512);
             e.set_param(p.id, from);
             e.reset();

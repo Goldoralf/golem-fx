@@ -89,3 +89,5 @@ name = "GoleM FX Glitch"
 
 [gfx-geq]
 name = "GoleM FX Graphic EQ"
+[gfx-freqshift]
+name = "GoleM FX Freqshift"

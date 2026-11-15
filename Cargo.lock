@@ -245,6 +245,7 @@ dependencies = [
  "gfx-emet",
  "gfx-eq",
  "gfx-flanger",
+ "gfx-freqshift",
  "gfx-gapmeter",
  "gfx-gate",
  "gfx-geq",
@@ -351,6 +352,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-freqshift"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

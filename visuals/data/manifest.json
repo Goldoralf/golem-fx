@@ -578,6 +578,31 @@
       {"id": "highcut", "name": "High Cut", "kind": "float", "min": 1000, "max": 22000, "default": 22000},
       {"id": "highcut_slope", "name": "High Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "auto_gain", "name": "Auto Gain", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-freqshift": [
+      {"id": "shift", "name": "Shift L", "kind": "float", "min": -2000, "max": 2000, "default": 2, "exp": true},
+      {"id": "fbk", "name": "Feedback", "kind": "float", "min": 0, "max": 110, "default": 0, "exp": true},
+      {"id": "time", "name": "Time", "kind": "float", "min": 0, "max": 2000, "default": 0, "exp": true},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "shift_r", "name": "Shift R", "kind": "float", "min": -100, "max": 100, "default": 100, "exp": true},
+      {"id": "loop", "name": "Loop", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "sideband", "name": "Sideband", "kind": "float", "min": -100, "max": 100, "default": 100, "exp": true},
+      {"id": "zero_cut", "name": "Zero Cut", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "dry_match", "name": "Dry Match", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "time_sync", "name": "Time Sync", "kind": "enum", "min": 0, "max": 16, "default": 0, "options": 17},
+      {"id": "low_cut", "name": "Loop Low Cut", "kind": "float", "min": 20, "max": 1000, "default": 20},
+      {"id": "high_cut", "name": "Loop High Cut", "kind": "float", "min": 1000, "max": 20000, "default": 20000, "exp": true},
+      {"id": "lfo_depth", "name": "LFO Depth", "kind": "float", "min": 0, "max": 500, "default": 0, "exp": true},
+      {"id": "rate", "name": "LFO Rate", "kind": "float", "min": 0.01, "max": 20, "default": 0.5, "exp": true},
+      {"id": "sync", "name": "LFO Sync", "kind": "enum", "min": 0, "max": 16, "default": 0, "options": 17},
+      {"id": "lfo_shape", "name": "LFO Shape", "kind": "enum", "min": 0, "max": 6, "default": 0, "options": 7},
+      {"id": "stereo_phase", "name": "Stereo Phase", "kind": "float", "min": 0, "max": 180, "default": 0},
+      {"id": "env_depth", "name": "Envelope Depth", "kind": "float", "min": -1000, "max": 1000, "default": 0, "exp": true},
+      {"id": "env_sens", "name": "Env Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "env_att", "name": "Env Attack", "kind": "float", "min": 1, "max": 100, "default": 5},
+      {"id": "env_rel", "name": "Env Release", "kind": "float", "min": 20, "max": 2000, "default": 250},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "trails", "name": "Trails", "kind": "bool", "min": 0, "max": 1, "default": 1}
     ]
   }
 }

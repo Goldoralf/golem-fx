@@ -1171,6 +1171,61 @@
           "auto_gain"
         ]
       }
+    ],
+    "gfx-freqshift": [
+      {
+        "id": "shifter",
+        "name": "Shifter",
+        "custom": null,
+        "params": [
+          "shift_r",
+          "sideband",
+          "zero_cut",
+          "dry_match"
+        ]
+      },
+      {
+        "id": "loop",
+        "name": "Loop",
+        "custom": null,
+        "params": [
+          "time_sync",
+          "low_cut",
+          "high_cut"
+        ]
+      },
+      {
+        "id": "lfo",
+        "name": "LFO",
+        "custom": null,
+        "params": [
+          "lfo_depth",
+          "rate",
+          "sync",
+          "lfo_shape",
+          "stereo_phase"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_depth",
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "trails",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1540,6 +1595,12 @@
       "gb_10k": {
         "param": "layout",
         "equals": "Bass 7"
+      }
+    },
+    "gfx-freqshift": {
+      "rate": {
+        "param": "sync",
+        "equals": "Off"
       }
     }
   }

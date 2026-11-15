@@ -1,9 +1,20 @@
 # gfx-freqshift
 
-> **Status: DESIGNED, reviewed** (2026-11-14). Not coded. Design by Claude Opus 5.5, reviewed by
-> Fable 5.2: the fixes are applied in the text, §7 holds the decisions, the last section the review. It brings a new
-> gfx-dsp module, `ssb`. A quadrature bug in gfx-dsp `pitch::Hilbert` / `FreqShifter`, found while
-> writing this design, is confirmed (§2.2) and must be fixed in place first.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed by Claude Opus 5.5 and reviewed by Fable 5.2
+> (2026-11-14: §7 holds the decisions, the last section the review), then coded as designed, with
+> the new gfx-dsp module `ssb` (the per-rate Hilbert pair with the exact nome, the complex shifter, the
+> second pass as the negative-frequency filter).
+>
+> - **Measured**: the pair's image is −86.8 dB at 48 kHz, −87.8 dB at 44.1 kHz, −99.7 dB at 96 kHz and
+>   −91.6 dB at 192 kHz, within 0.1 dB of the design. On the plugin, the worst image over the bench's
+>   grid (30 Hz – 15 kHz, ±5 to ±1,000 Hz, `zero_cut` on and off) is −86.9 dB. The zero cut leaves the
+>   50 Hz reflection of 100 Hz − 150 Hz at −87 dB. The `dry_match` null is −81.8 dB.
+> - **Tests**: 19 behaviour tests and 9 `ssb` unit tests pass. The bench is green (28 / 28, with one
+>   documented exemption: the step to `fbk` 110 %, §8).
+> - **CPU**: 136 ns per stereo frame at default settings with a mono source (the right channel is
+>   computed once). About 230 ns with true stereo input.
+> - **Open**: listening on the DIs (dispersion, phaser corners, `sat` knee); golem-rack's §3.4
+>   conversion. The deviations from the design are in §8.
 
 golem's **frequency shifter**: a single-sideband (Bode) shifter with a feedback loop, LFO and
 envelope. It moves every partial by the same number of hertz, so the harmonics stop being harmonic.
@@ -507,6 +518,84 @@ gfx-bench options:
 11. **Glyph: replace the catalogue's.** One block, one glyph; the new one says what the block does.
 12. **REAPER's Wet law**: linear, out = (1 − w) · dry + w · wet, kept as `mix`. Still to be confirmed
     by a golem-rack measurement (see Review).
+
+## 8. As coded (v0.1.0, 2026-11-15)
+
+Files:
+- `gfx-dsp/src/ssb.rs`: `HilbertDesign` (closed form, exact nome by the AGM, `rejection_db`, `response`,
+  `image_db`), `Allpass` (one path), `HilbertPair` (`analytic`, `split`, `positive`), `Phasor`
+  (signed advance, shortest-way slew) and `SsbShifter` (`shift` → complex w, `zero_cut`, `process` for
+  an external carrier phase: the API gfx-ringmod's Upper / Lower can call).
+- `src/lib.rs`: the processor; `src/plugin.rs`: the VST3 (class id `GoleMFxFreqSh001`, 2 / 2 then
+  1 / 1, latency 0); `src/tests.rs`: the §5 rows that run on synthetic signals.
+
+### Measurements
+
+All rates are 44.1, 48, 96 and 192 kHz unless stated.
+
+| Check (§5) | Target | Measured |
+|---|---|---|
+| Pair design (`ssb` tests, 7 rates incl. 50 kHz) | within 0.5 dB of the formula | within 0.1 dB. −87.8 / −86.8 / −100.8 / −99.7 / −92.5 / −91.6 dB at 44.1 / 48 / 88.2 / 96 / 176.4 / 192 kHz. The 48 kHz coefficients are pinned to proto/design.py (1e-12) |
+| Direction | +100 Hz → 1,100 Hz, −100 Hz → 900 Hz | level within 0.1 dB; the other side under −80 dB |
+| Image rejection (grid of 5 sines × 6 shifts × `zero_cut`) | ≤ −84 dB (8 + 8), ≤ −88 dB (10 + 10) | worst −86.9 dB at 44.1 kHz, −87.8 dB at 48 kHz, −95.6 dB at 96 kHz, −91.6 dB at 192 kHz |
+| Low end, +3 Hz at 48 kHz | image ≤ −84 dB, level within 1 dB | 41.2 Hz: −0.23 dB, image −136 dB; 30.9 Hz: −0.70 dB, image −138 dB (the second pass removes the image a second time) |
+| DC and thump | ≤ −100 dBFS; ≤ −43 dBFS | DC: nothing measurable; the 5 Hz thump at +200 Hz: −44.1 dBFS |
+| Through zero (±50 Hz at 2 Hz) | envelope ±0.1 dB, no click | 0.015 dB peak to peak; HF under −60 dB |
+| Zero cut, 100 Hz − 150 Hz | ≤ −80 dB; off: within 0.5 dB | −88.3 / −87.0 / −108.3 / −95.0 dB; off and 170 Hz → 20 Hz: within 0.5 dB |
+| Parked | −80 dB within 1 s | −149 dB |
+| Wrap, single pass (0.47 fs + 2 kHz) | ≤ −80 dBc | −88.7 dBc at 44.1 kHz, −93.2 dBc at 48 kHz (no wrap at the higher rates) |
+| Wrap in the loop (48 kHz, cut on and off) | top band < −80 dBFS within 5 s | nothing left (< −800 dBFS) |
+| Sideband | 0: within 0.1 dB; −100: image ≤ −80 dB | both met |
+| Dry match, null | ≤ −75 dB, 20 Hz – 20 kHz | −81.8 dB, worst third-octave |
+| Dry match, beat on a chord | trough ≤ −40 dB | −54.6 dB |
+| Loop (1 kHz burst, 100 ms, 50 %, +10 Hz) | 0.5^k ± 0.2 dB, +k · 10 Hz | met for 5 repeats; frequency within 1 Hz. Timing: see the deviations |
+| Stability, 110 %, 36 settings × 10 s | output ≤ +12 dBFS, no NaN | worst +9.5 dBFS |
+| Drain, 100 %, ±50 Hz, 3 ms | < −80 dBFS within 30 s | nothing left |
+| Stereo | L = R bit-exact, again ≤ 100 ms after the lock; −100 %: opposite | met |
+| Short times, impulse | no click; wet on sample 0 | met |
+| EXP sweep (50 Hz steps) | sidebands ≤ −80 dB | met |
+| Bench common checks | all | 28 / 28 |
+| CPU (bench, mono source on 2 / 2) | ≤ 300 ns / stereo frame | 136 ns (130 ns mono). True stereo: ≈ 230 ns at default, ≈ 340 ns with `loop` Phaser and `dry_match` on |
+
+### Deviations from the design, and why
+
+1. **`time` glide**: a 100 ms one-pole, with the read head's speed limited to one sample per sample
+   (the Doppler stays between a freeze and an octave up) and the speed itself smoothed over 10 ms. As
+   designed (a plain 100 ms glide), a 0 → 2,000 ms step moved the head at 20 samples per sample: a burst
+   at −39 dB above 10 kHz. The bench's step check now passes at −68 dB. A jump of a whole second takes
+   about a second.
+2. **Bench exemption, the step to `fbk` 110 %** (new `Options::step_exempt` in gfx-bench, empty for
+   every other effect). At `time` 0 the loop's fastest-growing modes are the high ones, so the runaway
+   starts with a burst above 10 kHz: −16 dB at 96 kHz, −9 dB at 192 kHz, then it settles. This is the
+   self-oscillation §5 already exempts from the silence floor. Every other step passes the default
+   bound.
+3. **Loop timing**: as the equation says, the loop is `time` + 1 sample, plus the group delay of the
+   pair and of the loop's cuts. Repeat k arrives at k · (time + 1 sample) − 1 sample + the dispersion,
+   not "100 · k ms ± 1 sample": 1.6 samples late by the 5th repeat at 1 kHz (the 20 Hz / 20 kHz loop
+   cuts). The test checks it against that model, ±2 samples.
+4. **The right channel's lock**: the phase slews onto the left's over 50 ms, then waits for the
+   smoothers to settle. The right output then crossfades onto the left's over 20 ms and takes its whole
+   state (delay line included, copied without allocating: `DelayLine::copy_from`, new in gfx-dsp). Only
+   then is L = R bit-exact and computed once. One side effect: if both inputs are bit-equal for 20 ms
+   (digital silence on a true stereo lane), the right merges onto the left, tail included. When the
+   inputs part again, the right resumes from the left's state (one copy of the line).
+5. **Loop cuts**: always in the return (2nd-order Butterworth high- and low-pass). Their "off" values,
+   20 Hz and 20 kHz (at most 0.45 fs), are not bypassed. The −3 dB at 20 kHz per pass is part of the loop's
+   colour.
+6. **Anti-wrap low-pass**: recomputed exactly (tan) whenever its cutoff moves by more than 1 Hz, rather
+   than with a fast tan approximation.
+7. **Envelope**: gfx-glitch's level-independent mapping (a 30 dB window whose floor is −20 − 40 ·
+   `env_sens` dBFS), then × `env_depth` Hz.
+8. **Not coded as tests**: the zero cut under modulation against an offline FFT reference (the
+   reference would also need the pair's dispersion), and the Surge render comparison (golem-rack's
+   renders). The §3.4 conversion is in the factory presets (`radio-ghost`, `metal-smear`,
+   `barberpole`, the last with `shift_r` +100 % as its author meant).
+9. **`ssb` section form**: y = c · x + (c · y[n−2] − x[n−2]). It is the same filter as `pitch.rs`'s
+   section, with one multiply-add on the critical path instead of three operations (true stereo
+   default: 300 → 230 ns).
+
+`pitch.rs` was not touched: its delay is already on the right path. Moving gfx-delay, gfx-octaver and
+gfx-glitch to `ssb` is a separate change (§7.1).
 
 ## Review (Fable 5.2, 2026-11-14)
 

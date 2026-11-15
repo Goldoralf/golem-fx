@@ -475,6 +475,22 @@
     "g11": "16k"
    },
    "level_fader": "level"
+  },
+  "gfx-freqshift": {
+   "name": "Shifter",
+   "blocks": [
+    "surge-freqshift"
+   ],
+   "knobs": [
+    "shift",
+    "fbk",
+    "time",
+    "mix"
+   ],
+   "selectors": [
+    "loop"
+   ],
+   "category": "pitch"
   }
  }
 }

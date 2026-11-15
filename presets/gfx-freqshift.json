@@ -1,0 +1,481 @@
+{
+ "crate": "gfx-freqshift",
+ "presets": [
+  {
+   "id": "endless-phase",
+   "type": "surge-freqshift",
+   "name": "Endless phase",
+   "desc": "Every partial moved up 0.3 Hz against the dry: notches that climb for ever and never turn round",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "shoegaze"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "shift": 0.3,
+    "mix": 50,
+    "fbk": 0,
+    "time": 0
+   },
+   "notes": "The barber-pole phaser with no feedback: the dry beats against the shifted wet; 50 % mix gives the deepest notches"
+  },
+  {
+   "id": "spiral-phaser",
+   "type": "surge-freqshift",
+   "name": "Spiral phaser",
+   "desc": "A dense barber-pole phaser: the shifted wet fed back through a twelve-stage all-pass chain",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "space-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "loop": "Phaser",
+    "shift": 0.5,
+    "fbk": 70,
+    "time": 0,
+    "mix": 50
+   },
+   "notes": "Costello's recipe: a dispersive loop around the shifter; more feedback, sharper notches"
+  },
+  {
+   "id": "spiral-flanger-down",
+   "type": "surge-freqshift",
+   "name": "Falling flanger",
+   "desc": "Comb teeth that glide down for ever: a 3 ms loop shifted −0.4 Hz on every pass",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "shoegaze"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "loop": "Delay",
+    "time": 3,
+    "shift": -0.4,
+    "fbk": 75,
+    "high_cut": 8000,
+    "mix": 50
+   },
+   "notes": "A short delay in the loop turns the barber-pole phaser into a flanger; the loop high cut keeps the teeth smooth"
+  },
+  {
+   "id": "metal-detune-wide",
+   "type": "surge-freqshift",
+   "name": "Wide metallic detune",
+   "desc": "Left shifted up 1.5 Hz, right down 1.5 Hz, 12 ms late: a sweet metallic chorus that spreads wide",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "dream-pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "shift": 1.5,
+    "shift_r": -100,
+    "time": 12,
+    "mix": 40
+   },
+   "notes": "Opposite stereo shifts; summed to mono they are both sidebands, a slow ring-mod shimmer"
+  },
+  {
+   "id": "swell-beat",
+   "type": "surge-freqshift",
+   "name": "Whole-band swell",
+   "desc": "The whole chord swells and fades four times a second: the dry matched to the wet's phase",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "shift": 4,
+    "dry_match": true,
+    "mix": 50
+   },
+   "notes": "Dry Match puts every partial's beat in phase: a tremolo made of beating, not a phaser"
+  },
+  {
+   "id": "bell-lead",
+   "type": "surge-freqshift",
+   "name": "Bell lead",
+   "desc": "Every partial moved up 180 Hz: harmonics turn inharmonic, single notes ring like bells",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "rock"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "art-rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "shift": 180,
+    "mix": 60,
+    "high_cut": 6000
+   },
+   "notes": "Inharmonic partials over a dry core; play single notes, chords turn to clang"
+  },
+  {
+   "id": "ring-carrierless",
+   "type": "surge-freqshift",
+   "name": "Carrier-free ring mod",
+   "desc": "Both sidebands at ±400 Hz, no carrier and no dry: a clean ring modulator",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "noise",
+    "industrial-electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "sideband": 0,
+    "shift": 400,
+    "mix": 100
+   },
+   "notes": "Sideband 0 mixes the shift and its mirror at −6 dB each: a sine ring modulator without carrier bleed"
+  },
+  {
+   "id": "zero-swirl",
+   "type": "surge-freqshift",
+   "name": "Through-zero swirl",
+   "desc": "The shift swings ±3 Hz around zero: the phasing slows, stops and reverses on a slow cycle",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "shift": 0,
+    "lfo_depth": 3,
+    "rate": 0.15,
+    "mix": 50
+   },
+   "notes": "The oscillator's phase is continuous, so crossing 0 Hz never steps"
+  },
+  {
+   "id": "pick-zap",
+   "type": "surge-freqshift",
+   "name": "Pick zap",
+   "desc": "Each pick attack pushes the shift up to 600 Hz and lets it fall back: a zap on every note",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rnb"
+   ],
+   "subgenres": [
+    "funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "shift": 0,
+    "env_depth": 600,
+    "env_rel": 150,
+    "mix": 50
+   },
+   "notes": "The envelope drives the shift in Hz; play staccato for separate zaps"
+  },
+  {
+   "id": "ghost-echo-fall",
+   "type": "surge-freqshift",
+   "name": "Falling ghost echoes",
+   "desc": "Echoes 350 ms apart, each one 30 Hz lower and thinner than the last",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "post-rock",
+    "space-rock"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "time": 350,
+    "shift": -30,
+    "fbk": 70,
+    "low_cut": 150,
+    "mix": 35
+   },
+   "notes": "Zero Cut keeps the falling repeats from folding back into mud below 0 Hz"
+  },
+  {
+   "id": "spiral-echo-rise",
+   "type": "surge-freqshift",
+   "name": "Rising spiral echoes",
+   "desc": "Quarter-second echoes that climb 12 Hz per repeat and darken as they go",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "time": 250,
+    "shift": 12,
+    "fbk": 85,
+    "high_cut": 5000,
+    "mix": 50
+   },
+   "notes": "A shifter in a delay loop; Zero Cut also removes what climbs past Nyquist"
+  },
+  {
+   "id": "runaway-wall",
+   "type": "surge-freqshift",
+   "name": "Runaway wall",
+   "desc": "Feedback past 100 %: the loop builds into a bounded, ever-rising wall; lower it to recover",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "drone"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "fbk": 105,
+    "time": 80,
+    "shift": 7,
+    "high_cut": 4000,
+    "mix": 50
+   },
+   "notes": "Meant for an EXP pedal on Feedback; the soft clip on the return keeps it bounded"
+  },
+  {
+   "id": "bass-growl",
+   "type": "surge-freqshift",
+   "name": "Bass growl",
+   "desc": "Bass shifted 60 Hz down with the zero cut off: low notes fold back through 0 Hz and growl",
+   "inst": "bass",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "sludge-metal",
+    "stoner-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "shift": -60,
+    "zero_cut": false,
+    "mix": 35
+   },
+   "notes": "The through-zero reflection on purpose; mixed low so the fundamental stays"
+  },
+  {
+   "id": "radio-ghost",
+   "type": "surge-freqshift",
+   "name": "Radio ghost",
+   "desc": "A 24 Hz shift with a short, faint loop and a nearly dry right side: a voice between stations",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "rock"
+   ],
+   "subgenres": [
+    "art-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "shift": 24,
+    "shift_r": 16,
+    "time": 23.7,
+    "fbk": 2.7,
+    "mix": 50
+   },
+   "notes": "The catalogue's radio-ghost converted to real units (README §3.4)"
+  },
+  {
+   "id": "metal-smear",
+   "type": "surge-freqshift",
+   "name": "Metal smear",
+   "desc": "Partials moved up 40 Hz on the left, 16 Hz on the right, smeared by a 15 ms loop",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "subgenres": [
+    "noise-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "shift": 40,
+    "shift_r": 40,
+    "time": 15.1,
+    "fbk": 12.5,
+    "mix": 40
+   },
+   "notes": "The catalogue's metal-smear converted to real units (README §3.4)"
+  },
+  {
+   "id": "barberpole",
+   "type": "surge-freqshift",
+   "name": "Barber pole",
+   "desc": "A 4 Hz shift in a 144 ms loop: echoes that each beat faster, a slow spinning pole",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "shift": 4,
+    "shift_r": 100,
+    "time": 143.6,
+    "fbk": 27.5,
+    "mix": 45
+   },
+   "notes": "The catalogue's barberpole in real units, with Shift R at +100 % (R = L) as its author meant"
+  }
+ ]
+}
