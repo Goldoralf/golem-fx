@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-bassdi"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -55,6 +55,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-freqshift" | "freqshift" => Some(Box::new(gfx_freqshift::FreqShift::new())),
         "gfx-swell" | "swell" => Some(Box::new(gfx_swell::Swell::new())),
         "gfx-crusher" | "crusher" => Some(Box::new(gfx_crusher::Crusher::new())),
+        "gfx-bassdi" | "bassdi" => Some(Box::new(gfx_bassdi::BassDi::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -176,6 +177,12 @@ pub fn options(name: &str) -> checks::Options {
         // 10 kHz (96 kHz), `quant` 16 → 1 −11 dB, `input` ±24 dB −26 dB; the README's −30 dB cannot
         // hold. Every other parameter stays below −35 dB (gfx-crusher's own parameter-step test).
         o.click_bound_db = -3.0;
+    }
+    if matches!(name, "gfx-bassdi" | "bassdi") {
+        // 8× minimum-phase oversampling (5.5 samples of group delay) and the twins' dispersion, no
+        // delay line, not reported (README §5, the gfx-drive / gfx-emet precedent)
+        o.skip_latency = true;
+        // README §5 allowed −30 dB for a `gain` jump; measured −78 dB worst: the default bound holds
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

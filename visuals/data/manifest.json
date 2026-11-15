@@ -649,6 +649,31 @@
       {"id": "env_sens", "name": "Envelope Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
       {"id": "env_att", "name": "Envelope Attack", "kind": "float", "min": 1, "max": 100, "default": 5},
       {"id": "env_rel", "name": "Envelope Release", "kind": "float", "min": 20, "max": 2000, "default": 200}
+    ],
+    "gfx-bassdi": [
+      {"id": "gain", "name": "Drive", "kind": "float", "min": 0, "max": 100, "default": 35, "exp": true},
+      {"id": "mix", "name": "Blend", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "bass", "name": "Bass", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "lo_mid", "name": "Lo Mid", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "hi_mid", "name": "Hi Mid", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "treble", "name": "Treble", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "model", "name": "Model", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "cab", "name": "Cab", "kind": "enum", "min": 0, "max": 4, "default": 1, "options": 5},
+      {"id": "grunt", "name": "Grunt", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "attack", "name": "Attack", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "dirt_level", "name": "Dirt Level", "kind": "float", "min": -12, "max": 12, "default": 0},
+      {"id": "lo_mid_freq", "name": "Lo Mid Freq", "kind": "float", "min": 100, "max": 1000, "default": 500},
+      {"id": "hi_mid_freq", "name": "Hi Mid Freq", "kind": "float", "min": 500, "max": 5000, "default": 1500},
+      {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 300, "default": 0},
+      {"id": "low_note", "name": "Lowest Note", "kind": "float", "min": 20, "max": 100, "default": 41.2},
+      {"id": "comp", "name": "Comp", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "comp_char", "name": "Comp Type", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "comp_path", "name": "Comp Path", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "sag", "name": "Sag", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "input", "name": "Input", "kind": "float", "min": -12, "max": 12, "default": 0},
+      {"id": "cab_lows", "name": "Cab Lows", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

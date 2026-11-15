@@ -405,6 +405,11 @@
    "label": "Auto swell",
    "uni": "◢",
    "svg": "<path d='M2.5 20h19' opacity='.4'/><path d='M4 20V12.5' opacity='.35'/><path d='M4 20C10 20 11.5 7 16 7h5.5'/>"
+  },
+  "bass-di": {
+   "label": "Bass DI (gfx)",
+   "uni": "⫘",
+   "svg": "<path d='M2 12h3M19 12h3'/><path d='M5 12l3-5h8l3 5'/><path d='M5 12c2 4 4.5 6 7 6s5-2 7-6'/>"
   }
  }
 }

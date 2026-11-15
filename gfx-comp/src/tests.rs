@@ -208,3 +208,33 @@ fn fet_drive_stays_clean_of_aliasing() {
     assert!(db < -80.0, "alias {db:.1} dB re fundamental");
 }
 
+
+#[test]
+fn colour_off_keeps_the_dynamics_only() {
+    // library setting (gfx-bassdi): FET, Opto and Pedal without their shaper, oversampler and hiss.
+    // No reduction → bit-transparent (no half-band pair, no half-sample); under reduction the same
+    // gain as with colour, applied as a pure gain
+    for ch in [Character::Fet, Character::Opto, Character::Pedal] {
+        let mut c = comp(|s| {
+            s.character = ch;
+            s.thresh = 0.0;
+            s.drive = 50.0;
+        });
+        c.set_colour(false);
+        let x = sine(ms(300.0), 440.0, 0.05);
+        let (y, _) = run(&mut c, &x, 256);
+        assert_eq!(y, x, "{ch:?}");
+        let mut c = comp(|s| {
+            s.character = ch;
+            s.thresh = -30.0;
+            s.ratio = 4.0;
+        });
+        c.set_colour(false);
+        let x = sine(ms(1000.0), 1000.0, 0.5);
+        let (y, gr) = run(&mut c, &x, 480);
+        let g = gr[gr.len() - 1];
+        let i = x.len() - 7;
+        let want = x[i] * 10f32.powf(-g / 20.0);
+        assert!(g > 5.0 && (y[i] - want).abs() < 2e-3, "{ch:?}: gr {g}, {} vs {want}", y[i]);
+    }
+}

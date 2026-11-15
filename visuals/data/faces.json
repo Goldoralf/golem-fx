@@ -527,6 +527,25 @@
    ],
    "category": "lofi",
    "color": "#e8336f"
+  },
+  "gfx-bassdi": {
+   "name": "Bass DI",
+   "blocks": [
+    "bass-di"
+   ],
+   "knobs": [
+    "gain",
+    "mix",
+    "level",
+    "bass",
+    "treble"
+   ],
+   "selectors": [
+    "model",
+    "cab"
+   ],
+   "category": "preamp",
+   "color": "#b316c0"
   }
  }
 }
