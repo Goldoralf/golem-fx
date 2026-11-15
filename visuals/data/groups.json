@@ -1616,6 +1616,51 @@
           "bass_keep"
         ]
       }
+    ],
+    "gfx-transient": [
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "sens",
+          "smooth",
+          "thresh",
+          "lookahead"
+        ]
+      },
+      {
+        "id": "band",
+        "name": "Attack Band",
+        "custom": null,
+        "params": [
+          "att_freq"
+        ]
+      },
+      {
+        "id": "sidechain",
+        "name": "Sidechain",
+        "custom": null,
+        "params": [
+          "source",
+          "sc_hpf",
+          "sc_lpf",
+          "link",
+          "listen"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "ceiling",
+          "mix",
+          "level",
+          "delta",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {

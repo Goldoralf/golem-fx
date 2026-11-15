@@ -375,6 +375,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-tape': 'ribbon',
     'gfx-grit': 'prism',
     'gfx-dist': 'traces',
+    'gfx-transient': 'spikes',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -574,6 +575,19 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         // (the wide face's slots run y 16 – 100, 0 dB at 58)
         for (let db = -15; db <= 15; db += 5) line(`M4 ${f1(WIDE_SLOT.mid - db / 15 * WIDE_SLOT.half)}H${W - 4}`, db === 0 ? 1 : .5);
         break;
+      case 'spikes': {
+        // either side of the rune, two envelopes each: the original (ghost) and the shaped one over it,
+        // a taller, sharper spike and a lifted tail (t 4 then 2: two shaped notes, not one stamp)
+        const y0 = cy + ch / 2 + 3, yTop = cy - ch / 2 - 6, free = (W - cw) / 2 - 3, w = free / 2 - 2;
+        for (const left of [true, false]) {
+          for (let k = 0; k < 2; k++) {
+            const x0 = (left ? 2 : cx + cw / 2 + 3) + k * (w + 2), t = k === 0 ? 4 : 2;
+            line(`M${f1(x0)} ${f1(y0)}L${f1(x0 + 1.5)} ${f1(y0 - 12)}Q${f1(x0 + .3 * w)} ${f1(y0 - 6)} ${f1(x0 + w)} ${f1(y0)}`, .35);
+            line(`M${f1(x0)} ${f1(y0)}L${f1(x0 + 1.2)} ${f1(yTop)}Q${f1(x0 + .25 * w)} ${f1(y0 - 9)} ${f1(x0 + w)} ${f1(y0 - t)}`);
+          }
+        }
+        break;
+      }
       case 'swells': {
         // four notes along a baseline: each pick's tick (the attack removed, faint), then a concave-up
         // rise (the Square curve) to a plateau, then the next note's dip; plateaus climb, a crescendo

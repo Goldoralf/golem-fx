@@ -618,6 +618,23 @@
    ],
    "category": "drive",
    "color": "#c8160e"
+  },
+  "gfx-transient": {
+   "name": "Transient",
+   "blocks": [
+    "transient"
+   ],
+   "knobs": [
+    "attack",
+    "sustain",
+    "att_time",
+    "sus_time"
+   ],
+   "selectors": [
+    "att_band",
+    "ceil_mode"
+   ],
+   "category": "dynamics"
   }
  }
 }

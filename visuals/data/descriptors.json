@@ -44474,6 +44474,1118 @@
      "notes": "1N34A at about 0.3 V: a softer, compressed clip"
     }
    ]
+  },
+  "gfx-transient": {
+   "name": "GoleM FX Transient",
+   "class_id": "GoleMFxTransnt01",
+   "blocks": [
+    "transient"
+   ],
+   "front": [
+    "attack",
+    "sustain",
+    "att_time",
+    "sus_time",
+    "att_band",
+    "ceil_mode"
+   ],
+   "groups": [
+    {
+     "id": "detection",
+     "name": "Detection",
+     "custom": null,
+     "params": [
+      "sens",
+      "smooth",
+      "thresh",
+      "lookahead"
+     ]
+    },
+    {
+     "id": "band",
+     "name": "Attack Band",
+     "custom": null,
+     "params": [
+      "att_freq"
+     ]
+    },
+    {
+     "id": "sidechain",
+     "name": "Sidechain",
+     "custom": null,
+     "params": [
+      "source",
+      "sc_hpf",
+      "sc_lpf",
+      "link",
+      "listen"
+     ]
+    },
+    {
+     "id": "output",
+     "name": "Output",
+     "custom": null,
+     "params": [
+      "ceiling",
+      "mix",
+      "level",
+      "delta",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "attack": {
+     "name": "Attack",
+     "kind": "float",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Gain on a full transient; + = more punch, − = softer"
+    },
+    "sustain": {
+     "name": "Sustain",
+     "kind": "float",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Gain on the tail once it has decayed; + = longer ring, − = tighter"
+    },
+    "att_time": {
+     "name": "Attack Length",
+     "kind": "float",
+     "min": 1,
+     "max": 100,
+     "default": 15,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "How long the attack gain lasts"
+    },
+    "sus_time": {
+     "name": "Sustain Length",
+     "kind": "float",
+     "min": 20,
+     "max": 3000,
+     "default": 300,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Which notes count as decaying: the reference falls at 8.69 / length dB / s"
+    },
+    "att_band": {
+     "name": "Attack Band",
+     "kind": "enum",
+     "min": 0,
+     "max": 2,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Full",
+      "Highs",
+      "Lows"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Where the attack gain acts"
+    },
+    "ceil_mode": {
+     "name": "Ceiling",
+     "kind": "enum",
+     "min": 0,
+     "max": 2,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "Soft",
+      "Limit"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Output ceiling stage"
+    },
+    "sens": {
+     "name": "Sensitivity",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "The level jump (attack) or fall under the reference (sustain) that counts as full: D_ref = 22 → 2 dB, above a fixed 1.5 dB dead zone"
+    },
+    "smooth": {
+     "name": "Smooth",
+     "kind": "float",
+     "min": 0.05,
+     "max": 5,
+     "default": 0.5,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 2,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Time the gain takes to move into an attack (and the lookahead ramp)"
+    },
+    "att_freq": {
+     "name": "Attack Band Freq",
+     "kind": "float",
+     "min": 200,
+     "max": 8000,
+     "default": 1500,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shelf midpoint for Highs / Lows"
+    },
+    "sc_hpf": {
+     "name": "Sidechain Low Cut",
+     "kind": "float",
+     "min": 0,
+     "max": 2000,
+     "default": 0,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Detector high-pass; also sets W (40 ms up to 60 Hz, 20 ms at 120 Hz, 8 ms from 300 Hz): shorter hold, faster sustain response"
+    },
+    "sc_lpf": {
+     "name": "Sidechain High Cut",
+     "kind": "float",
+     "min": 500,
+     "max": 22000,
+     "default": 22000,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Detector low-pass; ≥ 20 kHz = off"
+    },
+    "thresh": {
+     "name": "Noise Floor",
+     "kind": "float",
+     "min": -96,
+     "max": -30,
+     "default": -66,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Absolute floor: nothing below is shaped, sustain never lifts toward it"
+    },
+    "source": {
+     "name": "Detector Source",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Main",
+      "Key"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Key = auxiliary input (the clean DI after an amp)"
+    },
+    "link": {
+     "name": "Stereo Link",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Stereo layout only"
+    },
+    "lookahead": {
+     "name": "Lookahead",
+     "kind": "enum",
+     "min": 0,
+     "max": 3,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "1 ms",
+      "2 ms",
+      "5 ms"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Reported latency; the gain arrives before the transient"
+    },
+    "ceiling": {
+     "name": "Ceiling Level",
+     "kind": "float",
+     "min": -24,
+     "max": 0,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Maximum output level for ceil_mode Soft / Limit"
+    },
+    "mix": {
+     "name": "Mix",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Linear crossfade dry / shaped (dry delay-aligned)"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Output level, before the ceiling"
+    },
+    "listen": {
+     "name": "Listen",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Outputs the filtered sidechain (gfx-gate's listen)"
+    },
+    "delta": {
+     "name": "Delta",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Outputs only what the shaper adds or removes (wet − dry)"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "VST3 bypass parameter (make_bypass), as the coded effects"
+    }
+   },
+   "presets": [
+    {
+     "id": "snap-pick",
+     "type": "transient",
+     "name": "Snap pick",
+     "desc": "Lifts the pick click on every note by 8 dB on the highs only; the low strings' fundamentals stay put",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "rnb",
+      "pop"
+     ],
+     "subgenres": [
+      "funk"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": true,
+     "params": {
+      "attack": 8,
+      "sustain": 0,
+      "att_time": 12,
+      "sus_time": 300,
+      "att_band": "Highs",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "A shelf at 1.5 kHz carries the boost: the pick gets louder, the bass of a low E is not pumped"
+    },
+    {
+     "id": "soft-pick",
+     "type": "transient",
+     "name": "Soft pick",
+     "desc": "Takes 9 dB off each pick attack and lets the note through untouched: a rounder, jazzier touch",
+     "inst": "guitar",
+     "genres": [
+      "jazz",
+      "folk",
+      "pop"
+     ],
+     "subgenres": [
+      "cool-jazz"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm",
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "attack": -9,
+      "sustain": 0,
+      "att_time": 20,
+      "sus_time": 300,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 2,
+      "att_freq": 1500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "Zero latency lets a short tick through at each pick; lookahead 2 ms removes it where latency is acceptable"
+    },
+    {
+     "id": "funk-pop",
+     "type": "transient",
+     "name": "Funk pop",
+     "desc": "Sharper 16th strums: attacks up 10 dB, muted chops pulled down 8 dB, ringing chords left alone",
+     "inst": "guitar",
+     "genres": [
+      "rnb",
+      "pop"
+     ],
+     "subgenres": [
+      "funk",
+      "disco"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight",
+      "bright"
+     ],
+     "default": false,
+     "params": {
+      "attack": 10,
+      "sustain": -8,
+      "att_time": 8,
+      "sus_time": 250,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 70,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 120,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "sus_time 250 ms: chops decay faster than the reference and are cut, sustained chords are not. sc_hpf 120 is safe down to a low B"
+    },
+    {
+     "id": "chug-tight",
+     "type": "transient",
+     "name": "Chug tight",
+     "desc": "Palm-mute definition into a high-gain amp: each chug's attack up 6 dB, its tail cut 10 dB",
+     "inst": "guitar",
+     "genres": [
+      "metal"
+     ],
+     "subgenres": [
+      "djent",
+      "metalcore",
+      "thrash-metal"
+     ],
+     "gain": "high",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight",
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "attack": 6,
+      "sustain": -10,
+      "att_time": 6,
+      "sus_time": 250,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 70,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 120,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "Placed before the amp. Drop A: sc_hpf 100 (at or under twice the lowest note). Complements a gate"
+    },
+    {
+     "id": "pick-definition-after-amp",
+     "type": "transient",
+     "name": "Pick definition after the amp",
+     "desc": "Restores the pick attack an amp compressed, detecting on the clean DI; peaks held under -1 dBFS",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "hard-rock"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "modern"
+     ],
+     "default": false,
+     "params": {
+      "attack": 6,
+      "sustain": 0,
+      "att_time": 15,
+      "sus_time": 300,
+      "att_band": "Highs",
+      "ceil_mode": "Limit",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 2500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Key",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": -1,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "The key input carries the DI: a high-gain signal has few level changes left, its DI has them all"
+    },
+    {
+     "id": "ring-out",
+     "type": "transient",
+     "name": "Ring out",
+     "desc": "Clean arpeggios ring longer: tails lifted up to 10 dB, never above their height over the noise floor",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic",
+      "folk"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "attack": 0,
+      "sustain": 10,
+      "att_time": 15,
+      "sus_time": 2000,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -60,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "A 2 s reference shapes slowly decaying notes; thresh just above the rig's hiss keeps the noise from being lifted"
+    },
+    {
+     "id": "bass-click",
+     "type": "transient",
+     "name": "Bass click",
+     "desc": "The bass's finger or pick click up 8 dB on the highs; the fundamental is not modulated",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "rnb",
+      "metal"
+     ],
+     "subgenres": [
+      "funk"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": true,
+     "params": {
+      "attack": 8,
+      "sustain": 0,
+      "att_time": 15,
+      "sus_time": 300,
+      "att_band": "Highs",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1200,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "A full-band attack on a low E would reshape its first cycle; the shelf moves the boost to the click"
+    },
+    {
+     "id": "bass-thump",
+     "type": "transient",
+     "name": "Bass thump",
+     "desc": "More knock on each bass note: the lows boosted 6 dB over two full periods of a low E",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "rnb",
+      "hip-hop"
+     ],
+     "subgenres": [
+      "funk"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "attack": 6,
+      "sustain": 0,
+      "att_time": 60,
+      "sus_time": 300,
+      "att_band": "Lows",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 3,
+      "att_freq": 300,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "att_time 60 ms covers whole cycles of a 41 Hz note, so the boost is a thump, not one louder half-cycle"
+    },
+    {
+     "id": "bass-even",
+     "type": "transient",
+     "name": "Bass even",
+     "desc": "Fingerstyle evenness without a threshold: plucks softened 6 dB, held notes lifted up to 6 dB",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "pop",
+      "rnb"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "attack": -6,
+      "sustain": 6,
+      "att_time": 30,
+      "sus_time": 1000,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "Acts the same at any playing level: a compressor-like evenness with no threshold to set"
+    },
+    {
+     "id": "drum-punch",
+     "type": "transient",
+     "name": "Drum punch",
+     "desc": "Drum bus punch: hits up 9 dB, tails tightened 4 dB, the boosted peaks soft-clipped under 0 dBFS",
+     "inst": "drums",
+     "genres": [
+      "rock",
+      "pop",
+      "hip-hop"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": true,
+     "params": {
+      "attack": 9,
+      "sustain": -4,
+      "att_time": 10,
+      "sus_time": 250,
+      "att_band": "Full",
+      "ceil_mode": "Soft",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 120,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "sc_hpf 120 shortens the detector's hold to 20 ms. Accents get more than ghost notes"
+    },
+    {
+     "id": "gated-snare",
+     "type": "transient",
+     "name": "Gated snare",
+     "desc": "Cuts a snare's tail by up to 24 dB at any hit strength, half of it 60 ms after the hit",
+     "inst": "drums",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "new-wave"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight",
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "attack": 0,
+      "sustain": -24,
+      "att_time": 15,
+      "sus_time": 400,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 80,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 200,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "A tail shaper, not a gate: no threshold to set. For a hard gate, use the gate block"
+    },
+    {
+     "id": "room-dry",
+     "type": "transient",
+     "name": "Room dry",
+     "desc": "Pulls a live voice's room down 8 dB after each phrase, leaves held notes alone, at any singing level",
+     "inst": "voice",
+     "genres": [
+      "pop",
+      "rock"
+     ],
+     "subgenres": [
+      "singer-songwriter"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight"
+     ],
+     "default": true,
+     "params": {
+      "attack": 0,
+      "sustain": -8,
+      "att_time": 15,
+      "sus_time": 150,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 100,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "A short reference (58 dB / s): only the room's fall after a phrase is faster than it"
+    },
+    {
+     "id": "consonants",
+     "type": "transient",
+     "name": "Consonants",
+     "desc": "Clearer diction: the consonants' attacks up 5 dB on the highs",
+     "inst": "voice",
+     "genres": [
+      "pop",
+      "rock",
+      "hip-hop"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright",
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "attack": 5,
+      "sustain": 0,
+      "att_time": 10,
+      "sus_time": 300,
+      "att_band": "Highs",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 3000,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "Pair it with a de-esser placed after"
+    },
+    {
+     "id": "acoustic-body",
+     "type": "transient",
+     "name": "Acoustic body",
+     "desc": "Less pick and more body on an acoustic guitar: attacks down 4 dB, tails up 6 dB",
+     "inst": "guitar",
+     "genres": [
+      "folk",
+      "pop"
+     ],
+     "subgenres": [
+      "singer-songwriter",
+      "contemporary-folk"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "attack": -4,
+      "sustain": 6,
+      "att_time": 15,
+      "sus_time": 800,
+      "att_band": "Full",
+      "ceil_mode": "Off",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 0,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "Off",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "sus_time 800 ms lifts the ring of strummed chords without touching the pick"
+    },
+    {
+     "id": "studio-clean-punch",
+     "type": "transient",
+     "name": "Studio clean punch",
+     "desc": "Drum punch with the gain in place before each hit and no peak over 0 dBFS (1 ms latency)",
+     "inst": "any",
+     "genres": [
+      "rock",
+      "pop",
+      "electronic"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "modern"
+     ],
+     "default": false,
+     "params": {
+      "attack": 9,
+      "sustain": -4,
+      "att_time": 10,
+      "sus_time": 250,
+      "att_band": "Full",
+      "ceil_mode": "Limit",
+      "sens": 50,
+      "smooth": 0.5,
+      "att_freq": 1500,
+      "sc_hpf": 120,
+      "sc_lpf": 22000,
+      "thresh": -66,
+      "source": "Main",
+      "link": 100,
+      "lookahead": "1 ms",
+      "ceiling": 0,
+      "mix": 100,
+      "level": 0,
+      "listen": false,
+      "delta": false,
+      "bypass": false
+     },
+     "notes": "Lookahead 1 ms ramps the gain in before the transient: the first cycle is boosted whole. Not for a song that switches lookahead live"
+    }
+   ]
   }
  }
 }

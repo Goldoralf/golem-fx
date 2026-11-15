@@ -107,3 +107,6 @@ name = "GoleM FX Tape"
 name = "GoleM FX Grit"
 [gfx-dist]
 name = "GoleM FX Dist"
+
+[gfx-transient]
+name = "GoleM FX Transient"

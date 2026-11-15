@@ -1,15 +1,25 @@
 # gfx-transient
 
-> **Status: DESIGNED** (2026-11-14), **reviewed** the same day (Fable 5.2, see the Review section). Not
-> coded. A transient shaper with no threshold: attack and sustain are set in dB, and the response is the same at
-> any playing level. Its detector is a pair of differential envelopes, SPL's principle, computed as dB
-> differences. The fast envelope is a sliding maximum over one period of the lowest note (sized an octave
-> under the sidechain low cut), so a steady or decaying low note leaves the attack gain still: no envelope
-> ripple and no distortion on bass. A noise floor keeps the
-> sustain boost from lifting hiss and room. Options: attack on the highs or the lows only (a first-order
-> shelf, zero latency, no crossover), a key input, stereo link, a parallel mix, and an output ceiling
-> (soft clip or gfx-limiter's zero-latency engine). Zero latency by default; an optional lookahead (reported) lets the
-> gain move before the transient, so the attack is boosted or cut without bending its first cycle.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Review section), coded as
+> reviewed. A transient shaper with no threshold: attack and sustain are set in dB, and the response is
+> the same at any playing level.
+>
+> - **Detector**: gfx-dsp's new `sidechain` (window rule with its divisor, sidechain filters, phrase
+>   level) and `transient` (the two differential pairs, the floor, the law with its 1.5 dB dead zone, the
+>   lookahead ramp) modules, and a per-sample TPT one-pole in `svf` for the attack shelf.
+> - **The prototype's figures reproduce in Rust**, most to the hundredth of a dB: the attack table
+>   (5.11 / 2.26 / 0.68 dB, 0 from 2 `att_time`), the sustain law (1.29 / 5.26 / 9.22 / 10.83 dB), the
+>   lookahead (first cycle −21.9 dB at −24, gain 11.61 dB at the onset, 1.09 dB of motion; 7.8 dB of leak
+>   and 9.23 dB of motion at zero latency), re-picks 11 / 30 / 57 / 82 %, onset steps 0.32 / 0.65 dB.
+> - **No ripple**: 0.000 dB on steady sines and asymmetric waves down to 31 Hz and on decaying strings
+>   under their sidechain filter (41 – 82 Hz); level independence within 0.04 dB from 0 to −36 dB.
+> - **Ceiling**: gfx-limiter as a library (its core was not moved: see "As coded"); never a sample over
+>   `ceiling` in Limit (every lookahead) or Soft. Bit-transparent at 0 dB.
+> - **Bench 28 / 28**, 22 behaviour tests. CPU 53 ns / sample mono at default; about 80 ns shaping;
+>   150 ns with Limit and 180 – 260 ns with Soft (gfx-limiter's 2× Clip style as shipped).
+>
+> Open: the by-ear points of the Review (`sens` default, D_0, `smooth`), the real-DI renders, and the
+> golem-rack catalogue entry.
 
 golem's **transient shaper** for guitar, bass, drums and voice. A new golem block: there is no transient
 block in golem's catalogue today. Proposed entry: type **`transient`**, display name **"Transient
@@ -687,3 +697,109 @@ attack, clip), Trans-X Wide (sensitivity, duration, range). Left out on purpose:
 | Catalogue entry `transient` ("Transient Shaper", `dynamics`), glyph, face, block presets; key routing after the amp (as gfx-swell); a preset that changes `lookahead` re-syncs cleanly | golem-rack |
 | `spikes` in `motifParts`, `transient` glyph; face name "Transient" (9 letters fit at 13 px; "Snap" if the board wants it shorter) | visuals |
 | SPL's patent number [U] | nobody needs it |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `sidechain.rs` (new): `window_secs(hpf, divisor)`, `ScFilter`, `Phrase`. This is the shared
+  level helper of the Review's "Still open" table. gfx-gate is untouched: it keeps its own copy of the rule
+  (divisor 1). gfx-swell's `onset::Level` (a follower, not a sliding maximum) is untouched too.
+- gfx-dsp `transient.rs` (new): `Detector` (floor, attack and sustain pairs, law), `share`, `d_ref`,
+  `Ramp` (the lookahead engine of a share).
+- gfx-dsp `svf.rs`: `OnePoleTpt` and `tan_fast` added. Nothing existing changed.
+- `src/lib.rs`: the processor and `AttackStage` (Full / Highs / Lows). `src/plugin.rs`: the VST3. Its class
+  id is `GoleMFxTransnt01`. Mono 1 / 1 first, then 2 / 2, each with a key bus. The latency is reported
+  from `lookahead`; `shaping` and `gr` are read-only.
+- `src/tests.rs`: 22 behaviour tests on synthetic strings (the prototype's harmonic sums with a pick
+  click), noise snares, bursts and a drum loop.
+- `presets/gfx-transient.json`: 15 presets, the Applications table.
+
+**Choices where the spec was silent.**
+- **The ceiling stays a dependency.** gfx-limiter's core was **not** moved to gfx-dsp. The move must be
+  announced to golem-rack first (§2.7), and a coding agent does not message anyone. So gfx-transient
+  depends on gfx-limiter without its `plugin` feature, as gfx-bassdi depends on gfx-comp, and gfx-limiter
+  is unchanged.
+  - Soft is gfx-limiter's Clip style (softness 50 %). Limit is its Clean style, zero latency, auto
+    release 50 ms. `link` is passed through.
+  - A change between Soft and Limit uses gfx-limiter's own 10 ms style crossfade. Off ↔ on uses a 20 ms
+    crossfade here.
+- **Lookahead alignment.** Two boxes of h samples reach their full value 2h − 2 samples after a step, so
+  the share delay is L − (2h − 2), with R = 2h. That is the spec's L − R plus two samples, and the gain is
+  complete exactly at the onset sample.
+- **Ramp length changes.** With lookahead on, a `smooth` change that moves R by a sample restarts the
+  ramp: one step of the gain. `smooth` is a setup control there, like `lookahead`.
+- **`delta`** outputs m · (wet − dry): what the block adds at the current `mix`. The ceiling acts on
+  whatever is output (normal, delta or listen), so it stays the output's maximum.
+- **`listen`** is not delayed by the lookahead: it is a monitor for setting the filters.
+- **`bypass`** crossfades (5 ms) to the dry delayed by L, after the ceiling. The reported latency does
+  not change.
+- **`shaping`** reports G_att + G_sus, the block's largest |value| (signed), on the channel that has it.
+- **Stereo.** Two detectors always run in 2 / 2. At `link` 100 % they read the same level and give the
+  same gain bit for bit (tested). The cost is the stereo figure below.
+- **The sustain floor bound acts on the share**: share ≤ height / `sustain` for a boost. So
+  G_sus = min(S · share, height) and stays continuous when `sustain` crosses 0.
+
+### Measurements (`cargo test -p gfx-transient`, 48 kHz)
+
+| Check (§5) | Target | Measured |
+|---|---|---|
+| Transparency | `attack` = `sustain` = 0: bit-identical at any band / mix / link / sens, Off and Limit; `lookahead` 2 ms: the input delayed by L | Bit-identical (3 bands × 2 mixes × 3 link / sens × Off / Limit, stereo); 96 samples, exact |
+| Level independence | G identical ± 0.1 dB at 0 / −12 / −24 / −36 dB | 0.000 / 0.000 / 0.040 dB |
+| No ripple on steady notes | ≤ 0.05 dB p-p after 300 ms | 0.000 at 31, 41, 82, 1,000 Hz (sines) and 31 / 41 / 82 Hz (asymmetric), ±24 dB, `sens` 50 and 100, also 41 Hz at `sc_hpf` 80 and 82 Hz at 160 |
+| No ripple under the sidechain filter | G_att ≤ 0.05 dB p-p | 0.0000 dB at 41 / 80, 62, 73, 82 / 120, 82 / 160, ±24 dB, `sens` 100 |
+| Steady noise | ≤ 0.3 dB at `sens` 50, ≤ 1.5 dB at 100 | 99th percentile 0.000 / 0.000 dB; maximum 0.97 / 4.70 dB (see below); ringing E chord 0.000 |
+| Decaying bass note | G_sus ripple per period ≤ 0.5 dB | 0.37 dB (`sus_time` 300) and 0.33 dB (2,000), ±24 |
+| Attack law | ≥ 79 % in 0.1 `att_time`; 5.11 / 2.26 / 0.68 dB ± 0.5; 0 from 2 `att_time` | 11.43 dB; 5.11 / 2.26 / 0.68 dB; exactly 0 from 2.05 `att_time` |
+| Sustain law | the prototype ± 0.3 dB (1.29 / 5.26 / 9.22 / 10.83 dB at 100 / 200 / 400 / 600 ms) | 1.29 / 5.26 / 9.22 / 10.83 dB |
+| Floor bound | hiss 0 ± 0.1 dB; tail never above its height | 0.0000 dB in the gaps and under the floor; the tail stays under its height (+0.5 dB for the detector's lag) |
+| Sensitivity | 11 / 30 / 57 / 82 % ± 3; ≥ 85 % at 6 dB with `sens` 100; 0 for 1 dB | 11.3 / 30.3 / 56.7 / 82.2 %; 88.4 %; 0 |
+| Onset over a shaped tail | ≤ 1 dB per sample | 0.32 dB (+12), 0.65 dB (−24) |
+| Soft hit after a loud one | §2.2 table ± 10 points | −6 dB: 0 / 11 / 41 / 86 % (W 40 ms), 0 / 25 / 59 / 92 % (12 ms); −12 dB: 0 / 0 / 13 / 78, 0 / 9 / 38 / 85; −18 dB: 0 / 0 / 0 / 64, 0 / 0 / 16 / 74 |
+| Attack band | 80 Hz ≤ +0.2, 3 kHz +10.5 ± 0.3; monotonic at ±24, also at `mix` 50 % | +0.10 / +10.55 dB; monotonic and between 0 and the gain, Highs and Lows, ±24, mix 100 and 50 % |
+| Lookahead | −24: first cycle ≥ 20 dB down; +12: 0 until R before, ≥ 11.5 at the onset, ≤ 1.5 dB inside the first cycle; 1 / 2 / 5 ms the same | −21.9 dB; 0 before R, 11.61 dB, 1.09 dB; the three equal within 1e−4 dB. Zero latency: −7.8 dB (leak), 9.23 dB of motion |
+| Ceiling | no sample above `ceiling`, Limit at every lookahead and Soft; latency = L | Limit 0.00 / −6.00 dBFS peaks (ceilings 0 / −6) at Off, 1, 2, 5 ms; Soft −0.10 / −6.00 dBFS; Off: +17.4 dBFS |
+| Stereo link | `link` 100: the same gain on R; 0: R bit-identical | Equal gains every sample; R bit-identical |
+| Key | unconnected = Main | Bit-identical; a keyed snare boosts a steady main by 9.7 dB |
+| Clicks | within the bench's bound | HF bursts −71.0 dB (`att_band` switches), −75.8 dB (EXP sweep of `attack` through 0), −70.9 dB (`sc_hpf` 0 → 300 Hz) |
+| Latency | 0 by default; L reported; a change without a click | 0; 48 / 96 / 240 samples; −83.7 dB HF at a change |
+| Determinism | strict null; no NaN | Identical renders; NaN / inf / ±1e30 inputs give finite output |
+
+gfx-bench `check gfx-transient`: **28 / 28** at 44.1, 48, 96 and 192 kHz. The worst parameter step is
+−78 dB (bound −50). The only option set is `skip_steps = ["lookahead"]` (§5).
+
+**CPU** (48 kHz, blocks of 128, release):
+
+| Case | ns / sample |
+|---|---|
+| Default (bench) | 53 mono, 103 stereo |
+| Shaping, Full or Highs, no ceiling | about 80 mono |
+| + Limit | about 150 mono |
+| + Soft | 180 – 210 mono; 260 stereo unlinked |
+
+The design's estimate gave 30 – 50 ns for the ceiling. gfx-limiter as shipped costs about 70 ns in Clean
+style and about 110 ns in its 2× Clip style, per channel. So Soft in stereo is about 1.25 % of a core,
+over the 1 % budget. Every other case is within it. The cost is gfx-limiter's (per-sample `powf` for the
+ceiling and the knee, 2× ADAA with f64 `tanh` / `ln_1p`). Making it cheaper means changing gfx-limiter,
+under a bit-exact null of its renders: left for the move to gfx-dsp `limiter`.
+
+**Deviations from the spec, and why.**
+- **Steady-noise check read as the 99th percentile.** The prototype's 0.10 / 0.56 dB maxima came from
+  its luckiest seed. Rerun on eight seeds, the same prototype gives maxima of 0.6 – 1.3 dB (`sens` 50)
+  and 3.0 – 5.9 dB (`sens` 100), with 99th percentiles of 0.04 / 0.22 dB. The Rust code gives 99th
+  percentiles of 0.000 / 0.000 dB and maxima of 0.97 / 4.70 dB over four seeds. The test asserts the 99th
+  percentile against the README's bounds, and the maximum against the prototype's spread (1.5 / 6 dB).
+  The bursts are rare isolated noise peaks that rise more than 1.5 dB above the 40 ms maximum.
+- **Ceiling not moved to gfx-dsp** (see above).
+- The `transient` module's own level-independence test skips the first 2 ms of a note out of silence.
+  There, the raw unsmoothed shares meet the absolute floor (−96 dB) at one level and not at the other
+  (up to 0.8 dB at −24 dB). After the effect's smoothing, the gain holds within 0.04 dB.
+
+**Left for Raph.**
+- The by-ear points of the Review: `sens` default, one `sens` or two, D_0, `smooth` default, Room Dry
+  on a held voice, and an A / B against an SPL-style shaper. No DI renders were made: they need the bench
+  WAVs and ears.
+- Gated Snare keeps `sustain` −24 dB, as in the Applications table and its measured figures. Open
+  question 1 says block presets stay within ±12 dB; that rule is read here as applying to boosts.
+- The gfx-limiter → gfx-dsp move (announce to golem-rack first), which would also allow a cheaper
+  ceiling.
+- golem-rack: the catalogue entry `transient`, key routing after the amp, and the `lookahead` re-sync.
