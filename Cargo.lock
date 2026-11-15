@@ -339,6 +339,7 @@ dependencies = [
  "gfx-limiter",
  "gfx-mbcomp",
  "gfx-met",
+ "gfx-morph",
  "gfx-octaver",
  "gfx-phaser",
  "gfx-pitch",
@@ -616,6 +617,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-morph"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

@@ -33,7 +33,8 @@ effect (gfx-glitch). §6 explains where it sits among them.
 
 **Files.** `src/curves.rs` (every module curve f and its antiderivative F, the Amount laws, the
 compensation tables' generator; plain `std`, also included by `build.rs`, which writes the tables as const
-data), `src/modules.rs` (the 25 modules: parameters at an effective Amount, their inner-rate state, the
+data; **moved verbatim to gfx-dsp `shapers` on 2026-11-15** for gfx-morph, re-exported here as
+`curves`, with 50 renders and the generated tables byte-identical before and after), `src/modules.rs` (the 25 modules: parameters at an effective Amount, their inner-rate state, the
 slot crossfade), `src/engine.rs` (one oversampled engine: half-bands, `crossover::Tree`, bands, dry
 alignment, DC blocks, band sum, droop correction), `src/lib.rs` (the processor, `PARAMS`, smoothing,
 Drive / Focus, the engine switch), `src/convert.rs` (golem's one-time value conversion, below),

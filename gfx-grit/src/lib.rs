@@ -10,7 +10,7 @@
 //!   droop correction after the sum gives the highs back.
 //! - **Crossovers**: gfx-dsp `crossover::Tree`, LR4 or LR8 with compensation all-passes: the clean
 //!   sum is an all-pass, the band phases equal.
-//! - **Bands**: two slots of 25 modules (modules.rs, curves.rs), an always-on 5 Hz DC block on the
+//! - **Bands**: two slots of 25 modules (modules.rs, gfx-dsp `shapers`), an always-on 5 Hz DC block on the
 //!   wet, a per-band dry / wet against the aligned dry, a band gain on the whole band, solo / bypass.
 //! - **Level**: the saturators carry a static make-up at a reference level (build-time tables).
 //! - **Face**: Drive and Focus add weighted points to every nonlinear module's Amount.
@@ -22,7 +22,8 @@
 #![allow(clippy::needless_range_loop)]
 
 pub mod convert;
-pub mod curves;
+/// The curves and laws, now gfx-dsp's `shapers` (moved verbatim, renders byte-identical).
+pub use gfx_dsp::shapers as curves;
 pub mod engine;
 pub mod modules;
 

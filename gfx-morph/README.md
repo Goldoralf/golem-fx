@@ -1,10 +1,23 @@
 # gfx-morph
 
-> **Status: DESIGNED (2026-11-15), reviewed by Fable 5.2** (Review section at the end; its decisions
-> override the body where they differ). Design only, no plugin code. Prototypes in `proto/`
-> (numpy / scipy, plus a Rust CPU timing in `proto/rs/`) and the reviewer's scripts in `proto/review/`;
-> every number marked [P] below is theirs, re-run in `proto/results.txt`. Bundle name "GoleM FX Morph", golem block type **`morph`**, display name
-> **Morph**.
+> **Status: CODED (v0.1.0, 2026-11-15).** Designed and reviewed by Fable 5.2 the same day (Review
+> section; its decisions override the body where they differ). Bundle name "GoleM FX Morph", golem block
+> type **`morph`**, display name **Morph**. Built as designed, in the review's order: gfx-grit's curves
+> moved verbatim to gfx-dsp `shapers` (50 gfx-grit renders and its tables byte-identical), a new gfx-dsp
+> `modal` (48 TPT modes in f64 lanes, rank morph, edge fades), then this crate: the guard's whole-pedal
+> cap, the de-fizz drive duck and shelf, Single / Two / Three bands at 2× / 4× with 15 types A / B and the
+> live ρ gain, vocal make-up and small-signal tables generated at build time, nine physical objects with
+> their level, peak and voice tables, the comp, post filter, slap echo and three read-only meters; 45
+> parameters, 17 presets, zero latency. Measured: group delay at 1 kHz 0.089 / 0.120 / 0.207 / 0.346 ms
+> (Single 2×, 4×, Two, Three); the clean skeleton flat within 0.031 dB; the phrase held within 0.4 dB by
+> every table; pink bleed under the guard at or below bypass in every third-octave band with every
+> object, `reso`, `comp`, the echo and `tilt`; de-fizz −8.9 / −14.8 dB of hash at 50 / 100 %; the
+> objects' pink level within 0.59 dB off the table's points and their voice level within 0.7 dB; 27
+> behaviour tests, the bench 28 / 28 at every rate; CPU at the defaults on par with gfx-grit's measured
+> beside it (As coded, at the end, with the deviations: Fuzz and Crush laws shortened, one-stage droop
+> correction, S measured at −90 dBFS, and the CPU of the heavy rows on a loaded machine). Prototypes in
+> `proto/` (numpy / scipy, plus a Rust CPU timing in `proto/rs/`) and the reviewer's scripts in
+> `proto/review/`; every number marked [P] below is theirs, re-run in `proto/results.txt`.
 
 golem's **live vocal mangler**: one pedal that turns a voice into a scream, a megaphone, a broken
 transmission, a robot or a voice shouted into a can. It is built for a singer on stage, so its latency
@@ -1109,3 +1122,140 @@ B = blocking: apply before coding. R = recommended.
 | `shapers` move: gfx-grit's renders and tables byte-identical before and after, in its own commit | golem-fx, before this crate |
 | Catalogue entry: block `morph`, 45 parameters, `depends` as §3.2, pins `guard` −90 and `defizz` 0 on non-vocal lanes, the soundcheck step for `guard` | golem-rack |
 | Hue at tile size against raspberry; the glyph at 16 px | Raph, on the family sheet |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Order** (open question 10). (1) gfx-grit's `curves.rs` → gfx-dsp `shapers`, verbatim, in a commit of
+its own: 50 gfx-bench renders of gfx-grit (each of the 25 modules in two slots and two bands with
+`drive`; and in the low band at 4×, LR8, `focus`, stereo) byte-identical before and after (md5 of every
+WAV), and the generated make-up tables identical apart from their "generated from" comment line.
+(2) gfx-dsp `modal`, new code, 8 unit tests (unity peak and skirt at 44.1 – 192 kHz, equality with gfx-dsp
+`Svf` band-passes, ramps landing on the static set, rank morph and the partner rule, edge fades, a 30 Hz
+Q 160 mode at 192 kHz within 0.05 dB, the analytic response within 0.05 dB of the filter, decay after a
+burst). gfx-acoustic is not touched; nothing moves from gfx-radio. (3) This crate.
+
+**Files.** `src/lib.rs` (`Morph`: `PARAMS`, the control tick, the guard, the de-fizz detector and
+shelf, the tilt, the box stage, the comp, the post filters, the echo, the `order`, `split` and `quality`
+switches, the meters), `src/dirt.rs` (the oversampled engine: LR4 tree, two parallel slots per band with
+the type crossfade queue, skipped zero-weight slots, the ρ estimator, aligned dry, DC block, droop
+correction), `src/types.rs` (the 15 types: laws, curves with antiderivatives, per-slot state; plain enough
+for build.rs), `src/objects.rs` (the port of `proto/objects.py` with the fixed mode set, and the level,
+peak and voice-constant generators), `src/voice.rs` (the reference vowel, pink noise, sibilants),
+`build.rs` (the tables: make-up and S per type and dB of drive, 26,325 level values, 405 peaks, 9 voice
+constants; about 25 s in cargo's unoptimised build-script profile), `src/plugin.rs` (VST3 class id
+`GoleMFxMorph0001`, 1 / 1 then 2 / 2, latency 0, meters `gr`, `state`, `defizz_gr`), `src/tests.rs`.
+
+**Measured** (tests on the synthetic signals of `src/voice.rs`; the real-take rows through gfx-bench
+render on the maintainer's 27 s sung phrase, set to −18 dBFS RMS over its active parts, not in the repo):
+
+| §5 row | Target | Coded |
+|---|---|---|
+| Latency | first sample 0; GD at 1 kHz ≤ 0.10 / 0.13 / 0.22 / 0.36 ms | first sample ≠ 0 at 44.1 – 192 kHz in every split and factor; **0.089 / 0.120 / 0.207 / 0.346 ms**; the de-fizz shelf at rest is the exact identity (and does not run) |
+| Clean skeleton | ±0.1 dB 20 Hz – 20 kHz | **±0.031 dB** (Single / Two / Three × 2× / 4×) |
+| Aliasing, prototype's types | Soft −53 / −42, Hard −41, Fold −64 / −46 (worst of four pitches) | Soft **−55.6 / −45.0**, Hard **−44.3**, Fold **−66.8 / −49.3**; 4× better by 30 / 17 / 15 dB on Soft / Soft −6 / Hard |
+| Aliasing, the nine others (drive 100 %, −18 dBFS vowel, 2× / 4×) | ≤ −45 dB or shorten the law | Tube −55.5 / −87.7, Rectify −74.3 / −91.5, Sine Fold −93.5, **Fuzz −50.2 / −71.6** (law shortened, below), **Crush −46.3 / −59.4** (law shortened), Sputter silent (below), Carbon −68.5 / −87.9, Starve −75.7 / −89.4. Inharmonic by design, reported: Decimate +24.3 (its clock is not the pitch's), Ring (every product is f0 ± carrier), Rasp −12.9 (noise) |
+| Level, vocal tables (phrase) | ±1 dB | every compensated type within **−0.30 … +0.38 dB** at drive 0 / 25 / 50 / 75 / 100 %, Sputter apart (silent at 100 %) |
+| Level, real take | +0.5 / −2.5 dB | Soft 0 … −1.6, Hard 0 … −1.8, Tube −0.2 … −1.5, Fuzz −0.1 … −1.9, Rectify 0 … −0.2, Fold 0 … −2.3, Sine Fold −0.5 … −2.2, Carbon +0.9 … −2.4, Rasp +0.1 … −1.5; **Starve +2.4 dB at 100 %** (outside) |
+| Morph level | ±0.5 dB memoryless, ±1.5 with memory | memoryless pairs ≤ **0.01 dB** off the line at 25 / 50 / 75 % (phrase), ≤ 0.25 dB at 50 % on the real take; Ring → Decimate +0.43, Soft → Fuzz, Sputter → Starve, Tube → Rasp 0.00 |
+| Guard, bleed | ≤ bypass − 2 dB, every type, drive 0 → 100 %, mix 35 / 100; no third-octave band over bypass with each object, `reso`, `comp`, echo, `tilt`, together | all broadband ≤ −2 dB; worst band, dirt alone **−0.5 dB** (Fuzz 100 %); each object at `box` 100 % −2.4 (Hands) … −11.5 dB (Bottle); `reso` 100 % −2.8, `comp` 100 % −1.5, echo 50 / 60 % −6.3, `tilt` ±12 −1.8 / −2.2, all together −27.9 dB |
+| Guard, S(type, d) | within 1 dB of the measured small-signal gain | within **0.27 dB** through the whole pedal (Decimate and Ring hold their worst band by design, below) |
+| Guard, onset; quiet vowel | ≤ 3 dB over 5 ms, ≤ 1 dB over 10 ms; ±0.1 dB | −1.24 / −0.53 / **−0.26** / **−0.12** / −0.06 dB over 1 / 2 / 5 / 10 / 20 ms (T −45, drive 36 dB); a −40 dBFS vowel **±0.000 dB**, `state` 1 |
+| De-fizz | ≤ −7.5 / −10.5 dB at 50 / 100 % (−4.0 at 0 %); vowels ±0.3 dB; hiss onset ≤ 0.5 dB; tilted breathy vowel ≤ 1 dB; hats at 0 %: meter 0 | **−3.4 / −8.9 / −14.8 dB**; vowels **0.00 dB**; hiss then a vowel: no duck (0.00 dB); breathy vowel (2 – 8 kHz aspiration 12 dB under) with `tilt` +12: **mean 0.18 dB, largest 2.0 dB**; `defizz_gr` 0 at 0 %, the hats read as sibilants at 50 % |
+| Objects | mode list fixed; pink ±1 dB off the grid; voice level ±1 dB; `box` 0 bit-exact; 44.1 – 192 kHz | counts 28 / 36 / 22 / 25 / 48 / 37 / 32 / 27 / 2 (Tin Can … Hands), unchanged by `position` and `size`; pink **≤ 0.59 dB** off the grid (5 × 4 × 5 points per object); voice level **−0.52 … +0.69 dB**, single notes −7.4 … +7.4 dB (Oil Drum); `box` 0 bit-exact; finite at every rate with `size` 25 %, `decay` 400 % |
+| Box motion | finite; largest step ≤ 1.5 × the static renders' | **1.41 ×** (Cardboard Box, `size` 25 → 400 % in 0.5 s), the reference being the static renders along the path; Hands ↔ Tin Can: −1.3 → −4.7 dB, no bump |
+| Comp | GR within 1 dB of the law; meter | **20.99 dB** against 21.00 dB; `gr` 20.99; make-up 0 / 2.0 / 5.2 dB at 40 / 70 / 100 % |
+| Echo | ±1 sample; bounded at 90 %; no re-feed with the guard closed | 5,280 samples exactly (re the dry's own peak); bounded and decaying; bleed stays ≥ 2 dB under bypass |
+| Switches | ≤ −30 dB re peak | worst **−51.3 dB** (`split`, `quality`, `order`, `object`, `object_b`, types under a held note) |
+| Stereo, determinism | L = R bit-exact; renders null | L = R bit-exact and equal to mono within 1e-6; Rasp, Ring, Decimate renders null after reset |
+| Common checks | | gfx-bench **28 / 28** at 44.1 / 48 / 96 / 192 kHz (`skip_latency`, `click_bound_db` −30, both as §5; worst step −36 dB at 192 kHz) |
+
+Tables (dB; d = 0 / 12 / 24 / 36 / 48): vocal make-up Soft 0.1 / −10.4 / −15.9 / −17.5 / −17.8 (the
+prototype's r2 table to 0.1 dB), Fuzz −13.9 … −17.9, Rectify 0 … +6.6, Fold 0 … −13.2, Sine Fold
+−3.8 … −14.9, Sputter 0 … +6.0 (capped), Carbon +0.1 … +2.8, Starve 0 … +8.9. S: Soft 0.1 / 1.6 / 8.0 /
+18.5 / 30.1 (the review's +8.0 / +18.5 / +30.2), Hard to 30.1, Tube 29.4, Fuzz 30.0, Fold 10.8, Sine
+Fold 12.9, Rectify ≤ 0.9, Ring ≤ 1.8, Decimate ≤ 5.9 (worst band), Carbon 2.8, Starve 8.8, Crush and
+Sputter −60 (a dead zone). Objects' voice constants (dB): Tin Can −1.3, Bucket +0.2, Pipe +3.1, Bottle
++3.9, Cardboard Box +0.1, Oil Drum −3.0, Glass Jar +3.0, Cone +2.0, Hands −2.3 (the review's figures
+to 0.1 dB except the Cardboard Box, whose fixed mode set differs); their largest peaks at the defaults,
+re bypass with the constant: 11.8 / 10.4 / 12.9 / 20.0 / 9.6 / 8.2 / 16.0 / 9.6 / 3.8 dB.
+
+**CPU** (48 kHz, blocks of 128). The machine was loaded (load average 6 – 15, other sessions building)
+and the readings scatter by ±30 %; gfx-grit, documented at 236 ns at its defaults, read 383 – 635 ns
+beside it, so the figures are given raw and against gfx-grit read in the same minutes:
+
+| Configuration | Budget | Raw (fastest of 5) | × 236 / 383 (gfx-grit's ratio) |
+|---|---|---|---|
+| Defaults (gfx-bench's CPU line) | ≤ 350 ns | 392 ns mono, 429 ns stereo | ≈ 240 ns |
+| Default-like: `box` 60, `comp` 60, `echo_mix` 30 | ≤ 450 ns | 524 ns | ≈ 325 ns |
+| Three 2×, one-stage types in A and B, `morph` 50, box, comp, echo | ≤ 750 ns | 1,034 ns | ≈ 640 ns |
+| Worst: Three 4×, Fuzz in six slots, morph and box moving, comp, echo | ≤ 2.2 µs | 1,865 ns | ≈ 1,150 ns |
+| Stereo / mono | ≤ 1.8 × | 1.1 – 1.6 × | |
+
+Parts at the defaults (raw): the Soft slot's two ADAA tanh 110 – 130 ns, the de-fizz detector 45 ns,
+the 48-mode bank at `box` > 0 about 130 ns, the comp 20 ns (its gain computer at the control rate),
+the skeleton (half-bands, detectors, ramps) about 230 ns. `cargo test --release -p gfx-morph
+cpu_per_configuration -- --ignored --nocapture` re-runs the table; a quiet machine should re-read it.
+
+**Deviations from the spec, and why**
+
+1. **One-stage droop correction**, (1 + a) / (1 + a z⁻¹), not gfx-grit's square. The types are parallel,
+   so every path carries one inner average, where gfx-grit's two slots in series carry two; the square
+   overshot by +0.11 dB at 4.9 kHz (the clean-skeleton bound is 0.1). Flat within 0.031 dB with one.
+2. **Fuzz's law shortened** to 0.7 d (0 – 33.6 dB into its first stage, then gfx-grit's two biased clip
+   stages): at the README's 48 dB it aliased at −38.1 dB on the reference vowel (−45.0 at 36 dB). Now
+   −50.2 dB at `drive` 100 %.
+3. **Crush 16 → 4 bits** (the README's 16 → 2): from about 3 bits down the −18 dBFS vowel falls inside
+   the mid-tread's dead zone (−121 dBFS out at 2 bits, the inharmonic share then +32 dB re the
+   harmonics); at 4 bits it reads −46.3 dB.
+4. **S(type, d) is measured at −90 dBFS** (the README says −60): the guard's cut takes the bleed far below
+   −60 dBFS, where the high-gain types gain more than their −60 reading (Fuzz at the old law: +1.5 dB
+   over bypass in the bleed test). **Decimate and Ring take their worst third-octave band** (images and
+   sidebands lift a band while the whole loses): with the broadband value, Decimate at 100 % left a band
+   +2.4 dB over bypass. Both make the cap exact where it matters (README §2.2: "the worst frequency").
+5. **Carbon is coded in the crate**, not as gfx-dsp `adaa::Shaper::Asym` (the README's §2.4 / §2.11):
+   gfx-radio's carbon curve is 1 / (1 − u) − 1 with a soft tanh guard and no antiderivative. Here the
+   same curve with a hard guard at |u| = 0.6 (linear beyond) and its closed-form antiderivative
+   (−ln(1 − u) − u), under ADAA, u = h x, h = 0.1 · 10^(d / 40) / (peak of a −18 dBFS RMS sine).
+6. **Starve's constants** (the spec gives the law, not the numbers): a rail at −6 dBFS at rest that sags
+   by up to 90 % × depth with a 20 ms envelope of |x| normalised to the reference vowel's mean |x|,
+   floor 3 %. On the real take it ends +2.4 dB over its input at `drive` 100 % (the loud frames sag the
+   rail more than the reference vowel did); by ear.
+7. **Sputter**: its make-up is capped at +6 dB (the README's "capped", value unstated). Its dead zone
+   reaches −6 dBFS at 48 dB as specified, so from about 90 % a −18 dBFS voice is entirely gated: the
+   "broken voice" law taken to its end. `broken-transmission` sits at 50 %.
+8. **Rasp's make-up is Tube's table** (the noise rides on top at −12 dB re the band, 0.3 dB at most).
+9. **Control rate**: the bands' drives and laws, the detectors' dB laws, ρ and the cap are rebuilt every
+   16 samples; the gains that multiply audio (guard, mix, levels, ρ, morph weights, box, comp, echo,
+   level) ramp per sample between ticks; the EXP smoothers (gfx-dsp `exp_smooth`) run at the control
+   rate. The comp's peak detector runs per sample on the linked linear level and its dB gain computer at
+   the tick (a 3 ms attack against a 0.33 ms tick).
+10. **The ρ estimator removes the means** (exponential means of A and B over 30 ms): Rectify, Tube,
+    Carbon and Fuzz carry DC before the band's DC block, which inflated ρ.
+11. **Object morph's peak term** for the guard: the larger of the two ends while 0 < μ < 1 (conservative).
+    **Object None** is a flat skirt (10 Hz / 0.45 fs, 0 dB) with no mode, so a morph from None fades the
+    partner's modes in.
+12. **The level and peak tables are generated at 48 kHz** and read at every rate (they weigh 100 Hz –
+    8 kHz; only the edge fades differ with the rate).
+13. **De-fizz on a tilted breathy vowel**: the mean duck is 0.18 dB, the largest instantaneous duck 2.0 dB
+    (the bound "≤ 1 dB" is met as a mean, not as a peak).
+14. **Clean-skeleton null against the twins' cascade** is not a separate test: the skeleton is that
+    cascade (the same gfx-dsp tree, half-bands and averages); its flatness is tested.
+15. **`body_trim` stays live in Single** (greyed by `depends`, it still adds to `drive`).
+16. **`depends`**: golem's descriptor holds `param = option` only, so `x_air` and `air_*` carry
+    `split = Three`; the rest of §3.2's list (`low_*` and `x_low` in Single, `body_trim` in Single,
+    `<b>_b` at `morph` 0 with `env_morph` 0, `tilt_freq` at `tilt` 0, `ring_hz` without a Ring type, the
+    box parameters at `box` 0 or object None, `reso` without the low-pass or `env_filter`, the echo's at
+    `echo_mix` 0) needs conditions the format lacks: for golem-rack.
+17. **Presets are level-matched on synthetic signals** (the p4-style phrase with sibilants for voice, a
+    plucked saw for guitar, a kick + hat loop for drums) through gfx-bench render, not on the bench's voice
+    DI: all within ±0.25 dB except `drum-bus-trash` (−1.3 dB at `level` +12, its comp at 70 % squashes
+    the loop's peaks). Glass Jar's and Object morph's EXP targets are in the presets' notes (the preset
+    format has no EXP field).
+18. **Bypass** fades the input out of the chain over 10 ms while the object and the echo ring out (the
+    output is the dry plus those tails).
+
+**Left for the owner.** By ear: the de-fizz threshold and 50 % default on a brighter mic, Starve's and
+Sputter's top of range, the object voicings (open question 3: the Tin Can's 100 Hz wall mode first),
+the guard on a stage against a wedge, the presets on the voice DI. Accept or not the worst-case CPU row
+and the heavy rows' raw figures (re-time on a quiet machine). Golem-rack: the block `morph`, the
+`depends` conditions above, the voice lane's −18 dBFS RMS level, the soundcheck step for `guard`.
