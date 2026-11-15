@@ -46,6 +46,9 @@ pub const FOUR_STEP_ABOVE: usize = 16384;
 pub const UNIT: usize = 1024;
 /// Σ w_a · w_s over the hop (Hann / Hann, hop N / 4): the coherent overlap-add's gain.
 pub const OLA_AMP: f32 = 1.5;
+/// The same at hop N / 8 (gfx-spectralcomp): Σ w² over the hop = 3.0. Per hop divisor D the sum is
+/// 0.375 · D, constant for D ≥ 4 (the periodic Hann's squares overlap-add exactly from hop N / 4 down).
+pub const OLA_AMP_HOP8: f32 = 3.0;
 /// mean(w_a²) · Σ w_s² = 0.375 · 1.5: the power gain of uncorrelated (random-phase) frames.
 pub const OLA_POW: f32 = 0.5625;
 /// Entries of the phasor table.
@@ -673,6 +676,29 @@ mod tests {
     fn lcg(s: &mut u64) -> f32 {
         *s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         ((*s >> 40) as f32 / (1u64 << 24) as f32) * 2.0 - 1.0
+    }
+
+    /// Hann² overlap-adds to 0.375 · D at hop N / D: 1.5 at N / 4 ([`OLA_AMP`]), 3.0 at N / 8
+    /// ([`OLA_AMP_HOP8`]), exactly constant over the whole hop.
+    #[test]
+    fn ola_constants_per_hop() {
+        let t = Tables::new();
+        for &n in &[512usize, 1024, 4096, 16384] {
+            let plan = &t.plans[(0..NUM_SIZES).find(|&i| size(i) == n).unwrap()];
+            for &(div, want) in &[(4usize, OLA_AMP), (8, OLA_AMP_HOP8)] {
+                let h = n / div;
+                for i in 0..h {
+                    let mut s = 0.0f64;
+                    let mut j = i;
+                    while j < n {
+                        let w = plan.hann(&t, j) as f64;
+                        s += w * w;
+                        j += h;
+                    }
+                    assert!((s - want as f64).abs() < 1e-5, "N {n} hop N/{div} at {i}: {s}");
+                }
+            }
+        }
     }
 
     #[test]

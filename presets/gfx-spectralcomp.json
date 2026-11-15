@@ -1,0 +1,699 @@
+{
+ "crate": "gfx-spectralcomp",
+ "presets": [
+  {
+   "id": "gentle-glue",
+   "type": "spectral-comp",
+   "name": "Gentle glue",
+   "desc": "Two-to-one on every band over the curve, a little lift under it: a whole mix leans together",
+   "inst": "any",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-pop",
+    "downtempo"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Studio",
+    "thresh": -37.3,
+    "down": 2,
+    "up": 1.1,
+    "center": 420,
+    "slope": -2.08,
+    "attack": 75.0,
+    "release": 300,
+    "window": "2048",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": 0,
+    "mix": 100
+   },
+   "notes": "golem's legacy preset, converted once (README §3.4): Studio, the legacy block had no caps and no make-up"
+  },
+  {
+   "id": "de-harsh-vocal",
+   "type": "spectral-comp",
+   "name": "De-harsh vocal",
+   "desc": "Holds the 3 kHz and up region of a bright voice as it gets harsh; the body passes",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-pop",
+    "neo-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "thresh": -40.3,
+    "down": 4,
+    "up": 1.0,
+    "center": 3000,
+    "slope": -6.24,
+    "attack": 10.0,
+    "release": 120,
+    "window": "1024",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": 0,
+    "mix": 100
+   },
+   "notes": "Legacy preset, converted once (README §3.4); Studio at 1024 (21 ms). vocal-de-harsh is its Live sibling"
+  },
+  {
+   "id": "keys-even",
+   "type": "spectral-comp",
+   "name": "Keys even",
+   "desc": "Evens a keyboard part across its range so no register jumps out of the mix",
+   "inst": "keys",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-pop",
+    "art-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "thresh": -35.3,
+    "down": 3,
+    "up": 1.14,
+    "center": 600,
+    "slope": -3.12,
+    "attack": 25.0,
+    "release": 250,
+    "window": "2048",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": 0,
+    "mix": 100
+   },
+   "notes": "Legacy preset, converted once (README §3.4)"
+  },
+  {
+   "id": "pad-hold",
+   "type": "spectral-comp",
+   "name": "Pad hold",
+   "desc": "Pulls a pad's loud bands down and lifts its quiet ones: a steady, even bed",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop",
+    "experimental"
+   ],
+   "subgenres": [
+    "ambient",
+    "downtempo"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Studio",
+    "thresh": -46.3,
+    "down": 4,
+    "up": 1.55,
+    "center": 500,
+    "slope": -2.08,
+    "attack": 75.0,
+    "release": 500,
+    "window": "4096",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": -3,
+    "mix": 100
+   },
+   "notes": "Legacy preset, converted once (README §3.4); window 4096 in Studio (85 ms)"
+  },
+  {
+   "id": "pink-noise-wash",
+   "type": "spectral-comp",
+   "name": "Pink noise wash",
+   "desc": "Squashes anything toward pink noise, mixed under the dry: the legacy wash, unguarded",
+   "inst": "keys",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "extreme",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "thresh": -56.3,
+    "down": 8,
+    "up": 2.01,
+    "center": 420,
+    "slope": -2.08,
+    "attack": 150.0,
+    "release": 1000,
+    "window": "4096",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": -3.09,
+    "mix": 42.9
+   },
+   "notes": "Legacy preset, converted once (README §3.4), mix and out exact. spectral-wash is the guarded new sound"
+  },
+  {
+   "id": "vocal-smooth",
+   "type": "spectral-comp",
+   "name": "Vocal smooth",
+   "desc": "Evens a voice band by band, highs held a little sooner: smoother, never pumping",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "folk"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "neo-soul",
+    "indie-folk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Studio",
+    "thresh": -39.3,
+    "down": 3,
+    "up": 1.19,
+    "center": 1000,
+    "slope": -4.16,
+    "attack": 30.0,
+    "release": 200,
+    "window": "2048",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": 0,
+    "mix": 100
+   },
+   "notes": "Legacy preset, converted once (README §3.4). vocal-smooth-live is its zero-latency sibling"
+  },
+  {
+   "id": "vocal-upfront",
+   "type": "spectral-comp",
+   "name": "Vocal upfront",
+   "desc": "Lifts a voice's quiet detail and holds its peaks, blended in parallel: closer, denser",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "neo-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "thresh": -45.3,
+    "down": 2,
+    "up": 1.5,
+    "center": 800,
+    "slope": -2.08,
+    "attack": 40.0,
+    "release": 300,
+    "window": "2048",
+    "range": 60,
+    "lift_range": 24,
+    "guard": -96,
+    "auto_gain": false,
+    "res": 2,
+    "out": -1.35,
+    "mix": 65.0
+   },
+   "notes": "Legacy preset, converted once (README §3.4), mix and out exact"
+  },
+  {
+   "id": "even-clean-strum",
+   "type": "spectral-comp",
+   "name": "Even clean strum",
+   "desc": "Strummed clean chords: the low strings stop masking the top ones, with no broadband pumping",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-rock",
+    "indie-folk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Live",
+    "thresh": -40,
+    "down": 3,
+    "up": 1.5,
+    "slope": 0,
+    "attack": 30,
+    "release": 200,
+    "window": "1024"
+   },
+   "notes": "README §4. Live: zero latency on a played lane"
+  },
+  {
+   "id": "glassy-arpeggio",
+   "type": "spectral-comp",
+   "name": "Glassy arpeggio",
+   "desc": "Arpeggios whose quiet notes ring as loud as the picked ones",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "experimental"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "thresh": -44,
+    "down": 2,
+    "up": 2.5,
+    "attack": 50,
+    "release": 400,
+    "lift_range": 9
+   },
+   "notes": "README §4. The lift stops at 9 dB and never raises what sits under the guard"
+  },
+  {
+   "id": "crunch-de-fizz",
+   "type": "spectral-comp",
+   "name": "Crunch de-fizz",
+   "desc": "After a drive: the fizz above 3 kHz is held as the gain rises, the chug passes",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "alternative-rock"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "source": "Main",
+    "thresh": -42,
+    "down": 4,
+    "up": 1,
+    "slope": -4,
+    "center": 2000,
+    "attack": 20,
+    "release": 120
+   },
+   "notes": "README §4 (Review change 5): Main, not the DI key, since the DI has no fizz to read"
+  },
+  {
+   "id": "bass-even-strings",
+   "type": "spectral-comp",
+   "name": "Bass even strings",
+   "desc": "Bass whose strings read at different levels: the lows held, the fingers' detail kept",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "pop",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "funk",
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Live",
+    "thresh": -38,
+    "down": 3,
+    "up": 1.5,
+    "slope": 2,
+    "center": 200,
+    "attack": 60,
+    "release": 300,
+    "window": "2048"
+   },
+   "notes": "README §4; window 2048 reads the low E cleanly (1.5-bin floor: 35 Hz)"
+  },
+  {
+   "id": "bass-growl-lift",
+   "type": "spectral-comp",
+   "name": "Bass growl lift",
+   "desc": "Brings up a bass's growl and finger noise without lifting the amp's hiss",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal",
+    "rnb"
+   ],
+   "subgenres": [
+    "funk",
+    "hard-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "window": "2048",
+    "thresh": -46,
+    "down": 2,
+    "up": 3,
+    "slope": -2,
+    "center": 800,
+    "lift_range": 9,
+    "guard": -66
+   },
+   "notes": "README §4 (Review change 11: window 2048 for bass)"
+  },
+  {
+   "id": "vocal-smooth-live",
+   "type": "spectral-comp",
+   "name": "Vocal smooth live",
+   "desc": "A live voice: ringing resonances and harsh vowels held, zero latency in the in-ears",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-pop",
+    "neo-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "thresh": -40,
+    "down": 3,
+    "up": 1.5,
+    "slope": -3,
+    "center": 1000,
+    "attack": 40,
+    "release": 200
+   },
+   "notes": "README §4"
+  },
+  {
+   "id": "vocal-de-harsh",
+   "type": "spectral-comp",
+   "name": "Vocal de-harsh",
+   "desc": "Holds the harshness and sibilant edges of a bright mic at zero latency",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-folk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "thresh": -44,
+    "down": 4,
+    "up": 1,
+    "slope": -6,
+    "center": 3000,
+    "attack": 15,
+    "release": 100
+   },
+   "notes": "README §4; pair with gfx-deesser for the sibilants themselves"
+  },
+  {
+   "id": "spectral-wash",
+   "type": "spectral-comp",
+   "name": "Spectral wash",
+   "desc": "Squashes anything toward pink noise, guarded: an ambient bed under the dry",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "ambient",
+    "drone"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "dreamy",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "window": "4096",
+    "thresh": -56,
+    "down": 8,
+    "up": 6,
+    "attack": 300,
+    "release": 1000,
+    "lift_range": 24,
+    "guard": -84,
+    "mix": 60,
+    "out": -6
+   },
+   "notes": "README §4: a new sound beside the converted pink-noise-wash, with the guard and the default res"
+  },
+  {
+   "id": "make-room-for-voice",
+   "type": "spectral-comp",
+   "name": "Make room for voice",
+   "desc": "Keyed by the singer: the instrument steps out of the voice's harmonics only",
+   "inst": "keys",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "source": "Key",
+    "thresh": -50,
+    "down": 6,
+    "up": 1,
+    "attack": 10,
+    "release": 150
+   },
+   "notes": "README §4: needs golem-rack's key_from (another lane's voice); with no key it does nothing"
+  },
+  {
+   "id": "fill-the-gaps",
+   "type": "spectral-comp",
+   "name": "Fill the gaps",
+   "desc": "A pad keyed by the lead: it rises where the lead leaves room",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop",
+    "experimental"
+   ],
+   "subgenres": [
+    "ambient",
+    "downtempo"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Studio",
+    "source": "Key",
+    "thresh": -50,
+    "down": 1,
+    "up": 3,
+    "lift_range": 9,
+    "guard": -60
+   },
+   "notes": "README §4; auto gain is 0 dB under a key, so a silent key changes nothing"
+  },
+  {
+   "id": "tame-ringing-room",
+   "type": "spectral-comp",
+   "name": "Tame ringing room",
+   "desc": "An acoustic or a mic that rings: the ring is held over two-thirds of an octave as it builds",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "indie-folk",
+    "americana"
+   ],
+   "gain": "clean",
+   "use": "utility",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Live",
+    "thresh": -30,
+    "down": 6,
+    "up": 1,
+    "res": 2,
+    "attack": 5,
+    "release": 80,
+    "window": "1024"
+   },
+   "notes": "README §4: 63 % at the output in about 11 ms. It does not replace a notch"
+  }
+ ]
+}

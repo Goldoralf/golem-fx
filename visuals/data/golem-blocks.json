@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 46,
+ "catalog_version": 48,
  "effects": [
   {
    "type": "gate",
@@ -113,59 +113,6 @@
      "max": 400,
      "default": 150,
      "unit": "ms"
-    }
-   ]
-  },
-  {
-   "type": "boost",
-   "name": "Overdrive / Boost",
-   "short": "Boost",
-   "category": "drive",
-   "engine": "plugin",
-   "plugin": "Proteus",
-   "color": "#ffb03a",
-   "glyph": "△",
-   "icon": "▲",
-   "params": [
-    {
-     "id": "drive",
-     "name": "Drive",
-     "min": 0,
-     "max": 100,
-     "default": 30,
-     "unit": "%"
-    },
-    {
-     "id": "level",
-     "name": "Level",
-     "min": 0,
-     "max": 100,
-     "default": 50,
-     "unit": "%"
-    },
-    {
-     "id": "treble",
-     "name": "Treble",
-     "min": -8,
-     "max": 8,
-     "default": 0,
-     "unit": null
-    },
-    {
-     "id": "bass",
-     "name": "Bass",
-     "min": -8,
-     "max": 8,
-     "default": 0,
-     "unit": null
-    },
-    {
-     "id": "mid",
-     "name": "Mid",
-     "min": -8,
-     "max": 8,
-     "default": 0,
-     "unit": null
     }
    ]
   },
@@ -495,59 +442,6 @@
    ]
   },
   {
-   "type": "chorus-js",
-   "name": "Stereo Chorus (JSFX)",
-   "short": "Chorus",
-   "category": "modulation",
-   "engine": "plugin",
-   "plugin": "JS: sstillwell/chorus_stereo",
-   "color": "#2ecc71",
-   "glyph": "≈",
-   "icon": "≈",
-   "params": [
-    {
-     "id": "length",
-     "name": "Chorus Length (ms)",
-     "min": 1,
-     "max": 100,
-     "default": 15,
-     "unit": "ms"
-    },
-    {
-     "id": "voices",
-     "name": "Number Of Voices",
-     "min": 1,
-     "max": 8,
-     "default": 2,
-     "unit": null
-    },
-    {
-     "id": "rate",
-     "name": "Rate (Hz) (0=tempo sync)",
-     "min": 0.1,
-     "max": 3,
-     "default": 0.5,
-     "unit": "Hz"
-    },
-    {
-     "id": "wet",
-     "name": "Wet Mix (dB)",
-     "min": -60,
-     "max": 0,
-     "default": -12,
-     "unit": "dB"
-    },
-    {
-     "id": "dry",
-     "name": "Dry Mix (dB)",
-     "min": -60,
-     "max": 0,
-     "default": 0,
-     "unit": "dB"
-    }
-   ]
-  },
-  {
    "type": "flanger-js",
    "name": "Flanger",
    "short": "Flanger",
@@ -658,51 +552,6 @@
      "max": 6,
      "default": 0,
      "unit": "dB"
-    }
-   ]
-  },
-  {
-   "type": "phaser",
-   "name": "Phaser",
-   "short": "Phaser",
-   "category": "modulation",
-   "engine": "plugin",
-   "plugin": "Calf Phaser",
-   "color": "#2ecc71",
-   "glyph": "◍",
-   "icon": "◍",
-   "params": [
-    {
-     "id": "rate",
-     "name": "Mod rate",
-     "min": 0.05,
-     "max": 2,
-     "default": 0.4,
-     "unit": "Hz"
-    },
-    {
-     "id": "depth",
-     "name": "Mod depth",
-     "min": 1000,
-     "max": 8000,
-     "default": 4000,
-     "unit": "cents"
-    },
-    {
-     "id": "stages",
-     "name": "# Stages",
-     "min": null,
-     "max": null,
-     "default": "6",
-     "unit": null
-    },
-    {
-     "id": "feedback",
-     "name": "Feedback",
-     "min": 0,
-     "max": 0.8,
-     "default": 0.3,
-     "unit": null
     }
    ]
   },
@@ -986,35 +835,6 @@
      "max": 12000,
      "default": 7000,
      "unit": "Hz"
-    }
-   ]
-  },
-  {
-   "type": "pitch-spectral",
-   "name": "Digital Detuner",
-   "short": "Spectral",
-   "category": "pitch",
-   "engine": "plugin",
-   "plugin": "Spectral Shift",
-   "color": "#b06cf0",
-   "glyph": "♭",
-   "icon": "♭",
-   "params": [
-    {
-     "id": "shift",
-     "name": "Pitch (semitones)",
-     "min": -12,
-     "max": 12,
-     "default": 0,
-     "unit": "st"
-    },
-    {
-     "id": "formant_comp",
-     "name": "Formant Compensation",
-     "min": null,
-     "max": null,
-     "default": false,
-     "unit": null
     }
    ]
   },
@@ -1575,189 +1395,6 @@
    "params": []
   },
   {
-   "type": "delay-tape",
-   "name": "Tape Delay",
-   "short": "Tape",
-   "category": "delay",
-   "engine": "plugin",
-   "plugin": "Calf Vintage Delay",
-   "color": "#8a94a3",
-   "glyph": "⟲",
-   "icon": "⟲",
-   "params": [
-    {
-     "id": "time",
-     "name": "Time L",
-     "min": 1,
-     "max": 16,
-     "default": "dotted 8th",
-     "unit": null
-    },
-    {
-     "id": "time_r",
-     "name": "Time R",
-     "min": 1,
-     "max": 16,
-     "default": "5 16ths",
-     "unit": null
-    },
-    {
-     "id": "tempo",
-     "name": "BPM",
-     "min": 60,
-     "max": 300,
-     "default": 120,
-     "unit": "bpm"
-    },
-    {
-     "id": "feedback",
-     "name": "Feedback",
-     "min": 0,
-     "max": 80,
-     "default": 40,
-     "unit": "%"
-    },
-    {
-     "id": "mix",
-     "name": "Wet",
-     "min": 0,
-     "max": 100,
-     "default": 30,
-     "unit": "%"
-    },
-    {
-     "id": "medium",
-     "name": "Medium",
-     "min": 0,
-     "max": 2,
-     "default": "Tape",
-     "unit": null
-    }
-   ]
-  },
-  {
-   "type": "delay-tape-aw",
-   "name": "Tape Delay (Airwindows)",
-   "short": "Tape",
-   "category": "delay",
-   "engine": "plugin",
-   "plugin": "VST: TapeDelay2 (airwindows)",
-   "color": "#8a94a3",
-   "glyph": "⟲",
-   "icon": "⟲",
-   "params": [
-    {
-     "id": "time",
-     "name": "Time",
-     "min": null,
-     "max": null,
-     "default": "350 ms",
-     "unit": null
-    },
-    {
-     "id": "regen",
-     "name": "Regen",
-     "min": 0,
-     "max": 100,
-     "default": 35,
-     "unit": "%"
-    },
-    {
-     "id": "tone",
-     "name": "Freq",
-     "min": 0,
-     "max": 100,
-     "default": 50,
-     "unit": "%"
-    },
-    {
-     "id": "reso",
-     "name": "Reso",
-     "min": 0,
-     "max": 100,
-     "default": 0,
-     "unit": "%"
-    },
-    {
-     "id": "flutter",
-     "name": "Flutter",
-     "min": 0,
-     "max": 100,
-     "default": 15,
-     "unit": "%"
-    },
-    {
-     "id": "mix",
-     "name": "Dry/Wet",
-     "min": 0,
-     "max": 100,
-     "default": 30,
-     "unit": "%"
-    }
-   ]
-  },
-  {
-   "type": "delay-echo",
-   "name": "Echo Cat",
-   "short": "Echo",
-   "category": "delay",
-   "engine": "plugin",
-   "plugin": "GxEchoCat",
-   "color": "#8a94a3",
-   "glyph": "↺",
-   "icon": "↺",
-   "params": [
-    {
-     "id": "time",
-     "name": "BPM",
-     "min": 60,
-     "max": 240,
-     "default": 120,
-     "unit": "bpm"
-    },
-    {
-     "id": "repeats",
-     "name": "Sustain",
-     "min": 0,
-     "max": 100,
-     "default": 30,
-     "unit": "%"
-    },
-    {
-     "id": "mix",
-     "name": "Swell",
-     "min": 0,
-     "max": 100,
-     "default": 35,
-     "unit": "%"
-    },
-    {
-     "id": "input",
-     "name": "Input",
-     "min": 0,
-     "max": 100,
-     "default": 25,
-     "unit": "%"
-    },
-    {
-     "id": "head1",
-     "name": "Head 1",
-     "min": null,
-     "max": null,
-     "default": false,
-     "unit": null
-    },
-    {
-     "id": "head2",
-     "name": "Head 2",
-     "min": null,
-     "max": null,
-     "default": false,
-     "unit": null
-    }
-   ]
-  },
-  {
    "type": "reverb-plate",
    "name": "Plate Reverb",
    "short": "Plate",
@@ -1946,67 +1583,6 @@
    ]
   },
   {
-   "type": "eq-para",
-   "name": "Parametric EQ",
-   "short": "PEQ",
-   "category": "eq",
-   "engine": "plugin",
-   "plugin": "x42-eq - Parametric Equalizer Mono",
-   "color": "#8a94a3",
-   "glyph": "∿",
-   "icon": "∿",
-   "params": [
-    {
-     "id": "lowcut_on",
-     "name": "Highpass",
-     "min": null,
-     "max": null,
-     "default": true,
-     "unit": null
-    },
-    {
-     "id": "lowcut",
-     "name": "Highpass Frequency",
-     "min": 20,
-     "max": 250,
-     "default": 80,
-     "unit": "Hz"
-    },
-    {
-     "id": "bass",
-     "name": "Lowshelf Gain",
-     "min": -12,
-     "max": 12,
-     "default": 0,
-     "unit": "dB"
-    },
-    {
-     "id": "f1",
-     "name": "Frequency 1",
-     "min": 60,
-     "max": 600,
-     "default": 160,
-     "unit": "Hz"
-    },
-    {
-     "id": "g1",
-     "name": "Gain 1",
-     "min": -12,
-     "max": 12,
-     "default": 0,
-     "unit": "dB"
-    },
-    {
-     "id": "f2",
-     "name": "Frequency 2",
-     "min": 200,
-     "max": 2000,
-     "default": 500,
-     "unit": "Hz"
-    }
-   ]
-  },
-  {
    "type": "eq-graphic",
    "name": "Graphic EQ",
    "short": "GEQ",
@@ -2020,48 +1596,48 @@
     {
      "id": "g1",
      "name": "G1",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     },
     {
      "id": "g2",
      "name": "G2",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     },
     {
      "id": "g3",
      "name": "G3",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     },
     {
      "id": "g4",
      "name": "G4",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     },
     {
      "id": "g5",
      "name": "G5",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     },
     {
      "id": "g6",
      "name": "G6",
-     "min": -12,
-     "max": 12,
+     "min": -15,
+     "max": 15,
      "default": 0,
      "unit": "dB"
     }
@@ -2369,9 +1945,9 @@
     {
      "id": "freeze",
      "name": "Freeze",
-     "min": 0,
-     "max": 1,
-     "default": 0,
+     "min": null,
+     "max": null,
+     "default": false,
      "unit": null
     },
     {
@@ -2490,7 +2066,7 @@
      "name": "Fast Correction",
      "min": null,
      "max": null,
-     "default": false,
+     "default": true,
      "unit": null
     },
     {
@@ -2510,12 +2086,12 @@
      "unit": null
     },
     {
-     "id": "offset",
-     "name": "Offset",
-     "min": -2,
-     "max": 2,
-     "default": 0,
-     "unit": "st"
+     "id": "song_key",
+     "name": null,
+     "min": null,
+     "max": null,
+     "default": true,
+     "unit": null
     }
    ]
   },
@@ -2626,128 +2202,6 @@
      "min": 0,
      "max": 1,
      "default": 0,
-     "unit": null
-    }
-   ]
-  },
-  {
-   "type": "rezfilter",
-   "name": "Resonant Filter",
-   "short": "RezFilter",
-   "category": "filter",
-   "engine": "plugin",
-   "plugin": "MDA RezFilter",
-   "color": "#5ec8e0",
-   "glyph": "◇",
-   "icon": null,
-   "params": [
-    {
-     "id": "freq",
-     "name": "Freq",
-     "min": 0,
-     "max": 1,
-     "default": 0.5,
-     "unit": null
-    },
-    {
-     "id": "res",
-     "name": "Res",
-     "min": 0,
-     "max": 1,
-     "default": 0.6,
-     "unit": null
-    },
-    {
-     "id": "env",
-     "name": "Env->VCF",
-     "min": 0,
-     "max": 1,
-     "default": 0.4,
-     "unit": null
-    },
-    {
-     "id": "attack",
-     "name": "Attack",
-     "min": 0,
-     "max": 1,
-     "default": 0.35,
-     "unit": null
-    },
-    {
-     "id": "release",
-     "name": "Release",
-     "min": 0,
-     "max": 1,
-     "default": 0.5,
-     "unit": null
-    },
-    {
-     "id": "lfodepth",
-     "name": "LFO->VCF",
-     "min": 0,
-     "max": 1,
-     "default": 0,
-     "unit": null
-    }
-   ]
-  },
-  {
-   "type": "surge-spring",
-   "name": "Spring Reverb",
-   "short": "Spring",
-   "category": "reverb",
-   "engine": "plugin",
-   "plugin": "Surge XT Effects",
-   "color": "#5a7cff",
-   "glyph": "♨",
-   "icon": null,
-   "params": [
-    {
-     "id": "size",
-     "name": "FX Parameter 0",
-     "min": 0,
-     "max": 1,
-     "default": 0.5,
-     "unit": null
-    },
-    {
-     "id": "decay",
-     "name": "FX Parameter 1",
-     "min": 0,
-     "max": 1,
-     "default": 0.55,
-     "unit": null
-    },
-    {
-     "id": "refl",
-     "name": "FX Parameter 2",
-     "min": 0,
-     "max": 1,
-     "default": 0.5,
-     "unit": null
-    },
-    {
-     "id": "damp",
-     "name": "FX Parameter 3",
-     "min": 0,
-     "max": 1,
-     "default": 0.45,
-     "unit": null
-    },
-    {
-     "id": "spin",
-     "name": "FX Parameter 4",
-     "min": 0,
-     "max": 1,
-     "default": 0.35,
-     "unit": null
-    },
-    {
-     "id": "chaos",
-     "name": "FX Parameter 5",
-     "min": 0,
-     "max": 1,
-     "default": 0.15,
      "unit": null
     }
    ]
@@ -3145,67 +2599,6 @@
    ]
   },
   {
-   "type": "freeze",
-   "name": "Freeze",
-   "short": "Frz",
-   "category": "reverb",
-   "engine": "plugin",
-   "plugin": "CLAP: GoleM Freeze (GoleM)",
-   "color": "#6cc8f0",
-   "glyph": "❄",
-   "icon": "❄",
-   "params": [
-    {
-     "id": "freeze",
-     "name": "Freeze",
-     "min": null,
-     "max": null,
-     "default": false,
-     "unit": null
-    },
-    {
-     "id": "mix",
-     "name": "Mix",
-     "min": 0,
-     "max": 100,
-     "default": 80,
-     "unit": "%"
-    },
-    {
-     "id": "decay",
-     "name": "Decay",
-     "min": 0.05,
-     "max": 10,
-     "default": 0.6,
-     "unit": "s"
-    },
-    {
-     "id": "smear",
-     "name": "Smear",
-     "min": 0,
-     "max": 100,
-     "default": 20,
-     "unit": "%"
-    },
-    {
-     "id": "tone",
-     "name": "Tone",
-     "min": 0,
-     "max": 100,
-     "default": 50,
-     "unit": "%"
-    },
-    {
-     "id": "window",
-     "name": "Window",
-     "min": 0,
-     "max": 2,
-     "default": "2048",
-     "unit": null
-    }
-   ]
-  },
-  {
    "type": "guitar-drive",
    "name": "Guitar Drive",
    "short": "Drive",
@@ -3319,6 +2712,828 @@
    "glyph": "◈",
    "icon": "◈",
    "params": []
+  },
+  {
+   "type": "swell",
+   "name": "Auto Swell",
+   "short": "Swell",
+   "category": "dynamics",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Swell (GoleM)",
+   "color": "#4a5a6e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "rise",
+     "name": "Rise",
+     "min": 5,
+     "max": 4000,
+     "default": 300,
+     "unit": "ms"
+    },
+    {
+     "id": "sens",
+     "name": "Sensitivity",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "legato",
+     "name": "Legato",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "curve",
+     "name": "Curve",
+     "min": null,
+     "max": null,
+     "default": "Square",
+     "unit": null
+    },
+    {
+     "id": "depth",
+     "name": "Depth",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    }
+   ]
+  },
+  {
+   "type": "transient",
+   "name": "Transient Shaper",
+   "short": "Transient",
+   "category": "dynamics",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Transient (GoleM)",
+   "color": "#4a5a6e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "attack",
+     "name": "Attack",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "sustain",
+     "name": "Sustain",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "att_time",
+     "name": "Attack Length",
+     "min": 1,
+     "max": 100,
+     "default": 15,
+     "unit": "ms"
+    },
+    {
+     "id": "sus_time",
+     "name": "Sustain Length",
+     "min": 20,
+     "max": 3000,
+     "default": 300,
+     "unit": "ms"
+    },
+    {
+     "id": "att_band",
+     "name": "Attack Band",
+     "min": null,
+     "max": null,
+     "default": "Full",
+     "unit": null
+    },
+    {
+     "id": "ceil_mode",
+     "name": "Ceiling",
+     "min": null,
+     "max": null,
+     "default": "Off",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "mb-comp",
+   "name": "Multiband Comp",
+   "short": "Bands",
+   "category": "dynamics",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX MB Comp (GoleM)",
+   "color": "#4a5a6e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "amount",
+     "name": "Amount",
+     "min": 0,
+     "max": 200,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "tilt",
+     "name": "Tilt",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "time",
+     "name": "Time",
+     "min": 10,
+     "max": 400,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "character",
+     "name": "Character",
+     "min": null,
+     "max": null,
+     "default": "Clean",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "ducker",
+   "name": "Ducker",
+   "short": "Duck",
+   "category": "dynamics",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Ducker (GoleM)",
+   "color": "#4a5a6e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "mode",
+     "name": "Mode",
+     "min": null,
+     "max": null,
+     "default": "Follow",
+     "unit": null
+    },
+    {
+     "id": "thresh",
+     "name": "Threshold",
+     "min": -90,
+     "max": 0,
+     "default": -40,
+     "unit": "dB"
+    },
+    {
+     "id": "depth",
+     "name": "Depth",
+     "min": 0,
+     "max": 60,
+     "default": 12,
+     "unit": "dB"
+    },
+    {
+     "id": "hold",
+     "name": "Hold",
+     "min": 0,
+     "max": 2000,
+     "default": 150,
+     "unit": "ms"
+    },
+    {
+     "id": "release",
+     "name": "Release",
+     "min": 10,
+     "max": 5000,
+     "default": 400,
+     "unit": "ms"
+    },
+    {
+     "id": "shape",
+     "name": "Band",
+     "min": null,
+     "max": null,
+     "default": "Wide",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "widener",
+   "name": "Stereo Widener",
+   "short": "Wide",
+   "category": "utility",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Widener (GoleM)",
+   "color": "#c0e0f8",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "mode",
+     "name": "Mode",
+     "min": null,
+     "max": null,
+     "default": "Velvet",
+     "unit": null
+    },
+    {
+     "id": "amount",
+     "name": "Amount",
+     "min": 0,
+     "max": 100,
+     "default": 60,
+     "unit": "%"
+    },
+    {
+     "id": "width",
+     "name": "Width",
+     "min": 0,
+     "max": 200,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "time",
+     "name": "Time",
+     "min": 1,
+     "max": 40,
+     "default": 20,
+     "unit": "ms"
+    },
+    {
+     "id": "bass_keep",
+     "name": "Bass Keep",
+     "min": 0,
+     "max": 500,
+     "default": 120,
+     "unit": "Hz"
+    },
+    {
+     "id": "mono_law",
+     "name": "Mono Law",
+     "min": null,
+     "max": null,
+     "default": "Exact",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "bass-di",
+   "name": "Bass DI",
+   "short": "BassDI",
+   "category": "preamp",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Bass DI (GoleM)",
+   "color": "#b316c0",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "gain",
+     "name": "Drive",
+     "min": 0,
+     "max": 100,
+     "default": 35,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Blend",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "bass",
+     "name": "Bass",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "treble",
+     "name": "Treble",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "model",
+     "name": "Model",
+     "min": null,
+     "max": null,
+     "default": "Modern",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "tape",
+   "name": "Tape",
+   "short": "Tape",
+   "category": "lofi",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Tape (GoleM)",
+   "color": "#d8c8a0",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "input",
+     "name": "Record",
+     "min": -12,
+     "max": 24,
+     "default": 6,
+     "unit": "dB"
+    },
+    {
+     "id": "wow",
+     "name": "Wow",
+     "min": 0,
+     "max": 4,
+     "default": 0.1,
+     "unit": "%"
+    },
+    {
+     "id": "flutter",
+     "name": "Flutter",
+     "min": 0,
+     "max": 1,
+     "default": 0.05,
+     "unit": "%"
+    },
+    {
+     "id": "wear",
+     "name": "Wear",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "model",
+     "name": "Model",
+     "min": null,
+     "max": null,
+     "default": "Studio Reel",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "dist",
+   "name": "Dist",
+   "short": "Dist",
+   "category": "drive",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Dist (GoleM)",
+   "color": "#c8160e",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "circuit",
+     "name": "Circuit",
+     "min": null,
+     "max": null,
+     "default": "Op-Amp Dist",
+     "unit": null
+    },
+    {
+     "id": "gain",
+     "name": "Gain",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "tone_stack",
+     "name": "Tone",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB"
+    }
+   ]
+  },
+  {
+   "type": "fuzz",
+   "name": "Fuzz",
+   "short": "Fuzz",
+   "category": "drive",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Fuzz (GoleM)",
+   "color": "#b0602a",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "fuzz",
+     "name": "Fuzz",
+     "min": 0,
+     "max": 100,
+     "default": 70,
+     "unit": "%"
+    },
+    {
+     "id": "tone",
+     "name": "Tone",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "guitar_vol",
+     "name": "Guitar Vol",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "model",
+     "name": "Model",
+     "min": null,
+     "max": null,
+     "default": "Ge Pair",
+     "unit": null
+    },
+    {
+     "id": "buffer",
+     "name": "Buffer",
+     "min": null,
+     "max": null,
+     "default": false,
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "radio",
+   "name": "Radio",
+   "short": "Radio",
+   "category": "lofi",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Radio (GoleM)",
+   "color": "#4b5320",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "model",
+     "name": "Model",
+     "min": null,
+     "max": null,
+     "default": "Telephone",
+     "unit": null
+    },
+    {
+     "id": "drive",
+     "name": "Drive",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "noise",
+     "name": "Noise",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "distance",
+     "name": "Distance",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "tune",
+     "name": "Tune",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    }
+   ]
+  },
+  {
+   "type": "vocoder",
+   "name": "Vocoder",
+   "short": "Vocoder",
+   "category": "modulation",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Vocoder (GoleM)",
+   "color": "#00a84f",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "source",
+     "name": "Carrier",
+     "min": null,
+     "max": null,
+     "default": "Tracked",
+     "unit": null
+    },
+    {
+     "id": "chord",
+     "name": "Chord",
+     "min": null,
+     "max": null,
+     "default": "Unison",
+     "unit": null
+    },
+    {
+     "id": "formant",
+     "name": "Formant",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "st"
+    },
+    {
+     "id": "env_rel",
+     "name": "Release",
+     "min": 20,
+     "max": 2000,
+     "default": 40,
+     "unit": "ms"
+    },
+    {
+     "id": "sib",
+     "name": "Sibilance",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    }
+   ]
+  },
+  {
+   "type": "acoustic-sim",
+   "name": "Acoustic Sim",
+   "short": "Acoustic",
+   "category": "amp",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Acoustic (GoleM)",
+   "color": "#552210",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "model",
+     "name": "Model",
+     "min": null,
+     "max": null,
+     "default": "Dreadnought",
+     "unit": null
+    },
+    {
+     "id": "body",
+     "name": "Body",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "top",
+     "name": "Top",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "mic",
+     "name": "Mic",
+     "min": 0,
+     "max": 100,
+     "default": 75,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "twelve",
+     "name": "12-String",
+     "min": null,
+     "max": null,
+     "default": false,
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "sustainer",
+   "name": "Sustainer",
+   "short": "Feedback",
+   "category": "pitch",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Sustainer (GoleM)",
+   "color": "#c4148c",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "harmonic",
+     "name": "Harmonic",
+     "min": null,
+     "max": null,
+     "default": "Octave",
+     "unit": null
+    },
+    {
+     "id": "delay",
+     "name": "Onset Delay",
+     "min": 0,
+     "max": 3000,
+     "default": 300,
+     "unit": "ms"
+    },
+    {
+     "id": "rise",
+     "name": "Rise",
+     "min": 50,
+     "max": 6000,
+     "default": 1200,
+     "unit": "ms"
+    },
+    {
+     "id": "bloom",
+     "name": "Bloom",
+     "min": -24,
+     "max": 6,
+     "default": -6,
+     "unit": "dB"
+    },
+    {
+     "id": "dry",
+     "name": "Dry",
+     "min": -60,
+     "max": 0,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "mode",
+     "name": "Mode",
+     "min": null,
+     "max": null,
+     "default": "Feedback",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "polysynth",
+   "name": "Poly Synth",
+   "short": "Synth",
+   "category": "pitch",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Polysynth (GoleM)",
+   "color": "#ff9ecf",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "engine",
+     "name": "Engine",
+     "min": null,
+     "max": null,
+     "default": "Spectral",
+     "unit": null
+    },
+    {
+     "id": "wave",
+     "name": "Wave",
+     "min": null,
+     "max": null,
+     "default": "Saw",
+     "unit": null
+    },
+    {
+     "id": "cutoff",
+     "name": "Cutoff",
+     "min": 40,
+     "max": 12000,
+     "default": 3000,
+     "unit": "Hz"
+    },
+    {
+     "id": "reso",
+     "name": "Resonance",
+     "min": 0,
+     "max": 100,
+     "default": 20,
+     "unit": "%"
+    },
+    {
+     "id": "filt_env",
+     "name": "Env Amount",
+     "min": -48,
+     "max": 48,
+     "default": 24,
+     "unit": "st"
+    },
+    {
+     "id": "synth",
+     "name": "Synth",
+     "min": -60,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    }
+   ]
   }
  ],
  "pedals": [

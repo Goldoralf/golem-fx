@@ -18,16 +18,21 @@
 //! Everything is fixed-size: a [`Plan`] is built once per layout and sample rate (`prepare`), and the
 //! per-tick work allocates nothing. The sections' centres never move, so each one caches the fitting
 //! grid of the matched design ([`FixedBell`]).
+//!
+//! **Plan specs** ([`PlanSpec`]): gfx-geq's faders with fill-ins ([`PlanSpec::GEQ`], what
+//! [`Plan::new`] builds), or a fixed band list without fill-ins whose targets are given at the design
+//! points directly ([`PlanSpec::THIRDS`]: gfx-spectralcomp's 27 third-octave bells, c = 0.5, ±40 dB,
+//! two outer design points). The bell constant c and the gain clamp are per plan.
 
 use crate::matched::{Analog, Biquad};
 use std::f64::consts::PI;
 
-/// Most faders of a layout.
-pub const MAX_BANDS: usize = 11;
-/// Most sections (faders + fill-ins): Octave 11 has 20.
-pub const MAX_SECTIONS: usize = 20;
-/// Most design points: the sections and the midpoints between them.
-pub const MAX_POINTS: usize = 2 * MAX_SECTIONS - 1;
+/// Most faders (bands) of a layout: gfx-spectralcomp's 27 third-octave bands.
+pub const MAX_BANDS: usize = 27;
+/// Most sections (faders + fill-ins): Octave 11 has 20, gfx-spectralcomp 27.
+pub const MAX_SECTIONS: usize = 27;
+/// Most design points: the sections, the midpoints between them and two outer points.
+pub const MAX_POINTS: usize = 2 * MAX_SECTIONS + 1;
 
 /// A section's dB gain at its edges, as a fraction of its peak gain (ACGE's c; 0.3 with one bell per band).
 pub const EDGE_GAIN: f64 = 0.4;
@@ -35,7 +40,7 @@ pub const EDGE_GAIN: f64 = 0.4;
 pub const PROTO_DB: f64 = 15.0;
 /// Tikhonov regularisation of the pseudo-inverse.
 pub const LAMBDA: f64 = 1e-3;
-/// Largest filter gain the solver may ask for (dB).
+/// Largest filter gain the solver may ask for (dB), gfx-geq's plan ([`PlanSpec::clamp_db`] per plan).
 pub const GAIN_CLAMP_DB: f64 = 30.0;
 /// A correction below this (dB, every section) is converged.
 pub const TOLERANCE_DB: f64 = 0.005;
@@ -50,11 +55,44 @@ const FILL_GAP_OCT: f64 = 0.7;
 const FILL_MIN_OCT: f64 = 0.5;
 /// Sections above this fraction of the sample rate are dropped (never at 44.1 kHz or above).
 const TOP: f64 = 0.45;
+/// The upper outer design point never goes above this fraction of the sample rate.
+const OUTER_TOP: f64 = 0.47;
+
+/// How a [`Plan`] is built from its band list.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PlanSpec {
+    /// Fill-in sections between the bands (gfx-geq), or one section per band.
+    pub fill_ins: bool,
+    /// The bells' dB gain at their edges, as a fraction of their peak's (ACGE's c).
+    pub edge_gain: f64,
+    /// Largest section gain (dB).
+    pub clamp_db: f64,
+    /// Design-point weights: at a band's section, at a fill-in, at a midpoint between two sections.
+    pub w_band: f64,
+    pub w_fill: f64,
+    pub w_mid: f64,
+    /// Weight of the two outer points, half a gap below the first section and above the last
+    /// (capped at 0.47 fs); 0 = no outer points.
+    pub w_outer: f64,
+}
+
+impl PlanSpec {
+    /// gfx-geq's plan: fill-ins, c = 0.4, ±30 dB, weights 1 / 0.15 / 0.05, no outer points.
+    pub const GEQ: Self = Self { fill_ins: true, edge_gain: EDGE_GAIN, clamp_db: GAIN_CLAMP_DB, w_band: WEIGHT_FADER, w_fill: WEIGHT_FILL, w_mid: WEIGHT_MID, w_outer: 0.0 };
+    /// gfx-spectralcomp's Live plan (its README §2.6, Review change 8): one bell per band, c = 0.5,
+    /// ±40 dB, weights 1 at the centres, 0.5 at the midpoints, 0.25 at the two outer points.
+    pub const THIRDS: Self = Self { fill_ins: false, edge_gain: 0.5, clamp_db: 40.0, w_band: 1.0, w_fill: 0.0, w_mid: 0.5, w_outer: 0.25 };
+}
 
 /// The section grid of a fader layout: the faders and the fill-ins between them, ascending. Returns
 /// the section count; `is_fader[k]` tells a fader's section from a fill-in. Sections above 0.45 fs
 /// are dropped.
 pub fn sections(faders: &[f64], sample_rate: f64, freq: &mut [f64; MAX_SECTIONS], is_fader: &mut [bool; MAX_SECTIONS]) -> usize {
+    sections_with(faders, sample_rate, true, freq, is_fader)
+}
+
+/// [`sections`], with or without the fill-ins.
+pub fn sections_with(faders: &[f64], sample_rate: f64, fill_ins: bool, freq: &mut [f64; MAX_SECTIONS], is_fader: &mut [bool; MAX_SECTIONS]) -> usize {
     assert!(!faders.is_empty() && faders.len() <= MAX_BANDS, "1 – {MAX_BANDS} faders");
     let mut n = 0;
     let mut push = |f: f64, fader: bool| {
@@ -71,6 +109,9 @@ pub fn sections(faders: &[f64], sample_rate: f64, freq: &mut [f64; MAX_SECTIONS]
         let mut k = (gap / FILL_GAP_OCT).ceil().max(1.0) as usize;
         if gap >= FILL_MIN_OCT {
             k = k.max(2);
+        }
+        if !fill_ins {
+            k = 1;
         }
         for j in 1..k {
             push(w[0] * (gap * j as f64 / k as f64).exp2(), false);
@@ -303,14 +344,22 @@ pub struct Plan {
     phi: [Phi; MAX_POINTS],
     /// the regularised pseudo-inverse, P[section][point]
     p: [[f64; MAX_POINTS]; MAX_SECTIONS],
+    edge_gain: f64,
+    clamp_db: f64,
 }
 
 impl Plan {
-    /// The plan of `faders` (Hz, ascending) at `sample_rate`. Allocation-free, a few tens of µs.
+    /// The plan of `faders` (Hz, ascending) at `sample_rate` (gfx-geq's [`PlanSpec::GEQ`).
+    /// Allocation-free, a few tens of µs.
     pub fn new(faders: &[f64], sample_rate: f64) -> Self {
+        Self::with_spec(faders, sample_rate, &PlanSpec::GEQ)
+    }
+
+    /// The plan of `bands` (Hz, ascending) at `sample_rate`, built as `spec` says.
+    pub fn with_spec(faders: &[f64], sample_rate: f64, spec: &PlanSpec) -> Self {
         let mut freq = [0.0; MAX_SECTIONS];
         let mut is_fader = [false; MAX_SECTIONS];
-        let n = sections(faders, sample_rate, &mut freq, &mut is_fader);
+        let n = sections_with(faders, sample_rate, spec.fill_ins, &mut freq, &mut is_fader);
         let mut s = Self {
             sample_rate,
             n_bands: faders.len(),
@@ -326,6 +375,8 @@ impl Plan {
             log_points: [0.0; MAX_POINTS],
             phi: [Phi::default(); MAX_POINTS],
             p: [[0.0; MAX_POINTS]; MAX_SECTIONS],
+            edge_gain: spec.edge_gain,
+            clamp_db: spec.clamp_db,
         };
         for (k, &f) in faders.iter().enumerate() {
             s.bands[k] = f;
@@ -348,14 +399,25 @@ impl Plan {
         }
         // design points: the sections and the midpoints between them, with their weights
         let mut w = [0.0; MAX_POINTS];
+        let outer = spec.w_outer > 0.0 && n >= 2;
+        if outer {
+            s.points[s.np] = freq[0] / (freq[1] / freq[0]).sqrt();
+            w[s.np] = spec.w_outer;
+            s.np += 1;
+        }
         for m in 0..n {
             if m > 0 {
                 s.points[s.np] = (freq[m - 1] * freq[m]).sqrt();
-                w[s.np] = WEIGHT_MID;
+                w[s.np] = spec.w_mid;
                 s.np += 1;
             }
             s.points[s.np] = freq[m];
-            w[s.np] = if is_fader[m] { WEIGHT_FADER } else { WEIGHT_FILL };
+            w[s.np] = if is_fader[m] { spec.w_band } else { spec.w_fill };
+            s.np += 1;
+        }
+        if outer {
+            s.points[s.np] = (freq[n - 1] * (freq[n - 1] / freq[n - 2]).sqrt()).min(OUTER_TOP * sample_rate);
+            w[s.np] = spec.w_outer;
             s.np += 1;
         }
         for k in 0..s.np {
@@ -366,7 +428,7 @@ impl Plan {
         let np = s.np;
         let mut b = [[0.0; MAX_SECTIONS]; MAX_POINTS];
         for m in 0..n {
-            let d = s.bells[m].design(bell_q(PROTO_DB, s.edge[m], EDGE_GAIN), PROTO_DB);
+            let d = s.bells[m].design(bell_q(PROTO_DB, s.edge[m], spec.edge_gain), PROTO_DB);
             for k in 0..np {
                 b[k][m] = 10.0 * s.phi[k].mag2(&d).log10() / PROTO_DB;
             }
@@ -438,6 +500,14 @@ impl Plan {
     pub fn points(&self) -> &[f64] {
         &self.points[..self.np]
     }
+    /// The bells' edge-gain constant c of this plan.
+    pub fn edge_gain(&self) -> f64 {
+        self.edge_gain
+    }
+    /// The largest section gain of this plan (dB).
+    pub fn clamp_db(&self) -> f64 {
+        self.clamp_db
+    }
 
     /// The fader curve: a monotone cubic in log-frequency through `fader_db`.
     pub fn curve(&self, fader_db: &[f64]) -> Pchip {
@@ -455,7 +525,7 @@ impl Plan {
     /// The matched design of section `m` at `gain_db`.
     #[inline]
     pub fn design(&self, m: usize, gain_db: f64) -> Biquad {
-        self.bells[m].design(bell_q(gain_db, self.edge[m], EDGE_GAIN), gain_db)
+        self.bells[m].design(bell_q(gain_db, self.edge[m], self.edge_gain), gain_db)
     }
 
     /// Designs every section from its gain.
@@ -482,11 +552,49 @@ impl Plan {
             for k in 0..self.np {
                 dg += self.p[m][k] * e[k];
             }
-            let new = (g[m] + dg).clamp(-GAIN_CLAMP_DB, GAIN_CLAMP_DB);
+            let new = (g[m] + dg).clamp(-self.clamp_db, self.clamp_db);
             worst = worst.max((new - g[m]).abs());
             g[m] = new;
         }
         self.designs(g, designs);
+        worst
+    }
+
+    /// [`Plan::correct`] for a solver that runs every few milliseconds on many sections
+    /// (gfx-spectralcomp): the same chord step, with the cascade's response read from each design's
+    /// three numerator and denominator terms (products over the sections, one division per point
+    /// instead of one per section), and a section whose gain moved by less than `skip_db` keeps its
+    /// design. Equal to `correct` up to rounding when `skip_db` is 0. Returns the largest |Δg| (dB).
+    pub fn correct_lean(&self, t: &[f64; MAX_POINTS], g: &mut [f64; MAX_SECTIONS], designs: &mut [Biquad; MAX_SECTIONS], skip_db: f64) -> f64 {
+        // |H|² = (n0 p0 + n1 p1 − n2 p2) / (d0 p0 + d1 p1 − d2 p2) per section
+        let mut nd = [[0.0f64; 6]; MAX_SECTIONS];
+        for (m, b) in designs[..self.n].iter().enumerate() {
+            nd[m] = [(b.b0 + b.b1 + b.b2).powi(2), (b.b0 - b.b1 + b.b2).powi(2), 4.0 * b.b0 * b.b2, (1.0 + b.a1 + b.a2).powi(2), (1.0 - b.a1 + b.a2).powi(2), 4.0 * b.a2];
+        }
+        let mut e = [0.0; MAX_POINTS];
+        for k in 0..self.np {
+            let ph = &self.phi[k];
+            let (mut num, mut den) = (1.0f64, 1.0f64);
+            for c in &nd[..self.n] {
+                num *= c[0] * ph.p0 + c[1] * ph.p1 - c[2] * ph.p2;
+                den *= (c[3] * ph.p0 + c[4] * ph.p1 - c[5] * ph.p2).max(1e-300);
+            }
+            e[k] = t[k] - 10.0 * (num / den).max(1e-300).log10();
+        }
+        let mut worst = 0.0f64;
+        for m in 0..self.n {
+            let mut dg = 0.0;
+            for k in 0..self.np {
+                dg += self.p[m][k] * e[k];
+            }
+            let new = (g[m] + dg).clamp(-self.clamp_db, self.clamp_db);
+            let d = (new - g[m]).abs();
+            worst = worst.max(d);
+            if d > skip_db || (new == 0.0) != (g[m] == 0.0) {
+                g[m] = new;
+                designs[m] = self.design(m, new);
+            }
+        }
         worst
     }
 
@@ -500,7 +608,7 @@ impl Plan {
                 for k in 0..self.np {
                     acc += self.p[m][k] * t[k];
                 }
-                g[m] = acc.clamp(-GAIN_CLAMP_DB, GAIN_CLAMP_DB);
+                g[m] = acc.clamp(-self.clamp_db, self.clamp_db);
             }
         }
         self.designs(g, designs);
@@ -596,6 +704,77 @@ mod tests {
                 assert!((v - 6.0).abs() < 1e-12);
             }
         }
+    }
+
+    const THIRDS: [f64; 27] = [
+        40.0, 50.0, 63.0, 80.0, 100.0, 125.0, 160.0, 200.0, 250.0, 315.0, 400.0, 500.0, 630.0, 800.0, 1000.0, 1250.0, 1600.0, 2000.0, 2500.0, 3150.0, 4000.0,
+        5000.0, 6300.0, 8000.0, 10000.0, 12500.0, 16000.0,
+    ];
+
+    /// The fixed band list (gfx-spectralcomp): no fill-ins, 55 design points (two outer), c and the
+    /// clamp per plan; a smooth two-thirds-octave dip given at the points converges, and a flat
+    /// target is exactly flat.
+    #[test]
+    fn thirds_plan_without_fill_ins() {
+        for &sr in &[44100.0, 48000.0, 96000.0, 192000.0] {
+            let plan = Plan::with_spec(&THIRDS, sr, &PlanSpec::THIRDS);
+            assert_eq!(plan.len(), 27);
+            assert_eq!(plan.points().len(), 55);
+            assert!(plan.points().windows(2).all(|w| w[1] > w[0]));
+            assert!((plan.points()[0] - 40.0 / (50.0f64 / 40.0).sqrt()).abs() < 1e-9);
+            assert!(*plan.points().last().unwrap() <= 0.47 * sr);
+            assert_eq!(plan.edge_gain(), 0.5);
+            assert_eq!(plan.clamp_db(), 40.0);
+            let mut t = [0.0; MAX_POINTS];
+            let mut g = [1.0; MAX_SECTIONS];
+            let mut d = [Biquad { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 }; MAX_SECTIONS];
+            plan.solve(&t, &mut g, &mut d);
+            assert!(g.iter().all(|&x| x == 0.0));
+            // −12 dB at 1 kHz, falling to half at ±1/3 octave and 0 at ±2/3 (the target rule's shape)
+            for (k, &f) in plan.points().iter().enumerate() {
+                let o = (f / 1000.0).log2().abs();
+                t[k] = -12.0 * (1.0 - 1.5 * o).max(0.0);
+            }
+            plan.solve(&t, &mut g, &mut d);
+            for &f in &[800.0, 1000.0, 1250.0, 2000.0, 500.0] {
+                let want = -12.0 * (1.0 - 1.5 * (f / 1000.0f64).log2().abs()).max(0.0);
+                let r = plan.response_db(&d, f);
+                assert!((r - want).abs() < 1.0, "{sr} Hz rate, {f} Hz: {r:.2} vs {want:.2}");
+            }
+            assert!(g.iter().all(|v| v.abs() <= 40.0));
+        }
+        // the lean correction is the same step (skip 0), and converges to the same gains
+        let plan = Plan::with_spec(&THIRDS, 48000.0, &PlanSpec::THIRDS);
+        let mut t = [0.0; MAX_POINTS];
+        for (k, &f) in plan.points().iter().enumerate() {
+            t[k] = -9.0 * (1.0 - (f / 2000.0).log2().abs()).max(0.0) + 4.0 * (1.0 - (f / 150.0).log2().abs()).max(0.0);
+        }
+        let (mut ga, mut gb) = ([0.0; MAX_SECTIONS], [0.0; MAX_SECTIONS]);
+        let (mut da, mut db) = ([Biquad { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 }; MAX_SECTIONS], [Biquad { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 }; MAX_SECTIONS]);
+        plan.designs(&ga, &mut da);
+        plan.designs(&gb, &mut db);
+        for _ in 0..6 {
+            let wa = plan.correct(&t, &mut ga, &mut da);
+            let wb = plan.correct_lean(&t, &mut gb, &mut db, 0.0);
+            assert!((wa - wb).abs() < 1e-6);
+            for m in 0..27 {
+                assert!((ga[m] - gb[m]).abs() < 1e-6, "section {m}: {} vs {}", ga[m], gb[m]);
+            }
+        }
+        let mut gc = [0.0; MAX_SECTIONS];
+        let mut dc = [Biquad { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 }; MAX_SECTIONS];
+        plan.designs(&gc, &mut dc);
+        for _ in 0..12 {
+            plan.correct_lean(&t, &mut gc, &mut dc, 1e-3);
+        }
+        for &f in &[150.0, 2000.0, 700.0] {
+            assert!((plan.response_db(&dc, f) - plan.response_db(&da, f)).abs() < 0.02);
+        }
+        // gfx-geq's plan is unchanged by the spec
+        let a = Plan::new(&OCT, 48000.0);
+        assert_eq!(a.len(), 20);
+        assert_eq!(a.points().len(), 39);
+        assert_eq!(a.edge_gain(), EDGE_GAIN);
     }
 
     #[test]

@@ -63,3 +63,4 @@ gfx-stretch = { path = "../gfx-stretch", default-features = false }
 gfx-grains = { path = "../gfx-grains", default-features = false }
 gfx-sustainer = { path = "../gfx-sustainer", default-features = false }
 gfx-polysynth = { path = "../gfx-polysynth", default-features = false }
+gfx-spectralcomp = { path = "../gfx-spectralcomp", default-features = false }

@@ -95,6 +95,14 @@ impl SvfCoefs {
         Coefs::from_biquad(b).map(|c| Self { c })
     }
 
+    /// The TPT coefficients (a1, a2, a3, m0, m1, m2) of Simper's structure, for a caller that runs
+    /// the same realisation in its own loop (gfx-spectralcomp's cascade).
+    #[inline]
+    pub fn parts(&self) -> [f64; 6] {
+        let c = &self.c;
+        [c.a1, c.a2, c.a3, c.m0, c.m1, c.m2]
+    }
+
     /// Linear interpolation between two sets (t = 0 → self, 1 → other).
     #[inline]
     pub fn lerp(&self, other: &SvfCoefs, t: f64) -> SvfCoefs {
