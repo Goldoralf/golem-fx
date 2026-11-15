@@ -92,7 +92,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 50 | [gfx-stretch](gfx-stretch/) | `stretch` | PaulXStretch | **coded** (Capture + Rolling + Freeze), bench green, to test in golem |
 | 51 | [gfx-sustainer](gfx-sustainer/) | new block `sustainer` (controlled feedback / sustain) | — | **coded** (Feedback, Sustain, Both), bench green, to test in golem |
 | 52 | [gfx-polysynth](gfx-polysynth/) | new block `polysynth` (polyphonic guitar synth) | — | **coded** (v1: Spectral, Mono; Poly held back), bench green, to test in golem |
-| 53 | [gfx-spectralcomp](gfx-spectralcomp/) | `spectral-comp` | Spectral Compressor (CLAP) | **designed**, reviewed by Fable 5.2 |
+| 53 | [gfx-spectralcomp](gfx-spectralcomp/) | `spectral-comp` | Spectral Compressor (CLAP) | **coded** (Live + Studio, key input), bench green, to test in golem |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows

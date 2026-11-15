@@ -29,7 +29,6 @@
     <a href="#kits">Kits</a>
     <a href="#features">golem features</a>
     <a href="#hardware">Hardware</a>
-    <a href="#generic">Other golem blocks</a>
     <a href="#glyphs">Glyphs</a>
   </nav>
 
@@ -110,12 +109,6 @@
     <h2>Hardware</h2>
     <p class="lead">The MIDI hardware golem drives, from its pedal registry (<code>hardwareUnit</code>): one realistic render per kind of unit, at the real units' proportions, with no maker's livery, logo or lettering. golem's Whammy DT block draws as the pitch treadle; a MIDI pedal takes the kind its registry entry names. Click a unit to switch it off.</p>
     <div class="grid hw-grid" id="hardware-grid"></div>
-  </section>
-
-  <section id="generic">
-    <h2>Other golem blocks</h2>
-    <p class="lead">The third-party blocks golem still hosts, drawn as a vintage enamel box: the glyph on its badge tells them apart, its colour comes from the block's family, aged. Only the spectral compressor is left, until golem-fx's own replaces it. The other old blocks are retired: their golem-fx pedals took over, or they were dropped (<code>docs/legacy-blocks.md</code>).</p>
-    <div class="grid" id="generic-grid"></div>
   </section>
 
   <section id="glyphs">
@@ -358,11 +351,6 @@
   const HW_NAME = { 'pitch-treadle': 'Pitch treadle', 'big-box': 'Big box', 'mid-box': 'Mid box', compact: 'Compact', 'floor-multi': 'Floor multi-effects',
     'loop-switcher': 'Loop switcher', 'foot-controller': 'MIDI foot controller', 'rack-1u': 'Rack unit 1U' };
   P.HARDWARE_KINDS.forEach(k => $('hardware-grid').appendChild(card(on => P.hardwareUnit(k, { on }), null, HW_NAME[k] || k, k === 'pitch-treadle' ? 'whammy-dt' : 'midi-pedal · kind ' + k)));
-  // golem's legacy blocks retired in favour of golem-fx pedals, or dropped (docs/legacy-blocks.md): not shown
-  const RETIRED = ['chorus-js', 'phaser', 'delay-tape', 'delay-tape-aw', 'delay-echo', 'eq-para', 'surge-spring', 'boost', 'pitch-spectral', 'rezfilter', 'freeze'];
-  D.blocks.filter(b => b.family === 'generic' && !P.isFeature(b.type) && !['whammy-dt', 'midi-pedal'].includes(b.type) && !RETIRED.includes(b.type)).forEach(b => {
-    $('generic-grid').appendChild(card(on => P.genericPedal(b, { on }), b, b.name, b.type));
-  });
 
   // glyphs
   const famLabel = { gfx: 'golem-fx pedal', generic: 'enamel pedal', 'nam-pedal': 'NAM pedal', 'nam-head': 'NAM head', 'nam-cab': 'cab', 'nam-stack': 'NAM head + cab', instrument: 'instrument', service: 'service' };

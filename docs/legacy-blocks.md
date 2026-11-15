@@ -70,3 +70,4 @@ vector render per *kind* of MIDI hardware, validated by the maintainer: `hardwar
   photograph per kind (prompts written).
 - 2026-11-15: hardware drawn as vector renders (validated) instead of generated photographs; prompts dropped.
 - 2026-11-15: applied by golem-rack (catalogue v48): the rack rewrites old documents on load (boost → emet, or shem when drive ≤ 15; rezfilter → autowah Low-pass; freeze → granular, so an old song still loads), so the gfx descriptors' `blocks` need not list the old types.
+- 2026-11-15: `gfx-spectralcomp` coded (v0.1.0): `spectral-comp` now has its golem-fx pedal; the seven legacy presets are converted (Studio). "Other golem blocks" removed from `visuals/index.html`.
