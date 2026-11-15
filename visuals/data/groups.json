@@ -1925,6 +1925,58 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-correct": [
+      {
+        "id": "engine",
+        "name": "Engine",
+        "custom": null,
+        "params": [
+          "fastmode",
+          "register",
+          "formant_keep"
+        ]
+      },
+      {
+        "id": "correction",
+        "name": "Correction",
+        "custom": null,
+        "params": [
+          "offset",
+          "flex",
+          "hysteresis",
+          "reference"
+        ]
+      },
+      {
+        "id": "voicing",
+        "name": "Voicing",
+        "custom": null,
+        "params": [
+          "sens",
+          "thresh",
+          "bypass"
+        ]
+      },
+      {
+        "id": "notes",
+        "name": "Note Mask",
+        "custom": null,
+        "params": [
+          "m00",
+          "m01",
+          "m02",
+          "m03",
+          "m04",
+          "m05",
+          "m06",
+          "m07",
+          "m08",
+          "m09",
+          "m10",
+          "m11"
+        ]
+      }
     ]
   },
   "help": {
@@ -2275,6 +2327,20 @@
       "offset_7": "Sweetening of string 7 in cents (1 = the lowest), its 12th-fret harmonic included",
       "string_8": "Custom tuning's open string 8 (MIDI, 1 = the lowest); 0 ends the list",
       "offset_8": "Sweetening of string 8 in cents (1 = the lowest), its 12th-fret harmonic included"
+    },
+    "gfx-correct": {
+      "m00": "Note mask: C allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m01": "Note mask: C# allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m02": "Note mask: D allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m03": "Note mask: D# allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m04": "Note mask: E allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m05": "Note mask: F allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m06": "Note mask: F# allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m07": "Note mask: G allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m08": "Note mask: G# allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m09": "Note mask: A allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m10": "Note mask: A# allowed as a target (intersected with key / scale; written by golem's compile)",
+      "m11": "Note mask: B allowed as a target (intersected with key / scale; written by golem's compile)"
     }
   },
   "depends": {

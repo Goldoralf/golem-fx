@@ -4,6 +4,10 @@
 > the real-time engine matches it on that voice (double exactly an octave down on 98 % of the frames, level
 > −1 dB re the dry at Double Level 0 dB); 7 behaviour tests, bench green (28 checks); CPU 50 ns / sample.
 > Design reviewed by Fable 5.2 (folded in). `align` is deferred to a later version (§4).
+> 2026-11-15: the epoch tracker, the voicing gate, the octave rejection and the helpers moved to gfx-dsp
+> `psola` (shared with gfx-correct and gfx-formant); renders byte-identical before and after the move
+> (54 renders: guitar DIs and the sung phrase, 44.1 / 48 / 96 kHz, all registers, locked, free, harmony,
+> formant and stereo settings). Class id, parameters and behaviour unchanged.
 
 golem's **live vocal doubler**: the voice of clay. It adds one or two pitch-shifted copies of a singer's
 voice — first and foremost **a double one octave below**, tight under the lead, the sound of Sleep Token's

@@ -6,10 +6,14 @@
 //! - an octave below is **phase-locked**: its grains land on the lead's own predicted epochs (one every
 //!   second epoch, one every fourth for −24), so its harmonics stay coherent with the lead's;
 //! - any other interval is scheduled freely at the smoothed period / r.
+//!
 //! Formants move by resampling the grains; the double's level is normalised over interval and formant.
-//! The dry voice is never delayed.
+//! The dry voice is never delayed. The epoch tracker, the voicing gate and the helpers live in gfx-dsp
+//! `psola` (moved there bit-exact); the overlap-add writer and the scheduler stay here.
 
-use gfx_dsp::detect::{harmony_interval, NoteTracker, PitchDetector, SCALES};
+use gfx_dsp::detect::{harmony_interval, NoteTracker, SCALES};
+pub use gfx_dsp::psola::{level_norm, voicing_thresholds, CLOSE_MS, HOLD_MS, MARK_LP_HZ, OCTAVE_CONFIRM_MS, OPEN_MS, REGISTERS};
+use gfx_dsp::psola::{hermite, Tracker};
 use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::{Effect, ParamInfo};
 
@@ -37,20 +41,9 @@ pub static PARAMS: [ParamInfo; 18] = [
     ParamInfo::float("hpf", "Low Cut", 20.0, 200.0, 40.0),
 ];
 
-/// `register`: (lowest, highest) sung fundamental, Hz.
-pub const REGISTERS: [(f32, f32); 3] = [(60.0, 500.0), (90.0, 800.0), (150.0, 1200.0)];
-/// The epoch marker's low-pass (Hz).
-pub const MARK_LP_HZ: f32 = 1000.0;
-/// Octave-error rejection: a ×2 / ÷2 jump must last this long to be believed (ms).
-pub const OCTAVE_CONFIRM_MS: f32 = 40.0;
-/// Voicing: hold (ms), gain ramps (ms).
-pub const HOLD_MS: f32 = 30.0;
-pub const OPEN_MS: f32 = 10.0;
-pub const CLOSE_MS: f32 = 30.0;
 /// Interval slew (semitones per ms).
 pub const SLEW_ST_PER_MS: f64 = 1.0;
 const VOICES: usize = 2;
-const MARKS: usize = 16;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Settings {
@@ -100,34 +93,6 @@ impl Default for Settings {
     }
 }
 
-/// Voicing thresholds (clarity) for `sens` 0 – 100 %: (open, close).
-pub fn voicing_thresholds(sens: f32) -> (f32, f32) {
-    let s = (sens / 100.0).clamp(0.0, 1.0);
-    // 0 % → 0.9 / 0.8, 50 % → 0.8 / 0.65, 100 % → 0.7 / 0.5
-    let lerp = |a: f32, b: f32, c: f32| if s < 0.5 { a + (b - a) * s * 2.0 } else { b + (c - b) * (s - 0.5) * 2.0 };
-    (lerp(0.9, 0.8, 0.7), lerp(0.8, 0.65, 0.5))
-}
-
-/// The double's level normalisation for an interval ratio `r` and a formant ratio `alpha`: the grains'
-/// overlap scales the output power by about r / alpha.
-pub fn level_norm(r: f64, alpha: f64) -> f64 {
-    (alpha / r).sqrt().clamp(0.25, 4.0)
-}
-
-#[inline]
-fn hermite(buf: &[f32], mask: usize, pos: f64) -> f32 {
-    let i = pos.floor();
-    let f = (pos - i) as f32;
-    let i = i as i64;
-    let at = |k: i64| buf[(k as usize) & mask];
-    let (y0, y1, y2, y3) = (at(i - 1), at(i), at(i + 1), at(i + 2));
-    let c0 = y1;
-    let c1 = 0.5 * (y2 - y0);
-    let c2 = y0 - 2.5 * y1 + 2.0 * y2 - 0.5 * y3;
-    let c3 = 0.5 * (y3 - y0) + 1.5 * (y1 - y2);
-    ((c3 * f + c2) * f + c1) * f + c0
-}
-
 /// A deterministic slow random walk in −1 … 1 (humanize).
 #[derive(Clone, Copy, Debug)]
 struct Drift {
@@ -174,33 +139,15 @@ pub struct Golem {
     s: Settings,
     sr: f64,
     t: u64,
-    // history (input), its marker low-pass and its anti-aliased copy
-    hist: Vec<f32>,
-    lpbuf: Vec<f32>,
+    /// history, voicing gate and epochs (gfx-dsp `psola`)
+    tr: Tracker,
+    // the anti-aliased copy of the input
     aabuf: Vec<f32>,
     mask: usize,
-    mark_lp: Svf,
     aa: Svf,
     aa_alpha: f64,
-    gd: f64,
-    det: PitchDetector,
     notes: NoteTracker,
-    // voice tracking
-    f_det: f32,
-    octave_pending: u32,
-    level: f64,
-    gate_open: bool,
-    agree: u32,
-    hold: u32,
     gain: f64,
-    pitched_quiet: bool,
-    // epochs
-    active: bool,
-    pol: f32,
-    marks: [f64; MARKS],
-    nmarks: usize,
-    mark_index: u64,
-    period: f64,
     voices: [Voice; VOICES],
     olamask: usize,
     drift_pitch: Drift,
@@ -215,8 +162,6 @@ pub struct Golem {
     lpf: f64,
     hpf: f64,
     ctl: u32,
-    /// the detector's analysis hop (samples)
-    det_hop: f64,
 }
 
 impl Golem {
@@ -225,30 +170,13 @@ impl Golem {
             s: Settings::default(),
             sr: 48000.0,
             t: 0,
-            hist: Vec::new(),
-            lpbuf: Vec::new(),
+            tr: Tracker::new(),
             aabuf: Vec::new(),
             mask: 0,
-            mark_lp: Svf::new(),
             aa: Svf::new(),
             aa_alpha: 1.0,
-            gd: 0.0,
-            det: PitchDetector::default(),
             notes: NoteTracker::default(),
-            f_det: 0.0,
-            octave_pending: 0,
-            level: 0.0,
-            gate_open: false,
-            agree: 0,
-            hold: 0,
             gain: 0.0,
-            pitched_quiet: false,
-            active: false,
-            pol: 1.0,
-            marks: [0.0; MARKS],
-            nmarks: 0,
-            mark_index: 0,
-            period: 0.0,
             voices: [Voice::default(), Voice::default()],
             olamask: 0,
             drift_pitch: Drift::new(0x9E37_79B9),
@@ -262,7 +190,6 @@ impl Golem {
             lpf: 6000.0,
             hpf: 40.0,
             ctl: 0,
-            det_hop: 128.0,
         }
     }
 
@@ -271,28 +198,19 @@ impl Golem {
     }
 
     pub fn set(&mut self, s: Settings) {
-        let reg = self.s.register;
         self.s = s;
-        if s.register != reg && !self.hist.is_empty() {
-            let (lo, hi) = REGISTERS[s.register.min(2)];
-            self.det.set_range(lo, hi);
-        }
+        self.tr.set_register(s.register);
+        self.tr.set_gate(s.sens, s.thresh);
     }
 
     /// 0 idle, 1 tracking, 2 pitched but gated by level.
     pub fn state(&self) -> u8 {
-        if self.gate_open {
-            1
-        } else if self.pitched_quiet {
-            2
-        } else {
-            0
-        }
+        self.tr.state()
     }
 
     /// The tracked period (samples), when tracking.
     pub fn period(&self) -> Option<f64> {
-        self.active.then_some(self.period)
+        self.tr.active().then_some(self.tr.period())
     }
 
     fn target_st(&self, v: usize) -> f64 {
@@ -331,14 +249,15 @@ impl Golem {
     /// Writes one grain: the source grain around mark `src` (needs `src − 1` and `src + 1`), centred at
     /// absolute output time `at`, into voice `v`'s overlap-add buffer.
     fn write_grain(&mut self, v: usize, src: usize, at: f64) {
-        let c = self.marks[src];
-        let left = c - self.marks[src - 1];
-        let right = self.marks[src + 1] - c;
+        let marks = self.tr.marks();
+        let c = marks[src];
+        let left = c - marks[src - 1];
+        let right = marks[src + 1] - c;
         let alpha = self.alpha(v);
         // output spans: lowering formants stretches the grain to the right only (no extra delay)
         let lo = if alpha > 1.0 { left / alpha } else { left };
         let ro = right / alpha;
-        let buf = if alpha > 1.0 { &self.aabuf } else { &self.hist };
+        let buf = if alpha > 1.0 { &self.aabuf } else { self.tr.history() };
         let g = level_norm(2f64.powf(self.voices[v].st / 12.0), alpha) as f32;
         let start = (at - lo).ceil() as i64;
         let end = (at + ro).floor() as i64;
@@ -357,8 +276,7 @@ impl Golem {
     }
 
     fn on_mark(&mut self) {
-        self.mark_index += 1;
-        let n = self.nmarks;
+        let n = self.tr.marks().len();
         if n < 3 {
             return;
         }
@@ -370,11 +288,13 @@ impl Golem {
                     // the grain one period back, landed on a predicted epoch of the lead that is still
                     // ahead of the output
                     let src = n - 2;
-                    let last = self.marks[n - 1];
-                    let left = self.marks[src] - self.marks[src - 1];
-                    let mut at = last + 2.0 * self.period;
+                    let marks = self.tr.marks();
+                    let last = marks[n - 1];
+                    let left = marks[src] - marks[src - 1];
+                    let period = self.tr.period();
+                    let mut at = last + 2.0 * period;
                     while at - left <= self.t as f64 + 1.0 {
-                        at += self.period;
+                        at += period;
                     }
                     self.write_grain(v, src, at);
                 }
@@ -385,8 +305,8 @@ impl Golem {
 
     /// Free-mode scheduling, every sample.
     fn schedule(&mut self) {
-        let n = self.nmarks;
-        if !self.active || n < 3 {
+        let n = self.tr.marks().len();
+        if !self.tr.active() || n < 3 {
             return;
         }
         for v in 0..VOICES {
@@ -395,7 +315,7 @@ impl Golem {
             }
             let r = 2f64.powf(self.voices[v].st / 12.0);
             let src = n - 2;
-            let left = self.marks[src] - self.marks[src - 1];
+            let left = self.tr.marks()[src] - self.tr.marks()[src - 1];
             let alpha = self.alpha(v);
             let lo = if alpha > 1.0 { left / alpha } else { left };
             let now = self.t as f64;
@@ -405,128 +325,9 @@ impl Golem {
                 }
                 let at = self.voices[v].next + self.s.humanize as f64 * 0.01 * 0.010 * self.sr * self.drift_time.next();
                 self.write_grain(v, src, at.max(now + lo + 1.0));
-                self.voices[v].next += self.period / r;
+                self.voices[v].next += self.tr.period() / r;
             }
         }
-    }
-
-    /// The epoch tracker, every sample.
-    fn track(&mut self) {
-        let t = self.t as f64;
-        let tdet = self.sr / self.f_det.max(1.0) as f64;
-        if !self.gate_open && self.hold == 0 {
-            self.active = false;
-            self.nmarks = 0;
-            return;
-        }
-        if self.f_det <= 0.0 {
-            return;
-        }
-        if !self.active {
-            // start: polarity from the last two periods, first mark on the strongest peak of the last one
-            let span = (2.0 * tdet) as i64;
-            let (mut mx, mut mn) = (f32::MIN, f32::MAX);
-            for k in 0..span {
-                let v = self.lpbuf[((self.t as i64 - k) as usize) & self.mask];
-                mx = mx.max(v);
-                mn = mn.min(v);
-            }
-            self.pol = if mx >= -mn { 1.0 } else { -1.0 };
-            let mut best = 0i64;
-            let mut bv = f32::MIN;
-            for k in 0..(tdet as i64) {
-                let v = self.pol * self.lpbuf[((self.t as i64 - k) as usize) & self.mask];
-                if v > bv {
-                    bv = v;
-                    best = k;
-                }
-            }
-            self.marks[0] = t - best as f64 - self.gd;
-            self.nmarks = 1;
-            self.period = tdet;
-            self.active = true;
-            return;
-        }
-        let last = self.marks[self.nmarks - 1];
-        let pred = last + self.period;
-        let half = 0.25 * self.period;
-        // the search window must be fully in the past of the low-passed signal
-        if t < pred + half + self.gd + 2.0 {
-            return;
-        }
-        let lo = (pred - half + self.gd).ceil() as i64;
-        let hi = (pred + half + self.gd).floor() as i64;
-        let mut best = lo;
-        let mut bs = f32::MIN;
-        for k in lo..=hi {
-            let d = (k as f64 - self.gd - pred) / half;
-            let pen = 1.0 - 0.3 * (d * d) as f32;
-            let v = self.pol * self.lpbuf[(k as usize) & self.mask] * pen;
-            if v > bs {
-                bs = v;
-                best = k;
-            }
-        }
-        let y = |k: i64| self.pol * self.lpbuf[(k as usize) & self.mask];
-        let (y0, y1, y2) = (y(best - 1), y(best), y(best + 1));
-        let den = y0 - 2.0 * y1 + y2;
-        let off = if den.abs() > 1e-12 { (0.5 * (y0 - y2) / den).clamp(-0.5, 0.5) } else { 0.0 } as f64;
-        let m = best as f64 + off - self.gd;
-        let measured = m - last;
-        if (measured - tdet).abs() < 0.3 * tdet {
-            self.period += 0.3 * (measured - self.period);
-        }
-        self.period += 0.05 * (tdet - self.period);
-        if self.nmarks == MARKS {
-            self.marks.copy_within(1.., 0);
-            self.nmarks -= 1;
-        }
-        self.marks[self.nmarks] = m;
-        self.nmarks += 1;
-        self.on_mark();
-    }
-
-    /// The detector's verdict → octave-error rejection and the voicing gate.
-    fn voicing(&mut self) {
-        let f = self.det.period_hz();
-        let c = self.det.clarity();
-        let (lo, hi) = REGISTERS[self.s.register.min(2)];
-        let in_range = f >= lo && f <= hi;
-        // octave errors: a ×2 / ÷2 jump must persist before it is believed
-        let frames_confirm = ((OCTAVE_CONFIRM_MS * 0.001) as f64 * self.sr / self.det_hop).ceil() as u32;
-        let mut f_new = f;
-        if self.f_det > 0.0 && in_range {
-            let r = f / self.f_det;
-            if ((r - 2.0).abs() < 0.12 || (r - 0.5).abs() < 0.03) && self.octave_pending < frames_confirm {
-                self.octave_pending += 1;
-                f_new = self.f_det;
-            } else {
-                self.octave_pending = 0;
-            }
-        }
-        let (open_th, close_th) = voicing_thresholds(self.s.sens);
-        let level_ok = self.level > 10f64.powf(self.s.thresh as f64 / 10.0);
-        let pitched = in_range && c >= close_th;
-        self.pitched_quiet = pitched && !level_ok;
-        let hold_frames = ((HOLD_MS * 0.001) as f64 * self.sr / self.det_hop).ceil() as u32;
-        if !self.gate_open {
-            self.agree = if in_range && c >= open_th && level_ok { self.agree + 1 } else { 0 };
-            if self.agree >= 3 {
-                self.gate_open = true;
-                self.hold = hold_frames;
-            }
-        } else if pitched && level_ok {
-            self.hold = hold_frames;
-        } else if self.hold > 0 {
-            self.hold -= 1;
-        } else {
-            self.gate_open = false;
-            self.agree = 0;
-        }
-        if in_range && (self.gate_open || c >= open_th) {
-            self.f_det = f_new;
-        }
-        self.notes.update(if self.gate_open { Some(self.f_det) } else { None });
     }
 
     fn controls(&mut self) {
@@ -563,7 +364,6 @@ impl Golem {
     fn process_inner(&mut self, buffers: &mut [&mut [f32]]) {
         let n = buffers.first().map_or(0, |b| b.len());
         let nch = buffers.len();
-        let a_level = 1.0 - (-1.0 / (0.020 * self.sr)).exp();
         let a_open = 1.0 - (-1.0 / (OPEN_MS as f64 * 0.001 * self.sr)).exp();
         let a_close = 1.0 - (-1.0 / (CLOSE_MS as f64 * 0.001 * self.sr)).exp();
         let a_lvl = 1.0 - (-1.0 / (0.030 * self.sr)).exp();
@@ -574,17 +374,17 @@ impl Golem {
             self.ctl = (self.ctl + 1) % 32;
             let x = if nch > 1 { 0.5 * (buffers[0][i] + buffers[1][i]) } else { buffers[0][i] };
             let t = self.t as usize;
-            self.hist[t & self.mask] = x;
-            self.lpbuf[t & self.mask] = self.mark_lp.process(x);
             self.aabuf[t & self.mask] = if self.aa_alpha > 1.0 { self.aa.process(x) } else { x };
-            self.level += a_level * ((x as f64) * (x as f64) - self.level);
-            if self.det.push(x) {
-                self.voicing();
+            let ev = self.tr.push(x);
+            if ev.frame {
+                self.notes.update(if self.tr.gate_open() { Some(self.tr.f_det()) } else { None });
             }
-            self.track();
+            if ev.mark {
+                self.on_mark();
+            }
             self.schedule();
             // the doubles
-            let target = if self.gate_open { 1.0 } else { 0.0 };
+            let target = if self.tr.gate_open() { 1.0 } else { 0.0 };
             self.gain += if target > self.gain { a_open } else { a_close } * (target - self.gain);
             let om = self.olamask;
             let mut d = [0.0f32; VOICES];
@@ -625,10 +425,10 @@ impl Effect for Golem {
 
     fn prepare(&mut self, sample_rate: f32, _max_block: usize, _channels: usize) {
         self.sr = sample_rate as f64;
-        let need = (0.4 * self.sr) as usize;
-        let len = need.next_power_of_two();
-        self.hist = vec![0.0; len];
-        self.lpbuf = vec![0.0; len];
+        self.tr.set_register(self.s.register);
+        self.tr.set_gate(self.s.sens, self.s.thresh);
+        self.tr.prepare(sample_rate, 0.4);
+        let len = self.tr.history().len();
         self.aabuf = vec![0.0; len];
         self.mask = len - 1;
         let olen = ((0.3 * self.sr) as usize).next_power_of_two();
@@ -636,13 +436,6 @@ impl Effect for Golem {
             v.ola = vec![0.0; olen];
         }
         self.olamask = olen - 1;
-        self.mark_lp.set(SvfMode::LowPass, MARK_LP_HZ, std::f32::consts::FRAC_1_SQRT_2, 0.0, sample_rate);
-        // second-order Butterworth low-pass group delay at low frequency: √2 / ωc
-        self.gd = self.sr * std::f64::consts::SQRT_2 / (2.0 * std::f64::consts::PI * MARK_LP_HZ as f64);
-        self.det.prepare_range(sample_rate, REGISTERS[0].0, REGISTERS[2].1, false);
-        self.det_hop = 32.0 * (self.sr / 12000.0).round().max(1.0);
-        let (lo, hi) = REGISTERS[self.s.register.min(2)];
-        self.det.set_range(lo, hi);
         self.drift_pitch.prepare(self.sr);
         self.drift_time.prepare(self.sr);
         self.aa_alpha = f64::NAN;
@@ -651,25 +444,11 @@ impl Effect for Golem {
 
     fn reset(&mut self) {
         self.t = 0;
-        for b in [&mut self.hist, &mut self.lpbuf, &mut self.aabuf] {
-            b.iter_mut().for_each(|x| *x = 0.0);
-        }
-        self.mark_lp.reset();
+        self.tr.reset();
+        self.aabuf.iter_mut().for_each(|x| *x = 0.0);
         self.aa.reset();
-        self.det.reset();
         self.notes.reset();
-        self.f_det = 0.0;
-        self.octave_pending = 0;
-        self.level = 0.0;
-        self.gate_open = false;
-        self.agree = 0;
-        self.hold = 0;
         self.gain = 0.0;
-        self.pitched_quiet = false;
-        self.active = false;
-        self.nmarks = 0;
-        self.mark_index = 0;
-        self.period = 0.0;
         let db = |x: f32| if x <= -60.0 { 0.0 } else { 10f64.powf(x as f64 / 20.0) };
         self.voice1 = db(self.s.voice1);
         self.voice2 = db(self.s.voice2);

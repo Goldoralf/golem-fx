@@ -4,6 +4,8 @@
 //! - [`GrainShifter`]: delay-line pitch shifter. Two read heads sweep a window at the speed the ratio
 //!   asks, half a window apart, crossfaded with sin² windows (Dattorro, *Effect Design* part 2). Inside a
 //!   loop its window delay is part of the repeat, so it reports no latency.
+//! - [`PeriodShifter`]: the live pitch-correction shifter (gfx-correct): one read head resampling at
+//!   the ratio around a fixed centre, period-locked splices found by correlation, re-centring.
 //! - [`FreqShifter`]: single-sideband frequency shifter. An IIR Hilbert pair of four all-pass sections
 //!   per path (Niemitalo's coefficients, 90° ± 0.7° from 20 Hz to 20 kHz at 44.1 kHz), times a
 //!   quadrature oscillator. Zero latency.
@@ -535,6 +537,245 @@ impl FreqShifter {
     }
 }
 
+/// The live pitch-correction shifter (gfx-correct §2.5): resampling with **period-locked splices**
+/// (Hildebrand's patent, Zita-AT1).
+///
+/// - **One read head** moves at rate r around a fixed centre C (its delay changes by 1 − r per sample).
+///   Only during a splice does a second head exist: when the delay leaves C ± T / 2 (moving away), a
+///   head starts exactly one period nearer the centre and the two are crossfaded (raised cosine,
+///   amplitude-complementary) over min(T, 2 ms). Shifting up repeats a cycle, shifting down drops one.
+///   Breath and noise are never played by two heads at once outside a splice (no comb, no flutter).
+/// - **Jump length**: the period given by the caller (an epoch tracker), searched ±10 % by correlation
+///   on a coarse grid (the ~12 kHz step), then refined over ±2 samples at the full rate with a
+///   parabola. With no period (unvoiced), the best lag within ±50 % of the last one, clipped to the
+///   register.
+/// - **Re-centring**: [`Self::recentre`] crossfades the head to C over 5 ms, so after a voiced passage
+///   the output is again the input delayed by C, exactly (C is a whole number of samples).
+/// - **Stereo**: the splices are decided on the analysis signal (the caller's (L + R) / 2) and applied
+///   identically to every channel.
+#[derive(Clone, Debug, Default)]
+pub struct PeriodShifter {
+    ana: DelayLine,
+    ch: [DelayLine; 2],
+    centre: f64,
+    t_min: f64,
+    t_max: f64,
+    xfade_max: f64,
+    recentre_len: f64,
+    /// coarse search step (samples at the host rate per ~12 kHz sample)
+    step: usize,
+    /// correlation length (samples)
+    corr: usize,
+    d: f64,
+    /// the second head during a splice / re-centring
+    d_new: f64,
+    fade_age: f64,
+    fade_len: f64,
+    ratio: f64,
+    period: f64,
+    voiced: bool,
+    want_recentre: bool,
+    splices: u64,
+}
+
+impl PeriodShifter {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sizes the lines for the longest period this shifter will ever be configured with (samples).
+    pub fn allocate(&mut self, sample_rate: f32, max_t_max: f64) {
+        let ms = sample_rate as f64 * 0.001;
+        let need = (max_t_max * 0.5 + 1.0 * ms) + 1.6 * max_t_max + 4.0 * ms + 16.0;
+        self.ana.prepare(need as usize);
+        for c in self.ch.iter_mut() {
+            c.prepare(need as usize);
+        }
+    }
+
+    /// The register's shortest and longest periods (samples): C = ⌈T_max / 2 + 1 ms⌉. Resets (no
+    /// allocation within what `allocate` sized).
+    pub fn configure(&mut self, sample_rate: f32, t_min: f64, t_max: f64) {
+        let ms = sample_rate as f64 * 0.001;
+        self.t_min = t_min.max(4.0);
+        self.t_max = t_max.max(self.t_min + 1.0);
+        self.centre = (0.5 * self.t_max + ms).ceil();
+        self.xfade_max = 2.0 * ms;
+        self.recentre_len = 5.0 * ms;
+        self.step = (sample_rate as f64 / 12000.0).round().max(1.0) as usize;
+        self.corr = ((2.0 * ms) as usize).max(16);
+        self.reset();
+    }
+
+    pub fn reset(&mut self) {
+        self.ana.reset();
+        for c in self.ch.iter_mut() {
+            c.reset();
+        }
+        self.d = self.centre;
+        self.d_new = self.centre;
+        self.fade_age = 0.0;
+        self.fade_len = 0.0;
+        self.ratio = 1.0;
+        self.period = 0.5 * (self.t_min + self.t_max);
+        self.voiced = false;
+        self.want_recentre = false;
+        self.splices = 0;
+    }
+
+    /// The reported latency (samples): the centre C.
+    pub fn latency(&self) -> usize {
+        self.centre as usize
+    }
+
+    /// The read head's offset from the centre (samples): 0 when re-centred.
+    pub fn offset(&self) -> f64 {
+        self.d - self.centre
+    }
+
+    /// Splices made since reset (a diagnostic).
+    pub fn splices(&self) -> u64 {
+        self.splices
+    }
+
+    pub fn set_ratio(&mut self, ratio: f64) {
+        self.ratio = ratio.clamp(0.5, 2.0);
+    }
+
+    /// The voice's period (samples) when the caller trusts one, else None (free search).
+    pub fn set_period(&mut self, period: Option<f64>) {
+        match period {
+            Some(p) => {
+                self.period = p.clamp(self.t_min, self.t_max);
+                self.voiced = true;
+            }
+            None => self.voiced = false,
+        }
+    }
+
+    /// Asks for the head to return to the centre (5 ms crossfade) as soon as no splice is running.
+    pub fn recentre(&mut self) {
+        self.want_recentre = true;
+    }
+
+    /// Normalised correlation of the analysis line's span at delay `a` with the span at delay `b`.
+    #[inline]
+    fn corr_at(&self, a: f64, b: f64) -> f64 {
+        let (mut c, mut e, mut f) = (0.0f64, 1e-12f64, 1e-12f64);
+        let mut k = 0;
+        while k < self.corr {
+            let x = self.ana.read(a + k as f64, Interp::Linear) as f64;
+            let y = self.ana.read(b + k as f64, Interp::Linear) as f64;
+            c += x * y;
+            e += x * x;
+            f += y * y;
+            k += 2;
+        }
+        c / (e * f).sqrt()
+    }
+
+    /// The jump (samples, > 0) that best continues the head at delay `d`, the new head at d ± jump.
+    fn best_jump(&self, d: f64, sign: f64) -> f64 {
+        let (lo, hi) = if self.voiced {
+            (0.9 * self.period, 1.1 * self.period)
+        } else {
+            (0.5 * self.period, 1.5 * self.period)
+        };
+        let (lo, mut hi) = (lo.max(self.t_min), hi.min(self.t_max));
+        if sign < 0.0 {
+            // the new head must stay inside the line (delay ≥ the interpolator's guard)
+            hi = hi.min(d - 6.0);
+        }
+        let lo = lo.min(hi);
+        let at = |j: f64| self.corr_at(d, d + sign * j);
+        // coarse grid, then ±2 samples, then a parabola
+        let mut best = self.period.clamp(lo, hi);
+        let mut bv = f64::MIN;
+        let mut j = lo;
+        while j <= hi {
+            let v = at(j);
+            if v > bv {
+                bv = v;
+                best = j;
+            }
+            j += self.step as f64;
+        }
+        let c = best;
+        for k in -2..=2 {
+            let j = c + k as f64;
+            if j >= lo && j <= hi {
+                let v = at(j);
+                if v > bv {
+                    bv = v;
+                    best = j;
+                }
+            }
+        }
+        let (a, b) = (at(best - 1.0), at(best + 1.0));
+        let den = a - 2.0 * bv + b;
+        let frac = if den.abs() > 1e-12 { (0.5 * (a - b) / den).clamp(-0.5, 0.5) } else { 0.0 };
+        best + frac
+    }
+
+    /// Processes one frame: `ana` is the analysis sample ((L + R) / 2), `io` the channels (1 or 2),
+    /// replaced by the shifted output.
+    #[inline]
+    pub fn process(&mut self, ana: f32, io: &mut [f32]) {
+        self.ana.push(ana);
+        for (c, x) in io.iter().enumerate() {
+            self.ch[c].push(*x);
+        }
+        let rate = 1.0 - self.ratio;
+        if self.fade_len == 0.0 {
+            let half = 0.5 * self.period;
+            let lo_edge = self.centre - half;
+            let hi_edge = self.centre + half;
+            // hard edges of the line, whatever the period
+            let min_d = 3.0;
+            let max_d = self.centre + 0.5 * self.t_max + 2.0;
+            if (self.d > hi_edge && rate > 0.0) || self.d > max_d {
+                let j = self.best_jump(self.d, -1.0);
+                self.start_fade(self.d - j, self.xfade_max.min(self.period));
+            } else if (self.d < lo_edge && rate < 0.0) || self.d < min_d {
+                let j = self.best_jump(self.d, 1.0);
+                self.start_fade(self.d + j, self.xfade_max.min(self.period));
+            } else if self.want_recentre {
+                self.want_recentre = false;
+                if (self.d - self.centre).abs() > 1e-9 {
+                    self.start_fade(self.centre, self.recentre_len);
+                    self.splices -= 1;
+                }
+            }
+        }
+        if self.fade_len > 0.0 {
+            let w = 0.5 - 0.5 * (std::f64::consts::PI * self.fade_age / self.fade_len).cos();
+            let (wo, wn) = ((1.0 - w) as f32, w as f32);
+            for (c, x) in io.iter_mut().enumerate() {
+                *x = wo * self.ch[c].read(self.d, Interp::Lagrange3) + wn * self.ch[c].read(self.d_new, Interp::Lagrange3);
+            }
+            self.fade_age += 1.0;
+            self.d += rate;
+            self.d_new += rate;
+            if self.fade_age >= self.fade_len {
+                self.d = self.d_new;
+                self.fade_len = 0.0;
+            }
+        } else {
+            for (c, x) in io.iter_mut().enumerate() {
+                *x = self.ch[c].read(self.d, Interp::Lagrange3);
+            }
+            self.d += rate;
+        }
+    }
+
+    fn start_fade(&mut self, d_new: f64, len: f64) {
+        self.d_new = d_new;
+        self.fade_age = 0.0;
+        self.fade_len = len.max(1.0).round();
+        self.splices += 1;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -547,6 +788,61 @@ mod tests {
             }
         }
         (t.len() - 1) as f64 / (t[t.len() - 1] - t[0]) * sr
+    }
+
+    #[test]
+    fn period_shifter_identity_shift_and_recentre() {
+        let sr = 48000.0f32;
+        let (t_min, t_max) = (sr as f64 / 800.0, sr as f64 / 90.0);
+        let mut p = PeriodShifter::new();
+        p.allocate(sr, sr as f64 / 60.0);
+        p.configure(sr, t_min, t_max);
+        let c = p.latency();
+        assert_eq!(c, (0.5 * t_max + 48.0).ceil() as usize);
+        // identity at r = 1
+        let x: Vec<f32> = (0..20000).map(|i| (0.37 * i as f32).sin() * (0.0011 * i as f32).cos()).collect();
+        for (i, &v) in x.iter().enumerate() {
+            let mut io = [v];
+            p.process(v, &mut io);
+            if i >= c {
+                assert_eq!(io[0], x[i - c]);
+            }
+        }
+        // a 220 Hz tone shifted up 1 st and down 1 st
+        for st in [1.0f64, -1.0, 0.5] {
+            p.reset();
+            let f0 = 220.0f32;
+            p.set_period(Some(sr as f64 / f0 as f64));
+            p.set_ratio((st / 12.0).exp2());
+            let y: Vec<f32> = (0..96000)
+                .map(|i| {
+                    let v = (std::f32::consts::TAU * f0 * i as f32 / sr).sin();
+                    let mut io = [v];
+                    p.process(v, &mut io);
+                    io[0]
+                })
+                .collect();
+            let f = freq_of(&y[4800..], sr as f64);
+            let cents = 1200.0 * (f / f0 as f64).log2();
+            assert!((cents - st * 100.0).abs() < 2.0, "{st} st: {cents:.2} cents");
+            assert!(p.splices() > 5);
+        }
+        // back to unity, re-centred: the delayed input again, exactly
+        p.set_ratio(1.0);
+        p.recentre();
+        let base = 96000usize;
+        let mut ok = 0;
+        for i in 0..4800 {
+            let v = (0.21 * (base + i) as f32).sin();
+            let mut io = [v];
+            p.process(v, &mut io);
+            if i > 600 {
+                let want = (0.21 * (base + i - c) as f32).sin();
+                assert_eq!(io[0], want, "sample {i}");
+                ok += 1;
+            }
+        }
+        assert!(ok > 0 && p.offset() == 0.0);
     }
 
     #[test]
