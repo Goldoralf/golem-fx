@@ -1,6 +1,19 @@
 # gfx-swell
 
-> **Status: DESIGNED** (2026-11-14, design only; reviewed 2026-11-14, see the Review section at the end).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Review section), coded as
+> reviewed, with the detector fixes the synthetic bench forced (see "As coded" at the end).
+>
+> - **Detection**: gfx-dsp's new `onset` module (L, A, B, C, strum logic) and the gain engine `swell`.
+> - **Legato (B, C) passed its negative tests**, so `legato` keeps its 50 % default. On Karplus-Strong
+>   strings it gives zero false onsets at 50 % and 100 %: vibrato, bends and a dive from 82 to 659 Hz,
+>   tremolo, let-ring, beating chords, noise and hum. A semitone fires in 8 ms at 330 Hz and 16 ms at
+>   110 and 82 Hz (targets 18 / 30 / 35); a fingered chord fires B in 12 ms (target 15).
+> - **Picks**: attack after silence removed to −66 dB or lower. A re-pick over a ringing note leaks −12 to
+>   −15 dB at zero latency and −66 dB with `lookahead` 3 ms.
+> - **Tests and CPU**: 18 behaviour tests pass; bench 28 / 28; 140 – 165 ns per sample (0.7 – 0.8 % of a core) with
+>   every detector on, 59 ns with `legato` 0.
+> - **Still open**: the real-DI checks (annotated onsets) and the listening.
+>
 > Zero-latency auto-swell: each note, chord or legato change fades in on its own. It uses a level gate
 > after silence and three onset detectors, each for a different kind of note change:
 > - picks: a high-passed transient detector, from gfx-killswitch;
@@ -580,3 +593,118 @@ time before the decay, the Attack Decay's fuzz and loop, the Pico Swello's filte
   cleanly on both engines.
 - **Follow-ups**: the shared `swell` of delay / reverb / shimmer (decision 1); a Poly mode on the ERB bank
   and a bass range for C, both only if the bench asks.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `onset.rs`: `Level`, `LevelGate` (L), `Pick` (A), `Flux` (B), `PitchJump` (C), `Strum`.
+- gfx-dsp `swell.rs`: the gain engine, with its curves and their inverses.
+- `src/lib.rs`: the processor. `src/plugin.rs`: the VST3, class id `GoleMFxSwell0001`, mono 1 / 1 first,
+  then 2 / 2, each with a key bus; latency reported from `lookahead`; `state`, `gr`, `onsets_count`
+  read-only.
+- `src/tests.rs`: the behaviour tests, on Karplus-Strong strings built in the test.
+- `presets/gfx-swell.json`: 14 presets, the Applications table.
+
+**`onset::Pick` serves gfx-ducker's interface** (gfx-ducker README §2.10):
+- a standalone type;
+- `Pick::next(x, above_floor)` uses its own high-passed envelope, `Pick::detect(env_db, above_floor)`
+  takes any external level in dB (the ducker's sliding maximum);
+- `PickSettings { rise_db, slope_ms, hold_ms, refractory_ms }` are its arguments. The floor is the
+  caller's bool, so the ducker passes L > T and the swell passes e > max(`thresh`, P − W).
+- gfx-killswitch is untouched. Its move to `Pick` is a later, null-guarded change, with its own `sens`
+  mapping kept in the crate.
+
+### Measurements (`cargo test -p gfx-swell`, 48 kHz unless stated)
+
+| Check (§5) | Target | Measured |
+|---|---|---|
+| Curve | ±0.3 dB over 10 – 100 % of the rise; sync 1/4 at 120 BPM = 500 ms ± 1 sample | All five curves within 0.3 dB; 24,000 samples ± 1 |
+| Attack removed after silence | ≤ −40 dB in the first 10 ms | −65.7 dB (82 Hz), −68.6 (196 Hz), −68.4 (659 Hz) |
+| Never silent | One onset (L), the swell plays; engage on a ringing chord swells it in | L 3.8 ms into a 50 ms fade-in, then unity; engage: L at +1 ms, −20 dB at first, unity after the rise |
+| Retrigger on pick | One onset per re-pick, ≤ 1.5 ms late; leak ≤ −12 dB at zero latency (target); ≤ −40 dB with 3 ms | One each, ≤ 0.44 ms late (110, 196, 440 Hz). Leak at zero latency: −11.9 to −15.1 dB (worst −11.9 at 110 Hz). With 3 ms: −65.7 dB worst |
+| Retrigger on legato (C) | Semitone at 330 / 110 / 82 Hz within 18 / 30 / 35 ms | 8 / 16 / 16 ms, up and down |
+| Retrigger on legato (B) | New three-note chord with no pick within 15 ms | B at 12 ms (the soft finger also fired A at 1.8 ms) |
+| Legato dips with lookahead 25 ms | Within ± 3 ms of the change | 330 Hz −1.6 ms, 110 Hz −1.0 ms, chord +1.2 ms |
+| No retrigger on decay | 0 onsets after the first | 0: an 8 s note; a 6-string chord ±3 cents, `legato` 50 and 100 % |
+| No retrigger on vibrato / bends | 0; a 5-fret slide in 150 ms = 1 | 0 for ±50 c / 6 Hz, ±100 c / 7 Hz, 200 c bends in 100 and 40 ms and back, a 12-semitone dive, at 82, 110, 220, 330 and 659 Hz; tremolo 6 dB / 5 Hz: 0. Slide: 1 |
+| No retrigger on let-ring | 0 from C; one per pick from A | 0 for fifth, fourth, third and octave at 110 and 196 Hz, both decay orders, and a triad; arpeggio 5 / 5 from A |
+| One swell per strum | 1 per strum, 2 strums = 2; `strum` 20 ms low E = 1 | 1, 1, 2, 1 (C absorbed 27 ms after A) |
+| Noise and level | 1 then 0; nothing in the pauses; 0 / −12 / −24 dB identical ± 1 ms | Pink −50 / −20 dBFS and hum −50 dBFS at 50 and 75 %: 1 then 0. Phrase: nothing in the pauses, the notes identical within 0.1 ms. Hiss above `thresh` opens the swell once at the start (0 and −12 dB), the limit stated in §2.2 |
+| Reset | Closed within 150 ms of a stopped note; the pick 200 ms later removed; a ringing note not reset | Closed after 133 ms; the next pick at −67.9 dB; 4 s ringing at 3 dB / s stays in Hold |
+| No clicks | `fire` dip on 1 kHz ≤ −50 dB HF | −69.1 dB; reset fade −91.4 dB; bow decay below the measurement floor; `lookahead` change −89 to −94 dB |
+| Bow | One attack-decay, then 0 onsets until a pick | Idle → Rise → Decay → Idle, silent until the pick at 6 s |
+| Latency | Reported = measured | 3 / 10 / 25 ms = 144 / 480 / 1,200 samples, output = input delayed bit-exactly |
+| Key | Unconnected = Main | Bit-identical; a key's picks swell a pad on the main |
+| Other rates | — | 44.1 and 96 kHz: picks, a semitone at 330 and 110 Hz, vibrato, decay, noise pass |
+| Determinism, CPU | Strict null; ≤ 2 % of a core (target 1 %) | gfx-bench 28 / 28 at 44.1 – 192 kHz. 140 – 165 ns / sample mono, 145 – 151 ns stereo (0.7 – 0.8 % of a core) at default, over two runs; 59 ns with `legato` 0 |
+
+Not run, for want of data: picks on annotated DIs (funk, clean, crunch with the key), legato
+F-measure on lead-clean.wav, a note left ringing 4 s on clean.wav. These DIs and their onset
+annotations are not in the repository.
+
+### Deviations from the reviewed design, and why
+
+Each one was forced by a measured failure on the synthetic bench. Every constant is named in `onset.rs`.
+
+1. **A, slope test.** The design compared the envelope with its value 3 ms earlier. The coded test
+   compares it with the envelope's **maximum over the 13.4 ms (one period of 75 Hz) before those 3 ms**
+   (`PickSettings::hold_ms`; 0 restores the design's test).
+   - Above 1.5 kHz a low string's partials arrive as one spike per period, so the 0.2 / 5 ms envelope
+     ripples by 10 – 15 dB on a 110 Hz note.
+   - With the design's test, A fired on the decay of a plain 110 Hz note, about 360 ms after the pick.
+   - A periodic envelope never rises above its own last peak; a pick does.
+2. **A, re-arm.** It also re-arms once the envelope has fallen R / 2 under its peak since the onset, or
+   100 ms after the onset.
+   - The dB slow reference starts at −120 dB and needs hundreds of ms to climb after silence. With
+     "re-arm when env − slow < R / 2" alone, a second strum 250 ms after the first was missed, and so
+     was a first note over hiss that had fired at its start.
+   - The slope test and the 20 ms refractory time (the design gave none) already keep one transient from
+     firing twice.
+   - The high-pass is gfx-killswitch's 2 × 2nd order; §2.3 said 2nd order, §1 said "× 2".
+3. **L arms 6 dB under the floor**, not just under it. Right after a reset, the tail of an 8 s note
+   hovered at the floor and re-opened L.
+4. **B's maximum filter reads each band's level peak-held with a 20 dB / s release**, not the single
+   frame 8 ms earlier.
+   - With the single frame, two partials beating at 4.4 Hz (a major third left ringing: 550 against
+     554 Hz) fired B as they came out of each null.
+   - Pink noise at `legato` 75 % fired it too (D 29 against a threshold of 24).
+   - A band now has to exceed where it recently was, so beats, tremolo troughs and noise dips no
+     longer count. A new note still does.
+   - δ, the 1.5 × median and the 2 ms envelopes are as designed.
+5. **C ignores integer-ratio jumps** instead of holding them for three more analyses. Within 30 cents
+   of an octave, a twelfth or two octaves, the reference re-anchors without firing.
+   - YIN's harmonic lock read a 220 Hz string as 110 Hz (clarity 1.0) for 140 ms, then flipped back.
+   - A major third left ringing (196 + 247 Hz) read their common 82 Hz sub-period, then 247 Hz.
+   - Both held well past three analyses. The cost: a true octave legato does not swell through C.
+6. **C, glides drag the reference at any clarity.** Every voiced analysis within 18 cents of the
+   previous one (a continuous path) and within 70 cents of the reference moves the reference. The
+   design's stable pairs, gated by clarity, still decide the jumps.
+   - On a low E the 13.3 ms window smears a ±100 cent vibrato down to clarity 0.65 – 0.8.
+   - The reference stayed behind, and C fired 4 times in 1.2 s.
+   - A legato change crosses unvoiced or garbled analyses and lands at once, so it is not dragged.
+7. **C's lag for the lookahead** is the window plus one period of the new note, as measured: 8 ms at
+   330 Hz against the design's "≈ 14 ms". The 25 ms placements land within 1.6 ms.
+8. **Choices where the design is silent.**
+   - A slide is a C jump in the same direction within `strum` of the previous C jump.
+   - The B / C hold-off counts from the last onset that started a swell.
+   - `fire` is never absorbed.
+   - With `dip` 0 a ringing note ignores retriggers, as designed. A note that is releasing restarts its
+     rise from the current gain.
+   - A `lookahead` change crossfades the old and new delay taps over 20 ms.
+   - The key falls back to main after 1 s of silence, as gfx-gate does.
+   - `process_with_key` is an inherent method, as in gfx-gate. Adding it to the `Effect` trait is
+     gfx-ducker's change.
+9. **gfx-bench** gained `Options::skip_steps` (empty by default), so the README's `param_steps`
+   exemptions (`lookahead`, `fire`) could be written.
+10. The dB curve's half-rise is −24.5 dB (§2.5 says "≈ −24 dB").
+
+### Left for the owner
+
+- **Listening.**
+  - Whether the zero-latency legato "blip, then swell" suits `legato` 50 % by default.
+  - B's δ and C's clarity bound, by ear on real playing.
+  - The `reset` default on clean.wav, and the pick leak (−12 to −15 dB measured on Karplus-Strong
+    strings).
+- **Onset annotations** for clean, lead-clean, funk and crunch, plus a let-ring and a bass DI, to run
+  the real-DI rows of §5.
+- **golem-rack**: the catalogue entry (type `swell`, decision 9) and the key routing.

@@ -34379,6 +34379,967 @@
      "notes": "The catalogue's barberpole in real units, with Shift R at +100 % (R = L) as its author meant"
     }
    ]
+  },
+  "gfx-swell": {
+   "name": "GoleM FX Swell",
+   "class_id": "GoleMFxSwell0001",
+   "blocks": [
+    "swell"
+   ],
+   "front": [
+    "rise",
+    "sens",
+    "legato",
+    "curve",
+    "depth"
+   ],
+   "groups": [
+    {
+     "id": "rise",
+     "name": "Rise",
+     "custom": null,
+     "params": [
+      "sync"
+     ]
+    },
+    {
+     "id": "retrigger",
+     "name": "Retrigger",
+     "custom": null,
+     "params": [
+      "dip",
+      "strum"
+     ]
+    },
+    {
+     "id": "envelope",
+     "name": "Envelope",
+     "custom": null,
+     "params": [
+      "decay",
+      "reset",
+      "release"
+     ]
+    },
+    {
+     "id": "detection",
+     "name": "Detection",
+     "custom": null,
+     "params": [
+      "thresh",
+      "source",
+      "lookahead"
+     ]
+    },
+    {
+     "id": "output",
+     "name": "Output",
+     "custom": null,
+     "params": [
+      "fire",
+      "level",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "rise": {
+     "name": "Rise",
+     "kind": "float",
+     "min": 5,
+     "max": 4000,
+     "default": 300,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": {
+      "param": "sync",
+      "equals": "Off"
+     },
+     "help": "Swell time from start to full level (when sync = Off)"
+    },
+    "sync": {
+     "name": "Sync",
+     "kind": "enum",
+     "min": 0,
+     "max": 16,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "4/1",
+      "2/1",
+      "1/1",
+      "1/2",
+      "1/2•",
+      "1/2T",
+      "1/4",
+      "1/4•",
+      "1/4T",
+      "1/8",
+      "1/8•",
+      "1/8T",
+      "1/16",
+      "1/16•",
+      "1/16T",
+      "1/32"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Rise as a note value at the host tempo"
+    },
+    "sens": {
+     "name": "Sensitivity",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Pick threshold (rise 12 → 3 dB) and the window below the playing level that may trigger (18 → 48 dB)"
+    },
+    "legato": {
+     "name": "Legato",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Sensitivity of the pickless detectors (shape flux, pitch jump); 0 = picks only (and cheaper)"
+    },
+    "curve": {
+     "name": "Curve",
+     "kind": "enum",
+     "min": 0,
+     "max": 4,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Square",
+      "Linear",
+      "S-Curve",
+      "dB",
+      "Pedal"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Rise law"
+    },
+    "depth": {
+     "name": "Depth",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "How far below unity a swell starts: 100 % = from silence, 50 % = attack softened by 6 dB"
+    },
+    "dip": {
+     "name": "Retrigger Dip",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "How far a new note pulls a ringing note down before swelling; 0 = swell only after silence"
+    },
+    "strum": {
+     "name": "Strum Window",
+     "kind": "float",
+     "min": 20,
+     "max": 300,
+     "default": 60,
+     "unit": "ms",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Onsets this close to the first one merge into one swell (strums, slides); also the fastest retrigger"
+    },
+    "decay": {
+     "name": "Decay (Bow)",
+     "kind": "float",
+     "min": 0,
+     "max": 4000,
+     "default": 0,
+     "unit": "ms",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "After the rise, fall back to the start level: attack-decay bows, reverse-tape"
+    },
+    "reset": {
+     "name": "Reset",
+     "kind": "float",
+     "min": 6,
+     "max": 60,
+     "default": 30,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "The swell resets (gain back to the start) once the note has decayed this far below its body level; falling under thresh always resets"
+    },
+    "release": {
+     "name": "Reset Fade",
+     "kind": "float",
+     "min": 10,
+     "max": 2000,
+     "default": 60,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Fade to the start level on reset"
+    },
+    "thresh": {
+     "name": "Noise Floor",
+     "kind": "float",
+     "min": -96,
+     "max": -30,
+     "default": -66,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Absolute floor: nothing below it triggers or holds a note (hiss, hum)"
+    },
+    "source": {
+     "name": "Detector Source",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Main",
+      "Key"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Key = the auxiliary input (the clean DI when the swell sits after the amp)"
+    },
+    "lookahead": {
+     "name": "Lookahead",
+     "kind": "enum",
+     "min": 0,
+     "max": 3,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "3 ms",
+      "10 ms",
+      "25 ms"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Delays the audio, reported to the host: perfect removal of retriggered attacks"
+    },
+    "fire": {
+     "name": "Fire",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Each off → on edge starts a swell (footswitch)"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Output level"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "The VST3 bypass parameter (make_bypass): golem switches the block with it, so engaging is seen"
+    }
+   },
+   "presets": [
+    {
+     "id": "violin",
+     "type": "swell",
+     "name": "Violin",
+     "desc": "Each picked note fades in from silence over a quarter second; stop each note before the next",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic",
+      "folk"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient",
+      "americana"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": true,
+     "params": {
+      "rise": 250,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Stopping each note lets the swell reset, so the next pick meets a closed gain: the attack is removed at zero latency"
+    },
+    {
+     "id": "violin-after-amp",
+     "type": "swell",
+     "name": "Violin after the amp",
+     "desc": "The violin swell placed after the drive or amp, listening to the clean DI on the key input",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "post-rock",
+      "post-metal"
+     ],
+     "gain": "any",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 250,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Key",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Detection on the clean DI: a distorted signal has few transients left and lifts the hiss; needs the DI routed to the key bus"
+    },
+    {
+     "id": "cello-pad",
+     "type": "swell",
+     "name": "Cello pad",
+     "desc": "Strummed chords swell in slowly as one bowed pad, one swell per strum; best into a long reverb",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient",
+      "shoegaze"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "rise": 700,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "S-Curve",
+      "depth": 100,
+      "dip": 100,
+      "strum": 80,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "An 80 ms strum window merges slow strums into one swell; the S-curve lands softly"
+    },
+    {
+     "id": "legato-lead",
+     "type": "swell",
+     "name": "Legato lead",
+     "desc": "Hammer-ons, pull-offs and slides swell too, not only picked notes; a slide swells once",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "jazz"
+     ],
+     "subgenres": [
+      "progressive-rock",
+      "jazz-fusion"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 120,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 75,
+      "curve": "dB",
+      "depth": 100,
+      "dip": 70,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The pitch-jump detector answers 8 – 16 ms after a legato note: a short blip, then the swell; lookahead 25 ms removes it in the studio"
+    },
+    {
+     "id": "gentle-bow-changes",
+     "type": "swell",
+     "name": "Gentle bow changes",
+     "desc": "A new note only pulls the ringing one down a little before swelling: smooth bow changes",
+     "inst": "guitar",
+     "genres": [
+      "classical",
+      "rock"
+     ],
+     "subgenres": [
+      "neoclassical-new-age",
+      "post-rock"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "rise": 300,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 35,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Dip 35 % keeps two thirds of the ringing note under the new one"
+    },
+    {
+     "id": "reverse-tape",
+     "type": "swell",
+     "name": "Reverse tape",
+     "desc": "Every note rises over a quarter note and stops dead: a backwards-tape feel locked to the tempo",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "shoegaze"
+     ],
+     "gain": "clean",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "sync": "1/4",
+     "tags": [
+      "extreme"
+     ],
+     "default": false,
+     "params": {
+      "rise": 300,
+      "sync": "1/4",
+      "sens": 50,
+      "legato": 50,
+      "curve": "dB",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 40,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Long rise, 40 ms decay: the attack-decay bow of the reverse-tape pedals"
+    },
+    {
+     "id": "bowed-stabs",
+     "type": "swell",
+     "name": "Bowed stabs",
+     "desc": "Each note swells in fast and fades away by itself: a bowed attack and decay per note",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "downtempo"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 80,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "S-Curve",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 400,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "With a decay the swell is spent after each bow; only a new pick, legato note or fire starts another"
+    },
+    {
+     "id": "tempo-swells",
+     "type": "swell",
+     "name": "Tempo swells",
+     "desc": "Swells that take a half note at the song's tempo, with a pedal-like taper; feed a dotted delay and a long reverb",
+     "inst": "guitar",
+     "genres": [
+      "electronic",
+      "rock"
+     ],
+     "subgenres": [
+      "ambient",
+      "post-rock"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "sync": "1/2",
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "rise": 300,
+      "sync": "1/2",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Pedal",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The swell starts at the note, not on the grid; only its length follows the tempo"
+    },
+    {
+     "id": "soft-attack",
+     "type": "swell",
+     "name": "Soft attack",
+     "desc": "Takes the edge off each pick: a 25 ms linear fade from half level, nothing else changes",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "folk"
+     ],
+     "subgenres": [
+      "indie-rock",
+      "indie-pop"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "rise": 25,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Linear",
+      "depth": 50,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Depth 50 % starts each note 6 dB down: a transient softener rather than a swell"
+    },
+    {
+     "id": "foot-swell",
+     "type": "swell",
+     "name": "Foot swell",
+     "desc": "Swells only when the footswitch fires: re-swell a held chord on demand",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 300,
+      "sync": "Off",
+      "sens": 0,
+      "legato": 0,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Map Fire to a momentary footswitch; sens 0 and legato 0 leave the picks and legato detectors at their least eager"
+    },
+    {
+     "id": "live-clean-retriggers",
+     "type": "swell",
+     "name": "Live clean retriggers",
+     "desc": "The violin swell with 3 ms of lookahead: re-picked notes lose their attack completely",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 250,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "3 ms",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "3 ms of reported latency hides every pick's dip; set at insert, never switched inside a song"
+    },
+    {
+     "id": "studio-perfect-swell",
+     "type": "swell",
+     "name": "Studio perfect swell",
+     "desc": "The violin swell with 25 ms of lookahead: picked and legato notes all start at silence",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "default": false,
+     "params": {
+      "rise": 250,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 50,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "25 ms",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "For recording and re-amping: 25 ms of reported latency places the legato dips too, down to about 145 Hz"
+    },
+    {
+     "id": "bowed-bass",
+     "type": "swell",
+     "name": "Bowed bass",
+     "desc": "Bass notes fade in like a bowed double bass, at any playing level",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "jazz"
+     ],
+     "subgenres": [
+      "post-rock",
+      "jazz-fusion"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "default": true,
+     "params": {
+      "rise": 180,
+      "sync": "Off",
+      "sens": 60,
+      "legato": 40,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Pitch jumps are read above 75 Hz only (from the D string's first frets up); below, legato swells through the flux detector or not at all"
+    },
+    {
+     "id": "pads-and-keys",
+     "type": "swell",
+     "name": "Pads and keys",
+     "desc": "Removes the attack of keys and pads: each new chord swells in, even without a transient",
+     "inst": "keys",
+     "genres": [
+      "electronic",
+      "pop"
+     ],
+     "subgenres": [
+      "ambient",
+      "synth-pop"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": true,
+     "params": {
+      "rise": 400,
+      "sync": "Off",
+      "sens": 50,
+      "legato": 70,
+      "curve": "Square",
+      "depth": 100,
+      "dip": 100,
+      "strum": 60,
+      "decay": 0,
+      "reset": 30,
+      "release": 60,
+      "thresh": -66,
+      "source": "Main",
+      "lookahead": "Off",
+      "fire": false,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The level gate opens after each silence; the flux detector catches a new chord over a ringing one"
+    }
+   ]
   }
  }
 }

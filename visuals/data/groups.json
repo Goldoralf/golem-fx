@@ -1226,6 +1226,55 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-swell": [
+      {
+        "id": "rise",
+        "name": "Rise",
+        "custom": null,
+        "params": [
+          "sync"
+        ]
+      },
+      {
+        "id": "retrigger",
+        "name": "Retrigger",
+        "custom": null,
+        "params": [
+          "dip",
+          "strum"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "decay",
+          "reset",
+          "release"
+        ]
+      },
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "thresh",
+          "source",
+          "lookahead"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "fire",
+          "level",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1599,6 +1648,12 @@
     },
     "gfx-freqshift": {
       "rate": {
+        "param": "sync",
+        "equals": "Off"
+      }
+    },
+    "gfx-swell": {
+      "rise": {
         "param": "sync",
         "equals": "Off"
       }

@@ -68,10 +68,10 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 26 | [gfx-golem](gfx-golem/) | new block (live vocal octave doubler) | — (the Sleep Token *Emergence* vocal) | **coded**, bench green, prototype approved by ear, to test in golem |
 | 27 | [gfx-glitch](gfx-glitch/) | new block (spectral freeze / glitch) | — | **coded**, bench green, to test in golem |
 | 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **designed**, reviewed by Fable 5.2 |
-| 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **designed**, reviewed by Fable 5.2 |
+| 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **coded**, bench green, to test in golem |
 | 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **designed**, reviewed by Fable 5.2 |
 | 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **coded** (Accurate mode; Pedal mode waits for its voicing), bench green, to test in golem |
-| 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **designed**, reviewed by Fable 5.2 |
+| 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **coded**, bench green, to test in golem |
 | 33 | [gfx-fuzz](gfx-fuzz/) | new block `fuzz` (circuit fuzzes, guitar in the netlist) | — | **designed**, reviewed by Fable 5.2 |
 | 34 | [gfx-dist](gfx-dist/) | new block `dist` (circuit distortions and overdrives) | — | **designed**, reviewed by Fable 5.2 |
 | 35 | [gfx-bassdi](gfx-bassdi/) | new block `bass-di` (bass preamp / DI) | — | **designed**, reviewed by Fable 5.2 |

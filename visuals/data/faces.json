@@ -491,6 +491,22 @@
     "loop"
    ],
    "category": "pitch"
+  },
+  "gfx-swell": {
+   "name": "Swell",
+   "blocks": [
+    "swell"
+   ],
+   "knobs": [
+    "rise",
+    "sens",
+    "legato",
+    "depth"
+   ],
+   "selectors": [
+    "curve"
+   ],
+   "category": "dynamics"
   }
  }
 }

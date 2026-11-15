@@ -1,0 +1,402 @@
+{
+ "crate": "gfx-swell",
+ "presets": [
+  {
+   "id": "violin",
+   "type": "swell",
+   "name": "Violin",
+   "desc": "Each picked note fades in from silence over a quarter second; stop each note before the next",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic",
+    "folk"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient",
+    "americana"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "rise": 250,
+    "curve": "Square",
+    "sens": 50,
+    "legato": 50
+   },
+   "notes": "Stopping each note lets the swell reset, so the next pick meets a closed gain: the attack is removed at zero latency"
+  },
+  {
+   "id": "violin-after-amp",
+   "type": "swell",
+   "name": "Violin after the amp",
+   "desc": "The violin swell placed after the drive or amp, listening to the clean DI on the key input",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "post-rock",
+    "post-metal"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "rise": 250,
+    "curve": "Square",
+    "sens": 50,
+    "legato": 50,
+    "source": "Key"
+   },
+   "notes": "Detection on the clean DI: a distorted signal has few transients left and lifts the hiss; needs the DI routed to the key bus"
+  },
+  {
+   "id": "cello-pad",
+   "type": "swell",
+   "name": "Cello pad",
+   "desc": "Strummed chords swell in slowly as one bowed pad, one swell per strum; best into a long reverb",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient",
+    "shoegaze"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "rise": 700,
+    "curve": "S-Curve",
+    "strum": 80
+   },
+   "notes": "An 80 ms strum window merges slow strums into one swell; the S-curve lands softly"
+  },
+  {
+   "id": "legato-lead",
+   "type": "swell",
+   "name": "Legato lead",
+   "desc": "Hammer-ons, pull-offs and slides swell too, not only picked notes; a slide swells once",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "jazz"
+   ],
+   "subgenres": [
+    "progressive-rock",
+    "jazz-fusion"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "rise": 120,
+    "curve": "dB",
+    "legato": 75,
+    "dip": 70
+   },
+   "notes": "The pitch-jump detector answers 8 – 16 ms after a legato note: a short blip, then the swell; lookahead 25 ms removes it in the studio"
+  },
+  {
+   "id": "gentle-bow-changes",
+   "type": "swell",
+   "name": "Gentle bow changes",
+   "desc": "A new note only pulls the ringing one down a little before swelling: smooth bow changes",
+   "inst": "guitar",
+   "genres": [
+    "classical",
+    "rock"
+   ],
+   "subgenres": [
+    "neoclassical-new-age",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "rise": 300,
+    "dip": 35
+   },
+   "notes": "Dip 35 % keeps two thirds of the ringing note under the new one"
+  },
+  {
+   "id": "reverse-tape",
+   "type": "swell",
+   "name": "Reverse tape",
+   "desc": "Every note rises over a quarter note and stops dead: a backwards-tape feel locked to the tempo",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "shoegaze"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/4",
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "sync": "1/4",
+    "curve": "dB",
+    "decay": 40,
+    "depth": 100
+   },
+   "notes": "Long rise, 40 ms decay: the attack-decay bow of the reverse-tape pedals"
+  },
+  {
+   "id": "bowed-stabs",
+   "type": "swell",
+   "name": "Bowed stabs",
+   "desc": "Each note swells in fast and fades away by itself: a bowed attack and decay per note",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "downtempo"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "rise": 80,
+    "decay": 400,
+    "curve": "S-Curve"
+   },
+   "notes": "With a decay the swell is spent after each bow; only a new pick, legato note or fire starts another"
+  },
+  {
+   "id": "tempo-swells",
+   "type": "swell",
+   "name": "Tempo swells",
+   "desc": "Swells that take a half note at the song's tempo, with a pedal-like taper; feed a dotted delay and a long reverb",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "ambient",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/2",
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "sync": "1/2",
+    "curve": "Pedal"
+   },
+   "notes": "The swell starts at the note, not on the grid; only its length follows the tempo"
+  },
+  {
+   "id": "soft-attack",
+   "type": "swell",
+   "name": "Soft attack",
+   "desc": "Takes the edge off each pick: a 25 ms linear fade from half level, nothing else changes",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "folk"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "indie-pop"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "rise": 25,
+    "curve": "Linear",
+    "depth": 50
+   },
+   "notes": "Depth 50 % starts each note 6 dB down: a transient softener rather than a swell"
+  },
+  {
+   "id": "foot-swell",
+   "type": "swell",
+   "name": "Foot swell",
+   "desc": "Swells only when the footswitch fires: re-swell a held chord on demand",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "legato": 0,
+    "sens": 0
+   },
+   "notes": "Map Fire to a momentary footswitch; sens 0 and legato 0 leave the picks and legato detectors at their least eager"
+  },
+  {
+   "id": "live-clean-retriggers",
+   "type": "swell",
+   "name": "Live clean retriggers",
+   "desc": "The violin swell with 3 ms of lookahead: re-picked notes lose their attack completely",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "rise": 250,
+    "curve": "Square",
+    "sens": 50,
+    "legato": 50,
+    "lookahead": "3 ms"
+   },
+   "notes": "3 ms of reported latency hides every pick's dip; set at insert, never switched inside a song"
+  },
+  {
+   "id": "studio-perfect-swell",
+   "type": "swell",
+   "name": "Studio perfect swell",
+   "desc": "The violin swell with 25 ms of lookahead: picked and legato notes all start at silence",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "rise": 250,
+    "curve": "Square",
+    "sens": 50,
+    "legato": 50,
+    "lookahead": "25 ms"
+   },
+   "notes": "For recording and re-amping: 25 ms of reported latency places the legato dips too, down to about 145 Hz"
+  },
+  {
+   "id": "bowed-bass",
+   "type": "swell",
+   "name": "Bowed bass",
+   "desc": "Bass notes fade in like a bowed double bass, at any playing level",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "jazz"
+   ],
+   "subgenres": [
+    "post-rock",
+    "jazz-fusion"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": true,
+   "params": {
+    "rise": 180,
+    "curve": "Square",
+    "sens": 60,
+    "legato": 40
+   },
+   "notes": "Pitch jumps are read above 75 Hz only (from the D string's first frets up); below, legato swells through the flux detector or not at all"
+  },
+  {
+   "id": "pads-and-keys",
+   "type": "swell",
+   "name": "Pads and keys",
+   "desc": "Removes the attack of keys and pads: each new chord swells in, even without a transient",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "subgenres": [
+    "ambient",
+    "synth-pop"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": true,
+   "params": {
+    "rise": 400,
+    "legato": 70
+   },
+   "notes": "The level gate opens after each silence; the flux detector catches a new chord over a ringing one"
+  }
+ ]
+}

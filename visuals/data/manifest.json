@@ -603,6 +603,25 @@
       {"id": "env_rel", "name": "Env Release", "kind": "float", "min": 20, "max": 2000, "default": 250},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "trails", "name": "Trails", "kind": "bool", "min": 0, "max": 1, "default": 1}
+    ],
+    "gfx-swell": [
+      {"id": "rise", "name": "Rise", "kind": "float", "min": 5, "max": 4000, "default": 300, "exp": true},
+      {"id": "sync", "name": "Sync", "kind": "enum", "min": 0, "max": 16, "default": 0, "options": 17},
+      {"id": "sens", "name": "Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "legato", "name": "Legato", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "curve", "name": "Curve", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "depth", "name": "Depth", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "dip", "name": "Retrigger Dip", "kind": "float", "min": 0, "max": 100, "default": 100},
+      {"id": "strum", "name": "Strum Window", "kind": "float", "min": 20, "max": 300, "default": 60},
+      {"id": "decay", "name": "Decay (Bow)", "kind": "float", "min": 0, "max": 4000, "default": 0, "exp": true},
+      {"id": "reset", "name": "Reset", "kind": "float", "min": 6, "max": 60, "default": 30},
+      {"id": "release", "name": "Reset Fade", "kind": "float", "min": 10, "max": 2000, "default": 60},
+      {"id": "thresh", "name": "Noise Floor", "kind": "float", "min": -96, "max": -30, "default": -66},
+      {"id": "source", "name": "Detector Source", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "lookahead", "name": "Lookahead", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "fire", "name": "Fire", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }
