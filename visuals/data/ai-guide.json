@@ -593,7 +593,8 @@
    "roles": [
     "guitar",
     "bass",
-    "voice"
+    "voice",
+    "keys"
    ],
    "position": "pre-amp",
    "position_note": "early in the lane; octave-up goes before a fuzz",
@@ -622,7 +623,8 @@
    "roles": [
     "guitar",
     "bass",
-    "voice"
+    "voice",
+    "keys"
    ],
    "position": "pre-amp",
    "position_note": "before the amp for pitch dives / harmony into drive; for a vocal octave double use gfx-golem",
@@ -651,7 +653,8 @@
    "roles": [
     "guitar",
     "bass",
-    "voice"
+    "voice",
+    "keys"
    ],
    "position": "pre-amp",
    "pairs_well_with": [
@@ -678,7 +681,8 @@
    "roles": [
     "guitar",
     "bass",
-    "voice"
+    "voice",
+    "keys"
    ],
    "position": "post-amp",
    "position_note": "after the amp for stereo widening; before delay / reverb",
@@ -892,7 +896,8 @@
    "roles": [
     "guitar",
     "bass",
-    "voice"
+    "voice",
+    "keys"
    ],
    "position": "post-amp",
    "position_note": "stereo by nature (2/2): placed before an amp it turns the whole lane stereo; use gfx-ringmod for clang before the amp",
@@ -1842,7 +1847,8 @@
    "roles": [
     "voice",
     "guitar",
-    "bass"
+    "bass",
+    "keys"
    ],
    "position": "pre-amp",
    "position_note": "on a voice lane: after the de-esser and any gate, before the octave doubler (gfx-golem)",
