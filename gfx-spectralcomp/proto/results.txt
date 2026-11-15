@@ -1,0 +1,131 @@
+##### m1.py
+== Studio identity at unity gains (ratios 1), impulse latency
+512 latency 511 =N-1 null -314.5 dB
+1024 latency 1023 =N-1 null -314.3 dB
+2048 latency 2047 =N-1 null -313.8 dB
+4096 latency 4095 =N-1 null -313.4 dB
+== calibration: sine reading (dB) at bin of the sine, by N; amplitude -20 dBFS
+512 100.0 -20.47 | 512 440.0 -20.01 | 512 1003.7 -20.01 | 512 5000.0 -20.00 | 
+1024 100.0 -20.00 | 1024 440.0 -20.02 | 1024 1003.7 -20.03 | 1024 5000.0 -20.00 | 
+2048 100.0 -20.01 | 2048 440.0 -20.01 | 2048 1003.7 -20.00 | 2048 5000.0 -20.00 | 
+4096 100.0 -20.04 | 4096 440.0 -20.03 | 4096 1003.7 -20.00 | 4096 5000.0 -20.00 | 
+== reference (vdH) per-bin peak reading of the same sine, ov=16: 20log10(A)+10log10(N/96)
+1024 -10.35 formula -9.72
+2048 -7.34 formula -6.71
+4096 -4.33 formula -3.70
+== pink noise reading flat per band? (std across 100 Hz-10 kHz of time-mean level)
+1024 mean -34.9 dB, slope -0.92 dB/oct, predicted band level -35.8
+2048 mean -35.1 dB, slope -0.33 dB/oct, predicted band level -35.8
+== static curve: 1 kHz sine swept -80..0 dBFS, down 4 up 3, thresh -36, knee 0/6; steady-state gain vs formula
+studio knee 0 max |err| 0.10 dB errs: 0.0 -0.1 0.1 0.1 0.1 0.1 0.1
+studio knee 6 max |err| 0.10 dB errs: 0.0 -0.1 0.1 0.1 0.1 0.1 0.1
+live knee 0 max |err| 3.86 dB errs: 0.0 0.6 2.2 -0.4 -1.7 -2.7 -3.7
+live knee 6 max |err| 3.86 dB errs: 0.0 0.6 2.2 -0.4 -1.7 -2.7 -3.7
+##### m1b.py
+1000.0 max |err| 3.86 -80:0.00 -76:0.00 -72:0.00 -68:0.63 -64:1.34 -60:2.15 -56:2.24 -52:1.10 -48:0.32 -44:-0.44 -40:-0.93 -36:-1.37 -32:-1.72 -28:-1.96 -24:-2.26 -20:-2.69 -16:-3.10 -12:-3.54 -8:-3.70 -4:-3.76 0:-3.86
+150.0 max |err| 0.59 -80:0.00 -76:0.00 -72:0.00 -68:-0.08 -64:-0.18 -60:-0.22 -56:-0.17 -52:-0.08 -48:0.03 -44:0.06 -40:0.07 -36:0.06 -32:0.06 -28:0.06 -24:0.10 -20:0.15 -16:0.22 -12:0.29 -8:0.38 -4:0.48 0:0.59
+5000.0 max |err| 7.40 -80:0.00 -76:0.00 -72:0.00 -68:0.66 -64:1.46 -60:2.45 -56:2.83 -52:2.09 -48:1.46 -44:0.91 -40:0.43 -36:-0.01 -32:-0.49 -28:-1.04 -24:-1.68 -20:-2.46 -16:-3.50 -12:-4.97 -8:-5.39 -4:1.48 0:7.40
+7100.0 max |err| 5.36 -80:0.00 -76:0.00 -72:0.00 -68:-0.01 -64:-0.14 -60:-0.47 -56:-0.64 -52:-0.33 -48:-0.14 -44:-0.04 -40:-0.00 -36:-0.00 -32:0.00 -28:0.06 -24:0.20 -20:0.47 -16:0.91 -12:1.53 -8:2.35 -4:3.60 0:5.36
+##### m2b.py
+N512 att  1 rel50: GR -19.5; frame-end 10/63/90%: 3/5/7 ms; release 63/90%: 47/83 ms (N/2 = 5.3 ms)
+N512 att 10 rel100: GR -19.5; frame-end 10/63/90%: 5/15/28 ms; release 63/90%: 87/159 ms (N/2 = 5.3 ms)
+N512 att 50 rel300: GR -19.5; frame-end 10/63/90%: 16/60/125 ms; release 63/90%: 244/461 ms (N/2 = 5.3 ms)
+N512 att150 rel300: GR -19.5; frame-end 10/63/90%: 41/175/371 ms; release 63/90%: 244/461 ms (N/2 = 5.3 ms)
+N1024 att  1 rel50: GR -19.5; frame-end 10/63/90%: 5/8/13 ms; release 63/90%: 55/89 ms (N/2 = 10.7 ms)
+N1024 att 10 rel100: GR -19.5; frame-end 10/63/90%: 8/19/32 ms; release 63/90%: 95/167 ms (N/2 = 10.7 ms)
+N1024 att 50 rel300: GR -19.5; frame-end 10/63/90%: 19/64/128 ms; release 63/90%: 252/468 ms (N/2 = 10.7 ms)
+N1024 att150 rel300: GR -19.5; frame-end 10/63/90%: 45/179/373 ms; release 63/90%: 252/468 ms (N/2 = 10.7 ms)
+N2048 att  1 rel50: GR -19.5; frame-end 10/63/90%: 8/19/24 ms; release 63/90%: 71/108 ms (N/2 = 21.3 ms)
+N2048 att 10 rel100: GR -19.5; frame-end 10/63/90%: 13/24/40 ms; release 63/90%: 108/183 ms (N/2 = 21.3 ms)
+N2048 att 50 rel300: GR -19.5; frame-end 10/63/90%: 24/72/136 ms; release 63/90%: 268/487 ms (N/2 = 21.3 ms)
+N2048 att150 rel300: GR -19.5; frame-end 10/63/90%: 51/184/381 ms; release 63/90%: 268/487 ms (N/2 = 21.3 ms)
+N4096 att  1 rel50: GR -19.5; frame-end 10/63/90%: 24/35/45 ms; release 63/90%: 103/135 ms (N/2 = 42.7 ms)
+N4096 att 10 rel100: GR -19.5; frame-end 10/63/90%: 24/45/56 ms; release 63/90%: 145/209 ms (N/2 = 42.7 ms)
+N4096 att 50 rel300: GR -19.5; frame-end 10/63/90%: 35/88/152 ms; release 63/90%: 295/519 ms (N/2 = 42.7 ms)
+N4096 att150 rel300: GR -19.5; frame-end 10/63/90%: 67/195/387 ms; release 63/90%: 295/519 ms (N/2 = 42.7 ms)
+##### m3.py
+== hop spurs: 1 kHz sine, 6 Hz AM +-6 dB around -20 dBFS, thresh -36, down 4, attack 10, release 50
+studio N1024 hop N/4: spurs at k*fs/H -44.3 dBc; worst component >40 Hz from carrier -44.3 dBc
+studio N2048 hop N/4: spurs at k*fs/H -42.4 dBc; worst component >40 Hz from carrier -42.4 dBc
+studio N1024 hop N/8: spurs at k*fs/H -77.5 dBc; worst component >40 Hz from carrier -69.8 dBc
+studio N2048 hop N/8: spurs at k*fs/H -79.1 dBc; worst component >40 Hz from carrier -79.1 dBc
+live N1024 hop N/4: spurs at k*fs/tick -57.0 dBc; worst component >40 Hz from carrier -57.0 dBc
+live N2048 hop N/4: spurs at k*fs/tick -60.6 dBc; worst component >40 Hz from carrier -57.2 dBc
+##### m4.py
+== musical noise: pink noise -18 dBFS RMS, thresh -40, down 4, up 4, attack 10, release 50, N 2048 (Studio)
+per bin (reference-like: one bin, no band): gain std over time 1.96 dB, bin-to-bin 2.02 dB, hop-to-hop 0.66 dB
+main lobe only (+-2 bins)                 : gain std over time 1.19 dB, bin-to-bin 0.58 dB, hop-to-hop 0.36 dB
+1/12 oct                                  : gain std over time 0.87 dB, bin-to-bin 0.36 dB, hop-to-hop 0.27 dB
+1/6 oct (default)                         : gain std over time 0.67 dB, bin-to-bin 0.25 dB, hop-to-hop 0.22 dB
+1/3 oct                                   : gain std over time 0.49 dB, bin-to-bin 0.17 dB, hop-to-hop 0.17 dB
+== pre-echo: a pluck (E4) after 0.6 s of -80 dBFS white noise; Studio N 2048; output level before the onset
+input                                           : RMS 0-5 ms before onset  -67.1 dB, 5-20 ms  -67.2, 20-45 ms  -67.4 (re first 10 ms)
+Studio down 8, per bin (hmin 0, res 0)          : RMS 0-5 ms before onset  -19.2 dB, 5-20 ms  -37.4, 20-45 ms  -65.3 (re first 10 ms)
+Studio down 8, 1/6 oct                          : RMS 0-5 ms before onset  -21.0 dB, 5-20 ms  -47.6, 20-45 ms  -58.3 (re first 10 ms)
+Studio down 8 up 8, per bin                     : RMS 0-5 ms before onset   -8.7 dB, 5-20 ms  -34.2, 20-45 ms  -63.7 (re first 10 ms)
+Studio down 8 up 8, 1/6 oct                     : RMS 0-5 ms before onset  -14.8 dB, 5-20 ms  -41.4, 20-45 ms  -58.6 (re first 10 ms)
+Studio down 8 up 8, 1/6 oct, N 1024             : RMS 0-5 ms before onset  -23.7 dB, 5-20 ms  -56.4, 20-45 ms  -63.8 (re first 10 ms)
+Live down 8 up 8, N 1024                        : RMS 0-5 ms before onset  -72.4 dB, 5-20 ms  -72.6, 20-45 ms  -72.7 (re first 10 ms)
+##### m5.py
+== pink -18 dBFS   mean power gain per octave [125, 250, 500, 1000, 2000, 4000, 8000] (ref | ours | diff)
+gentle-glue      ref   -1.3   -1.0   -0.6   -0.4   -0.2   -0.1   -0.1 | ours   -3.4   -2.8   -2.2   -2.2   -3.2   -4.2   -5.2 | max diff 5.1
+de-harsh-vocal   ref    0.0    0.0   -0.0   -0.0   -0.3   -1.4   -3.6 | ours    0.0    0.0   -0.0   -0.2   -2.0   -6.2  -10.7 | max diff 7.2
+keys-even        ref    0.0   -0.1   -0.1   -0.2   -0.3   -0.4   -0.5 | ours   -1.7   -1.7   -1.6   -2.2   -4.1   -6.0   -8.0 | max diff 7.5
+pad-hold         ref   -6.5   -6.1   -5.4   -4.7   -4.2   -3.7   -3.1 | ours   -9.1   -8.4   -8.3   -9.6  -11.0  -12.6  -14.0 | max diff 10.9
+pink-noise-wash  ref  -16.5  -16.2  -15.5  -14.9  -14.5  -14.0  -13.6 | ours  -18.9  -17.6  -17.5  -17.9  -19.1  -21.4  -22.8 | max diff 9.1
+vocal-smooth     ref    0.7    0.3   -0.1   -0.5   -1.1   -1.8   -2.6 | ours   -0.7   -1.2   -1.8   -3.0   -5.6   -8.3  -11.0 | max diff 8.5
+vocal-upfront    ref   -4.8   -4.5   -3.9   -3.5   -3.1   -2.7   -2.3 | ours   -6.9   -6.2   -5.6   -5.5   -6.5   -7.5   -8.5 | max diff 6.2
+
+== clean DI   mean power gain per octave [125, 250, 500, 1000, 2000, 4000, 8000] (ref | ours | diff)
+gentle-glue      ref   -0.5   -2.4   -4.5   -4.2   -0.3    1.4    2.1 | ours   -0.7   -3.0   -5.2   -4.2   -0.6    2.1    2.9 | max diff 0.8
+de-harsh-vocal   ref    0.0   -0.0   -1.2   -2.3   -0.2   -0.0   -0.0 | ours    0.0   -0.0   -2.1   -3.2   -0.4    0.0    0.0 | max diff 1.0
+keys-even        ref    0.6   -1.5   -4.8   -5.2   -0.5    1.7    2.6 | ours    0.1   -2.7   -6.2   -6.0   -1.0    2.2    3.3 | max diff 1.4
+pad-hold         ref   -3.8   -8.3  -11.4  -10.8   -3.2    3.4    7.0 | ours   -4.4   -8.4  -11.3  -11.4   -4.4    5.1    7.8 | max diff 1.7
+pink-noise-wash  ref  -12.1  -17.9  -20.8  -19.7   -9.8    0.5    5.3 | ours   -6.9  -10.9  -16.2  -17.1   -8.3    3.7    6.9 | max diff 7.0
+vocal-smooth     ref    1.4   -1.1   -4.9   -5.7   -0.9    2.2    3.4 | ours    0.7   -2.2   -6.2   -6.4   -1.7    2.6    3.8 | max diff 1.3
+vocal-upfront    ref   -2.4   -5.5   -7.9   -7.6   -1.9    3.8    7.0 | ours   -3.2   -6.4   -8.8   -8.0   -2.7    4.9    7.7 | max diff 1.2
+
+gentle-glue: thresh -37.3, slope -2.08, up 1.10
+de-harsh-vocal: thresh -40.3, slope -6.24, up 1.00
+keys-even: thresh -35.3, slope -3.12, up 1.14
+pad-hold: thresh -46.3, slope -2.08, up 1.55
+pink-noise-wash: thresh -56.3, slope -2.08, up 2.01
+vocal-smooth: thresh -39.3, slope -4.16, up 1.19
+vocal-upfront: thresh -45.3, slope -2.08, up 1.50
+##### m6.py
+== level vs bypass, defaults (thresh -36, down 4, up 1, attack 150, release 300, 1/6 oct), auto gain on / off
+clean DI         peak -3.4 dBFS, RMS -20.5: live1024 ag1 +0.6; live1024 ag0 -6.8; studio2048 ag1 -0.6; studio2048 ag0 -5.1 (makeup 0.0 dB)
+lead-clean DI    peak -15.1 dBFS, RMS -32.9: live1024 ag1 +6.4; live1024 ag0 -0.9; studio2048 ag1 +3.6; studio2048 ag0 -0.9 (makeup 0.0 dB)
+synthetic phrase peak -10.0 dBFS, RMS -32.2: live1024 ag1 +7.3; live1024 ag0 -0.0; studio2048 ag1 +4.5; studio2048 ag0 -0.0 (makeup 0.0 dB)
+== an 'even' setting: thresh -40, down 3, up 2, attack 30, release 200 (level and the octave-band crest)
+clean DI         live: level -0.5 dB, makeup 9.2, ACGE realised-vs-target worst 1.15 dB, p95 1.03  (11 s)
+clean DI         studio: level -2.6 dB, makeup 7.1  (0 s)
+lead-clean DI    live: level +6.6 dB, makeup 9.2, ACGE realised-vs-target worst 1.38 dB, p95 1.11  (12 s)
+lead-clean DI    studio: level +3.7 dB, makeup 7.1  (0 s)
+synthetic phrase live: level +10.5 dB, makeup 9.2, ACGE realised-vs-target worst 1.29 dB, p95 1.19  (12 s)
+synthetic phrase studio: level +9.1 dB, makeup 7.1  (0 s)
+##### m7.py
+== sample rates: 1 kHz and 6 kHz sines at -12 dBFS, down 4 (formula -18.0 dB); Studio window 2048, Live 1024
+44100 N(2048)=2048 studio 1000: -17.99; studio 6000: -18.00; live 1000: -20.54; live 6000: -17.98
+48000 N(2048)=2048 studio 1000: -17.99; studio 6000: -18.00; live 1000: -20.72; live 6000: -18.10
+96000 N(2048)=4096 studio 1000: -17.99; studio 6000: -18.00; live 1000: -20.72; live 6000: -18.10
+192000 N(2048)=8192 studio 1000: -17.99; studio 6000: -18.00; live 1000: -20.72; live 6000: -18.10
+== Live mix 50 %: pink noise, a fixed -12 dB third-octave cut at 1 kHz; deepest dip of |0.5 + 0.5 H| vs the ideal blend
+cut -6 dB: worst (complex blend - magnitude blend) -0.15 dB; max phase of H 22 deg
+cut -12 dB: worst (complex blend - magnitude blend) -0.56 dB; max phase of H 42 deg
+cut -24 dB: worst (complex blend - magnitude blend) -1.64 dB; max phase of H 72 deg
+cut +9 dB: worst (complex blend - magnitude blend) -0.33 dB; max phase of H 32 deg
+== Key mode: main = steady pink noise -24 dBFS; key = E4 pluck train; down 8, thresh -50, attack 10, release 150
+studio gain during a note at 330 / 660 / 990 Hz: -12.9 / -11.6 / -6.7 dB; at 200 / 3000 / 8000 Hz: -0.0 / -11.3 / -2.5 dB
+live gain during a note at 330 / 660 / 990 Hz: -13.7 / -19.0 / -18.0 dB; at 200 / 3000 / 8000 Hz: -6.5 / -15.5 / -4.6 dB
+##### rs (cargo run --release)
+N   512 hop N/4 live detector (fwd+gains)  :   8.15 us per hop,  63.7 ns per sample at the hop rate (acc 104022.7)
+N   512 hop N/8 studio (fwd+gains+inv+OLA):   9.00 us per hop, 140.6 ns per sample at the hop rate (acc 104022.7)
+N  1024 hop N/4 live detector (fwd+gains)  :  15.25 us per hop,  59.6 ns per sample at the hop rate (acc 62644.3)
+N  1024 hop N/8 studio (fwd+gains+inv+OLA):  16.78 us per hop, 131.1 ns per sample at the hop rate (acc 62644.3)
+N  2048 hop N/4 live detector (fwd+gains)  :  30.87 us per hop,  60.3 ns per sample at the hop rate (acc 36810.4)
+N  2048 hop N/8 studio (fwd+gains+inv+OLA):  37.03 us per hop, 144.7 ns per sample at the hop rate (acc 36810.4)
+N  4096 hop N/4 live detector (fwd+gains)  :  67.86 us per hop,  66.3 ns per sample at the hop rate (acc 18450.0)
+N  4096 hop N/8 studio (fwd+gains+inv+OLA):  90.61 us per hop, 177.0 ns per sample at the hop rate (acc 18450.0)
+N  8192 hop N/4 live detector (fwd+gains)  : 123.96 us per hop,  60.5 ns per sample at the hop rate (acc 9180.8)
+N  8192 hop N/8 studio (fwd+gains+inv+OLA): 137.61 us per hop, 134.4 ns per sample at the hop rate (acc 9180.8)
