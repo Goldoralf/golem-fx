@@ -2109,6 +2109,75 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-grains": [
+      {
+        "id": "grain",
+        "name": "Grain",
+        "custom": null,
+        "params": [
+          "spray",
+          "shape",
+          "skew",
+          "reverse",
+          "chance",
+          "regular"
+        ]
+      },
+      {
+        "id": "pitch",
+        "name": "Pitch",
+        "custom": null,
+        "params": [
+          "pitch_rand",
+          "scale",
+          "detune",
+          "glide"
+        ]
+      },
+      {
+        "id": "time",
+        "name": "Time",
+        "custom": null,
+        "params": [
+          "length",
+          "length_sync",
+          "scan",
+          "sync",
+          "seed"
+        ]
+      },
+      {
+        "id": "hold",
+        "name": "Hold",
+        "custom": null,
+        "params": [
+          "decay",
+          "skip",
+          "live"
+        ]
+      },
+      {
+        "id": "space",
+        "name": "Space & tone",
+        "custom": null,
+        "params": [
+          "spread",
+          "feedback",
+          "low_cut",
+          "high_cut",
+          "kill_dry"
+        ]
+      },
+      {
+        "id": "bypass",
+        "name": "Bypass",
+        "custom": null,
+        "params": [
+          "trails",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2473,6 +2542,9 @@
       "m09": "Note mask: A allowed as a target (intersected with key / scale; written by golem's compile)",
       "m10": "Note mask: A# allowed as a target (intersected with key / scale; written by golem's compile)",
       "m11": "Note mask: B allowed as a target (intersected with key / scale; written by golem's compile)"
+    },
+    "gfx-grains": {
+      "trails": "With bypass: on, the cloud finishes its grains and a hold releases in its decay; off, the wet fades out in 20 ms"
     }
   },
   "depends": {
@@ -2820,6 +2892,12 @@
       "degree": {
         "param": "source",
         "equals": "Drone"
+      }
+    },
+    "gfx-grains": {
+      "regular": {
+        "param": "mode",
+        "equals": "Cloud"
       }
     }
   }

@@ -234,6 +234,8 @@ pub struct Pick {
     armed: bool,
     s: PickSettings,
     sr: f32,
+    /// env − slow at the last decision (dB), read by callers that grade onsets (gfx-grains)
+    last_rise: f32,
 }
 
 impl Pick {
@@ -290,6 +292,7 @@ impl Pick {
         self.since = 0;
         self.refr = 0;
         self.armed = true;
+        self.last_rise = 0.0;
     }
 
     /// Its own envelope: high-passed at 1.5 kHz (2 × 2nd order), fast follower 0.2 / 5 ms, in dB.
@@ -321,6 +324,7 @@ impl Pick {
         self.hist[self.at] = env_db;
         let reference = if self.hold_on { self.held.next(past - DB_FLOOR) + DB_FLOOR } else { past };
         let rise = env_db - self.slow_db as f32;
+        self.last_rise = rise;
         self.slow_db = env_db as f64 + (self.slow_db - env_db as f64) * self.k_slow;
         self.refr = self.refr.saturating_sub(1);
         self.peak_db = self.peak_db.max(env_db);
@@ -337,6 +341,13 @@ impl Pick {
             self.armed = true;
         }
         false
+    }
+
+    /// The rise (envelope − its 150 ms average, dB) at the last decision: an onset's strength is its
+    /// maximum over the few ms after it fires. Read only; it changes no decision.
+    #[inline]
+    pub fn rise_db(&self) -> f32 {
+        self.last_rise
     }
 
     /// One sample through its own envelope.

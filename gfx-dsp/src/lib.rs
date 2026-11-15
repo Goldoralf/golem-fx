@@ -29,6 +29,7 @@ pub mod exp_smooth;
 pub mod filterbank;
 pub mod flanger;
 pub mod geq;
+pub mod grain;
 pub mod ir;
 #[cfg(feature = "ir-host")]
 pub mod ir_engine;

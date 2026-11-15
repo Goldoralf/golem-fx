@@ -799,6 +799,27 @@
     "freeze"
    ],
    "category": "modulation"
+  },
+  "gfx-grains": {
+   "name": "Grains",
+   "blocks": [
+    "granular"
+   ],
+   "knobs": [
+    "grains",
+    "size",
+    "pos",
+    "pitch",
+    "mix"
+   ],
+   "selectors": [
+    "mode"
+   ],
+   "toggles": [
+    "freeze"
+   ],
+   "category": "modulation",
+   "color": "#00a84f"
   }
  }
 }

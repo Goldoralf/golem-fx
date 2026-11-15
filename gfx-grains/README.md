@@ -1,7 +1,18 @@
 # gfx-grains
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Design by Claude Opus 5.5, reviewed by
-> Fable 5.2 the same day: the fixes are in the text, the list is in the [Review](#review-fable-52-2026-11-14).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Fable 5.2
+> the same day ([Review](#review-fable-52-2026-11-14)), coded as reviewed with Raph's decisions and the
+> deviations listed in [As coded](#as-coded-v010-2026-11-15). gfx-dsp's new `grain` module (multi-rate
+> buffer with its 51-tap half-band copy, the 17-kernel ratio-tracking bank read through the octave switch,
+> the window and its incremental Hann, the drop-never-steal pool), the four schedulers, the hold with
+> copy-on-freeze, the reflected positions, `skip` on gfx-dsp `onset::Pick`, the measured level between
+> the cloud's two bounds, feedback, `live`, trails, 2 / 2 first, zero latency. Measured: kernel stop bands
+> 71.7 – 98.8 dB as the prototype, worst alias −76.4 dB below 0.4 fs over 13 ratios; the unity stream
+> nulls the delayed input to −131 … −145 dB; wet level within ±1.0 dB of the source over 180 renders
+> (density 1 – 64, scatter 0 – 50 %, pitch, detune, regularity, window; noise and notes); a 30 s hold has
+> no envelope period (autocorrelation peak 0.11); bit-exact across host block sizes; bench 28 / 28 at
+> 44.1 – 192 kHz; CPU 74 – 87 ns per sample at the defaults (budget 120), 1.15 – 1.3 µs at 64 pitched
+> grains (target 900 ns, see As coded).
 
 golem's **granular processor and granular delay**. A rolling stereo buffer is played back as a cloud of
 up to 128 short windowed grains. Each grain has its own position, length, pitch, direction, envelope and
@@ -802,3 +813,125 @@ the working hold.
   it), it covers cloud, freeze and pitched grains, and its parameters (position, size, pitch, density,
   texture) map onto ours for a matched A/B. The test: the guitar DIs through both at matched loudness, at
   four settings (sparse cloud, dense cloud, freeze, +12 st grains), blind to Raph.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `grain.rs` (new): `HalfBand` (51 taps, Kaiser β for 80 dB, 13 multiplies per output by
+  symmetry), `MipBuffer` (1 or 2 channels interleaved, level 0 and its half-rate level 1, each a
+  power-of-two ring with a 64-frame mirrored guard, a frame counter from reset; `push`, `read_int`,
+  `read` / `read_run` through a kernel, `copy_l0_from` / `copy_l1_from` for HOLD), `KernelBank` (17
+  kernels × 129 rows, 32 taps to ρ⁺ = √2 and 48 above, rows normalised to DC 1; `choose(r)` = the octave
+  switch; an SSE path and an AVX2 / FMA path picked once at construction), `Window` / `WindowShape`
+  (flat → triangle → Hann, `skew` bounded in time, raised-cosine guard on the flat and triangular parts;
+  moments and |W(f)|², the periodic sum's variance by Poisson summation), `WindowOsc` (the Hann part by an
+  f64 rotation at the grain's exact phase, restarted at the peak), `GrainPool` (fixed, drops when full).
+  10 unit tests (+ 1 ignored speed probe).
+- gfx-dsp `onset.rs`: one read-only accessor, `Pick::rise_db()` (env − slow at the last decision), and its
+  field. No decision changes: gfx-swell and gfx-ducker renders (clean.wav and lead-clean.wav, mono and
+  stereo at `sens` 80) are byte-identical before and after (8 renders).
+- `src/lib.rs`: the processor (`Grains`, `PARAMS` in the README's order, `MODES`, `SCALE_NAMES`,
+  `METERS`). `src/plugin.rs`: the VST3, class id `GoleMFxGrains001`, 2 / 2 first then 1 / 1, latency 0,
+  `bypass` = `make_bypass`, `active` and `state` read-only. `src/tests.rs`: 21 behaviour tests (§5) and
+  `cpu_report` (ignored).
+- gfx-bench: the crate in `EFFECTS` / `make()`; `options()`: stereo by nature, nothing exempted (silence
+  floor −140 dBFS, latency check and click bound at their defaults).
+- `presets/gfx-grains.json`: the 22 presets of §4 (Standard, Shimmer cloud and Stutter keep golem's ids
+  `standard`, `shimmer-cloud`, `stutter`, re-authored by intent). Visuals: the face, groups, help,
+  `regular` greyed outside Cloud, the `grains` motif (modulation green, anodized, no crate hue), the new
+  `granular` glyph.
+
+**Measured** (48 kHz unless stated; synthetic signals: pink and white noise, harmonic notes, plucked
+notes and five-string strums with exponential decays).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Unity | ≤ −120 dB; Poisson within 0.5 dB | regular Hann, 2 / 8 / 64 grains: −144.8 / −138.7 / −130.8 dB (mono and stereo); Poisson +0.43 / −0.30 / −0.33 dB |
+| Kernel | pass ±0.01 dB, stop ≥ 71 dB to 64 × the rate, DC 1 ± 1e−6 | the continuous kernels (129 rows): pass ±0.0002 … ±0.0031 dB; stop 97.2, 92.0, 89.2, 86.8, 82.5, 79.2, 77.3, 72.9, **71.7** dB (32 taps, ρ⁺ 1 … √2), 98.8, 94.8, 92.2, 88.5, 84.1, 82.2, 78.1, **75.3** dB (48 taps, 2^(9/16) … 2); every row's DC within 2e−6 |
+| Aliasing | ≤ −70 dB below 0.4 fs | the reader at the 13 ratios of §5 on tones 1 – 18 kHz: worst **−76.4 dB** |
+| Half-rate copy | ≤ −80 dB below 0.2 fs | half-band: ripple 0.0010 dB to 0.2 fs, stop **−78.8 dB** from 0.3 fs (the Kaiser estimate's 80 dB, measured); a level-1 read at ρ = 1 matches the analytic sine to −70 dB (group delay compensated) |
+| Glide | no burst at a row or level change | +12 / +24 / −24 st per grain on a 300 Hz tone: steepest sample step 0.35 / 0.53 / 0.13 × the band's own bound |
+| Clicks | ≤ −60 dB | `shape`, `skew`, `size` (2 – 2,000 ms) moved every 50 ms on a sine: HF above 10 kHz −65.9 dB re peak |
+| Freeze, no loop | autocorrelation peak ≤ 0.3, level ±1.5 dB | "Hold Chord" on a ringing chord, 30 s: peak **0.11** (at 2.4 s); level −1.1 … +1.4 dB on 3 s windows (−1.9 … +2.3 dB on 1 s windows: the texture) |
+| Freeze capture | no attack in the hold; the earlier chord ≤ −40 dB | pressed 1 s after the chord: field 0.137 – 1.0 s after it, **0** detector events in 29 s, the first chord's root −90.7 dB re the second's; pressed 0.3 s after: field 0.137 – 0.3 s, **1** event at the detector's threshold in 29 s (below), −52.0 dB |
+| Edges | no histogram bin above 2 × the mean | `pos` 0 and 1, `spray` 100 %: 1.49 / 1.48 × the mean (5,274 grains) |
+| Copy-on-freeze | null ≤ −120 dB | HOLD equals RECORD's region frame for frame on both levels (exact); the hold's grains read HOLD once copied |
+| Hold again, Pool | layers capped at 48, < 0.1 % dropped | 64 grains through a release and two re-engages: 43 live + 58 hold grains during the release, **0** of 4,657 dropped; the third engage ends the oldest |
+| Live level | `live` 0: the dry bit-exact until `freeze` | bit-exact; the hold comes in under its windows |
+| Release | T60 ± 10 % | `decay` 1 s: −60 dB at 0.94 s; 3 s: at 2.93 s |
+| Level | ±2 LU of the source | 180 renders (pink, 110 Hz and 440 Hz notes × `grains` 1 / 8 / 64 × `spray` 0 / 0.05 / 0.2 / 1 / 50 % × {plain, `pitch_rand` 12, `detune` 10 + `regular` 100, `shape` 0 + `regular` 100}): worst **+1.00 dB** (RMS) |
+| Determinism | exact | two renders, a reset, host blocks of 1 / 32 / 64 / 512 / 4,096 and a random schedule: identical |
+| Seed / variate order | correlation < 0.5; onsets unchanged by `spray` | `seed` 0 vs 1: −0.002; `spray` 10 → 30 %: the same onset times |
+| Tempo | ±1 sample of the grid | Rhythm 1/8 at 120 and 97 BPM after a relocation: within 1 sample; no tempo: 12,000 samples per eighth (120 BPM) |
+| Strum | within 6 ms before each onset; `grains` 1: the last | yes; `grains` 1 uses only the last of three onsets, 3 uses all three |
+| Phrase seams | ≤ −90 dB contiguous; wrap no dip > 1 dB | live phrase (a looping delay of L + the 30 ms pre-roll): **−142.6 dB**; held phrase on noise: the wrap's 30 ms crossfade +0.10 dB re the whole |
+| Feedback | peak ≤ +6 dBFS, DC < −60 dBFS; 90 % decays | 100 % at +12 st, 60 s of noise at −12 dBFS: peak +4.4 dBFS, DC −66 dBFS, no NaN; 90 % at 0 st: −55 dB 19 s after the input stops |
+| Stereo | L = R bit-exact at `spread` 0; correlation < 0.3 at 100 | bit-exact; **0.66** at 100 % (below) |
+| Rate independence | onsets and lengths ± 1 sample | 44.1 / 48 / 96 / 192 kHz: yes |
+| Trails | cloud finishes within `size`; off: gone in 20 ms | yes (silent after 160 ms with trails, 25 ms without) |
+| Common checks | — | **28 / 28** at 44.1 – 192 kHz; worst parameter step −64 dB re peak |
+| CPU (48 kHz, stereo) | ≤ 120 ns defaults; ≤ 900 ns 64 + `pitch_rand` + `glide` + `feedback`; ≤ 1,300 ns two layers at +11 st | bench: 76 – 81 ns (mono / stereo) at the defaults; on a performance core: 74 – 87 ns defaults, 173 – 184 ns at 8 grains + `pitch_rand` 12, 325 – 355 ns at 64 unity grains, **1.13 – 1.27 µs** at 64 + `pitch_rand` 12 + `glide` + `feedback`, **1.6 µs** for two layers 48 + 48 at +11 st (the machine shared, ±15 %) |
+
+Not run here: the DI rows (guitar DIs, voice and keys renders), REAPER vs Golem Engine (golem-rack's), the
+EXP sideband row (every grain parameter is drawn at the grain's start; `mix`, `live`, `feedback`, `scan`
+are smoothed 20 ms, the cuts by gfx-dsp `cuts`), the copy's per-block timing, the listening rows (Clouds
+in VCV Rack as the blind reference, Raph's).
+
+**Deviations from the design, and why.**
+- **CPU over the 64-grain targets** (1.13 – 1.27 µs against 900 ns; 1.6 µs against 1,300 ns for two
+  layers at +11 st). A pitched grain-sample costs ≈ 17 ns on a performance core with AVX2 / FMA (2 × 32 – 48
+  MACs, the 32 – 48 phase lerps and the row loads), against §2.11's 7 – 10 ns; a unity grain-sample 5 ns.
+  Done: the grains are rendered a tick ahead, grain by grain (`read_run`, the kernel set up once per
+  tick), an AVX2 / FMA dot product picked at run time (SSE2 otherwise), the Hann by rotation. Left for the
+  owner: fewer phase rows (64 rows: −86 dB images) or one dot product per two samples.
+- **Rings are powers of two** (mask addressing; a 64-bit modulo per read cost ≈ 10 ns per grain-sample):
+  RECORD 2^20 frames and HOLD 2^19 at 44.1 / 48 kHz, **18.9 MB** stereo (17 in §2.1); 37.7 MB at 96 kHz,
+  75.5 MB at 192 kHz. Allocated in `prepare` (nih-plug's `initialize`), never zeroed: the frame counter
+  masks stale content.
+- **Onset intervals between Poisson and metronomic are a shifted exponential** from one variate (the
+  twelfth, the spare): mean·((1 − a) + a·E), a = 1 − `regular`, so the coefficient of variation is a
+  (shape 1 / a², not §2.7's gamma 1 → 50). A gamma variate needs a rejection loop, which would break the
+  fixed variate order. The level's V is a²·N·E[w²] + (1 − a²)·V_periodic, with `chance` added as
+  c²·V + c(1 − c)·N·E[w²]; V_periodic comes from the window's transform (2 Σ n² |W(kn)|²), not a table.
+- **The normalisation gain is applied per grain**, fixed at its start (as every other grain property):
+  with a layer gain, a density step (`grains` 64 → 1) multiplied the 64 grains still sounding by 8 (a
+  −47 dB burst on the bench's step check). A density change now crossfades through the grains' lives.
+- **Grains fit the field and the onset rate follows** (§2.6 shortens the grains, the design was silent on
+  the rate): a press 0.3 s after a chord (163 ms field, 81 ms grains) otherwise played 12 grains per
+  450 ms, an overlap of 2, and the detector fired 103 times in 29 s on the hold's own gaps.
+- **Freeze capture at 0.3 s**: one detector event in 29 s, at its threshold (7.5 dB), from a Poisson
+  cluster of five grain starts within 22 ms; every grain's span is inside the field after the last
+  attack. None at 1 s. The early-press texture is §Review's by-ear item.
+- **Spread 100 %: wet correlation 0.66**, not < 0.3. With independent grains at uniform equal-power
+  positions the correlation is E[gL·gR] / E[gL²] = 2 / π = 0.64; §5's bound would need positions pushed
+  to the sides (a different law than §2.2's θ = `spread`·u). Kept as designed; the test checks 2 / π.
+- **The hold's level**: within ±1.5 dB on 3 s windows; 1 s windows spread −1.9 … +2.3 dB (grains drawn
+  over a decaying field, and the measured gain's own 400 ms wander that §2.5 quantified).
+- **The onset detector runs only while Strum mode or `skip` needs it** (53 ns per sample: half the
+  default budget). A block it did not see stays unmarked, its level byte 0 (unknown, never "silence"),
+  so a `skip` switched on just before a press has no marks for the time before.
+- **Onset strength**: `Pick` runs at its most sensitive (3 dB) and each mark is graded by its largest rise
+  over the next 5 ms (`Pick::rise_db`, the accessor added to gfx-dsp); `skip` counts marks ≥ 12 − 9 ·
+  `skip` / 100 dB, Strum plays onsets ≥ 7.5 dB (the module's default). The strum window (60 ms,
+  gfx-dsp `onset::Strum`) makes a strum one onset in Strum's list; every pick is marked in the map.
+- **`skip`'s rejection applies to Cloud and Rhythm grains in a hold**; Strum grains start on an attack on
+  purpose and Phrase slices follow the phrase.
+- **Phrase seams are decided one slice ahead** (the next slice's variates are drawn with the current
+  one), since a grain is rendered a tick ahead; the live phrase is a looping delay of L + X (the slice's
+  pre-roll).
+- **Caps**: 48 per layer while two sound (the live layer counts while its last grains ring), 32 while a
+  third ends (its 50 ms).
+- **Feedback** takes the whole wet (the hold layer's too) into RECORD; HOLD itself is never written.
+- **Freeze needs 100 ms of history** after a reset (the engage waits for it), and `length` is clipped to
+  the history there is.
+- **Grain length** at most 2.5 s (`size` 2 s + 25 % jitter); Phrase slices are not bounded.
+- **`depends`**: only `regular` (Cloud) is greyed; `sync`, `scan`, `shape`, `skew`, `size` and `pos` are
+  inert in two modes, which the descriptor's single-value `depends` cannot express (golem-rack's
+  per-mode caption of `grains` applies there too).
+- **`pos`** is displayed as the plain fraction (golem shows % · ms).
+
+**Left for the owner.** By ear on the DIs (`gfx-bench apps gfx-grains`): the measured level on note
+changes at 64 grains and small `spray`, the early-press hold, `skip`'s 40 ms and 100 ms, the presets'
+voicing and levels (each `level_db` 0 as a start), Hold Chord against a spectral hold, the blind test
+against Clouds. golem-rack: the catalogue swap (2 / 2, `freeze` bool, presets, glyph and colour), the
+footswitch on `freeze`, 18.9 MB in `initialize` against the stall check. CPU at 64 pitched grains.
