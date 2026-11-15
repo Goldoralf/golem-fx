@@ -809,6 +809,26 @@
       {"id": "tight", "name": "Tight", "kind": "float", "min": 20, "max": 1000, "default": 20},
       {"id": "input", "name": "Input", "kind": "float", "min": -12, "max": 12, "default": 0},
       {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 500, "default": 0}
+    ],
+    "gfx-fuzz": [
+      {"id": "fuzz", "name": "Fuzz", "kind": "float", "min": 0, "max": 100, "default": 70, "exp": true},
+      {"id": "tone", "name": "Tone", "kind": "float", "min": -100, "max": 100, "default": 0, "exp": true},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 24, "default": 0, "exp": true},
+      {"id": "guitar_vol", "name": "Guitar Vol", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "model", "name": "Model", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "buffer", "name": "Buffer", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "pickup", "name": "Pickup", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "bias", "name": "Bias", "kind": "float", "min": -100, "max": 100, "default": 0, "exp": true},
+      {"id": "temp", "name": "Temperature", "kind": "float", "min": 0, "max": 50, "default": 25},
+      {"id": "leakage", "name": "Leakage", "kind": "float", "min": 0, "max": 400, "default": 100},
+      {"id": "voltage", "name": "Voltage", "kind": "float", "min": 3, "max": 18, "default": 9, "exp": true},
+      {"id": "sag", "name": "Sag", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "stack", "name": "Tone Stack", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "mids", "name": "Mids", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "input", "name": "Input", "kind": "float", "min": -12, "max": 12, "default": 0},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 500, "default": 0},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

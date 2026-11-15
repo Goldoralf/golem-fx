@@ -40,7 +40,7 @@ pub struct Circuit {
 
 /// The booster's NPN (2SC2240-class low-noise small-signal part) [U: generic constants, hFE in the
 /// datasheet's GR range].
-pub const Q_2SC2240: BjtModel = BjtModel { npn: true, is: 2e-14, bf: 400.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0 };
+pub const Q_2SC2240: BjtModel = BjtModel { npn: true, is: 2e-14, bf: 400.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0, nf: 1.0, nr: 1.0 };
 
 /// The MOSFET clipper side: the 2N7000's body diode with its diode-connected channel in parallel.
 pub fn mosfet_side(count: u32) -> ClipSide {

@@ -29,6 +29,7 @@ pub mod lfo;
 pub mod matched;
 pub mod onset;
 pub mod oversample;
+pub mod pickup;
 pub mod pitch;
 pub mod pot;
 pub mod reverb;
