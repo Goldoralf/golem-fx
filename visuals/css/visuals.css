@@ -96,3 +96,10 @@ footer code { color: var(--text); }
 .keys-compact { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
 .keys-unit svg { width: 100%; height: auto; display: block; }
 .rack-unit svg { width: 100%; height: auto; display: block; }
+
+/* the table of contents under the title: one chip per section */
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 0 0 18px; }
+nav.toc a { font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; padding: 4px 12px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+section, #lanes { scroll-margin-top: 12px; }
