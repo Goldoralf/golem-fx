@@ -16,6 +16,8 @@ pub mod blep;
 pub mod circuit;
 pub mod circuit_nl;
 pub mod converter;
+pub mod convolve;
+pub mod cuts;
 pub mod crossover;
 pub mod delay;
 pub mod detect;
@@ -26,6 +28,11 @@ pub mod envelope;
 pub mod exp_smooth;
 pub mod flanger;
 pub mod geq;
+pub mod ir;
+#[cfg(feature = "ir-host")]
+pub mod ir_engine;
+#[cfg(feature = "ir-host")]
+pub mod ir_host;
 pub mod lfo;
 pub mod matched;
 pub mod onset;

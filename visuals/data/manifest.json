@@ -978,6 +978,46 @@
       {"id": "string_8", "name": "String 8", "kind": "int", "min": 0, "max": 96, "default": 0},
       {"id": "threshold", "name": "Threshold", "kind": "float", "min": -90, "max": -30, "default": -65},
       {"id": "always_on", "name": "Always On", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-cab": [
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "blend", "name": "Blend", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "lowcut", "name": "Low Cut", "kind": "float", "min": 10, "max": 500, "default": 10},
+      {"id": "highcut", "name": "High Cut", "kind": "float", "min": 1000, "max": 22000, "default": 22000, "exp": true},
+      {"id": "align", "name": "Align", "kind": "enum", "min": 0, "max": 2, "default": 1, "options": 3},
+      {"id": "ir_a", "name": "IR A", "kind": "int", "min": 0, "max": 65535, "default": 0},
+      {"id": "ir_b", "name": "IR B", "kind": "int", "min": 0, "max": 65535, "default": 0},
+      {"id": "level_a", "name": "Level A", "kind": "float", "min": -24, "max": 12, "default": 0},
+      {"id": "level_b", "name": "Level B", "kind": "float", "min": -24, "max": 12, "default": 0},
+      {"id": "polarity_b", "name": "Polarity B", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "delay_b", "name": "Delay B", "kind": "float", "min": -10, "max": 10, "default": 0},
+      {"id": "length", "name": "Length", "kind": "float", "min": 5, "max": 2000, "default": 2000},
+      {"id": "fade", "name": "Fade", "kind": "float", "min": 0, "max": 100, "default": 10},
+      {"id": "normalize", "name": "Normalize", "kind": "enum", "min": 0, "max": 2, "default": 2, "options": 3},
+      {"id": "min_phase", "name": "Min Phase", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "lowcut_slope", "name": "Low Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "highcut_slope", "name": "High Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "dry", "name": "Dry", "kind": "float", "min": -60, "max": 6, "default": -60},
+      {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 300, "default": 0},
+      {"id": "stereo", "name": "Stereo", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-irfx": [
+      {"id": "wet", "name": "Wet", "kind": "float", "min": -60, "max": 6, "default": -6, "exp": true},
+      {"id": "dry", "name": "Dry", "kind": "float", "min": -60, "max": 6, "default": 0},
+      {"id": "lowcut", "name": "Low Cut", "kind": "float", "min": 10, "max": 1000, "default": 10},
+      {"id": "highcut", "name": "High Cut", "kind": "float", "min": 1000, "max": 22000, "default": 22000, "exp": true},
+      {"id": "ir_a", "name": "IR", "kind": "int", "min": 0, "max": 65535, "default": 0},
+      {"id": "predelay", "name": "Predelay", "kind": "float", "min": 0, "max": 250, "default": 0},
+      {"id": "length", "name": "Length", "kind": "float", "min": 10, "max": 20000, "default": 20000},
+      {"id": "fade", "name": "Fade", "kind": "float", "min": 0, "max": 100, "default": 10},
+      {"id": "normalize", "name": "Normalize", "kind": "enum", "min": 0, "max": 2, "default": 2, "options": 3},
+      {"id": "reverse", "name": "Reverse", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "width", "name": "Width", "kind": "float", "min": 0, "max": 200, "default": 100},
+      {"id": "lowcut_slope", "name": "Low Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "highcut_slope", "name": "High Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "trails", "name": "Trails", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

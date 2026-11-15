@@ -9,3 +9,13 @@ publish.workspace = true
 
 [dependencies]
 realfft = "3.5"
+rustfft = "6.4"
+hound = { version = "3.5", optional = true }
+sha2 = { version = "0.10", optional = true }
+serde_json = { version = "1", optional = true }
+rtrb = { version = "0.3", optional = true }
+
+[features]
+# The IR plugins' plumbing (index, WAV, hash, cache, hand-over queues): gfx-cab and gfx-irfx only, so
+# the other effects do not pull hound, sha2, serde_json and rtrb.
+ir-host = ["dep:hound", "dep:sha2", "dep:serde_json", "dep:rtrb"]

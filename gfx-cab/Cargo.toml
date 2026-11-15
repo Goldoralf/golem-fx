@@ -1,0 +1,25 @@
+[package]
+name = "gfx-cab"
+version = "0.1.0"
+description = "GoleM FX Cab — golem's zero-latency impulse-response loader: two IRs blended, files by slot"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["plugin"]
+# The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
+plugin = ["dep:nih_plug"]
+
+[dependencies]
+gfx-dsp = { workspace = true, features = ["ir-host"] }
+nih_plug = { workspace = true, optional = true }
+
+[dev-dependencies]
+realfft = "3.5"
+# nih-plug's process allocation checker (its global allocator in the plugin build), for the test
+assert_no_alloc = { git = "https://github.com/robbert-vdh/rust-assert-no-alloc.git", branch = "feature/nested-permit-forbid" }

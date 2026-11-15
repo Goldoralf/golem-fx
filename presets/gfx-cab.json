@@ -1,0 +1,368 @@
+{
+ "crate": "gfx-cab",
+ "presets": [
+  {
+   "id": "close-mic",
+   "type": "cab",
+   "name": "Single close mic",
+   "desc": "One miked cab at zero latency, onset trimmed and level-matched to a typical cab IR",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal",
+    "blues"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "align": "Onset",
+    "normalize": "Loudness"
+   },
+   "notes": "The default: whatever IR golem picks plays at the library's usual level, so swaps do not jump"
+  },
+  {
+   "id": "two-mic-blend",
+   "type": "cab",
+   "name": "Two-mic blend",
+   "desc": "A dynamic and a ribbon of one cab blended, aligned by correlation so the pair cannot comb",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "align": "Correlation",
+    "blend": 35
+   },
+   "notes": "Set ir_b to the second mic of the same cab; Correlation fixes polarity and the sub-millisecond lag"
+  },
+  {
+   "id": "session-true-blend",
+   "type": "cab",
+   "name": "Session-true blend",
+   "desc": "Two mics captured together kept at their recorded distance, the phase nudged by ear",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "align": "Raw",
+    "blend": 50,
+    "delay_b": 0.0
+   },
+   "notes": "Raw keeps the captured phase; move delay_b by ±0.1 ms to taste"
+  },
+  {
+   "id": "mic-sweep",
+   "type": "cab",
+   "name": "Mic sweep pedal",
+   "desc": "Expression sweeps from one mic position to another of the same speaker",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "align": "Correlation",
+    "blend": 0
+   },
+   "notes": "EXP on blend 0 → 100 %: a two-point mic move; ir_b = the same speaker off-axis"
+  },
+  {
+   "id": "tight-metal",
+   "type": "cab",
+   "name": "Tight metal rhythm",
+   "desc": "Proximity boom and fizz cut after the cab for palm-muted high gain",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "djent",
+    "metalcore"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "lowcut": 90,
+    "highcut": 7500,
+    "highcut_slope": "24 dB"
+   }
+  },
+  {
+   "id": "wide-double-cab",
+   "type": "cab",
+   "name": "Wide double cab",
+   "desc": "Two different cabs, one per side, from one amp",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "stereo": "Split",
+    "blend": 50
+   },
+   "notes": "2 / 2 only; ir_a and ir_b = two different cabs; with ir_b none it plays linked"
+  },
+  {
+   "id": "bass-cab-di",
+   "type": "cab",
+   "name": "Bass cab over DI",
+   "desc": "The lows stay on the DI and the cab only colours the mids and highs",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": true,
+   "params": {
+    "bass_keep": 120
+   },
+   "notes": "A bass cab IR in ir_a; below 120 Hz the dry plays instead of the cab"
+  },
+  {
+   "id": "bass-parallel-di",
+   "type": "cab",
+   "name": "Bass cab plus parallel DI",
+   "desc": "A bass cab with the clean DI blended under it",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "pop",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "dry": -6,
+    "level": -3
+   }
+  },
+  {
+   "id": "acoustic-body",
+   "type": "cab",
+   "name": "Acoustic body",
+   "desc": "A piezo pickup through a body IR, the piezo kept underneath",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "dry": -10,
+    "lowcut": 70,
+    "length": 2000
+   },
+   "notes": "A body IR in ir_a; normalize Off if the capture is unity-gain"
+  },
+  {
+   "id": "small-speaker",
+   "type": "cab",
+   "name": "Small speaker",
+   "desc": "A phone or practice-amp speaker: thin, boxy, band-limited",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "lowcut": 300,
+    "highcut": 4000,
+    "highcut_slope": "24 dB"
+   }
+  },
+  {
+   "id": "room-cab",
+   "type": "cab",
+   "name": "Room cab",
+   "desc": "A far-miked cab with its room, the whole IR kept",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "length": 2000,
+    "normalize": "Loudness"
+   },
+   "notes": "No forced truncation: a long room IR plays whole"
+  },
+  {
+   "id": "tight-mpt",
+   "type": "cab",
+   "name": "Tight minimum phase",
+   "desc": "IRs from different vendors blended in minimum phase: tight, no pre-delay, no combing",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "min_phase": true,
+    "align": "Correlation",
+    "blend": 50
+   }
+  },
+  {
+   "id": "short-ir",
+   "type": "cab",
+   "name": "Short IR",
+   "desc": "A cab trimmed to 40 ms with a fade, for a small board",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "length": 40,
+    "fade": 20
+   }
+  },
+  {
+   "id": "dark-lead",
+   "type": "cab",
+   "name": "Dark lead",
+   "desc": "High cut on the expression pedal for a lead that darkens on the toe",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "metal"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "highcut": 6000,
+    "highcut_slope": "12 dB"
+   },
+   "notes": "EXP on highcut"
+  },
+  {
+   "id": "raw-parity",
+   "type": "cab",
+   "name": "Raw parity",
+   "desc": "The file played exactly as it is, no trim and no level match",
+   "inst": "any",
+   "genres": [
+    "other"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "align": "Raw",
+    "normalize": "Off"
+   },
+   "notes": "For converted chains and unity-gain pedal captures (README R7)"
+  }
+ ]
+}

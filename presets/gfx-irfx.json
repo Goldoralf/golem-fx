@@ -1,0 +1,183 @@
+{
+ "crate": "gfx-irfx",
+ "presets": [
+  {
+   "id": "spring-tank",
+   "type": "ir-fx",
+   "name": "Spring tank",
+   "desc": "A captured spring reverb, whole and in stereo, the boom thinned",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "pop"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "wet": -6,
+    "dry": 0,
+    "lowcut": 150,
+    "trails": true
+   },
+   "notes": "Spring IR in ir_a; trails let it ring on bypass"
+  },
+  {
+   "id": "tape-echo-capture",
+   "type": "ir-fx",
+   "name": "Tape echo capture",
+   "desc": "A tape echo's repeats as captured, darkened a little",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "wet": -8,
+    "highcut": 6000
+   },
+   "notes": "The echo is in the IR: no feedback control"
+  },
+  {
+   "id": "reverse-swell",
+   "type": "ir-fx",
+   "name": "Reverse swell",
+   "desc": "A plate or hall played backwards: notes swell into the next",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental",
+    "electronic"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "reverse": true,
+    "predelay": 0,
+    "wet": -10
+   }
+  },
+  {
+   "id": "short-room-voice",
+   "type": "ir-fx",
+   "name": "Short room for voice",
+   "desc": "A room IR trimmed to 600 ms with a slow fade and narrowed",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "folk"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "length": 600,
+    "fade": 30,
+    "wet": -14,
+    "width": 80
+   }
+  },
+  {
+   "id": "wide-hall",
+   "type": "ir-fx",
+   "name": "Wide hall",
+   "desc": "A hall IR spread past the speakers, lows cut",
+   "inst": "any",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "wet": -10,
+    "width": 150,
+    "lowcut": 200,
+    "predelay": 20
+   }
+  },
+  {
+   "id": "dub-tail",
+   "type": "ir-fx",
+   "name": "Dub tail",
+   "desc": "A long echo capture behind a slap of predelay, dark and wide",
+   "inst": "any",
+   "genres": [
+    "caribbean",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "wet": -8,
+    "predelay": 80,
+    "highcut": 3500,
+    "width": 140
+   }
+  },
+  {
+   "id": "ir-raw",
+   "type": "ir-fx",
+   "name": "Raw file",
+   "desc": "The IR exactly as captured, no level match: parity with converted chains",
+   "inst": "any",
+   "genres": [
+    "other"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "normalize": "Off",
+    "wet": -6,
+    "dry": 0
+   },
+   "notes": "Converted ir-fx chains pin Off so their wet keeps its meaning (README R7)"
+  }
+ ]
+}

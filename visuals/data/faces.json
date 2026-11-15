@@ -728,6 +728,39 @@
    ],
    "category": "utility",
    "color": "#126e1c"
+  },
+  "gfx-cab": {
+   "name": "Cab",
+   "blocks": [
+    "cab"
+   ],
+   "knobs": [
+    "level",
+    "blend",
+    "lowcut",
+    "highcut"
+   ],
+   "selectors": [
+    "align"
+   ],
+   "category": "cab",
+   "color": "#00a898"
+  },
+  "gfx-irfx": {
+   "name": "IR",
+   "blocks": [
+    "ir-fx"
+   ],
+   "knobs": [
+    "wet",
+    "dry",
+    "predelay",
+    "highcut"
+   ],
+   "toggles": [
+    "trails"
+   ],
+   "category": "reverb"
   }
  }
 }

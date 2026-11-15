@@ -80,7 +80,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 38 | [gfx-transient](gfx-transient/) | new block `transient` (transient shaper) | — | **coded**, bench green, to test in golem |
 | 39 | [gfx-mbcomp](gfx-mbcomp/) | new block `mb-comp` (multiband compressor) | — | **coded** (R, default times, Tilt and the Lift-transient law [A] until bench DIs exist), bench green, to test in golem (needs the `mb-comp` catalogue entry) |
 | 40 | [gfx-ducker](gfx-ducker/) | new block `ducker` (key / self / pump ducking) | — | **coded** (Absolute detection; Relative later), bench green, to test in golem |
-| 41 | [gfx-cab](gfx-cab/) | `cab` (+ `ir-fx` as sibling crate gfx-irfx) | x42 IR Convolver Mono / Stereo | **designed**, reviewed by Fable 5.2 |
+| 41 | [gfx-cab](gfx-cab/) | `cab` (+ `ir-fx` as sibling crate gfx-irfx) | x42 IR Convolver Mono / Stereo | **coded** (both crates; golem side R1 – R8 pending), bench green, to test in golem |
 | 42 | [gfx-acoustic](gfx-acoustic/) | new block `acoustic-sim` (electric to acoustic) | — | **designed**, reviewed by Fable 5.2 |
 | 43 | [gfx-widener](gfx-widener/) | new block `widener` (mono-safe stereo width) | — | **coded**, bench green, to test in golem |
 | 44 | [gfx-tuner](gfx-tuner/) | `tuner` | golem_tuner.jsfx | **coded**, bench green, to test in golem |

@@ -351,6 +351,8 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     lofi: '#e8336f',
     // orchid violet: the free gap between reverb / shimmer (265°) and pitch's magenta (319°)
     preamp: '#b316c0',
+    // teal: between filter's cyan and modulation's green, near golem's own cab tile (gfx-cab's review)
+    cab: '#00a898',
   };
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000', 'gfx-ringmod': '#c9b000',
     // deck champagne: the pale gold-anodized faceplate of a reel deck (gfx-tape's review: brown is
@@ -388,6 +390,8 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-ducker': 'dips',
     'gfx-fuzz': 'sputter',
     'gfx-tuner': 'strobe',
+    'gfx-cab': 'cone',
+    'gfx-irfx': 'impulse',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -704,6 +708,42 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             shape(`M${f1(p.x - s / 2)} ${f1(p.y - s / 2)}h${s}v${s}h${-s}Z`, small ? .55 : 1);
           });
         });
+        break;
+      }
+      case 'cone': {
+        // a loudspeaker from the front, the rune as its dust cap: either side, arcs of radius 34, 40,
+        // 46 (opacity 1, .8, .6) and 52 dashed (the surround, 2 on 2 off) over ±28° about the
+        // horizontal, and three ribs at 0° and ±18° from 34 to 52 at 40 %
+        [[34, 1], [40, .8], [46, .6]].forEach(([r, op]) => {
+          line(arcPath(cx, cy, r, -28, 28), op);
+          line(arcPath(cx, cy, r, 152, 208), op);
+        });
+        const step = 4 / 52 * 180 / Math.PI, on = 2 / 52 * 180 / Math.PI;
+        for (const a0 of [-28, 152]) {
+          for (let a = a0; a < a0 + 56 - .01; a += step) line(arcPath(cx, cy, 52, a, Math.min(a + on, a0 + 56)));
+        }
+        const pt = (r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
+        [-18, 0, 18, 162, 180, 198].forEach(deg => {
+          const [x0, y0] = pt(34, deg), [x1, y1] = pt(52, deg);
+          line(`M${f1(x0)} ${f1(y0)}L${f1(x1)} ${f1(y1)}`, .4);
+        });
+        break;
+      }
+      case 'impulse': {
+        // an impulse response either side of the rune, bars on the baseline of 'bins': a tall spike at
+        // the inner end, then bars every 4 units decaying ×0.72, a gap, and a fainter echo cluster
+        const y0 = cy + ch / 2 + 6, top = cy - ch * .7, full = y0 - top;
+        for (const sgn of [-1, 1]) {
+          const x0 = cx + sgn * (cw / 2 + 3), end = sgn < 0 ? 7 : W - 7;
+          let x = x0, h = full, k = 0;
+          while (sgn * (end - x) >= 0) {
+            const echo = k >= 7, hh = echo ? full * .38 * Math.pow(.72, k - 7) : h;
+            if (k !== 6 && hh > 1) line(`M${f1(x)} ${f1(y0)}V${f1(y0 - hh)}`, k === 0 ? 1 : echo ? .45 : .75);
+            h *= .72;
+            x += sgn * 4;
+            k++;
+          }
+        }
         break;
       }
       case 'fan': {
