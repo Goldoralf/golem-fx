@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp", "gfx-morph"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -77,6 +77,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-sustainer" | "sustainer" => Some(Box::new(gfx_sustainer::Sustainer::new())),
         "gfx-polysynth" | "polysynth" => Some(Box::new(gfx_polysynth::Polysynth::new())),
         "gfx-spectralcomp" | "spectralcomp" => Some(Box::new(gfx_spectralcomp::SpectralComp::new())),
+        "gfx-morph" | "morph" => Some(Box::new(gfx_morph::Morph::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -369,6 +370,14 @@ pub fn options(name: &str) -> checks::Options {
         // exemption: Live reports 0 and Studio N − 1 (its own latency test); `mode` and `window` are
         // set-up switches whose fades stay under the click bound
         o.key = Some(signals::key_bursts);
+    }
+    if matches!(name, "gfx-morph" | "morph") {
+        // README §5: minimum-phase half-bands and crossovers, ADAA, IIR banks: group delay and
+        // dispersion, no delay line, reported 0 (gfx-grit's precedent); the first output sample of an
+        // impulse is sample 0, checked by the crate's own test
+        o.skip_latency = true;
+        // a type change at high drive makes real high-frequency content (gfx-grit's bound)
+        o.click_bound_db = -30.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

@@ -2491,6 +2491,118 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-morph": [
+      {
+        "id": "input",
+        "name": "Input",
+        "custom": null,
+        "params": [
+          "guard",
+          "defizz",
+          "env_drive",
+          "env_morph"
+        ]
+      },
+      {
+        "id": "pre",
+        "name": "Pre",
+        "custom": null,
+        "params": [
+          "pre_hp",
+          "pre_lp",
+          "tilt",
+          "tilt_freq"
+        ]
+      },
+      {
+        "id": "bands",
+        "name": "Bands",
+        "custom": null,
+        "params": [
+          "split",
+          "x_low",
+          "x_air",
+          "ring_hz",
+          "quality"
+        ]
+      },
+      {
+        "id": "low",
+        "name": "Low",
+        "custom": null,
+        "params": [
+          "low_a",
+          "low_b",
+          "low_trim",
+          "low_level"
+        ]
+      },
+      {
+        "id": "body",
+        "name": "Body",
+        "custom": null,
+        "params": [
+          "body_a",
+          "body_b",
+          "body_trim",
+          "body_level"
+        ]
+      },
+      {
+        "id": "air",
+        "name": "Air",
+        "custom": null,
+        "params": [
+          "air_a",
+          "air_b",
+          "air_trim",
+          "air_level"
+        ]
+      },
+      {
+        "id": "box",
+        "name": "Box",
+        "custom": null,
+        "params": [
+          "object_b",
+          "size",
+          "decay",
+          "position",
+          "order"
+        ]
+      },
+      {
+        "id": "post",
+        "name": "Post",
+        "custom": null,
+        "params": [
+          "comp",
+          "post_hp",
+          "post_lp",
+          "reso",
+          "env_filter"
+        ]
+      },
+      {
+        "id": "echo",
+        "name": "Echo",
+        "custom": null,
+        "params": [
+          "echo_time",
+          "echo_fb",
+          "echo_mix"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "level",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2901,6 +3013,30 @@
       "link": "Stereo: each channel's band levels move toward the louder one's",
       "delta": "Hear only what the compressor changes (wet minus dry)",
       "bypass": "The dry, still delayed in Studio so the lane's latency stays"
+    },
+    "gfx-morph": {
+      "low_a": "Low band (the chest, under the low crossover): the band's dirt type (Off, Soft, Hard, Tube, Fuzz, Rectify, Fold, Sine Fold, Crush, Decimate, Sputter, Ring, Carbon, Starve, Rasp) at morph 0 %",
+      "body_a": "Body band (the vowel; the whole voice in Single): the band's dirt type (Off, Soft, Hard, Tube, Fuzz, Rectify, Fold, Sine Fold, Crush, Decimate, Sputter, Ring, Carbon, Starve, Rasp) at morph 0 %",
+      "air_a": "Air band (sibilance and breath, over the air crossover): the band's dirt type (Off, Soft, Hard, Tube, Fuzz, Rectify, Fold, Sine Fold, Crush, Decimate, Sputter, Ring, Carbon, Starve, Rasp) at morph 0 %",
+      "low_b": "Low band's type at morph 100 %: the morph blends A into B, level-held",
+      "body_b": "Body band's type at morph 100 %: the morph blends A into B, level-held",
+      "air_b": "Air band's type at morph 100 %: the morph blends A into B, level-held",
+      "low_trim": "Added to the low band's drive (dB)",
+      "body_trim": "Added to the body band's drive (dB); in Single it is a second drive control",
+      "air_trim": "Added to the air band's drive (dB)",
+      "low_level": "The whole low band after the mix; -60 = mute",
+      "body_level": "The whole body band after the mix, into the box and the comp; -60 = mute",
+      "air_level": "The whole air band after the mix; -60 = mute",
+      "guard": "Loop-gain cap threshold (dBFS RMS): under it the pedal is quieter than bypass at every frequency; -90 = off. Set at soundcheck about 10 dB over the bleed, watching the state lamp",
+      "defizz": "Lowers the drive while an 's' passes, then shelves its band down: up to 18 dB; 0 for guitar and drums",
+      "order": "Dirt → Box: a distorted voice heard through the object; Box → Dirt: the object's peaks clip first",
+      "object_b": "The object morph target; Same = no object morph (morph moves the dirt only)",
+      "env_drive": "The voice's envelope (10 ms RMS, -48 to -12 dBFS) into the drive: + louder singing distorts more, - the dirt backs off on loud notes",
+      "env_morph": "The envelope added to morph: louder singing moves toward type B and object B",
+      "env_filter": "The envelope moves the post high cut by up to ±4 octaves: a talking filter",
+      "echo_time": "The slap's delay (ms), gliding when moved",
+      "echo_fb": "The slap's repeats, through a 4 kHz low-pass in the loop",
+      "level": "Output level (dB), after everything; presets are level-matched with it"
     }
   },
   "depends": {
@@ -3306,6 +3442,28 @@
       "key_track": {
         "param": "engine",
         "equals": "Mono"
+      }
+    },
+    "gfx-morph": {
+      "x_air": {
+        "param": "split",
+        "equals": "Three"
+      },
+      "air_a": {
+        "param": "split",
+        "equals": "Three"
+      },
+      "air_b": {
+        "param": "split",
+        "equals": "Three"
+      },
+      "air_trim": {
+        "param": "split",
+        "equals": "Three"
+      },
+      "air_level": {
+        "param": "split",
+        "equals": "Three"
       }
     }
   }

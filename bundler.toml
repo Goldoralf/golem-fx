@@ -149,3 +149,6 @@ name = "GoleM FX Polysynth"
 
 [gfx-spectralcomp]
 name = "GoleM FX Spectral Comp"
+
+[gfx-morph]
+name = "GoleM FX Morph"

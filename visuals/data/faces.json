@@ -931,6 +931,23 @@
     "mode"
    ],
    "category": "dynamics"
+  },
+  "gfx-morph": {
+   "name": "Morph",
+   "blocks": [
+    "morph"
+   ],
+   "knobs": [
+    "drive",
+    "morph",
+    "box",
+    "mix"
+   ],
+   "selectors": [
+    "object"
+   ],
+   "category": "lofi",
+   "color": "#9a0d2a"
   }
  }
 }

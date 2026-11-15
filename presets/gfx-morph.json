@@ -1,0 +1,620 @@
+{
+ "crate": "gfx-morph",
+ "presets": [
+  {
+   "id": "scream-edge",
+   "type": "morph",
+   "name": "Scream edge",
+   "desc": "A screamed lead that stays intelligible: chest boom cut before the dirt, sibilants kept clean, level even",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "punk",
+    "rock"
+   ],
+   "subgenres": [
+    "metalcore",
+    "post-hardcore"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "drive": 45,
+    "body_a": "Tube",
+    "body_b": "Fuzz",
+    "morph": 0,
+    "defizz": 70,
+    "guard": -55,
+    "comp": 40,
+    "pre_hp": 150,
+    "level": 3.0
+   },
+   "notes": "The voice default: Single band (no dispersion in the ears), Tube grit with Fuzz waiting on the morph; comp 40 % holds the take"
+  },
+  {
+   "id": "scream-swell",
+   "type": "morph",
+   "name": "Scream swell",
+   "desc": "The louder the scream, the more it breaks up: the envelope raises the drive and morphs Soft into Fuzz",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "punk",
+    "rock"
+   ],
+   "subgenres": [
+    "nu-metal",
+    "screamo"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "drive": 30,
+    "body_a": "Soft",
+    "body_b": "Fuzz",
+    "env_drive": 18,
+    "env_morph": 60,
+    "comp": 30,
+    "level": 1.5
+   },
+   "notes": "Sung quietly it stays nearly clean; the dynamics of the voice play the dirt"
+  },
+  {
+   "id": "growl-split",
+   "type": "morph",
+   "name": "Growl split",
+   "desc": "Metal growl: chest clean and solid, a rasped body, no fizz on top",
+   "inst": "voice",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "death-metal",
+    "deathcore",
+    "metalcore"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "split": "Three",
+    "x_low": 220,
+    "x_air": 3500,
+    "low_a": "Off",
+    "body_a": "Tube",
+    "body_b": "Rasp",
+    "morph": 50,
+    "air_a": "Off",
+    "air_level": -6,
+    "drive": 55,
+    "defizz": 60,
+    "level": 1.0
+   },
+   "notes": "The clean-lows split of bass rigs, for voice; Three bands turn the phase 163° at the crossover: heard as a hollow chest in in-ears"
+  },
+  {
+   "id": "parallel-grit",
+   "type": "morph",
+   "name": "Parallel grit",
+   "desc": "A distorted layer blended under the clean voice, phase-aligned, so the words stay readable",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop",
+    "punk"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "pop-punk"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "drive": 60,
+    "body_a": "Hard",
+    "body_b": "Fuzz",
+    "mix": 35,
+    "defizz": 60,
+    "level": 1.0
+   },
+   "notes": "Mix 35 %: the dry carries the words, the wet carries the edge; the guard's cap follows the mix"
+  },
+  {
+   "id": "acoustic-megaphone",
+   "type": "morph",
+   "name": "Acoustic megaphone",
+   "desc": "A shout through a cone: thin mid honk, clipped, with a slap off the street",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "punk",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "industrial-hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "object": "Cone",
+    "box": 85,
+    "body_a": "Hard",
+    "drive": 35,
+    "pre_hp": 400,
+    "post_lp": 5000,
+    "echo_mix": 20,
+    "echo_time": 140,
+    "echo_fb": 15,
+    "level": 2.5
+   },
+   "notes": "The acoustic horn with no amplifier; the electronic megaphone is a gfx-radio device"
+  },
+  {
+   "id": "shout-in-a-can",
+   "type": "morph",
+   "name": "Shout in a can",
+   "desc": "Shouting into a can taped to a cheap mic: the can's resonant peaks clip first",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "punk",
+    "experimental"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "garage-punk"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "order": "Box → Dirt",
+    "object": "Tin Can",
+    "box": 100,
+    "body_a": "Hard",
+    "drive": 40,
+    "size": 100,
+    "level": 1.5
+   },
+   "notes": "Box → Dirt: the object before the clipper, so its peaks are what distorts"
+  },
+  {
+   "id": "string-phone",
+   "type": "morph",
+   "name": "String phone",
+   "desc": "The child's can telephone: thin, ringing, barely dirty",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "screen"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "film-score"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "object": "Tin Can",
+    "box": 100,
+    "drive": 15,
+    "body_a": "Soft",
+    "position": 30,
+    "post_hp": 300,
+    "level": 2.5
+   },
+   "notes": "Position 30 % moves the ear toward the closed end; the low cut takes the body away"
+  },
+  {
+   "id": "bucket-head",
+   "type": "morph",
+   "name": "Bucket head",
+   "desc": "Singing with a bucket over the head: a boxy low resonance around the voice",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "experimental",
+    "pop"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "art-pop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "object": "Bucket",
+    "box": 70,
+    "drive": 25,
+    "body_a": "Soft",
+    "level": 1.0
+   },
+   "notes": "Box 70 % keeps some direct sound for the consonants"
+  },
+  {
+   "id": "bottle-ghost",
+   "type": "morph",
+   "name": "Bottle ghost",
+   "desc": "A hollow, haunted whisper inside a bottle, half dry, with a long dark slap",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "screen",
+    "experimental"
+   ],
+   "subgenres": [
+    "trip-hop",
+    "dark-ambient",
+    "film-score"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "object": "Bottle",
+    "box": 100,
+    "decay": 150,
+    "drive": 5,
+    "mix": 50,
+    "echo_mix": 25,
+    "echo_time": 280,
+    "echo_fb": 40,
+    "level": -0.5
+   },
+   "notes": "The bottle's 108 Hz Helmholtz peak is its loudest point: the guard counts it, raise the threshold on a loud stage"
+  },
+  {
+   "id": "oil-drum-boom",
+   "type": "morph",
+   "name": "Oil drum boom",
+   "desc": "A voice from inside a steel drum: a long metallic boom under a warm grit",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "industrial-metal",
+    "industrial-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "object": "Oil Drum",
+    "box": 75,
+    "body_a": "Tube",
+    "drive": 35,
+    "comp": 30,
+    "level": 3.5
+   },
+   "notes": "The comp after the box holds the drum's resonant peaks note to note"
+  },
+  {
+   "id": "glass-jar-sweep",
+   "type": "morph",
+   "name": "Glass jar sweep",
+   "desc": "A glassy formant sweep: the expression pedal moves the ear inside a jar",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "pop",
+    "experimental"
+   ],
+   "subgenres": [
+    "glitch-pop",
+    "art-pop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "object": "Glass Jar",
+    "box": 90,
+    "drive": 20,
+    "position": 50,
+    "level": -4.0
+   },
+   "notes": "Put the EXP pedal on position (0 – 100 %): the notches sweep through the jar's mode series"
+  },
+  {
+   "id": "cupped-hands-blues",
+   "type": "morph",
+   "name": "Cupped hands blues",
+   "desc": "The cupped bullet-mic voice of a harmonica player, put on a singer: midrange bark and grit",
+   "inst": "voice",
+   "genres": [
+    "blues",
+    "rock"
+   ],
+   "subgenres": [
+    "chicago-blues",
+    "harmonica-blues",
+    "blues-rock"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "object": "Hands",
+    "box": 100,
+    "body_a": "Carbon",
+    "drive": 45,
+    "pre_hp": 200,
+    "post_lp": 4500,
+    "level": -1.5
+   },
+   "notes": "Carbon is the old-mic second-harmonic grain; the hands are a small Helmholtz cavity around 500 Hz"
+  },
+  {
+   "id": "robot-ring",
+   "type": "morph",
+   "name": "Robot ring",
+   "desc": "The robot: a ring-modulated voice that turns into a sampled edge as the morph rises",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "hip-hop",
+    "rock"
+   ],
+   "subgenres": [
+    "electro",
+    "industrial-electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "body_a": "Ring",
+    "body_b": "Decimate",
+    "ring_hz": 55,
+    "drive": 70,
+    "morph": 30,
+    "object": "Pipe",
+    "box": 40,
+    "level": 5.5
+   },
+   "notes": "Decimate's half-hold delay combs against the ring when they blend: part of the sound"
+  },
+  {
+   "id": "broken-transmission",
+   "type": "morph",
+   "name": "Broken transmission",
+   "desc": "A voice that drops out and sputters on loud syllables, through a cardboard box and a narrow band",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "experimental",
+    "rock"
+   ],
+   "subgenres": [
+    "glitch",
+    "noise-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "body_a": "Sputter",
+    "body_b": "Starve",
+    "drive": 50,
+    "env_morph": 70,
+    "object": "Cardboard Box",
+    "box": 40,
+    "post_hp": 400,
+    "post_lp": 3500,
+    "level": 3.0
+   },
+   "notes": "Louder syllables morph into the starving rail; quiet ones fall into the sputter's dead zone"
+  },
+  {
+   "id": "object-morph-exp",
+   "type": "morph",
+   "name": "Object morph",
+   "desc": "One pedal sweep turns a small can into an oil drum and soft grit into folding",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "experimental",
+    "metal"
+   ],
+   "subgenres": [
+    "industrial-electronic",
+    "industrial-metal"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "body_a": "Soft",
+    "body_b": "Fold",
+    "object": "Tin Can",
+    "object_b": "Oil Drum",
+    "box": 80,
+    "morph": 0,
+    "level": 3.0
+   },
+   "notes": "Put the EXP pedal on morph (0 – 100 %); Fold's own law stops at 24 dB, so the sweep never turns to noise"
+  },
+  {
+   "id": "drum-bus-trash",
+   "type": "morph",
+   "name": "Drum bus crush",
+   "desc": "Parallel crushed drums in a box, the kick's body kept clean underneath",
+   "inst": "drums",
+   "genres": [
+    "rock",
+    "electronic",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "breakbeat",
+    "boom-bap"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "split": "Three",
+    "low_a": "Soft",
+    "body_a": "Crush",
+    "body_b": "Decimate",
+    "air_a": "Hard",
+    "air_level": -6,
+    "drive": 55,
+    "object": "Cardboard Box",
+    "box": 35,
+    "comp": 70,
+    "mix": 60,
+    "guard": -90,
+    "defizz": 0,
+    "level": 12.0
+   },
+   "notes": "Guard and de-fizz off: a drum bus has no stage bleed through this block, and cymbals read as sibilants"
+  },
+  {
+   "id": "can-lead-guitar",
+   "type": "morph",
+   "name": "Can lead guitar",
+   "desc": "A fuzz solo through a tin can, the low strings kept clean",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "blues-rock"
+   ],
+   "gain": "crunch",
+   "use": "solo",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "split": "Two",
+    "x_low": 180,
+    "low_a": "Off",
+    "body_a": "Fuzz",
+    "body_b": "Sine Fold",
+    "drive": 50,
+    "object": "Tin Can",
+    "box": 50,
+    "guard": -90,
+    "defizz": 0,
+    "level": 3.5
+   },
+   "notes": "Morph toward Sine Fold for an octave-up shimmer on the top notes"
+  }
+ ]
+}
