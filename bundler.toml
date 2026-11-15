@@ -136,3 +136,5 @@ name = "GoleM FX Vocoder"
 name = "GoleM FX Acoustic"
 [gfx-radio]
 name = "GoleM FX Radio"
+[gfx-stretch]
+name = "GoleM FX Stretch"

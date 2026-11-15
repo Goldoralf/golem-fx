@@ -1,9 +1,17 @@
 # gfx-stretch
 
-> **Status: DESIGNED** (2026-11-14), **reviewed** by Claude Fable 5.2 the same day (Review, at the end).
-> Design by Claude Opus 5.5. Not coded. It takes gfx-glitch's STFT machinery (schedule, windows, random
-> phases, size crossfade) into gfx-dsp `stft` and adds an **amortised four-step FFT** there. gfx-glitch
-> itself is not touched by this crate's work (§6).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Claude
+> Fable 5.2 the same day (Review), coded as reviewed with the deviations listed in "As coded" (at the end).
+> gfx-dsp's new `stft` (written from gfx-glitch's engine, which is not touched) cuts every pass of a frame
+> into units of ≤ 1,024 elements spread over the hop on sample counts, with a four-step FFT above 16,384
+> points; the crate adds f16 takes A / B with a pre-roll loop seam, the Rolling ghost with its resyncs,
+> freeze, power-domain (random) and complex (coherent) head crossfades, fshift / pitch / constant-Q spread /
+> frame compressor, and the `cloud` law. Measured: identity at ×1 to −90 dB (f32 pool) and −73.2 dB (f16)
+> at all 21 sizes; random-mode level within ±0.35 dB of the region at ×1 – ×100; spread σ within 3 %,
+> energy within 0.35 dB; fshift 540.15 / 540.00 Hz; compress steps exact to 0.01 dB; resync at 5 s ± 1
+> sample, fades of 0.50 s at ×1,024; bench 28 / 28 at 44.1 – 192 kHz; CPU 179 ns per stereo frame at the
+> defaults, ≤ 330 ns in every case, worst 64-sample block ≤ 8 % at 48 kHz. Coherent mode at ×8 – ×100 is
+> 1 – 3 dB under the `cloud` law, and memory is 57.7 / 128 MB (see "As coded").
 
 golem's **time stretcher**. It plays what you played slower than you played it, from twice as slow to a
 thousand times slower:
@@ -883,3 +891,113 @@ the 12-bit phasor table; linear ranges; no mode-dependent default; 2 / 2 first; 
 | By ear: the fading of a single note at long windows against PaulXStretch (ours fades slightly deeper); `cloud` 0 – 30 % at ×1.5 – ×4 on keys and voice; the first take's fade-in; Rolling's "ghost ends when you stop" against "finishes its phrase" | Raph, on `gfx-bench apps gfx-stretch` |
 | Six-step (transposed) form of the four-step FFT, if the 3.4 × is worth winning back | golem-fx, at coding |
 | The lowest labels and the lit rune on the periwinkle body; `chirp` against `waves` at tile size | Raph, on the family sheet |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `stft.rs` (new; gfx-glitch untouched): the 21-size grid (`size`, `nearest_size`), periodic Hann
+  read from two master tables of e^(−2πi m / T) (T = 2^18 and 3 · 2^16, built in `Tables::new` with every
+  rustfft plan; a size change is O(1)), `OLA_AMP` / `OLA_POW` / `cloud_gain`, the real FFT as a complex
+  FFT of N / 2 plus resumable twiddle passes (`post_twiddle`, `pre_twiddle`, `read_time`), the complex FFT
+  in one unit up to 16,384 and as a four-step above (`cfft_unit`: N₂ column FFTs of N₁ gathered a few
+  columns at a time with their twiddles, then N₁ row FFTs; its output stays transposed and the twiddle
+  passes read it in place, so there is no transpose pass), the schedule `due`, `XorShift` and the
+  4,096-entry `Phasors`, branch-free `fast_atan2` / `fast_sin_cos` / `wrap_pi`, gfx-glitch's `regions` and
+  its resumable two-sweep form `RegionSweep`, the scatter-form constant-Q `blur_pass`, `SizeFade`.
+  10 unit tests.
+- `src/memory.rs`: the pool (generic `Sample`: f16 by the `half` crate, f32 for the tests), takes and ring
+  with valid lengths, `touched` (every page written in `prepare`). `src/engine.rs`: the per-size engine
+  (passes and units, heads' analyses, map, mix, modules, phases, overlap-add). `src/lib.rs`:
+  `StretchCore<S>` / `Stretch` (the f16 processor), `PARAMS`, `MODES`, `METERS`, the catalogue conversions
+  `spread_from_catalogue` / `fft_from_catalogue` (§3.4). `src/plugin.rs`: the VST3, class id
+  `GoleMFxStretch01`, 2 / 2 first then 1 / 1, latency 0, sample-accurate automation (so `capture` lands on
+  its sample), `bypass` = `make_bypass`, `state` read-only. `src/tests.rs`: 22 behaviour tests (§5), and
+  ignored reports (`cpu_report`, `prepare_report`, `fault_probe`, `prof_coherent`).
+- gfx-bench: the crate in `EFFECTS` / `make()`; `options()`: `stereo_by_nature`, and the silence floor read
+  after 7 s instead of 3 (a new `Options::silence_tail_s`, default 3 s: every other effect unchanged).
+- `presets/gfx-stretch.json`: the 15 preset ideas of §4 (Capture-lineage presets set `mode` Capture).
+  Visuals: the face, groups (Spectrum, Modules, Takes, Output; `capture` depends on `mode` = Capture,
+  `compress` on `comp_on`), the `chirp` motif, hue `#a0a8ff` (family finish, anodized), `RUNE_LIGHT`
+  `#3040c8`, and the chirp form of the `stretch` glyph.
+
+**Measured** (48 kHz unless stated; synthetic signals; the f32 pool unless "f16").
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Four-step FFT | ≤ 1e-6 relative RMS of realfft, forward and inverse; median unit ≤ 25 µs | every size (the one-piece ones too) within 1e-6 both ways; 2^18: 256 units, median 4.3 – 5.6 µs, 99th percentile 10 – 26 µs |
+| Identity (`cloud` 0, ×1, Rolling) | −90 dB (f32 pool), −66 dB (f16) | every size 256 – 2^18: under −90 dB (peak and RMS); f16 worst −73.2 dB RMS under the signal |
+| Level, random (`cloud` 100 %) | ±0.5 dB | noise −0.07 … 0.00 dB, chord −0.19 … +0.12 dB (N = 2,048 / 8,192 / 32,768; ×1, ×8, ×100) |
+| Level, ×1, any `cloud` | ±0.5 dB | noise ±0.02 dB, chord −0.18 … +0.04 dB |
+| Level, coherent at ×8 / ×100 | ±1 dB | `cloud` 75 %: −0.36 … −0.76 dB; `cloud` ≤ 50 %: noise −0.98 … −1.51 dB, chord with resolved partials (N ≥ 8,192) −0.13 … +0.02 dB, chord at N = 2,048 (unresolved) −1.86 … −3.06 dB. **Not met** (deviations) |
+| One sine | ±0.5 dB over ≥ 2,000 windows | Rolling ×8, N = 512: −0.02 / +0.01 dB (L / R). Captured with its loop in phase: +0.50 dB (the equal-power seam adds up, §2.1), reported |
+| Stretch accuracy | ×10: 1 s ± 2 %; ×0.5: 50 ms ± 5 % | ×10: 27 intervals 0.994 – 1.004 s; ×0.5 (N = 256): 554 intervals 48.8 – 51.2 ms |
+| Capture | period 2 s × `amount` ± 1 hop; auto-commit ± 1 sample; < 50 ms ignored; on at load ignored | 192,000 samples ± 128 (×2); auto-commit at exactly 48,000; 40 ms ignored; `capture` on at load and in Rolling: no take |
+| Seam (77,777-sample take, ×1, `cloud` 0) | ±1 dB; HF ≤ 3 dB over the neighbours | chord 0.69 dB, noise 0.27 dB (50 ms windows); HF +0.00 / +0.05 dB |
+| Commit crossfade | ±1.5 dB | 400 ms levels (L / R power) through a 2 s commit: noise 0.10 / 0.12 dB, chord 0.77 / 0.44 dB (`cloud` 100 / 0 %) |
+| Resync | at `maxlen` ± 1 hop; ≤ 2 heads; ×1,024 fades 0.5 s | ×8, `maxlen` 5 s: on the first sample past 240,000 (checked per sample; the block before reads 239,992); ×1,024, `maxlen` 1 s, `xfade` 10 s: never 3 heads, every fade 0.50 s (± 1 %) |
+| Freeze | 1/3-octave ±0.5 dB over 60 s; level constant | noise frozen: bands within 0.45 dB over four 15 s segments; 1 s levels within 1 dB; the input stopping after the freeze changes nothing |
+| Rolling ×1 | late by N + H ± 1 | coherent: exact (identity); random, 16 pips: centroids 5,143 samples late for N + H = 5,120 (0.6 % of N) |
+| Modules | pitch +12: 880 Hz ± 1 bin; fshift +100: 540 ± 0.2 Hz; spread σ ±10 %, energy ±0.5 dB, centroid ±10 ¢; compress (1 − c) · 30 ± 1 dB, −21 dBFS kept, no lift under −72 dBFS, ≤ 2 dB per dB | pitch within a bin (random and coherent); fshift 540.15 Hz (random), 540.00 (coherent); spread 50 / 200 / 1,200 ¢ → σ 50.1 / 195.4 / 1,188.5 ¢, energy +0.34 / +0.19 / +0.03 dB, centroid +0.4 / +1.9 / −5.5 ¢; compress 0 / 50 / 100 %: 30.00 / 15.00 / 0.00 dB, −21 dBFS at 100 % within 0.5 dB, −80 dBFS not lifted; the law ≤ 2 dB per dB everywhere |
+| Stereo | `width` 0: L = R bit-exact; `width` 100: coherence < 0.2; mono DI ≤ 60 % CPU | bit-exact (f16 pool, chord); coherence 0.009 (`cloud` 100 %, 200 Hz – 10 kHz); mono DI 158 against 179 ns (88 %, **not met**: deviations) |
+| CPU, 48 kHz (mean / worst 64-sample block / 99.9th percentile) | mean ≤ 400 ns; worst ≤ 25 % | defaults (Rolling ×4, 683 ms, random) 179 ns / 4.0 % / 2.4 %; coherent 30 % 320 ns / 7.7 %; 5.46 s random 184 ns / 5.5 %; 5.46 s coherent 291 ns / 5.3 %; resyncs 206 ns / 3.8 %; size changes 683 → 5,461 → 21 ms 291 ns / 5.1 %; mode change + commits 107 ns / 3.0 %; coherent commits at 5.46 s 283 ns / 8.1 % |
+| CPU, 192 kHz | worst ≤ 25 % | means 163 – 318 ns. 99.9th percentile 11 – 25 % in every case; worst block 17 % (defaults), 19 – 27 % (resyncs, size and mode changes, commits), 24 – 45 % (coherent at 683 ms / 5.46 s): see deviations |
+| Memory and start | `prepare` ≤ 15 / 60 ms; no page fault in `process` | 57.7 MB at 48 kHz, 127.9 MB at 192 kHz; `prepare` 19 – 20 ms at 48 kHz, 42 ms at 192 kHz (a loaded machine); 0 page faults in `process` over 12 s (`/proc/self/stat`) |
+| Latency / determinism / block size | reported 0, dry at 0; strict null; blocks 1 – 4,096 | bench: measured 0; bit-identical; −240 dB. The behaviour test also renders captures and a freeze at blocks 1, 64, 512, 4,096: identical |
+| Conversion (§3.4 tables) | reproduced | every `spread` and `fft` entry within rounding |
+| Common checks | — | 28 / 28 at 44.1 – 192 kHz; worst parameter step −118 dB (`lpf` 20 → 1 kHz at 44.1 kHz). CPU line: 100.6 ns mono, 159.7 ns stereo |
+
+Not run here: the Texture row (no Paulstretch reference built), the Conversion renders against
+PaulXStretch (golem-rack / REAPER), the level of a fading head when `capture` starts during a commit
+crossfade (the hold is coded, its level not measured), and the Listening row.
+
+**Deviations from the design, and why.**
+- **Coherent level at ×8 – ×100** (`cloud` ≤ 50 %): the s² law holds at ×1 (±0.2 dB) and in random mode,
+  but a peak-locked phase vocoder's frames do not add up fully coherently once the head moves at another
+  speed than the output: −1.0 … −1.5 dB on noise, −1.9 … −3.1 dB on a chord whose partials the window does
+  not resolve (N = 2,048), 0 dB on resolved partials. §5's ±1 dB is not met there; the tests bound the
+  measured values. A cure would be signal-dependent (an estimate of each frame's coherence, or a slow
+  level loop): left for the owner, by ear first.
+- **Peak frequencies from the previous frame** when the head's last frame lies 0 < Δ ≤ N / 4 behind (amount
+  ≥ 1: the standard phase vocoder's case, unambiguous within ±2 bins of each peak, which is where a peak
+  is); the second analysis H / 4 earlier only for `amount` < 1, a new head and after a freeze. It halves the
+  coherent analysis (434 → 320 ns per stereo frame at the defaults). Frequencies are computed at the peaks
+  only, not per bin. Identity frames (×1, neutral) skip both: no frequency is needed.
+- **Fast trigonometry**: polynomial atan2 and sin / cos (≤ 1e-6, no libm call, branch-free) for the
+  coherent path; the identity still nulls to −90 dB.
+- **Units of ≤ 1,024 elements** (512 for the coherent passes with a transcendental per bin), not ~4,096:
+  at 192 kHz a 64-sample block lasts 333 µs and 4,096-element units of transposed reads cost 50 – 70 µs.
+- **192 kHz worst block**: the 99.9th percentile stays ≤ 25 % in every case, but single blocks reach 24 –
+  45 % in coherent mode (two units of the heaviest passes in one block, on a machine shared with other
+  builds: load 6 – 9, best of three runs). The six-step (transposed) FFT and finer coherent units are the
+  owner's options.
+- **Memory 57.7 MB at 48 kHz, 128 MB at 192 kHz** (§2.10: ≈ 51 / 121). Per engine and channel: the frame
+  buffer (N), the overlap-add ring (1.25 N), the mixed spectrum (2 × N / 2) and four arrays per head (2 × 4
+  × N / 2): 7.25 N against the ~6 N counted. The pool, tables and pre-roll are as designed (the pre-roll
+  ring is 2 × 250 ms, below).
+- **`prepare`** 19 – 20 ms at 48 kHz (bound 15): the first write of 57.7 MB on a loaded machine (the tables
+  are built from √T sines and cosines, ~1 ms). 42 ms at 192 kHz (bound 60).
+- **Mono-DI analysis** saves 12 % at `width` 100 %, not 40 %: each channel still synthesises its own phases
+  (the copy skips reading, the FFT and the twiddle pass). Mono is detected per take (no L ≠ R sample in it)
+  in Capture, by the last L ≠ R position in Rolling.
+- **The seam is never one block**: the pre-roll is copied aside one sample per recorded sample (its ring
+  holds 500 ms, so the 250 ms before a take stay intact for 250 ms more), and the seam is crossfaded 32
+  samples per sample after the commit (8 ms at any rate); the new head starts when it is done. `state`
+  shows Capturing meanwhile.
+- **Silence check**: §5's "the default holds" was wrong. Rolling ×4 plays the bench's 0.5 s burst four
+  times slower: its head leaves the burst at 4 × (0.5 s + N) ≈ 5 s, so the wet is −3 dBFS at 3 s. gfx-bench
+  reads the floor after 7 s for this pedal (a new option, default 3 s); the −140 dBFS bound holds (−240).
+- **Coherent modules**: fshift is part of the rigid region move, f′ = (f + fshift) · 2^(pitch / 12) per
+  peak; spread rescales each bin to the blurred power and keeps its phase (a bin with no coherent energy
+  gets a random phase).
+- **Edges the design left open**: a bypass while recording commits the take; re-engaging in Rolling goes
+  on from where the head is (Capture restarts the take, as designed); a commit during a commit crossfade
+  drops the oldest head at once (never three heads); `maxlen` is latched when a take starts; the Rolling
+  minimum lag is half the larger window during a size change; `hpf` at 20 Hz is a filter at 20 Hz, as
+  gfx-glitch's; `map_freq` stays in gfx-glitch (its form is slot-specific), the stretch's rigid move is in
+  its engine.
+
+**Left for the owner.** By ear (`gfx-bench apps gfx-stretch` is not written yet): the coherent end at ×1.5
+– ×4 and its level, the first take's fade, the fading of one note against PaulXStretch; the Texture and
+Conversion rows against PaulXStretch renders (golem-rack); golem-rack's catalogue change (`spread` in ¢,
+`fft` in ms, `maxlen` ≤ 60 s, `mode` Capture pinned for `stretch`, `amount` > 100 for `glacier`) and the
+switch-on stall check (`prepare` writes 58 – 128 MB).

@@ -1,0 +1,476 @@
+{
+ "crate": "gfx-stretch",
+ "presets": [
+  {
+   "id": "chord-pad",
+   "type": "stretch",
+   "name": "Chord into pad",
+   "desc": "Stomp on, strum one chord, stomp off: the chord plays eight times slower as a seamless looped pad",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Capture",
+    "amount": 8,
+    "fft": 683,
+    "thru": true,
+    "vol": -6,
+    "hpf": 100
+   },
+   "notes": "The intro pad: the pre-roll seam makes the loop invisible; the 100 Hz cut keeps the pad off the bass"
+  },
+  {
+   "id": "verse-drone",
+   "type": "stretch",
+   "name": "Drone under a verse",
+   "desc": "One low note captured and stretched sixty times into a level, widened drone under the verse",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "subgenres": [
+    "post-rock",
+    "drone"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 60,
+    "spread": 120,
+    "compress": 60,
+    "hpf": 80,
+    "lpf": 6000,
+    "vol": -10
+   },
+   "notes": "Compress 60 % holds the drone level through the note's decay; spread 120 cents widens each partial"
+  },
+  {
+   "id": "infinite-hold",
+   "type": "stretch",
+   "name": "Infinite hold",
+   "desc": "Capture a chord, then Freeze holds one instant of it forever while you play over it",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 4,
+    "xfade": 4000,
+    "vol": -6
+   },
+   "notes": "The hold-machine gesture: Freeze on the footswitch; a 4 s crossfade lets the next take arrive slowly"
+  },
+  {
+   "id": "vocal-outro",
+   "type": "stretch",
+   "name": "Voice into the outro",
+   "desc": "The last sung line captured and stretched twenty times: the vowels hang over the outro",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "ambient-pop",
+    "post-rock"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Capture",
+    "amount": 20,
+    "fft": 341,
+    "width": 100,
+    "lpf": 9000,
+    "vol": -6
+   },
+   "notes": "A 341 ms window keeps the vowels readable; the tone at 9 kHz tames the stretched sibilants"
+  },
+  {
+   "id": "ambient-shadow",
+   "type": "stretch",
+   "name": "Ambient shadow",
+   "desc": "Hands-free: a slow ghost of what you just played, six times slower, refreshed every twelve seconds",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Rolling",
+    "amount": 6,
+    "maxlen": 12,
+    "fft": 683,
+    "vol": -10,
+    "hpf": 120
+   },
+   "notes": "Rolling needs no footswitch: each resync takes a new snapshot of the playing and crossfades to it"
+  },
+  {
+   "id": "live-smear",
+   "type": "stretch",
+   "name": "Live spectral smear",
+   "desc": "The present, smeared through random phases: a diffuse halo a fifth of a second behind the playing",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "shoegaze",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Rolling",
+    "amount": 1,
+    "fft": 171,
+    "cloud": 100,
+    "vol": -6
+   },
+   "notes": "At ×1 Rolling reads the present: the wet is the input with fresh phases, late by window + hop (213 ms)"
+  },
+  {
+   "id": "slow-keys",
+   "type": "stretch",
+   "name": "Slow-motion keys",
+   "desc": "An arpeggio captured and played two and a half times slower with its notes still clear",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "classical"
+   ],
+   "subgenres": [
+    "ambient",
+    "modern-classical"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Capture",
+    "amount": 2.5,
+    "cloud": 15,
+    "fft": 85
+   },
+   "notes": "Cloud 15 % is the coherent end: peak-locked phases keep the notes, a little randomness hides the phasiness"
+  },
+  {
+   "id": "glass-octave",
+   "type": "stretch",
+   "name": "Glass octave drone",
+   "desc": "A captured chord stretched forty times and lifted an octave into a thin, glassy drone",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "ambient",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -6,
+   "tags": [
+    "bright",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 40,
+    "pitch": 12,
+    "spread": 40,
+    "lpf": 10000,
+    "vol": -12
+   },
+   "notes": "The pitch remap keeps the power; 40 cents of spread softens the octave's partials"
+  },
+  {
+   "id": "sub-bed",
+   "type": "stretch",
+   "name": "Sub bed",
+   "desc": "A bass note captured, stretched thirty times and dropped an octave: a mono sub bed under the band",
+   "inst": "bass",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "ambient",
+    "post-rock"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "dark"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Capture",
+    "amount": 30,
+    "pitch": -12,
+    "lpf": 1500,
+    "width": 0
+   },
+   "notes": "Width 0 keeps the low end mono; the tone at 1.5 kHz leaves only the sub"
+  },
+  {
+   "id": "chord-bells",
+   "type": "stretch",
+   "name": "Bells from a chord",
+   "desc": "A captured chord shifted up 70 Hz: inharmonic, bell-like partials stretched twelve times",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "drone",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 12,
+    "fshift": 70,
+    "spread": 0
+   },
+   "notes": "A frequency shift moves every partial by the same Hz: the harmonic series becomes bells"
+  },
+  {
+   "id": "noise-wash",
+   "type": "stretch",
+   "name": "Noise-band wash",
+   "desc": "Stretched a hundred times and spread over an octave: the playing becomes bands of level, steady noise",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "metal"
+   ],
+   "subgenres": [
+    "drone",
+    "drone-metal"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "extreme",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 100,
+    "spread": 1200,
+    "compress": 80
+   },
+   "notes": "The constant-Q blur keeps the energy while it widens; compress 80 % flattens the level swings"
+  },
+  {
+   "id": "tight-grain",
+   "type": "stretch",
+   "name": "Tight grain",
+   "desc": "A riff captured and stretched three times through a 21 ms window: a rhythmic, grainy flutter",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "ambient"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 3,
+    "fft": 21,
+    "cloud": 100
+   },
+   "notes": "Short windows keep the riff's rhythm and add a flutter: the low end of PaulXStretch's grain"
+  },
+  {
+   "id": "scene-swell",
+   "type": "stretch",
+   "name": "Scene swell",
+   "desc": "A take captured beforehand fades back in over six seconds when the pedal is engaged at the chorus",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "post-rock",
+    "shoegaze"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 8,
+    "xfade": 6000,
+    "trails": true,
+    "vol": -6
+   },
+   "notes": "The take survives bypass: engage the block with its scene and the pad swells back from the take's start"
+  },
+  {
+   "id": "glacier",
+   "type": "stretch",
+   "name": "Glacier",
+   "desc": "Five hundred times slower, spread and compressed: a note becomes a still, minutes-long glacier",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "drone",
+    "dark-ambient"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -6,
+   "tags": [
+    "extreme",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Capture",
+    "amount": 500,
+    "spread": 300,
+    "compress": 70,
+    "hpf": 80,
+    "vol": -8
+   },
+   "notes": "Above ×100: golem's catalogue knob stops at 100, so this preset needs its maximum raised (README §3.1)"
+  },
+  {
+   "id": "ghost-voice",
+   "type": "stretch",
+   "name": "Ghost voice",
+   "desc": "Hands-free on a vocal lane: a dark, quiet ghost of the last phrase, three times slower",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "subgenres": [
+    "ambient",
+    "ambient-pop"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "dark",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Rolling",
+    "amount": 3,
+    "lpf": 5000,
+    "vol": -14
+   },
+   "notes": "Rolling on a voice: the ghost follows the song in snapshots; the 5 kHz tone keeps it behind the singer"
+  }
+ ]
+}

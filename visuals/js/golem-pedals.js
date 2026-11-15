@@ -370,10 +370,11 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-correct': '#7a1450',
     // rosewood: a dark, saturated wood (gfx-acoustic's review: ΔE 36 to the copper)
     'gfx-acoustic': '#552210',
-    'gfx-radio': '#4b5320' };
+    'gfx-radio': '#4b5320',
+    'gfx-stretch': '#a0a8ff' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a', 'gfx-stretch': '#3040c8' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -402,7 +403,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-vocoder': 'bank',
     'gfx-acoustic': 'rosette',
     'gfx-radio': 'grille',
-  };
+    'gfx-stretch': 'chirp' };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
@@ -631,6 +632,20 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         const [g1, w1] = gaps[1], r = .6;
         [[g1 - 2.2, 3.4], [g1 + w1 + 1.8, -3.3], [g1 + w1 / 2, 4.2]].forEach(([x, dy]) =>
           shape(`M${f1(x - r)} ${f1(yAt(x) + dy)}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`, .8));
+        break;
+      }
+      case 'chirp': {
+        // one wave whose period grows ×8 from left to right, time being stretched: instantaneous
+        // period p0 · 8^(x / W), p0 = 5 px, so φ(x) = 2π W / (p0 ln 8) · (1 − 8^(−x / W)) (≈ 6.7 cycles
+        // over an 80 px face). A second copy at .45, 4 px lower and a quarter of the local period
+        // later: the stereo wash. In the rune band like `waves`, told apart by its glide
+        const a = ch * .7, p0 = 5, k = 2 * Math.PI * W / (p0 * Math.log(8));
+        const phi = x => k * (1 - Math.pow(8, -x / W));
+        [[0, 0, 1], [4, -Math.PI / 2, .45]].forEach(([dy, ph, op]) => {
+          let d = '';
+          for (let x = 0; x <= W + .01; x += 1) d += (d ? 'L' : 'M') + f1(x) + ' ' + f1(cy + dy + a * Math.sin(phi(x) + ph));
+          line(d, op);
+        });
         break;
       }
       case 'bank': {

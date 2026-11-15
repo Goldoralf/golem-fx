@@ -2216,6 +2216,49 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-stretch": [
+      {
+        "id": "spectrum",
+        "name": "Spectrum",
+        "custom": null,
+        "params": [
+          "pitch",
+          "fshift",
+          "cloud",
+          "width"
+        ]
+      },
+      {
+        "id": "modules",
+        "name": "Modules",
+        "custom": null,
+        "params": [
+          "spread_on",
+          "comp_on",
+          "compress"
+        ]
+      },
+      {
+        "id": "takes",
+        "name": "Takes",
+        "custom": null,
+        "params": [
+          "maxlen",
+          "xfade"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "hpf",
+          "lpf",
+          "trails",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2943,6 +2986,16 @@
       "quack": {
         "param": "pickup",
         "equals": "Piezo"
+      }
+    },
+    "gfx-stretch": {
+      "capture": {
+        "param": "mode",
+        "equals": "Capture"
+      },
+      "compress": {
+        "param": "comp_on",
+        "equals": true
       }
     }
   }
