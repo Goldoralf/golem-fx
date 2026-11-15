@@ -1888,6 +1888,43 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-tuner": [
+      {
+        "id": "strings",
+        "name": "Strings",
+        "custom": null,
+        "params": [
+          "tuning",
+          "transpose",
+          "string_1",
+          "string_2",
+          "string_3",
+          "string_4",
+          "string_5",
+          "string_6",
+          "string_7",
+          "string_8",
+          "offset_1",
+          "offset_2",
+          "offset_3",
+          "offset_4",
+          "offset_5",
+          "offset_6",
+          "offset_7",
+          "offset_8"
+        ]
+      },
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "threshold",
+          "always_on",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2220,6 +2257,24 @@
       "rotate": "Rotates a stereo image (positive = right); moves the mono fold",
       "level": "Output trim",
       "listen": "Audition the mono fold or the side alone (not stored by golem)"
+    },
+    "gfx-tuner": {
+      "string_1": "Custom tuning's open string 1 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_1": "Sweetening of string 1 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_2": "Custom tuning's open string 2 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_2": "Sweetening of string 2 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_3": "Custom tuning's open string 3 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_3": "Sweetening of string 3 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_4": "Custom tuning's open string 4 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_4": "Sweetening of string 4 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_5": "Custom tuning's open string 5 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_5": "Sweetening of string 5 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_6": "Custom tuning's open string 6 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_6": "Sweetening of string 6 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_7": "Custom tuning's open string 7 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_7": "Sweetening of string 7 in cents (1 = the lowest), its 12th-fret harmonic included",
+      "string_8": "Custom tuning's open string 8 (MIDI, 1 = the lowest); 0 ends the list",
+      "offset_8": "Sweetening of string 8 in cents (1 = the lowest), its 12th-fret harmonic included"
     }
   },
   "depends": {

@@ -951,6 +951,33 @@
       {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
       {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 500, "default": 0},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-tuner": [
+      {"id": "tuning", "name": "Tuning", "kind": "enum", "min": 0, "max": 21, "default": 0, "options": 22},
+      {"id": "mode", "name": "Mode", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "precision", "name": "Precision", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "reference", "name": "Reference A", "kind": "float", "min": 410, "max": 470, "default": 440},
+      {"id": "mute", "name": "Mute", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "transpose", "name": "Transpose", "kind": "int", "min": -12, "max": 12, "default": 0},
+      {"id": "offset_1", "name": "Offset 1", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_2", "name": "Offset 2", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_3", "name": "Offset 3", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_4", "name": "Offset 4", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_5", "name": "Offset 5", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_6", "name": "Offset 6", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_7", "name": "Offset 7", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "offset_8", "name": "Offset 8", "kind": "float", "min": -50, "max": 50, "default": 0},
+      {"id": "string_1", "name": "String 1", "kind": "int", "min": 0, "max": 96, "default": 40},
+      {"id": "string_2", "name": "String 2", "kind": "int", "min": 0, "max": 96, "default": 45},
+      {"id": "string_3", "name": "String 3", "kind": "int", "min": 0, "max": 96, "default": 50},
+      {"id": "string_4", "name": "String 4", "kind": "int", "min": 0, "max": 96, "default": 55},
+      {"id": "string_5", "name": "String 5", "kind": "int", "min": 0, "max": 96, "default": 59},
+      {"id": "string_6", "name": "String 6", "kind": "int", "min": 0, "max": 96, "default": 64},
+      {"id": "string_7", "name": "String 7", "kind": "int", "min": 0, "max": 96, "default": 0},
+      {"id": "string_8", "name": "String 8", "kind": "int", "min": 0, "max": 96, "default": 0},
+      {"id": "threshold", "name": "Threshold", "kind": "float", "min": -90, "max": -30, "default": -65},
+      {"id": "always_on", "name": "Always On", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

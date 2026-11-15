@@ -82,6 +82,12 @@ pub trait Effect: Send {
     /// it; the default ignores it. Called before `process` when the host gives it.
     fn set_transport(&mut self, _transport: crate::transport::TransportInfo) {}
 
+    /// A read-only meter (the plugin's output parameter) by id, as last published; None for an
+    /// unknown id. Effects without meters keep the default.
+    fn meter(&self, _id: &str) -> Option<f32> {
+        None
+    }
+
     /// Reported latency in samples.
     fn latency(&self) -> usize {
         0

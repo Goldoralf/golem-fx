@@ -710,6 +710,24 @@
    ],
    "category": "drive",
    "color": "#b0602a"
+  },
+  "gfx-tuner": {
+   "name": "Tune",
+   "blocks": [
+    "tuner"
+   ],
+   "knobs": [
+    "reference"
+   ],
+   "selectors": [
+    "mode",
+    "precision"
+   ],
+   "toggles": [
+    "mute"
+   ],
+   "category": "utility",
+   "color": "#126e1c"
   }
  }
 }
