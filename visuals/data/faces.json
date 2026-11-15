@@ -914,6 +914,23 @@
     "wave"
    ],
    "category": "pitch"
+  },
+  "gfx-spectralcomp": {
+   "name": "Spectral",
+   "blocks": [
+    "spectral-comp"
+   ],
+   "knobs": [
+    "thresh",
+    "down",
+    "up",
+    "slope",
+    "attack"
+   ],
+   "selectors": [
+    "mode"
+   ],
+   "category": "dynamics"
   }
  }
 }

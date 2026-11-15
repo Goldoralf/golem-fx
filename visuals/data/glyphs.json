@@ -24,7 +24,7 @@
   "spectral-comp": {
    "label": "Spectral compressor",
    "uni": "⩓",
-   "svg": "<path d='M4 21v-5M8 21v-9M12 21v-7M16 21v-10M20 21v-6'/><path d='M12 2.5v4M9.5 4.5 12 7l2.5-2.5'/>"
+   "svg": "<path d='M2.5 6.5 21.5 8.5'/><path d='M4.5 21.5V8.5M8.5 21.5V15.5M12.5 21.5V9.4M16.5 21.5V16M20.5 21.5V10.2'/><path d='M8.5 12.6V11M16.5 13.1V11.5' opacity='.5'/>"
   },
   "boost": {
    "label": "Overdrive / boost",

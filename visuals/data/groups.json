@@ -2453,6 +2453,44 @@
           "trails"
         ]
       }
+    ],
+    "gfx-spectralcomp": [
+      {
+        "id": "curve",
+        "name": "Curve",
+        "custom": null,
+        "params": [
+          "center",
+          "knee",
+          "range",
+          "lift_range",
+          "guard",
+          "res"
+        ]
+      },
+      {
+        "id": "timing",
+        "name": "Timing",
+        "custom": null,
+        "params": [
+          "release",
+          "window"
+        ]
+      },
+      {
+        "id": "routing",
+        "name": "Routing",
+        "custom": null,
+        "params": [
+          "source",
+          "link",
+          "mix",
+          "out",
+          "auto_gain",
+          "delta",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2840,6 +2878,29 @@
       "amp_mode": "Follow: the string's own level, flattened by Hold · Gate: an ADSR from every pick",
       "bank": "Dual: fast bank on attacks, legato and bends, clean bank on held notes · Fast: tightest, chords gritty · Clean: cleanest chords, slow attack (pads)",
       "quantize": "Off: bends and vibrato pass · Chromatic: the nearest semitone, held with hysteresis (Mono)"
+    },
+    "gfx-spectralcomp": {
+      "thresh": "Band level (a sine's dBFS in its band) at Center where the work starts; the same reading at every window",
+      "down": "Downward ratio above the threshold curve, per band; 1 = off",
+      "up": "Upward ratio below the curve, never under the noise guard; 1 = off",
+      "slope": "Tilts the threshold about Center in dB per octave; 0 is flat for pink noise, negative holds the highs sooner",
+      "attack": "How fast a rising band is held; the window adds a quarter to a half of its length",
+      "mode": "Live: zero latency, two-thirds-octave bells. Studio: per bin inside the STFT, latency of the window. Set before playing",
+      "center": "Pivot of the slope",
+      "release": "How fast a falling band is let go",
+      "window": "Analysis size (samples at 48 kHz): longer resolves lower notes, reacts later; Studio's latency. Set before playing",
+      "res": "Width of each bin's detector band (semitones): wider is smoother, less musical noise; 0 = the main lobe",
+      "knee": "Quadratic knee around the threshold, both directions",
+      "range": "Deepest cut of any band",
+      "lift_range": "Largest boost of any band",
+      "guard": "Nothing at or under this level is lifted: the upward stage never raises hiss",
+      "source": "What the detector reads: the lane itself, or the key (the lane's DI today); no key = no change",
+      "auto_gain": "Static make-up from the settings (pink noise at -18 dBFS RMS matches bypass); 0 dB under a key",
+      "mix": "Dry / wet, the dry aligned to the wet",
+      "out": "Output level after the mix",
+      "link": "Stereo: each channel's band levels move toward the louder one's",
+      "delta": "Hear only what the compressor changes (wet minus dry)",
+      "bypass": "The dry, still delayed in Studio so the lane's latency stays"
     }
   },
   "depends": {

@@ -410,7 +410,8 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-stretch': 'chirp',
     'gfx-grains': 'grains',
     'gfx-sustainer': 'modes',
-    'gfx-polysynth': 'saws' };
+    'gfx-polysynth': 'saws',
+    'gfx-spectralcomp': 'skyline' };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
@@ -748,6 +749,30 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(x)} ${f1(y0)}V${f1(cut)}`, op);
             line(`M${f1(x + slip)} ${f1(cut - gap)}V${f1(top)}`, op);
           } else line(`M${f1(x)} ${f1(y0)}V${f1(top)}`, op);
+        }
+        break;
+      }
+      case 'skyline': {
+        // a spectrum evened by a tilted line (gfx-spectralcomp): bins' grid and baseline either side of
+        // the rune; a threshold line falling to the right (the `slope`), broken at the cartouche; a bar
+        // over it is cut at the line with a faint stub of what was taken, a bar under it is lifted by a
+        // third of its gap to the line. Uneven below, flattened along the line
+        const y0 = cy + ch / 2 + 6, ya = cy - .15 * ch, yb = cy - .05 * ch, clear = cw / 2 + 2, gap = 1.6;
+        const yl = x => ya + (yb - ya) * x / W;
+        const tops = [.35, .9, .5, 1, .25, .7, .95, .4, .6, .3, .85, .55];
+        line(`M0 ${f1(ya)}L${f1(cx - clear)} ${f1(yl(cx - clear))}`, .45);
+        line(`M${f1(cx + clear)} ${f1(yl(cx + clear))}L${W} ${f1(yb)}`, .45);
+        let k = 0;
+        for (let x = 7; x <= W - 7; x += 5) {
+          if (Math.abs(x - cx) < clear) continue;
+          const t = tops[k++ % tops.length], top = y0 - (y0 - (cy - ch * .7)) * t, l = yl(x);
+          if (top < l) {
+            line(`M${f1(x)} ${f1(y0)}V${f1(l + gap)}`);
+            if (top < l - gap) line(`M${f1(x)} ${f1(l - gap)}V${f1(top)}`, .3);
+          } else {
+            line(`M${f1(x)} ${f1(y0)}V${f1(top)}`);
+            line(`M${f1(x)} ${f1(top)}V${f1(top - (top - l) / 3)}`, .55);
+          }
         }
         break;
       }

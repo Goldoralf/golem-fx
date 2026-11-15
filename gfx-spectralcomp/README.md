@@ -1,9 +1,18 @@
 # gfx-spectralcomp
 
-> **Status: DESIGNED (2026-11-15), reviewed by Fable 5.2** (Review section at the end; its decisions
-> override the body where they differ). Design only, no plugin code. Prototypes in `proto/` (numpy, plus
-> a Rust CPU timing in `proto/rs/`); every number marked [P] below is theirs, re-run in
-> `proto/results.txt`.
+> **Status: CODED (v0.1.0, 2026-11-15).** Designed and reviewed by Fable 5.2 the same day (Review
+> section; its decisions override the body where they differ). Built as designed: one calibrated
+> band-power detector (gfx-dsp `stft`, hop N / 8) feeding a per-bin Studio applier (latency N − 1) and
+> a zero-latency Live applier (27 third-octave ACGE bells on gfx-dsp `geq`, the review's target rule,
+> c = 0.5), with guarded upward compression, static auto make-up, `mix` / `delta` / `out` / `bypass`,
+> a key, and ten read-only meters. Measured: a sine reads its dBFS within 0.04 dB at every window,
+> Studio realises the static curve within 0.10 dB, Live matches Studio on pink noise within 0.12 dB,
+> Studio's tremolo spurs −77.5 dBc, musical noise 0.66 / 0.25 dB; 25 behaviour tests, the bench
+> 28 / 28 at every rate with no exemption; CPU 634 ns mono / 1,015 ns stereo (Live, the default; load
+> average 7). Coding added what the measurements asked for (As coded, at the end): low and high shelves
+> beyond the end bells, a solve every second tick, a lean correction in `geq`, a latency-free cascade
+> loop, and four figures a little outside §5's bounds. Prototypes in `proto/` (numpy, plus a Rust CPU
+> timing in `proto/rs/`, not a workspace member); every number marked [P] below is theirs.
 
 golem's own **spectral compressor**. It compresses each part of the spectrum on its own, downward above
 a threshold curve and upward below it, so a voice, a pad or a guitar is evened out without the pumping
@@ -874,3 +883,110 @@ B = blocking: apply before coding. R = recommended.
 | `skyline` against `bins` at tile size (same bar grid and baseline; only the line and the clipping differ); the new glyph at 16 px | Raph, on the family sheet |
 | `geq` changes (27 sections, per-plan clamp and c, targets at the points), with gfx-geq's renders nulling before and after | golem-fx, with this crate |
 | Converted presets on dense sources: 6 – 11 dB more cut at 8 kHz than the legacy on pink noise, by design of the band detector | Raph, by ear |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files**: `src/lib.rs` (the processor: parameters, the frame passes, the output stage), `src/curve.rs`
+(band edges, static curve, auto make-up, fast log2 / exp2), `src/live.rs` (the THIRDS plan, the solver
+slots, the shelves, the cascade), `src/plugin.rs` (nih-plug: 1 / 1 then 2 / 2, key on an aux bus of
+1 / 2 channels, class id `GoleMFxSpecCmp01`, "GoleM FX Spectral Comp"), `src/tests.rs`. gfx-dsp:
+`geq` (`PlanSpec`, `Plan::with_spec`, `correct_lean`; `MAX_BANDS` / `MAX_SECTIONS` 27, `MAX_POINTS`
+55), `stft` (`OLA_AMP_HOP8` = 3.0), `svf` (`SvfCoefs::parts`). gfx-geq renders null bit for bit before
+and after (three settings × four rates, mono and stereo: 12 / 12 identical files).
+
+**Decisions left "for the maintainer"**, taken as the README recommends (validated by the maintainer):
+converted presets in Studio (open question 1); the target rule with c = 0.5, no sixth-octave bells
+(2); `window` 512 appended (3); Studio's pre-echo accepted, no transient guard (4); auto gain's pink
+reference fixed at −18 dBFS RMS (5); the low-frequency floor stated (6); one threshold (7); hop N / 8
+in both modes (8).
+
+### Measured (tests, `cargo test -p gfx-spectralcomp -- --nocapture`; bench)
+
+| §5 row | Target | Measured |
+|---|---|---|
+| Latency | Live 0; Studio N − 1 | Studio: an impulse peaks exactly N − 1 late at 512 – 4,096 × every rate family, + H where the frame is cut over the hop (96 kHz `window` 4096; 192 kHz 1024 / 2048 / 4096); Live reports 0, bench latency 0 at four rates |
+| Transparency | Studio ≤ −120 dB; Live bit-exact | Studio at ratios 1: −140.1 to −141.1 dB (f32); Live at ratios 1 and under its threshold: bit-identical |
+| Calibration | ±0.1 dB; pink ±1 dB / oct | −20 dBFS sine at 100 Hz – 10 kHz, `window` 1024 – 4096: within 0.037 dB; pink −18 dBFS RMS: −0.90 dB / oct (1024), −0.34 (2048) |
+| Static curve | Studio ±0.15 dB; Live ±1 dB to −18, ±2.5 to −24 | Studio 0.102 dB (knee 0 / 6, −80 … 0 dBFS). Live lone tone (150 / 1,000 / 1,122 / 5,000 / 7,100 Hz): 1.09 dB to −18 dB (1,122 Hz, between two centres), 1.82 dB at −24 dB, 0.98 dB lifting |
+| Live against Studio | pink ≤ 0.3 dB | defaults 0.06 dB apart (−4.82 / −4.88 dB); thresh −40, down 3, up 2: 0.12 dB |
+| Rates | Studio ±0.1 dB of 48 kHz | 1 kHz −17.91 dB, 6 kHz −18.00 dB at 44.1 / 48 / 96 / 192 kHz (formula −18.00). Live 1 kHz −18.09 (−18.50 at 44.1 kHz), 6 kHz −18.70 … −18.75 |
+| Ballistics | Studio 63 % ≤ τ + N / 2 | +30 dB step, 10 / 63 / 90 % (ms): `window` 1024, attack 1: Studio 0.0 / 1.0 / 2.2, Live 7.5 / 11.0 / 15.2; attack 10: 0.2 / 8.5 / 21.2 and 11.0 / 20.0 / 33.2; attack 50: 11.2 / 56.0 / 121.5 and 23.8 / 68.5 / 134.0; `window` 2048, attack 10: 3.2 / 12.8 / 25.0 and 17.8 / 31.2 / 43.2; `window` 512, attack 1: 0.0 / 0.5 / 1.8 and 5.0 / 7.2 / 9.2 |
+| Hop spurs | tremolo ≤ −70 dBc; steady ≤ −55 (82 – 110 Hz), ≤ −65 above | Studio tremolo −77.5 (1024) / −78.0 (2048) dBc; Live −81.5 (1024) / −69.2 (2048). Steady, Studio 1024: 82.4 Hz −62.2, 110 Hz −58.1, 196 Hz −75.9, 440 Hz −73.9, 988 Hz −83.5 dBc |
+| Musical noise | ≤ 0.3 bin to bin, ≤ 0.8 over time | 0.25 / 0.66 dB (prototype 0.25 / 0.67) |
+| Pre-echo | ≤ −15 / ≤ −40 dB (Studio 2048) | Studio 2048: −14.5 / −40.4 / −58.9 dB (0 – 5 / 5 – 20 / 20 – 45 ms); Studio 1024: −24.5 / −56.2 / −64.0; Live −71.0 (the noise floor) |
+| Guard | no lift of −80 dBFS noise | `up` 20, guard −72: output ±0.00 dB, no bin above 0 dB, both modes; a −66 dBFS sine lifted 5.99 dB (bound 6) |
+| Auto gain | pink = bypass ±0.5 dB | five settings: Studio within 0.09 dB; Live within 0.25 dB, 0.54 dB at `spectral-wash`'s heavy setting. 0 dB under a key |
+| Key | silent key = input; harmonics cut, 200 Hz kept (Studio) | silent key: Live bit-identical, Studio null < −120 dB, make-up 0 dB. E4 plucks on the key, pink main, down 8, `window` 2048: Studio 200 Hz 0.0, 330 Hz −20.3, 660 Hz −16.0, 990 Hz −15.2, 8 kHz −16.2 dB (the plucks' noisy onsets); Live 200 Hz −3.3, 330 Hz −20.3, 660 −16.7, 990 −16.8 dB (two-thirds-octave duck) |
+| Mix | Studio no notch > 0.2 dB | Studio 50 %: the magnitude blend within 0.000 dB; Live 50 % at a 1 kHz tone (a bell centre, zero phase): 0.00 dB |
+| Switches | ≤ −60 dB re peak (held 82 Hz note) | `mode` Live → Studio −233 dB, Studio → Live −86 dB; `window` (Live) −67 / −68 dB; `source` −65 / −68.5 dB; `bypass`, `delta` −233 dB |
+| Meters | — | 1 kHz at −12 dBFS, down 4: `gr` 17.9 dB, `dyn_1k` −17.9, the other octaves 0.0; 250 Hz at −50 dBFS, up 3: `lift_gr` 12.0, `dyn_250` +9.4 |
+| Stereo link | — | 100 %: the quiet channel follows the loud one (−18.09 Live, −17.91 Studio); 0 %: ±0.00 dB |
+| CPU (48 kHz) | Live ≤ 0.7 / 1.2 µs, Studio ≤ 0.3 / 0.55 µs | bench (Live, default): 634 ns mono, 1,015 ns stereo. Own timing: Live 547 / 822 ns, Studio 275 / 477 ns (mono / stereo); detector alone 228 ns; one lean correction 13 µs every 128 samples; the 29-section cascade 170 ns while ramping. Load average 7 on the machine throughout |
+| Worst block | ≤ 25 % of a 64-sample block | each block's fastest of five runs, stereo: 48 kHz `window` 4096 15 %; 96 kHz 2048 31 – 33 %, 4096 (cut) 19 – 23 %; 192 kHz 512 33 – 34 %, 1024 (cut) 29 – 34 %, 4096 (cut) 36 – 47 % |
+| Bench | — | 28 / 28 at 44.1 – 192 kHz, run with the key bursts (README: "with and without a key"; `source` Main, the default, ignores the key, and the crate's `key` test runs Key without one). Worst parameter step −53 dB (`source` at 44.1 kHz). No exemption |
+
+Not measured in Rust: the legacy conversion's fit on the DIs (the reference model and the DIs are the
+prototype's, §3.4's 1.45 – 1.66 dB stand), the listening rows.
+
+### Deviations from the spec, and why
+
+1. **Shelves beyond the end bells** (`live.rs`). The 27 bells stop at 40 Hz and 16 kHz: under 35 Hz
+   and above 18 kHz Live did not compress while the make-up lifted everything. Measured before: pink
+   with its sub-bass, Live −2.7 dB against Studio −5.2 dB at the defaults, and +11.6 dB over bypass
+   with auto gain at thresh −50 / down 8. A broadband offset (the lowest target as a gain) made the
+   solver oscillate (sections swinging 12 – 18 dB each correction under an 82 Hz note). So a matched
+   low shelf (30 Hz) and high shelf (18 kHz), Q 0.71, take the end points' targets, and the bells solve
+   the rest minus the shelves' exact responses: the flat extrapolation the review's `r6` assumed. 29
+   sections per channel.
+2. **One correction every second tick** (§2.9's named lever): a 27 × 55 correction costs 29 µs
+   (`correct`), 13 µs with **`correct_lean`** (added to `geq`: the response from per-design terms, one
+   division per point, sections that moved < 0.001 dB keep their design; equal to `correct` within
+   1e-6 dB). Tested: one correction per tick does not change the 2048 spur (deviation 5).
+3. **The cascade loop** (`live::Cascade`): Simper's TPT structure with the same state, coefficients
+   and linear ramp as gfx-dsp `svf`, each section's output written y = G · x + C(state), so the path
+   from one section to the next is one multiply-add (27 `Svf`s ramping: 490 ns / sample; this loop:
+   170 ns for 29). `SvfCoefs::parts` exposes the coefficients.
+4. **Live lone tone: 1.09 dB at −18 dB** (bound 1.0), at 1,122 Hz between two centres. The review's
+   ±1.0 / ±2.1 dB (`r7`) ran with c = 0.4 (`live2.py`'s default); c = 0.5 (Review change 8) is kept for
+   program and plateaus.
+5. **Live tremolo spurs at `window` 2048: −69.2 dBc** (bound −70), at fs / H (the frame rate), not the
+   solver's period (one correction per tick gives −69.5). `window` 1024: −81.5 dBc.
+6. **Pre-echo at `window` 2048: −14.5 dB** in the last 5 ms (bound −15; the prototype's own figure is
+   −14.8). 5 – 20 ms: −40.4 dB, within its bound.
+7. **Auto gain, Live, the heaviest setting: +0.54 dB** (bound 0.5; `spectral-wash`: thresh −56, down 8,
+   up 6, `window` 4096). Studio holds 0.09 dB everywhere.
+8. **The worst-block rule counts two channels whatever the layout**: mono and stereo then render alike
+   (the bench's mono / stereo check), and the reported latency never depends on the channel count.
+   Cut over the hop: 96 kHz `window` 4096; 192 kHz every window but 512.
+9. **Worst block above 25 %** in several cases (table). The machine ran at load average 7 (a pass of
+   8,193 additions took 36 µs, about three times an idle core). The units are 256-bin pieces, the FFTs
+   weighted by their cost in the schedule, the targets cut by 14 points; the one-piece thresholds are
+   §2.9's.
+10. **The curve's set-and-forget values glide** (20 ms at the frame rate: `down`, `up`, `center`,
+    `knee`, `range`, `lift_range`, `guard`, `res`). Taken per hop as written, `down` 20 → 1 released
+    22 dB in about 6 ms: −50 dB re peak at 44.1 kHz, the bench's bound.
+11. **Set-up switches** (`mode`, Studio's `window`): 10 ms out, silence while the new engine fills its
+    window and settles (N + four solver periods), 10 ms in, smoothstep fades (linear fades left slope
+    corners at −64 dBFS above 2 kHz). `bypass` and `delta` fades are smoothstep too. A cascade engages
+    from each section's own 0 dB design (exactly the input), ramping to its designs.
+12. **`window` in Live** changes at the next frame, without a fade or `SizeFade` (the cascade runs on,
+    the targets ramp from the old frame's; −67 dB); in Studio it is a set-up switch (its latency moves).
+13. **Targets summed per window, not by prefix differences**: under a loud keyed tone the weights sit at
+    the 1e-20 floor where a prefix difference is rounding noise (a 2,835 dB target, then non-finite
+    output, at 192 kHz in Key mode). The detector's band powers keep their prefix sums (their floor,
+    −140 dB, is far above that noise).
+14. **Key bus**: 1 channel on the 1 / 1 layout, 2 on 2 / 2 (summed to mono), gfx-gate's and gfx-ducker's
+    layouts, where §2.7 says "mono aux".
+15. **Detector math**: a branch-free log2 / exp2 (errors 1e-5 / 1e-6) for the levels and gains; the
+    make-up keeps libm.
+
+### Left for the owner
+
+- Listening (§5's last row): the DIs through every preset, Live against Studio level-matched; Studio's
+  pre-echo on pick attacks; Live's two-thirds octave against Studio's bins; the shelves at the ends.
+- The legacy conversion re-fitted on voice and keys DIs; bass and voice presets on their DIs.
+- Studio hop N / 16 if the −58 dBc image at 110 Hz is heard.
+- The worst block on an idle machine (and the one-piece thresholds, if it stays above 25 %).
+- golem-rack (§6): the catalogue entry (`source`, `window` default 1024, `thresh` −80, the converted
+  presets), `key: true`, `key_from` for `make-room-for-voice`, the meters as a bar curve, the keyless
+  display on Windows / macOS.

@@ -146,3 +146,6 @@ name = "GoleM FX Sustainer"
 
 [gfx-polysynth]
 name = "GoleM FX Polysynth"
+
+[gfx-spectralcomp]
+name = "GoleM FX Spectral Comp"
