@@ -564,6 +564,28 @@
    ],
    "category": "preamp",
    "color": "#b316c0"
+  },
+  "gfx-tape": {
+   "name": "Tape",
+   "blocks": [
+    "tape"
+   ],
+   "knobs": [
+    "input",
+    "wow",
+    "flutter",
+    "wear",
+    "mix"
+   ],
+   "selectors": [
+    "model",
+    "speed"
+   ],
+   "toggles": [
+    "noise"
+   ],
+   "category": "lofi",
+   "color": "#d8c8a0"
   }
  }
 }

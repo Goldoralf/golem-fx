@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -57,6 +57,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-crusher" | "crusher" => Some(Box::new(gfx_crusher::Crusher::new())),
         "gfx-ringmod" | "ringmod" => Some(Box::new(gfx_ringmod::RingMod::new())),
         "gfx-bassdi" | "bassdi" => Some(Box::new(gfx_bassdi::BassDi::new())),
+        "gfx-tape" | "tape" => Some(Box::new(gfx_tape::Tape::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -194,6 +195,14 @@ pub fn options(name: &str) -> checks::Options {
         // delay line, not reported (README §5, the gfx-drive / gfx-emet precedent)
         o.skip_latency = true;
         // README §5 allowed −30 dB for a `gain` jump; measured −78 dB worst: the default bound holds
+    }
+    if matches!(name, "gfx-tape" | "tape") {
+        // the wet carries the transport's D0 (≈ 1 ms at the defaults, moving with the settings) and the
+        // half-bands' minimum-phase group delay: not reported (README §2.8, the gfx-vibrato precedent)
+        o.skip_latency = true;
+        // dropouts, snags, crinkle and stop create real high-frequency changes that are the effect
+        // (README §5)
+        o.click_bound_db = -40.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

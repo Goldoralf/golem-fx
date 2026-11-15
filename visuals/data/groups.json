@@ -1450,6 +1450,67 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-tape": [
+      {
+        "id": "machine",
+        "name": "Machine",
+        "custom": null,
+        "params": [
+          "formula",
+          "bias",
+          "head_bump",
+          "spacing",
+          "azimuth",
+          "alc",
+          "nr"
+        ]
+      },
+      {
+        "id": "transport",
+        "name": "Transport",
+        "custom": null,
+        "params": [
+          "wow_rate",
+          "wow_rand",
+          "snags",
+          "stop",
+          "stop_time",
+          "spread"
+        ]
+      },
+      {
+        "id": "failures",
+        "name": "Failures",
+        "custom": null,
+        "params": [
+          "dropouts",
+          "drop_sync",
+          "crinkle",
+          "crackle"
+        ]
+      },
+      {
+        "id": "noise",
+        "name": "Noise",
+        "custom": null,
+        "params": [
+          "noise_mode",
+          "hiss",
+          "mech"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "low_cut",
+          "high_cut",
+          "level",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1673,6 +1734,21 @@
       "model": "Modern: CMOS grind; Classic: tube-emulation DI push; Vintage: valve-preamp grit",
       "lo_mid_freq": "Centre of the Lo Mid band (the hardware positions: 250, 500, 1,000 Hz)",
       "hi_mid_freq": "Centre of the Hi Mid band, the growl (the hardware positions: 750, 1,500, 3,000 Hz)"
+    },
+    "gfx-tape": {
+      "input": "How hard the tape is hit: 0 dB puts a -18 dBFS note at the machine's reference; the output stays level",
+      "wow": "Peak slow speed deviation (% of speed); the model sets its spectrum",
+      "flutter": "Peak fast speed deviation (% of speed), 4 - 200 Hz",
+      "wear": "Age and failures in the model's own way: dull heads, dropouts, crinkles, snags or crackle",
+      "bias": "Under 100 %: crossover grit and a brighter top; over: cleaner and darker",
+      "spacing": "Head-to-tape gap: highs vanish first, much more at low speed",
+      "azimuth": "Head tilt in arc-minutes: duller highs; in stereo a delay between the tracks",
+      "wow_rate": "Scales the speed of every slow wobble of the transport",
+      "wow_rand": "Negative: a regular, machine-like wobble; positive: erratic",
+      "drop_sync": "Puts the dropouts on the host grid (Off: random)",
+      "noise_mode": "Follow: noise only under the playing; Constant: always; Duck: in the gaps",
+      "stop": "Tape stop: the motor winds down; off spins it back up",
+      "spread": "Stereo: the random wobble and failures differ left and right"
     }
   },
   "depends": {
@@ -1920,6 +1996,12 @@
       "balance": {
         "param": "model",
         "equals": "Diode"
+      }
+    },
+    "gfx-tape": {
+      "stop_time": {
+        "param": "stop",
+        "equals": true
       }
     }
   }

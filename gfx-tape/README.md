@@ -1,6 +1,125 @@
 # gfx-tape
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Reviewed 2026-11-14 (Fable 5.2): see the Review section at the end.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, Review section at
+> the end). The chain runs as designed for all eight models (Studio Reel, Home Reel, Cassette, Portable
+> Cassette, Microcassette, VHS, Vinyl, Shellac 78; AM Radio is gfx-radio's and never enters the enum):
+> Jiles-Atherton integrated along H with the substep rule n = min(8, ⌈|Δh| / k⌉), c = 0.9 at 100 % bias,
+> relaxation toward the anhysteretic, the per-speed record drive-boost table and its exact inverse, at
+> ≥ 352.8 kHz (8× at 44.1 / 48 kHz) through minimum-phase half-bands; the transport generated as speed
+> (two passes of each rotating part, drift, random wow and flutter, snags, stop / spin-up) read with
+> Lagrange-5 around a slewed D0; spacing-loss dropouts, crinkle, crackle and scratches, modulation noise,
+> hiss / mechanical noise in Follow / Constant / Duck, the compander, the ALC, azimuth, and the `wf_out`
+> meter. New gfx-dsp module `tape` (`Hysteresis`, `TapeSat` for gfx-grit, `SpacingFilter`, `Shelf1`,
+> `BandNoise`, `Wobble`, the static makeup table). Bench 28 / 28; 22 behaviour tests plus 6 unit tests here
+> and 10 in gfx-dsp. Low levels pass at unity on every model (≤ 0.27 dB at 1 kHz), the level is held over
+> 36 dB of `input` (≤ 0.06 dB, Shellac 0.64 dB), aliasing ≤ −79.7 dB (Studio at +12 / +18, Cassette at
+> +12). CPU 1.0 µs / sample mono at the defaults (render timing; the bench's line read 1.4 µs on a loaded
+> machine), 1.6 µs worst case: over the 1.1 µs budget, see "As coded". **The `wf_out` weighting is
+> fitted to the reviewer's recalled table [U]: it must be checked against AES6-2008 before the meter is
+> trusted.** Deviations: "As coded" below.
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp `tape.rs` (`Hysteresis`, `TapeSat`, `Shelf1`, `record_shelf`, `level_loss_db`,
+`SpacingFilter` and `matched_lowpass1`, `BandNoise`, `Wobble`) and `Oversampler2x::copy_from` (an addition:
+a linked stereo pair splits without allocating); here `lib.rs` (the processor), `models.rs` (the model
+tables, the drive-boost and replay-τ tables), `transport.rs` (ε generator, snags, the stop machine, the
+weighting meter), `medium.rs` (dropout / crinkle lanes, crackle and scratches, hiss / mechanical /
+modulation noise, the Follow law, ALC, compander, the disc core), `plugin.rs` (class id
+`GoleMFxTape00001`, mono 1 / 1 then 2 / 2, latency 0, `bypass` as the VST3 bypass, `wf_out` read-only),
+`tests.rs`. The model, transport components, noise levels and wear profile values are the README's
+[I] starting points; where it gave a range the middle was taken, where it gave none the value is marked
+[I] in `models.rs` (Home / Portable / Micro / VHS flutter extras, mechanical-noise spectra and levels,
+static spacing 0 µm: the rated band is the aligned machine).
+
+**Measured** (tests and `gfx-bench check gfx-tape`, 48 kHz unless stated):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| J-A, sines 50 Hz – 15 kHz up to 4 a (384 kHz) | ≤ 0.5 % of M_s vs a 64-substep reference; ≤ 1.3 substeps to 10 kHz | ≤ 0.5 % (asserted); ≤ 1.3 substeps; 1.000 on a played signal at `input` +12 |
+| J-A, ±8 a square, Nyquist alternation, white noise | no NaN, no reset, \|M\| ≤ M_s | none, none, ≤ M_s at c = 0.3 / 0.9 / 0.98; error vs reference 1.2 – 2.7 % of M_s (the Review's 0.5 % is not reproduced, see 2.) |
+| Small signal (−30 dB re ref, 1 kHz) | ±1 dB per model | Studio −0.01, Home 0.00, Cassette +0.11, Portable +0.11, Micro +0.19, VHS +0.10, Vinyl +0.13, Shellac +0.27 dB; 30 ips flat ±1 dB 200 Hz – 16 kHz; record × playback shelf null < 1e−12 |
+| No expander; THD at −20 dB re a | gain −40 dB → ref within 1 dB; ≈ 0.05 % | within 1 dB; THD at −20 dB re a < 0.2 % (asserted; 0.038 % on Home Reel at −20 dB re ref); unbiased c = 0.17: below −10 dB and above 1 % THD (asserted), as the Review measured |
+| Under-bias | THD at −20 dB re ref at 60 % ≥ 3× that at 100 % | 0.260 % vs 0.038 % (6.8×), Home Reel |
+| MOL (3 % THD, 1 kHz) | reels +10 … +14, Cassette +6 … +8 dB re ref | Studio +14.0, Home +11.3, Cassette +8.0, VHS +9.0; Portable +13.9 and Micro +12.8 with their ALC holding the level |
+| HF compression (1 dB points) | 10 kHz ≥ 10 dB below 1 kHz at 1⅞ ips, ≤ 4 dB at 30 | 1⅞: +8.2 / −2.2 dB (10.4 dB); 30 ips: +9.8 / +8.2 dB (1.6 dB) |
+| Relaxation | < −140 dBFS within 1 s after a +12 dB note | yes (the bench's silence floor reads −240 dBFS) |
+| Aliasing, 1 – 12 kHz, `input` +12 / +18 | ≤ −76 dB | Studio ≤ −80.0 dB; Cassette at +12 ≤ −79.7 dB; Cassette at +18: −68.4 dB at 9.2 kHz, −51.5 dB at 12 kHz (see 3.) |
+| Head bump, Studio 7½ / 15 / 30 ips | f_b, 2 f_b, 4 f_b ± 5 % | 19.9 / 39.0 / 78.0 Hz (f_b 19.05 / 38.1 / 76.2: the bell rides the contour's high-pass, +2 – 4 %), ratios 1.96 / 2.00 |
+| Transport | knob = unweighted peak ± 10 % | periodic part over 20 s: 0.77 (Studio), 0.74 (Cassette), 0.67 (Vinyl) of the knob (see 7.); `spread` 100 random parts correlation ≤ 0.15; meter on a 4 Hz deviation within 3 %; weighting fit within 0.3 dB of the [U] table |
+| Zero transport, D0 | 0 at wow = flutter = snags = 0; never < 1 sample; slews | exactly 0, line bypassed; D0 0.83 ms at the defaults, 40 ms cap at wow 4 % / rate 25 %; rise ≤ 20 ms/s, fall 1 ms/s; read head ≥ 3 samples |
+| Snags | excursion ≤ 6 ms, ∫ε = 0 | ≤ 5.04 ms over 60 s, returns to 0 after each event |
+| Stop | 0 in `stop_time` ± 5 %; spin-up, no click | silent 0.40 s after a 400 ms stop (± 30 ms asserted); release burst above 10 kHz < −40 dB re the tone; level back within 1 dB after ¼ `stop_time` + 30 ms |
+| Hiss S/N per model, Constant | ± 1 dB | every model within 0.1 dB of §2.1; `input` −12 vs +24 moves it < 0.5 dB |
+| Follow / Duck | exactly 0 within 750 ms; Duck −20 dB | additive noise 0 from 0.725 s (the whole output < −140 dBFS at 0.724 s); Duck −20 ± 1.5 dB |
+| Modulation noise | model level ± 2 dB; absent in silence | Studio −54.9 dB (−55), Micro −36.7 dB (−35); exactly 0 in silence |
+| Compander | unity ± 0.5 dB; hiss pushed down | encode → decode exact to 1e−9 (unit test); on tape within 0.02 dB of NR off at −30 / −10 / 0 dB re ref; Cassette hiss in silence −68 → −117 dBFS |
+| Mix 50 %, wow 0, `input` −12 | ± 1 dB of the wet, 40 Hz – 16 kHz | within 0.01 dB from 1 to 16 kHz, 0.16 dB at 100 Hz; −1.1 dB at 40 Hz (see 9.) |
+| Level, −18 dBFS sine, `input` −12 → +24 | ± 0.5 dB | ≤ 0.06 dB on every tape model and Vinyl; Shellac −0.64 dB at +24 |
+| Rates 44.1 / 48 / 96 / 192 kHz | ± 0.5 dB | 100 Hz, 1 kHz, 8 kHz within 0.5 dB |
+| Dropouts | rate ± 20 % over 60 s; synced on the grid | 153 events for 180 expected (−15 %); `drop_sync` 1/8 at 120 BPM: one per step; the same 3 µm event 30 dB deeper at 10 kHz at 1⅞ than at 15 ips |
+| Vinyl tracing | even order, rising with f and inward | H2 −51.3 dB at 500 Hz, −35.6 dB at 2 kHz, −36.0 dB at 500 Hz on the inner groove |
+| Stereo | `spread` 0 one transport; mono input on 2 / 2 bit-exact | L = R bit-exact (computed once); a later real stereo input takes over the left's state |
+| Bench | — | 28 / 28 at 44.1 – 192 kHz; worst parameter step −46 dB (bound −40) |
+| CPU (48 kHz) | ≤ 1.1 µs mono at defaults, ≤ 2.2 µs worst | 1.0 µs (20 s render), 1.4 – 1.5 µs in the bench's line on a machine at load 7 – 10; worst (Cassette, +18, compander, failures) 1.6 µs |
+| Presets | ± 2 LU of bypass | 19 presets on clean.wav (100 Hz high-passed RMS): ±0.4 dB at `level` 0, `level` set on the four that need it |
+
+**Deviations from the spec, and why.**
+
+1. **Spacing sections are magnitude-matched one-poles** (DC, Nyquist and min(corner, fs / 4) matched to
+   the analog section, closed form), not TPT sections: a bilinear corner cannot sit above Nyquist, and at
+   15 ips a 1 – 2 µm spacing puts both corners past 24 kHz, where TPT sections give no loss at all (−1.7 dB
+   missing at 12 kHz). Measured within 1.5 dB of 54.6 · d · f / v below 0.3 fs, within 2.5 dB above
+   (1.8 dB at 16 kHz / 48 kHz for 1 µm at 1⅞). Still first order, one state, modulation-safe; d = 0 exact.
+2. **J-A worst cases**: no NaN, no reset and |M| ≤ M_s hold, but the error against the 64-substep
+   reference on a ±8 a square / Nyquist alternation is 1.2 – 2.7 % of M_s (the Review measured 0.5 % at
+   c = 0.17 and without the soft clip of H). Sines stay within 0.5 %. The bench asks stability here.
+3. **Cassette at `input` +18 aliases above 9 kHz** (−68 dB at 9.2 kHz, −51 dB at 12 kHz): the 12 dB drive
+   boost puts a 12 kHz sine at +27 dB re a, deep into the ±8 a clip of H. Studio and Cassette at +12 meet
+   −76 dB. The test reports this case without bounding it.
+4. **CPU**: the core is latency-bound (each RK4 step is four dependent g evaluations, an exp and two
+   divisions each: ≈ 146 ns per internal sample), so 8× costs ≈ 1.0 – 1.4 µs mono at the defaults against
+   the 1.1 µs estimate; the worst case meets 2.2 µs. Already done: one division per g, no transcendental
+   per sample outside the core. The J-A lanes are scalar, not SIMD: a real stereo input costs ≈ 2× mono (a
+   mono input on 2 / 2 is computed once). The owner's call (Review "Still open"): accept, or 4×.
+5. **The playback inverse shelf sits inside `TapeSat`**, right after the core (the chain is linear from
+   there, so only the order of LTI stages changes); the hiss is shaped to its final spectrum directly (the
+   replay boost: a zero at 1 / 2πτ, a pole at 20 kHz) and added after it, before spacing and band edges.
+6. **Additive noises are output-referred**: injected scaled by the inverse of the output compensation, so
+   their level is the model's S/N re the −18 dBFS reference whatever `input` is (the Noise row's "moving
+   `input` does not move the noise"), and the compander still expands them.
+7. **The transport knobs bound the peak**: each rotating part is two passes (record, playback) of
+   amplitude ½ with independent diffusing phases and ±25 % amplitude walks, so the periodic part peaks at
+   0.67 – 0.77 of the knob over 20 s, not ±10 %; random parts are scaled by 3σ = knob and mixed with the
+   periodic ones as √((1 − ρ)² + ρ²). The random processes are designed once at their nominal frequencies
+   and stepped at a variable clock (`wow_rate` × speed ratio, clamped 0.125 – 8×), so no redesign happens
+   in `process`.
+8. **The dry runs the wet's whole half-band cascade** (each stage at its own rate, nothing between), not
+   one `Oversampler2x::identity` per stage: an identity at fs is not the stage at 2 fs or 4 fs, and the
+   per-stage version measured −11.3 dB at 5 kHz at `mix` 50 %. Now within 0.01 dB from 1 to 16 kHz.
+9. **Mix 50 % at 40 Hz is −1.1 dB from the in-phase sum** on Studio Reel: the head bump and its contour
+   high-pass are minimum-phase filters of the wet that the dry does not share. From 100 Hz up it is within
+   0.2 dB.
+10. **ALC sits before `input`** and holds the instrument's peaks at −6 dB re the reference sine's peak, so
+    the static compensation still holds across `input`; MOL then reads higher on the ALC models.
+11. **Shellac's static makeup leaves out the tracing term**: −0.64 dB at `input` +24 (bound ±0.5).
+12. **Azimuth's within-track loss** is folded into the spacing filter as d = 0.182 · w · tan θ (the sinc
+    and the spacing law matched at their 6 dB point); the stereo delay s · tan θ / v is exact.
+13. **Band edges**: a 4th-order Butterworth low-pass at the rated HF edge (scaled with the speed, dropped
+    above 0.45 fs), a 2nd-order high-pass at the rated LF edge on the models that list one; the bump
+    models (Studio, Home) take their low end from the contour only. Gap loss is not modelled apart.
+14. **Smaller choices**: dropout pool of 6 simultaneous events; crackle and scratches shared by both
+    channels (one stylus); `bias`'s HF sensitivity as a 5 kHz high shelf (+1 / −2 dB); the cuts engage
+    through a 5 ms crossfade (a switched 4th-order filter stepped −24 dB at 192 kHz); `stop` released
+    during the wind-down fades the old head out in 10 ms before the spin-up; a test-only `no_mod_noise`
+    switch (the modulation noise is never switched in use).
+
+**Left for the owner.** Voicing by ear (c(bias), the drive-boost table, MOL per model, hiss and
+mechanical spectra, crackle levels, all [I]); reference recordings per model; **the IEC 386 / AES6
+weighting table against AES6-2008 before `wf_out` is trusted**; the CPU (accept ≈ 1.0 – 1.4 µs, or 4×);
+the champagne body, rune light and `ribbon` motif at tile size by eye; golem-rack: type `tape` in
+`lofi`, `role_blocks.drums`, EXP on `spacing`, `bias`, `dropouts`, `wf_out` display, D0 against parallel
+lanes (0.83 ms at the defaults).
 
 golem's **tape and lo-fi media pedal**: the sound of a signal that has been recorded onto something and
 played back. A tape machine (record EQ, hysteresis with bias, head bump, alignment and its limits, speed
@@ -767,3 +886,8 @@ Still open:
 **Note (2026-11-14, after the gfx-radio review):** AM radio lives in gfx-radio, whose channel is simulated in
 complex baseband (detuning distortion, fading, static, whistle). It is no longer a deferred `model` option of
 this pedal and is never appended to the enum.
+
+**Note (2026-11-15, coding):** the `wf_out` meter implements the weighting from the table of §2.3 (a fit
+within 0.3 dB of it). That table is still [U]: it **must be checked against AES6-2008 (IEC 386 / DIN
+45507) before the meter is trusted**; until then `wf_out` is a relative reading, and presets should not
+quote it as a machine spec.
