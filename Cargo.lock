@@ -237,6 +237,7 @@ dependencies = [
  "gfx-boost",
  "gfx-chorus",
  "gfx-comp",
+ "gfx-crusher",
  "gfx-deesser",
  "gfx-delay",
  "gfx-detune",
@@ -287,6 +288,16 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-crusher"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "num-complex",
+ "realfft",
 ]
 
 [[package]]

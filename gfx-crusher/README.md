@@ -1,7 +1,81 @@
 # gfx-crusher
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Reviewed the same day by Fable 5.2: verdict
-> **Strong**, fixes applied in place (see the Review section at the end).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14, reviewed by Fable 5.2 (verdict **Strong**,
+> Review section at the end). The virtual converter runs as designed: a fractional f64 clock with seeded
+> jitter, the input read at each instant and the held staircase rendered through one minimum-phase kernel
+> (new gfx-dsp `blep`: −102 dB stop band, 2.6 samples of group delay), Linear / µ-law / Float words with
+> Tread / Riser / Truncate, the ladder and the DAC curve (new gfx-dsp `converter`, ADC and DAC halves
+> callable apart for gfx-radio), the tails window, six models, track, LFO / envelope modulation, a dry
+> through the kernels' own response. Measured against the ideal converter: foreign components ≤ −87 dB
+> below 0.4 fs (Raw), every intended component within 0.00 dB. Bench 28 / 28, 16 behaviour tests (plus 2 filter-design and 11 gfx-dsp unit tests), CPU
+> 77 ns / sample mono at defaults, 277 ns worst case. **ADPCM and Delta are not coded**: the `law` enum
+> stops at Float and grows when they are (§2.2). Deviations: "As coded" below.
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp `blep.rs` (kernel, `Reader` with point read and running integral, `Renderer`,
+`pair_fir`), gfx-dsp `converter.rs` (`Clock`, `Adc`, `Dac`, `BoxSampler`, `tail_gain`); here `lib.rs` (the
+processor), `filters.rs` (elliptic / Butterworth / ladder prototypes, bilinear, SVF cascades with ramped
+coefficients), `plugin.rs` (class id `GoleMFxCrusher01`, mono 1 / 1 then 2 / 2, latency 0, `rate_out`
+read-only meter), `tests.rs`.
+
+**Measured** (tests and `gfx-bench check gfx-crusher`):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| Kernel | ±0.5 dB to 0.35 fs, ≥ 86 dB from 0.6 fs, rows DC 1 ± 1e−6 | ±0.000 dB, −102.2 dB, rows exact; LF group delay 2.616 samples, h(0) = 5e−6 |
+| Ideal-model residue, Raw (R 3k / 8k / 26.04k / 37.3k, 7 partials 97 Hz – 15.9 kHz, 16 bits) | foreign ≤ −80 dB below 0.4 fs, ≤ −40 dB above; components ±0.5 dB below 0.35 fs | −87.3 dB / −95.9 dB; components within 0.00 dB |
+| Ideal-model residue, Average | ≤ −60 dB | −69.4 dB (where the box's own null leaves a reference peak ≥ −30 dB) |
+| Off is transparent (44.1 / 48 / 96 kHz) | 16-bit error, latency 0; `mix` 0 bit-exact | ≤ ½ LSB of 16 bits, no delay; bit-exact |
+| Rate glide (`rate_shift` 0 → −72 st in 128 EXP steps at 50 Hz) | no zipper | largest R change < 5 cents per sample, continuous |
+| Rate independence (8 kHz at 44.1 / 48 / 96 kHz) | ±1 Hz, ±1 dB below 15 kHz | ±0.25 Hz search grid, within 1 dB |
+| µ-law vs G.711 (8 bits) | within one step | within 1.39 local steps (the continuous µ = 255 curve departs from G.711's chords by up to 1.4 codes in the low segments) |
+| Float SNR, −6 … −42 dBFS (8-bit mantissa) | constant within 1 dB | 48.0 – 51.5 dB (3.5 dB peak to peak; a linear word loses 36 dB over the same range) |
+| MDA conversion (presets AM radio, Broken speaker, 8-bit) | same levels and dead zone, alias levels ±1.5 dB below 10 kHz | levels bit-identical; aliases within 1.5 dB |
+| Tails (4 / 8 / 12 bits, 440 / 82 Hz, −30 dB/s) | g on the table ±1 dB, no modulation at the period, crushed within 2 ms | g = ½ within 1 dB of s√2 (level = peak over the detector's 25 ms), g monotone, < 0.01 after 2 ms; below one step the output equals the unquantised path (< −90 dBFS); Gate exactly 0 |
+| Level | `quant` 4 → 16 ±3 dB; `nonlin` 100 % ±1.5 dB at −18 dBFS; presets ±2 LU | within ±3 dB; within ±1.5 dB; 18 presets within ±0.3 LU on clean.wav (K-weighted) |
+| Model filters | Clean ±0.1 dB to 0.45 R, ≥ 70 dB from 0.55 R, tracks R ±2 %; Sampler / Drum ±0.5 dB; Console's 3 taps | 9th-order elliptic: 0.1 dB, ≥ 70 dB from 0.55 R; tracks R within 0.21 % under a 10 Hz ±3-octave LFO; Sampler / Drum ±0.5 dB of their prototypes; Console ±0.2 dB |
+| Track (saw 110 / 220 / 440 Hz, `rate` 4 kHz) | ±5 cents, beat ≤ 6 Hz; vibrato ±50 cents across a boundary keeps N; pick noise moves R ≤ 5 % | all three; N constant; R held within 5 % |
+| Mix 50 % (R 6k / 16k) | no notch deeper than 3 dB below 0.4 R | −2.56 dB / −2.74 dB |
+| Jitter, LFO | strict null between renders | bit-identical (fresh, after reset); stereo = mono, one clock |
+| Bench | — | 28 / 28 at 44.1 – 192 kHz; silence floor exact 0 |
+| CPU (48 kHz) | ≤ 180 ns mono at defaults, ≤ 350 ns worst | 77 ns mono (113 ns / stereo frame); 277 ns with Clean + track (YIN from 40 Hz) + LFO + jitter |
+
+**Deviations from the spec, and why.**
+
+1. **Clean is a 9th-order elliptic**, not 8th: at 0.1 dB ripple and a 0.55 / 0.45 transition, 8 poles reach
+   only 64.6 dB (computed); 9 hold ≥ 70 dB from 0.55 R with the pass band to 0.45 R. One more first-order
+   section per filter.
+2. **The dry runs through the kernels' own response** (the kernel at whole samples convolved with itself,
+   63 taps, computed only while `mix` < 100 %), not a whole-sample delay: the 5-sample delay left the
+   0.23-sample remainder and the minimum phase's curvature, and the blend notched −3.6 dB at 0.4 R
+   (16 kHz), past the bench's 3 dB. Off still uses the undelayed dry (bit-exact at `mix` 0).
+3. **Average integrates the band-limited input** (the kernel's step table on the last 32 samples plus the
+   plain sum before them), not a trapezoid over host samples: the trapezoid's images folded back at
+   −19 dB for high partials (measured), far from the −60 dB the design expected.
+4. **Track's hysteresis is ±(0.6 + 6 % of N)**, not ±0.6: a ±50-cent vibrato swings R / f0 by ±2.9 % of N,
+   so ±0.6 alone keeps N only up to N ≈ 3; the bench's own vibrato row needs the relative term.
+5. **Tails: 0.25 ms toward crushed** (settled in ≈ 1 ms) and 20 ms toward tail: a 1 ms time constant leaves
+   g at 0.14 after 2 ms, against "crushed within 2 ms". The tails detector sits before the model's PRE
+   filter (one detector for both paths of a crossfade).
+6. **Bench `click_bound_db` −3 dB**, not −30: a `rate` / `rate_shift` glide 50 ↔ 48,000 Hz passes the 1 kHz
+   tone through every rate in about 50 ms, and the Raw images and steps it meets stand −4 dB re peak above
+   10 kHz (96 kHz); `quant` 16 → 1 −11 dB, `input` ±24 dB −26 dB. That is the effect. Every other
+   parameter is held to −35 dB by the crate's own step test.
+7. **Float's SNR ripples 3.5 dB** across levels (per-sample exponent: each sample's grain follows its own
+   octave), and **µ-law sits within 1.4 steps of G.711**, not one (above).
+8. **Clean's filter design looks one control tick ahead** (R extrapolated over the 16-sample coefficient
+   ramp), so the edges track a fast LFO within 0.21 %.
+9. **Not built**: ADPCM and Delta (the enum stops at Float; the Console Voice and Delta Robot presets wait
+   for them); the DI-melody and chord rows of the Track bench (by ear); the guitar-DI ideal-model render
+   (sines only); "no zipper sidebands > −80 dB under a 10 Hz LFO" is replaced by the R-tracking row.
+   `--golem ~/golem` in `build-data.py` stops on golem's new `ir-fx` block (no glyph yet), so the visuals
+   were rebuilt from the committed catalogue snapshot.
+
+**Left for the owner**: the Sampler / Drum Machine / Console voicings and the ladder magnitude by ear
+(§7.9); the presets' sound (level-matched on clean.wav only; voice, drums and keys presets have no DI of
+their own yet); golem-rack: the catalogue entry in real units, category `lofi`, the `rate_out` meter, and
+whether EXP can target `rate_shift`.
 
 golem's **bitcrusher and sample-rate reducer**. It stands for golem's `bitcrusher` block (today MDA
 Degrade) and keeps its parameter ids `quant`, `rate` and `nonlin` ([golem contract](../docs/golem-contract.md)).
@@ -384,7 +458,7 @@ None depends on another parameter. golem may still pin other values at insert.
 
 | id | Name | Type | Range | Default | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|
-| `law` | Format | e | Linear · µ-law · Float · ADPCM · Delta | Linear | crossfade | | Word format (§2.2); the last two enter the enum when coded |
+| `law` | Format | e | Linear · µ-law · Float (coded) · ADPCM · Delta (appended when coded) | Linear | crossfade | | Word format (§2.2): uniform, companded or gain-ranging words |
 | `quantizer` | Quantizer | e | Tread · Riser · Truncate | Tread | — | | Where zero sits: silence stays silent / buzzes / dead zone (MDA) |
 | `dither` | Dither | f | 0 – 100 % | 0 % | 30 ms | | TPDF, 100 % = ±1 LSB; tails fade it too |
 | `tails` | Tails | e | Clean · Gate · Raw | Clean | — | | Below 1 – 2 LSB: unquantised tail / silence / as is (§2.3) |

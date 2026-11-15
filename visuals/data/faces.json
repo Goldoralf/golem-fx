@@ -403,6 +403,26 @@
    ],
    "category": "modulation",
    "color": "#72c000"
+  },
+  "gfx-crusher": {
+   "name": "Crush",
+   "blocks": [
+    "bitcrusher"
+   ],
+   "knobs": [
+    "quant",
+    "rate",
+    "nonlin",
+    "mix"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "toggles": [
+    "track"
+   ],
+   "category": "lofi",
+   "color": "#e8336f"
   }
  }
 }

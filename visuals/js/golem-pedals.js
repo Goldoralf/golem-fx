@@ -344,6 +344,8 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const METAL_HUE = {
     dynamics: '#4a5a6e', drive: '#e04a00', utility: '#f0a500', filter: '#00a8c0', eq: '#0058e0',
     modulation: '#00a84f', delay: '#3a28f0', reverb: '#6a1fd1', pitch: '#c4148c',
+    // raspberry: golem's lofi orange sits too close to drive's; free between pitch's magenta and the thrash red
+    lofi: '#e8336f',
   };
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000' };
   const THRASH_HUE = { drive: '#c8160e' };
@@ -356,11 +358,12 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
     'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves', 'gfx-glitch': 'bins',
+    'gfx-crusher': 'pixels',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
-  const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash' };
+  const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
@@ -485,6 +488,31 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(x + slip)} ${f1(cut - gap)}V${f1(top)}`, op);
           } else line(`M${f1(x)} ${f1(y0)}V${f1(top)}`, op);
         }
+        break;
+      }
+      case 'pixels': {
+        // a sine sampled into square pixels either side of the rune (one column every 6 units, 1.5
+        // periods across the face, 5 levels), joined by its hold staircase; the two columns nearest
+        // the rune smaller and fainter, so the wave dissolves into it
+        // (the phase puts a rising swing on each side: trough at the edge, crest by the rune)
+        const amp = ch * .6, cols = [];
+        for (let x = 5; x <= W - 5; x += 6) {
+          if (Math.abs(x - cx) < cw / 2 + 2) continue;
+          const lv = Math.round((Math.sin(3 * Math.PI * x / W - Math.PI / 2) + 1) * 2) / 2 - 1;
+          cols.push({ x, y: cy - amp * lv, side: x < cx ? 0 : 1 });
+        }
+        [0, 1].forEach(side => {
+          const c = cols.filter(p => p.side === side);
+          if (!c.length) return;
+          let d = `M${f1(c[0].x)} ${f1(c[0].y)}`;
+          for (let i = 1; i < c.length; i++) d += `H${f1(c[i].x)}V${f1(c[i].y)}`;
+          line(d, .35);
+          const near = side ? c.slice(0, 2) : c.slice(-2);
+          c.forEach(p => {
+            const small = near.includes(p), s = small ? 3 : 4;
+            shape(`M${f1(p.x - s / 2)} ${f1(p.y - s / 2)}h${s}v${s}h${-s}Z`, small ? .55 : 1);
+          });
+        });
         break;
       }
       case 'ticks':

@@ -59,6 +59,8 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | `motor` | First-order inertia with separate accelerate / decelerate constants, angle integration | rotary, vibrato rise |
 | `onset` | Zero-latency pick detector (high-passed fast / slow envelope difference) | killswitch, autowah |
 | `divider` | Adaptive Schmitt trigger + flip-flops (analog octave divider) | octaver |
+| `blep` | One minimum-phase band-limited kernel (Kaiser prototype, cepstral minimum phase; 32 taps × 64 phases, pass band ±0.5 dB to 0.35 fs, stop band −102 dB from 0.6 fs, 2.6 samples of group delay): a `Reader` (the input at a fractional instant, and its running integral), a `Renderer` (minBLEP steps of a held signal), the FIR that matches a read + render pair for a parallel dry | crusher (later: delay's Lo-Fi) |
+| `converter` | A virtual ADC → DAC pair, halves callable apart: the `Clock` (f64 phase accumulator, seeded jitter), the `Adc` (clip, TPDF dither, Linear / µ-law / Float words, Tread / Riser / Truncate), the `Dac` (R-2R ladder errors, power-law curve), integrate-and-dump sampling, the tails window | crusher, radio (its codec between the halves) |
 
 Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter
 at 192 kHz loses precision in `f32`). Multi-line structures (FDN, filterbanks, multi-voice) are written for
