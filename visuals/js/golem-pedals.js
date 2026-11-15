@@ -2656,7 +2656,7 @@ ${grid}
   // golem's service blocks (rec, tuner, click, backing-track, looper, compo, drums, standard, arrangement,
   // sample) are golem's own devices, not effects: a graphite unit with a light bar, a screen that shows
   // what the feature is doing, and a ribbed rubber pad. The block's catalogue colour is its only colour.
-  // Same 112 × 200 footprint as a pedal. Raph chose this look (A · Console) on 2026-11-15.
+  // Same 112 × 200 footprint as a pedal. The maintainer chose this look (A · Console) on 2026-11-15.
   const FEATURE_TYPES = ['rec', 'tuner', 'click', 'backing-track', 'looper', 'compo', 'drums', 'standard', 'arrangement', 'sample'];
   const FEATURE_NAME = { rec: 'Rec', tuner: 'Tuner', click: 'Click', 'backing-track': 'Backing', looper: 'Looper', compo: 'Riff',
     drums: 'Drums', standard: 'Standard', arrangement: 'Arrange', sample: 'Sample' };
