@@ -369,7 +369,7 @@ fn bjt_common_emitter_biases_and_amplifies() {
     n.r(b, 0, 10e3);
     n.r(vs, cn, 10e3);
     n.r(e, 0, 1e3);
-    let bjt = BjtModel { npn: true, is: 1e-14, bf: 200.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0 };
+    let bjt = BjtModel { npn: true, is: 1e-14, bf: 200.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0, nf: 1.0, nr: 1.0 };
     n.bjt(cn, b, e, bjt);
     let oc = n.output(cn);
     let mut c = NonlinearCircuit::new(&n, 384000.0);
@@ -396,7 +396,7 @@ fn ebers_moll_leakage_is_the_collector_junction() {
         let b = n.node();
         n.r(vs, cn, 1e3);
         n.r(b, 0, 1e12);
-        let m = BjtModel { npn: true, is: 1e-9, bf: 100.0, br: 2.0, leak, eg: 0.67, xti: 3.0, tnom: 25.0 };
+        let m = BjtModel { npn: true, is: 1e-9, bf: 100.0, br: 2.0, leak, eg: 0.67, xti: 3.0, tnom: 25.0, nf: 1.0, nr: 1.0 };
         n.bjt(cn, b, 0, m);
         let o = n.output(cn);
         let mut c = NonlinearCircuit::new(&n, 48000.0);
@@ -486,7 +486,7 @@ fn timing() {
     let ev = evaluate(&DeviceModel::Clipper(ClipperModel::pair(D_1N914, 1)), (0.0, 0.0), 25.0, 9.0);
     let devs = [(0usize, 0usize, ev)];
     let kk = [-1000.0];
-    let nw = Newton { k: &kk, m: 1, devs: &devs, tol: 1e-6, dc: false, plain_steps: false };
+    let nw = Newton { k: &kk, m: 1, devs: &devs, tol: 1e-6, dc: false, plain_steps: false, blk: blocks(&devs), recip: false };
     let t = Instant::now();
     let mut its = 0;
     for k in 0..1_000_000 {
@@ -532,4 +532,93 @@ fn timing() {
         acc += c.output(o2);
     }
     eprintln!("op-amp + pair: {:.1} ns / sample, {:?} {acc}", t.elapsed().as_secs_f64() * 1e9 / 1e6, c.stats());
+}
+
+#[test]
+fn fast_lu_agrees_with_the_plain_one() {
+    // the opt-in factor / apply pair against lu_solve, pivoting forced (small diagonal)
+    let mut s = 7u32;
+    let mut rnd = || {
+        s = s.wrapping_mul(1664525).wrapping_add(1013904223);
+        (s >> 8) as f64 / 8388608.0 - 1.0
+    };
+    for _ in 0..50 {
+        let mut a = [0.0; 25];
+        for x in a.iter_mut() {
+            *x = rnd();
+        }
+        let b0: Vec<f64> = (0..5).map(|_| rnd()).collect();
+        let (mut a1, mut b1) = (a, b0.clone());
+        assert!(lu_solve(&mut a1, &mut b1, 5));
+        let mut a2 = a;
+        let (mut perm, mut inv) = ([0usize; MAX_PORTS], [0.0; MAX_PORTS]);
+        assert!(lu_factor::<5>(&mut a2, &mut perm, &mut inv));
+        let mut b2 = b0.clone();
+        lu_apply::<5>(&a2, &perm, &inv, &mut b2);
+        for (name, x) in [("plain", &b1), ("fast", &b2)] {
+            for r in 0..5 {
+                let ax: f64 = (0..5).map(|c| a[r * 5 + c] * x[c]).sum();
+                assert!((ax - b0[r]).abs() < 1e-9, "{name}: row {r}: {ax} vs {}", b0[r]);
+            }
+        }
+    }
+}
+
+#[test]
+#[ignore = "diagnostics: the cost of Newton's parts"]
+fn newton_parts_cost() {
+    let best = |n: usize, f: &mut dyn FnMut()| -> f64 {
+        let mut b = f64::MAX;
+        for _ in 0..5 {
+            let t = std::time::Instant::now();
+            f();
+            b = b.min(t.elapsed().as_secs_f64() * 1e9 / n as f64);
+        }
+        b
+    };
+    let m = DeviceModel::Bjt(BjtModel { npn: false, is: 5e-6, bf: 100.0, br: 4.5, leak: 1.0, eg: 0.67, xti: 3.0, tnom: 22.8, nf: 1.168, nr: 1.171 });
+    let ev = evaluate(&m, (0.0, 0.0), 25.0, 9.0);
+    let mut v = [-0.2, 4.0, 0.0, 0.0];
+    let mut i = [0.0; 4];
+    let mut j = [0.0; 16];
+    let n = 1_000_000;
+    let t = best(n, &mut || {
+        for k in 0..n {
+            v[0] = -0.2 - 1e-9 * (k & 7) as f64;
+            ev.eval(&v, &mut i, &mut j, 4, 0);
+            ev.eval(&v, &mut i, &mut j, 4, 2);
+        }
+    });
+    eprintln!("2 BJT evals: {t:.1} ns ({})", i[0]);
+    let mut a0 = [0.0; 16];
+    for r in 0..4 {
+        for c in 0..4 {
+            a0[r * 4 + c] = if r == c { 4.0 } else { 0.3 * (r + 2 * c) as f64 - 1.0 };
+        }
+    }
+    let mut acc = 0.0;
+    let t = best(n, &mut || {
+        for k in 0..n {
+            let mut a = a0;
+            let mut b = [1.0, 2.0, 3.0, k as f64];
+            lu_solve(&mut a, &mut b, 4);
+            acc += b[0];
+        }
+    });
+    eprintln!("LU 4: {t:.1} ns ({acc})");
+    let mut a10 = [0.0; 100];
+    for r in 0..10 {
+        for c in 0..10 {
+            a10[r * 10 + c] = if r == c { 4.0 } else { 0.03 * (r + 2 * c) as f64 - 0.1 };
+        }
+    }
+    let t = best(n / 10, &mut || {
+        for k in 0..n / 10 {
+            let mut a = a10;
+            let mut b = [1.0, 2.0, 3.0, k as f64, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
+            lu_solve(&mut a, &mut b, 10);
+            acc += b[0];
+        }
+    });
+    eprintln!("LU 10: {t:.1} ns ({acc})");
 }

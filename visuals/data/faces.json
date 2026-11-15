@@ -690,6 +690,26 @@
     "force"
    ],
    "category": "dynamics"
+  },
+  "gfx-fuzz": {
+   "name": "Fuzz",
+   "blocks": [
+    "fuzz"
+   ],
+   "knobs": [
+    "fuzz",
+    "tone",
+    "level",
+    "guitar_vol"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "toggles": [
+    "buffer"
+   ],
+   "category": "drive",
+   "color": "#b0602a"
   }
  }
 }

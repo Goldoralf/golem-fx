@@ -63,6 +63,8 @@ pub const GMIN: f64 = 1e-12;
 pub const NEWTON_CAP: usize = 20;
 /// The largest port count of a stage.
 pub const MAX_PORTS: usize = 12;
+/// The most variable resistors in one stage (a pot is two).
+pub const MAX_VARS: usize = 12;
 /// Exponentials continue linearly beyond this argument (SPICE).
 const EXP_LIM: f64 = 40.0;
 
@@ -229,7 +231,11 @@ impl ClipperModel {
 }
 
 /// Ebers–Moll BJT (transport form). `leak` scales the collector junction's saturation current
-/// Is / βR (gfx-fuzz's `leakage`; 1 = the device as given).
+/// Is / βR (gfx-fuzz's `leakage`; 1 = the device as given). `nf`, `nr`: the emission coefficients of
+/// the forward and reverse junctions (1 = ideal; DAFx-17's germanium sets measure 1.06 – 1.17). Is
+/// follows the temperature with the forward one: Is(T) = Is · (T / T₀)^(XTI / NF) ·
+/// exp(Eg / (NF k) · (1 / T₀ − 1 / T)) (gfx-fuzz §2.5; [`Netlist::to_spice`] writes XTI / NF and
+/// Eg / NF, so ngspice's own BJT law, which has no NF, gives the same Is).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct BjtModel {
     pub npn: bool,
@@ -240,6 +246,17 @@ pub struct BjtModel {
     pub eg: f64,
     pub xti: f64,
     pub tnom: f64,
+    pub nf: f64,
+    pub nr: f64,
+}
+
+impl BjtModel {
+    /// The open-base collector current I_CEO = Is (1 + leak (βF + 1) / βR) at `celsius` (the number
+    /// builders measure), with the reverse junction fully reverse-biased.
+    pub fn iceo(&self, celsius: f64) -> f64 {
+        let (is, _) = Junction { is: self.is, n: self.nf, eg: self.eg, xti: self.xti, tnom: self.tnom }.at(celsius);
+        is * (1.0 + self.leak * (self.bf + 1.0) / self.br)
+    }
 }
 
 /// Op-amp macromodel constants. I_t = SR · CC, V_lin = SR / (2π GBW) (tanh) — the slew rate and the
@@ -301,6 +318,10 @@ enum Eval {
         kl: f64,
         vcrit: f64,
         ivt: f64,
+        // the reverse junction's N·V_T, critical voltage and 1 / N·V_T (= the forward's at NR = NF)
+        vtr: f64,
+        vcritr: f64,
+        ivtr: f64,
     },
     OpAmp {
         it: f64,
@@ -339,9 +360,22 @@ fn evaluate(model: &DeviceModel, rails: (f64, f64), celsius: f64, supply: f64) -
             Eval::Clipper { isp, nvp, vcp, chp, isn, nvn, vcn, chn, ivp: 1.0 / nvp, ivn: 1.0 / nvn }
         }
         DeviceModel::Bjt(b) => {
-            let j = Junction { is: b.is, n: 1.0, eg: b.eg, xti: b.xti, tnom: b.tnom };
+            let j = Junction { is: b.is, n: b.nf, eg: b.eg, xti: b.xti, tnom: b.tnom };
             let (is, vt) = j.at(celsius);
-            Eval::Bjt { s: if b.npn { 1.0 } else { -1.0 }, is, vt, bf: b.bf, br: b.br, kl: b.leak, vcrit: vcrit(is, vt), ivt: 1.0 / vt }
+            let vtr = if b.nr == b.nf { vt } else { b.nr * K_Q * (celsius + KELVIN) };
+            Eval::Bjt {
+                s: if b.npn { 1.0 } else { -1.0 },
+                is,
+                vt,
+                bf: b.bf,
+                br: b.br,
+                kl: b.leak,
+                vcrit: vcrit(is, vt),
+                ivt: 1.0 / vt,
+                vtr,
+                vcritr: vcrit(is, vtr),
+                ivtr: 1.0 / vtr,
+            }
         }
         DeviceModel::OpAmp(o) => {
             let it = o.sr * CC;
@@ -411,15 +445,15 @@ impl Eval {
                 jac[off * m + off] = d;
                 exps
             }
-            Eval::Bjt { s, is, bf, br, kl, ivt, .. } => {
+            Eval::Bjt { s, is, bf, br, kl, ivt, ivtr, .. } => {
                 let vbe = s * v[off];
                 let vbc = s * v[off + 1];
                 let (ef, def) = exp_lin(vbe * ivt);
-                let (er, der) = exp_lin(vbc * ivt);
+                let (er, der) = exp_lin(vbc * ivtr);
                 let i_f = is * (ef - 1.0);
                 let i_r = is * (er - 1.0);
                 let gf = is * def * ivt;
-                let gr = is * der * ivt;
+                let gr = is * der * ivtr;
                 i[off] = s * (i_f / bf + kl * i_r / br);
                 i[off + 1] = s * (i_f - i_r - kl * i_r / br);
                 jac[off * m + off] = gf / bf;
@@ -485,10 +519,9 @@ impl Eval {
                     a
                 };
             }
-            Eval::Bjt { s, vt, vcrit, .. } => {
-                for k in 0..2 {
-                    vnew[off + k] = s * pnjlim(s * vnew[off + k], s * vold[off + k], vt, vcrit);
-                }
+            Eval::Bjt { s, vt, vcrit, vtr, vcritr, .. } => {
+                vnew[off] = s * pnjlim(s * vnew[off], s * vold[off], vt, vcrit);
+                vnew[off + 1] = s * pnjlim(s * vnew[off + 1], s * vold[off + 1], vtr, vcritr);
             }
             Eval::OpAmp { vlin, hi, lo, vc, .. } => {
                 // the input stage moves by at most 3 V_lin, unless it stays saturated on one side
@@ -600,6 +633,8 @@ pub struct Netlist {
     vars: Vec<(f64, f64, f64)>, // (initial, min, max) ohms
     pots: Vec<Pot>,
     outputs: Vec<Node>,
+    /// Outputs read on demand ([`NonlinearCircuit::probe`]), not computed every sample.
+    lazy: Vec<bool>,
     inputs: usize,
     names: Vec<(Node, &'static str)>,
 }
@@ -619,6 +654,7 @@ impl Netlist {
             vars: Vec::new(),
             pots: Vec::new(),
             outputs: Vec::new(),
+            lazy: Vec::new(),
             inputs,
             names: Vec::new(),
         }
@@ -769,6 +805,16 @@ impl Netlist {
     /// Declares a node voltage readable after each sample (an output or a meter). Returns its index.
     pub fn output(&mut self, node: Node) -> usize {
         self.outputs.push(node);
+        self.lazy.push(false);
+        self.outputs.len() - 1
+    }
+
+    /// Declares a node voltage read on demand (a meter read once per block or per host sample):
+    /// [`NonlinearCircuit::probe`] computes it from the last sample, the solve does not. Returns its
+    /// index (the same index space as [`Netlist::output`]).
+    pub fn probe(&mut self, node: Node) -> usize {
+        self.outputs.push(node);
+        self.lazy.push(true);
         self.outputs.len() - 1
     }
 
@@ -820,6 +866,7 @@ impl Netlist {
             }
         }
         t.outputs = self.outputs.clone();
+        t.lazy = self.lazy.clone();
         t
     }
 
@@ -906,14 +953,17 @@ impl Netlist {
                     DeviceModel::Bjt(b) => {
                         let m = format!("Q{k}M");
                         s += &format!("Q{k} {} {} {} {m}\n", name(n[0]), name(n[1]), name(n[2]));
+                        // ngspice's BJT temperature law has no NF: Eg / NF and XTI / NF give ours; the
+                        // leakage scale is βR / leak (the collector junction's Is / βR × leak)
+                        let nfr = if b.nf != 1.0 || b.nr != 1.0 { format!(" NF={} NR={}", b.nf, b.nr) } else { String::new() };
                         models += &format!(
-                            ".model {m} {}(IS={:e} BF={} BR={} EG={} XTI={} TNOM={})\n",
+                            ".model {m} {}(IS={:e} BF={} BR={} EG={} XTI={} TNOM={}{nfr})\n",
                             if b.npn { "NPN" } else { "PNP" },
                             b.is,
                             b.bf,
                             b.br / b.leak.max(1e-12),
-                            b.eg,
-                            b.xti,
+                            b.eg / b.nf,
+                            b.xti / b.nf,
                             b.tnom
                         );
                     }
@@ -961,6 +1011,65 @@ impl Netlist {
 // ---------------------------------------------------------------------------------------------
 // Small dense linear algebra (no allocation)
 
+/// out[r] = init[r] + Σ_c a[r · stride + c] · x[c] for r in 0..out.len(), c in 0..x.len(). Each row
+/// is summed in index order, exactly as one accumulator would (bit-identical to the plain loop), but
+/// four rows run side by side: a dot product is latency-bound, four are not.
+#[inline]
+fn matvec(a: &[f64], stride: usize, x: &[f64], init: Option<&[f64]>, out: &mut [f64]) {
+    let n = x.len();
+    let rows = out.len();
+    let mut r = 0;
+    while r + 8 <= rows {
+        let row = |k: usize| &a[(r + k) * stride..(r + k) * stride + n];
+        let (r0, r1, r2, r3, r4, r5, r6, r7) = (row(0), row(1), row(2), row(3), row(4), row(5), row(6), row(7));
+        let mut s = match init {
+            Some(i) => [i[r], i[r + 1], i[r + 2], i[r + 3], i[r + 4], i[r + 5], i[r + 6], i[r + 7]],
+            None => [0.0; 8],
+        };
+        for c in 0..n {
+            let xc = x[c];
+            s[0] += r0[c] * xc;
+            s[1] += r1[c] * xc;
+            s[2] += r2[c] * xc;
+            s[3] += r3[c] * xc;
+            s[4] += r4[c] * xc;
+            s[5] += r5[c] * xc;
+            s[6] += r6[c] * xc;
+            s[7] += r7[c] * xc;
+        }
+        out[r..r + 8].copy_from_slice(&s);
+        r += 8;
+    }
+    while r + 4 <= rows {
+        let (r0, r1, r2, r3) = (&a[r * stride..r * stride + n], &a[(r + 1) * stride..(r + 1) * stride + n], &a[(r + 2) * stride..(r + 2) * stride + n], &a[(r + 3) * stride..(r + 3) * stride + n]);
+        let (mut s0, mut s1, mut s2, mut s3) = match init {
+            Some(i) => (i[r], i[r + 1], i[r + 2], i[r + 3]),
+            None => (0.0, 0.0, 0.0, 0.0),
+        };
+        for c in 0..n {
+            let xc = x[c];
+            s0 += r0[c] * xc;
+            s1 += r1[c] * xc;
+            s2 += r2[c] * xc;
+            s3 += r3[c] * xc;
+        }
+        out[r] = s0;
+        out[r + 1] = s1;
+        out[r + 2] = s2;
+        out[r + 3] = s3;
+        r += 4;
+    }
+    while r < rows {
+        let row = &a[r * stride..r * stride + n];
+        let mut acc = init.map_or(0.0, |i| i[r]);
+        for c in 0..n {
+            acc += row[c] * x[c];
+        }
+        out[r] = acc;
+        r += 1;
+    }
+}
+
 /// Solves a x = b in place (b ← x), partial pivoting. Returns false if singular.
 fn lu_solve(a: &mut [f64], b: &mut [f64], n: usize) -> bool {
     match n {
@@ -1001,25 +1110,95 @@ fn lu_solve(a: &mut [f64], b: &mut [f64], n: usize) -> bool {
                     b.swap(col, piv);
                 }
                 let d = a[col * n + col];
-                for r in col + 1..n {
-                    let f = a[r * n + col] / d;
+                let bc = b[col];
+                // the pivot row and the rows below as slices: the same operations, without bounds
+                // checks in the inner loop
+                let (top, below) = a[..n * n].split_at_mut((col + 1) * n);
+                let prow = &top[col * n + col..col * n + n];
+                for (q, row) in below.chunks_exact_mut(n).enumerate() {
+                    let row = &mut row[col..];
+                    let f = row[0] / d;
                     if f != 0.0 {
-                        for c in col..n {
-                            a[r * n + c] -= f * a[col * n + c];
+                        for (x, p) in row.iter_mut().zip(prow) {
+                            *x -= f * p;
                         }
-                        b[r] -= f * b[col];
+                        b[col + 1 + q] -= f * bc;
                     }
                 }
             }
             for r in (0..n).rev() {
+                let row = &a[r * n..r * n + n];
                 let mut acc = b[r];
                 for c in r + 1..n {
-                    acc -= a[r * n + c] * b[c];
+                    acc -= row[c] * b[c];
                 }
-                b[r] = acc / a[r * n + r];
+                b[r] = acc / row[r];
             }
             true
         }
+    }
+}
+
+/// LU factorisation with partial pivoting, size a constant (the loops unroll), by reciprocal
+/// pivots: L below the diagonal (unit), U on and above it, the row swaps in `perm`, 1 / U's diagonal
+/// in `inv`. The opt-in fast path ([`NonlinearCircuit::set_fast_solve`]): its rounding differs from
+/// [`lu_solve`]'s divisions.
+#[inline]
+fn lu_factor<const N: usize>(a: &mut [f64], perm: &mut [usize; MAX_PORTS], inv: &mut [f64; MAX_PORTS]) -> bool {
+    for col in 0..N {
+        let mut piv = col;
+        for r in col + 1..N {
+            if a[r * N + col].abs() > a[piv * N + col].abs() {
+                piv = r;
+            }
+        }
+        if a[piv * N + col] == 0.0 || !a[piv * N + col].is_finite() {
+            return false;
+        }
+        perm[col] = piv;
+        if piv != col {
+            for c in 0..N {
+                a.swap(col * N + c, piv * N + c);
+            }
+        }
+        let id = 1.0 / a[col * N + col];
+        inv[col] = id;
+        let (top, below) = a[..N * N].split_at_mut((col + 1) * N);
+        let prow = &top[col * N + col + 1..col * N + N];
+        for row in below.as_chunks_mut::<N>().0 {
+            let row = &mut row[col..];
+            let f = row[0] * id;
+            row[0] = f;
+            if f != 0.0 {
+                for (x, p) in row[1..].iter_mut().zip(prow) {
+                    *x -= f * p;
+                }
+            }
+        }
+    }
+    true
+}
+
+/// Solves with [`lu_factor`]'s factors (b ← x).
+#[inline]
+fn lu_apply<const N: usize>(a: &[f64], perm: &[usize; MAX_PORTS], inv: &[f64; MAX_PORTS], b: &mut [f64]) {
+    // the row swaps moved whole rows (L included): all of them first, then L
+    for col in 0..N {
+        b.swap(col, perm[col]);
+    }
+    for col in 0..N {
+        let bc = b[col];
+        for r in col + 1..N {
+            b[r] -= a[r * N + col] * bc;
+        }
+    }
+    for r in (0..N).rev() {
+        let row = &a[r * N..r * N + N];
+        let mut acc = b[r];
+        for c in r + 1..N {
+            acc -= row[c] * b[c];
+        }
+        b[r] = acc * inv[r];
     }
 }
 
@@ -1160,12 +1339,20 @@ struct Stage {
     jn: Vec<f64>,
     v: [f64; MAX_PORTS],
     v1: [f64; MAX_PORTS],
+    v2: [f64; MAX_PORTS],
     i: [f64; MAX_PORTS],
     pp: [f64; MAX_PORTS],
     plain: [bool; 2],
+    plain2: bool,
+    /// Seed by quadratic extrapolation when the three previous samples were plain Newton.
+    quad: bool,
     y: Vec<f64>,
     u: Vec<f64>,
     tol: f64,
+    /// Trailing observation rows computed on demand only (probes); whether `x` holds the last step.
+    lazy: usize,
+    stepped: bool,
+    recip: bool,
     stats: Stats,
 }
 
@@ -1180,6 +1367,23 @@ struct Newton<'a> {
     /// No line search: every (limited) step is taken, as SPICE does — the last resort before the
     /// continuation, for stiff exponentials where Armijo crawls.
     plain_steps: bool,
+    /// Each port's device block [start, end): Jf's nonzero rows in that column.
+    blk: [(usize, usize); MAX_PORTS],
+    /// The Jacobian solve multiplies by each pivot's reciprocal instead of dividing (opt-in:
+    /// [`NonlinearCircuit::set_fast_solve`]).
+    recip: bool,
+}
+
+/// The device block of every port.
+fn blocks(devs: &[(usize, usize, Eval)]) -> [(usize, usize); MAX_PORTS] {
+    let mut b = [(0, 0); MAX_PORTS];
+    for &(_, off, ev) in devs {
+        let n = if let Eval::Clipper { .. } = ev { 1 } else { 2 };
+        for k in off..off + n {
+            b[k] = (off, off + n);
+        }
+    }
+    b
 }
 
 impl Newton<'_> {
@@ -1199,14 +1403,14 @@ impl Newton<'_> {
     #[inline]
     fn residual(&self, p: &[f64], v: &[f64], i: &[f64], g: &mut [f64]) -> f64 {
         let m = self.m;
+        let mut pv = [0.0; MAX_PORTS];
+        for r in 0..m {
+            pv[r] = p[r] - v[r];
+        }
+        matvec(self.k, m, &i[..m], Some(&pv[..m]), &mut g[..m]);
         let mut n2 = 0.0;
         for r in 0..m {
-            let mut acc = p[r] - v[r];
-            for c in 0..m {
-                acc += self.k[r * m + c] * i[c];
-            }
-            g[r] = acc;
-            n2 += acc * acc;
+            n2 += g[r] * g[r];
         }
         n2
     }
@@ -1220,16 +1424,27 @@ impl Newton<'_> {
     /// Damped Newton from `v` (in place). Returns (converged, iterations, exps); `i` holds f(v).
     fn solve(&self, p: &[f64], v: &mut [f64; MAX_PORTS], i: &mut [f64; MAX_PORTS], cap: usize) -> (bool, u32, u32) {
         // workspaces sized to the stage (no 1 kB memset per sample on a 2-port stage)
+        // and the port count a constant: every small loop unrolls
         match self.m {
-            0..=2 => self.solve_g::<4>(p, v, i, cap),
-            3..=4 => self.solve_g::<16>(p, v, i, cap),
-            5..=6 => self.solve_g::<36>(p, v, i, cap),
-            _ => self.solve_g::<{ MAX_PORTS * MAX_PORTS }>(p, v, i, cap),
+            0 => self.solve_g::<0, 4>(p, v, i, cap),
+            1 => self.solve_g::<1, 4>(p, v, i, cap),
+            2 => self.solve_g::<2, 4>(p, v, i, cap),
+            3 => self.solve_g::<3, 9>(p, v, i, cap),
+            4 => self.solve_g::<4, 16>(p, v, i, cap),
+            5 => self.solve_g::<5, 25>(p, v, i, cap),
+            6 => self.solve_g::<6, 36>(p, v, i, cap),
+            7 => self.solve_g::<7, 49>(p, v, i, cap),
+            8 => self.solve_g::<8, 64>(p, v, i, cap),
+            9 => self.solve_g::<9, 81>(p, v, i, cap),
+            10 => self.solve_g::<10, 100>(p, v, i, cap),
+            11 => self.solve_g::<11, 121>(p, v, i, cap),
+            _ => self.solve_g::<12, 144>(p, v, i, cap),
         }
     }
 
-    fn solve_g<const S: usize>(&self, p: &[f64], v: &mut [f64; MAX_PORTS], i: &mut [f64; MAX_PORTS], cap: usize) -> (bool, u32, u32) {
-        let m = self.m;
+    fn solve_g<const M: usize, const S: usize>(&self, p: &[f64], v: &mut [f64; MAX_PORTS], i: &mut [f64; MAX_PORTS], cap: usize) -> (bool, u32, u32) {
+        debug_assert_eq!(M, self.m);
+        let m = M;
         let mut jf = [0.0; S];
         let mut a = [0.0; S];
         let mut g = [0.0; MAX_PORTS];
@@ -1238,6 +1453,11 @@ impl Newton<'_> {
         let mut it_ = [0.0; MAX_PORTS];
         let mut jt = [0.0; S];
         let mut gt = [0.0; MAX_PORTS];
+        // the fast path (reciprocal pivots; chord steps reusing the factors were tried: on the
+        // faces they cost more iterations than the factorisations they save)
+        let fast = self.recip && M >= 3;
+        let mut perm = [0usize; MAX_PORTS];
+        let mut inv = [0.0; MAX_PORTS];
         let mut exps = self.eval(v, i, &mut jf);
         let mut norm = self.residual(p, v, i, &mut g);
         // a residual below the tolerance is converged (|A| ≥ 1 on these ports: the error in v is smaller)
@@ -1245,19 +1465,29 @@ impl Newton<'_> {
             return (true, 0, exps);
         }
         for iter in 1..=cap as u32 {
-            // A = K Jf − I
-            for r in 0..m {
-                for c in 0..m {
-                    let mut acc = 0.0;
-                    for k in 0..m {
-                        acc += self.k[r * m + k] * jf[k * m + c];
+            {
+                // A = K Jf − I. Jf is block-diagonal (one block per device): only the products of
+                // its block are summed, in the same order (the others are exact zeros)
+                for r in 0..m {
+                    let kr = &self.k[r * m..r * m + m];
+                    for c in 0..m {
+                        let (b0, b1) = self.blk[c];
+                        let mut acc = 0.0;
+                        for k in b0..b1 {
+                            acc += kr[k] * jf[k * m + c];
+                        }
+                        a[r * m + c] = acc - if r == c { 1.0 } else { 0.0 };
                     }
-                    a[r * m + c] = acc - if r == c { 1.0 } else { 0.0 };
+                    d[r] = -g[r];
                 }
-                d[r] = -g[r];
-            }
-            if !lu_solve(&mut a[..m * m], &mut d[..m], m) {
-                return (false, iter, exps);
+                if fast {
+                    if !lu_factor::<M>(&mut a[..m * m], &mut perm, &mut inv) {
+                        return (false, iter, exps);
+                    }
+                    lu_apply::<M>(&a[..m * m], &perm, &inv, &mut d[..m]);
+                } else if !lu_solve(&mut a[..m * m], &mut d[..m], m) {
+                    return (false, iter, exps);
+                }
             }
             let dn = d;
             for r in 0..m {
@@ -1603,10 +1833,10 @@ impl Stage {
         if k == 0 {
             return;
         }
-        let mut a = [0.0; 64];
-        let mut s = [0.0; 64];
-        let mut col = [0.0; 8];
-        assert!(k <= 8, "at most 8 variable resistors per stage");
+        let mut a = [0.0; MAX_VARS * MAX_VARS];
+        let mut s = [0.0; MAX_VARS * MAX_VARS];
+        let mut col = [0.0; MAX_VARS];
+        assert!(k <= MAX_VARS, "at most {MAX_VARS} variable resistors per stage");
         for r in 0..k {
             let dg = self.var_g[r] - self.var_g0[r];
             for c in 0..k {
@@ -1626,7 +1856,7 @@ impl Stage {
         }
         // T = S R (k × ncol) into jn-sized scratch: use a stack buffer per column
         for c in 0..ncol {
-            let mut t = [0.0; 8];
+            let mut t = [0.0; MAX_VARS];
             for r in 0..k {
                 let mut acc = 0.0;
                 for q in 0..k {
@@ -1662,18 +1892,15 @@ impl Stage {
         self.x[..nr].copy_from_slice(&self.j);
         self.x[nr..nr + nu].copy_from_slice(&self.u);
         let mut p = [0.0; MAX_PORTS];
-        for r in 0..m {
-            let row = &self.p[r * ncol..r * ncol + nr + nu];
-            let mut acc = 0.0;
-            for (c, w) in row.iter().enumerate() {
-                acc += w * self.x[c];
-            }
-            p[r] = acc;
-        }
+        matvec(&self.p, ncol, &self.x[..nr + nu], None, &mut p[..m]);
         if m > 0 {
-            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false };
+            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
             let mut v = self.v;
-            if self.plain[0] && self.plain[1] {
+            if self.quad && self.plain[0] && self.plain[1] && self.plain2 {
+                for r in 0..m {
+                    v[r] = 3.0 * (self.v[r] - self.v1[r]) + self.v2[r];
+                }
+            } else if self.plain[0] && self.plain[1] {
                 for r in 0..m {
                     v[r] = 2.0 * self.v[r] - self.v1[r];
                 }
@@ -1750,21 +1977,20 @@ impl Stage {
             self.stats.iterations += its as u64;
             self.stats.exps += exps as u64;
             self.stats.worst = self.stats.worst.max(its);
+            self.v2 = self.v1;
             self.v1 = self.v;
             self.v = v;
             self.i = i;
             self.pp = p;
+            self.plain2 = self.plain[1];
             self.plain = [plain, self.plain[0]];
             self.x[nr + nu..nr + nu + m].copy_from_slice(&i[..m]);
         }
         self.stats.samples += 1;
         // reactive voltages → new histories; outputs
+        matvec(&self.p[m * ncol..], ncol, &self.x, None, &mut self.jn);
         for r in 0..nr {
-            let row = &self.p[(m + r) * ncol..(m + r + 1) * ncol];
-            let mut acc = 0.0;
-            for (c, w) in row.iter().enumerate() {
-                acc += w * self.x[c];
-            }
+            let acc = self.jn[r];
             let kind = self.reactive[r].3;
             let g = self.rg[r];
             let j = self.j[r];
@@ -1775,14 +2001,9 @@ impl Stage {
             };
             self.jn[r] = if jn.abs() < 1e-200 { 0.0 } else { jn };
         }
-        for o in 0..self.no {
-            let row = &self.p[(m + nr + o) * ncol..(m + nr + o + 1) * ncol];
-            let mut acc = 0.0;
-            for (c, w) in row.iter().enumerate() {
-                acc += w * self.x[c];
-            }
-            self.y[o] = acc;
-        }
+        let now = self.no - self.lazy;
+        matvec(&self.p[(m + nr) * ncol..], ncol, &self.x, None, &mut self.y[..now]);
+        self.stepped = true;
         std::mem::swap(&mut self.j, &mut self.jn);
     }
 
@@ -1865,7 +2086,7 @@ impl Stage {
                 k[r * m + c] = self.p_dc[r * ncd + nu + c];
             }
         }
-        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false };
+        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
         let pdc = |u: &[f64], p: &mut [f64; MAX_PORTS], pdc: &[f64]| {
             for r in 0..m {
                 let mut acc = 0.0;
@@ -1969,8 +2190,11 @@ impl Stage {
                 self.y[r - nr] = acc;
             }
         }
+        self.stepped = false;
         self.v = v;
         self.v1 = v;
+        self.v2 = v;
+        self.plain2 = true;
         self.i = i;
         self.plain = [true, true];
         // p of the transient system at rest (continuation's start)
@@ -2213,11 +2437,20 @@ impl NonlinearCircuit {
         }
         let mut out_map = Vec::new();
         let mut stage_obs: Vec<Vec<Node>> = exports.clone();
-        for &o in &net.outputs {
-            let s = if net.source_of[o].is_some() { 0 } else { owner[o] };
-            assert!(s != usize::MAX, "output node {o} is not connected");
-            stage_obs[s].push(o);
-            out_map.push((s, stage_obs[s].len() - 1));
+        out_map.resize(net.outputs.len(), (0, 0));
+        let mut lazy = vec![0usize; ns];
+        // the outputs computed every sample first, the probes last (rows the step leaves out)
+        for pass in [false, true] {
+            for (k, &o) in net.outputs.iter().enumerate() {
+                if net.lazy[k] != pass {
+                    continue;
+                }
+                let s = if net.source_of[o].is_some() { 0 } else { owner[o] };
+                assert!(s != usize::MAX, "output node {o} is not connected");
+                stage_obs[s].push(o);
+                out_map[k] = (s, stage_obs[s].len() - 1);
+                lazy[s] += pass as usize;
+            }
         }
         let mut var_map = vec![(0, 0); net.vars.len()];
         let mut dev_map = vec![(0, 0); net.devices.len()];
@@ -2365,12 +2598,18 @@ impl NonlinearCircuit {
                 jn: vec![0.0; nr],
                 v: [0.0; MAX_PORTS],
                 v1: [0.0; MAX_PORTS],
+                v2: [0.0; MAX_PORTS],
                 i: [0.0; MAX_PORTS],
                 pp: [0.0; MAX_PORTS],
                 plain: [false, false],
+                plain2: false,
+                quad: false,
                 y: vec![0.0; no],
                 u: vec![0.0; nu],
                 tol: 1e-6,
+                lazy: lazy[s],
+                stepped: false,
+                recip: false,
                 stats: Stats::default(),
             };
             st.build();
@@ -2410,6 +2649,24 @@ impl NonlinearCircuit {
     pub fn set_tolerance(&mut self, tol: f64) {
         for s in &mut self.stages {
             s.tol = tol;
+        }
+    }
+
+    /// Newton's Jacobian solve by reciprocal pivots (one division per pivot instead of one per
+    /// row): faster, rounding-level different. Off by default (gfx-dist's renders are unchanged);
+    /// gfx-fuzz turns it on.
+    pub fn set_fast_solve(&mut self, on: bool) {
+        for s in &mut self.stages {
+            s.recip = on;
+        }
+    }
+
+    /// Newton's seed by quadratic extrapolation of the last three solutions (when all three were
+    /// solved by plain Newton; linear otherwise): fewer iterations on an oversampled signal. Off by
+    /// default (gfx-dist's renders are unchanged); gfx-fuzz turns it on.
+    pub fn set_quadratic_seed(&mut self, on: bool) {
+        for s in &mut self.stages {
+            s.quad = on;
         }
     }
 
@@ -2508,6 +2765,22 @@ impl NonlinearCircuit {
         self.stages[s].y[o]
     }
 
+    /// Probe `k` (declared by [`Netlist::probe`], or any output) after the last sample, computed now.
+    pub fn probe(&self, k: usize) -> f64 {
+        let (s, o) = self.out_map[k];
+        let st = &self.stages[s];
+        if !st.stepped || o < st.no - st.lazy {
+            return st.y[o];
+        }
+        let ncol = st.ncol();
+        let row = &st.p[(st.m + st.nr + o) * ncol..(st.m + st.nr + o + 1) * ncol];
+        let mut acc = 0.0;
+        for c in 0..ncol {
+            acc += row[c] * st.x[c];
+        }
+        acc
+    }
+
     /// Solves the DC operating point for the current inputs, pots and devices and puts every state
     /// at rest there. Inline and bounded (≤ 50 Newton iterations per attempt). Returns whether every
     /// stage converged.
@@ -2541,6 +2814,8 @@ impl NonlinearCircuit {
             a.u.copy_from_slice(&b.u);
             a.v = b.v;
             a.v1 = b.v1;
+            a.v2 = b.v2;
+            a.plain2 = b.plain2;
             a.i = b.i;
             a.pp = b.pp;
             a.plain = b.plain;
@@ -2593,7 +2868,7 @@ impl NonlinearCircuit {
             st2.woodbury();
         }
         st2.kmat(&mut k);
-        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false };
+        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false, blk: blocks(&st.devs), recip: st.recip };
         let mut vv = [0.0; MAX_PORTS];
         vv[..m].copy_from_slice(v);
         let mut i = [0.0; MAX_PORTS];

@@ -1839,6 +1839,55 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-fuzz": [
+      {
+        "id": "guitar",
+        "name": "Guitar",
+        "custom": null,
+        "params": [
+          "pickup",
+          "input"
+        ]
+      },
+      {
+        "id": "circuit",
+        "name": "Circuit",
+        "custom": null,
+        "params": [
+          "bias",
+          "temp",
+          "leakage"
+        ]
+      },
+      {
+        "id": "power",
+        "name": "Power",
+        "custom": null,
+        "params": [
+          "voltage",
+          "sag"
+        ]
+      },
+      {
+        "id": "muff",
+        "name": "Muff",
+        "custom": null,
+        "params": [
+          "stack",
+          "mids"
+        ]
+      },
+      {
+        "id": "blend",
+        "name": "Blend",
+        "custom": null,
+        "params": [
+          "mix",
+          "bass_keep",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2486,6 +2535,20 @@
       "offset": {
         "param": "mode",
         "equals": "Pump"
+      }
+    },
+    "gfx-fuzz": {
+      "stack": {
+        "param": "model",
+        "equals": "Si Four"
+      },
+      "mids": {
+        "param": "model",
+        "equals": "Si Four"
+      },
+      "leakage": {
+        "param": "model",
+        "equals": "Ge Pair"
       }
     }
   }

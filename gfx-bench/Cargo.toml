@@ -51,3 +51,4 @@ gfx-dist = { path = "../gfx-dist", default-features = false }
 gfx-transient = { path = "../gfx-transient", default-features = false }
 gfx-mbcomp = { path = "../gfx-mbcomp", default-features = false }
 gfx-ducker = { path = "../gfx-ducker", default-features = false }
+gfx-fuzz = { path = "../gfx-fuzz", default-features = false }

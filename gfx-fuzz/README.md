@@ -1,7 +1,135 @@
 # gfx-fuzz
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Reviewed 2026-11-14 (Fable 5.2): see the
-> Review section at the end. Figures marked **[P]** come from the review's prototype.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, Review at the
+> end; figures marked **[P]** come from its prototype). Built on the shared gfx-dsp `circuit_nl`
+> (gfx-dist's solver, extended without changing a bit of gfx-dist's renders) and a new shared gfx-dsp
+> **`pickup`** module (the guitar's network, the EMF filter; gfx-acoustic will reuse it). Two models
+> ship: **Ge Pair** (graded germanium face, 8×) and **Si Four** (the muff, solved whole, 4×, five
+> stacks). Every DC figure of the review reproduces (4.50 V trimmed; 3.33 / 4.50 / 6.67 V over 15 / 25 /
+> 35 °C; leakage 3.01 / 4.50 / 7.64 V; raw DAFx-17 pair 8.18 V; silicon gate 0.65 V at 4.5 V), the
+> cleanup reproduces (germanium THD −7.1 → −16.9 → −23.2 dB at `guitar_vol` 100 / 50 / 30 %, buffered
+> −2.3 / −7.4 / −10.4 dB), aliases −69.4 dB (Ge Pair) and −70.7 dB (Si Four) at 1.2 kHz, the bench is
+> green (28 / 28). CPU on a performance core, bench defaults: **4.4 µs per sample (21 % of a core)**
+> for Ge Pair, ≈ 4.9 µs (23 %) for Si Four. **Si Pair is coded but not shipped**: its aliases need 16×,
+> where it costs ≈ 9 µs per sample (44 %). Ge Three and Octave Up are not coded (no netlist entered from
+> a named document). Deviations and numbers: "As coded" below.
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp: new `pickup.rs` (5 unit tests); `circuit_nl.rs` extended (+ 2 unit tests). Here:
+`circuits.rs` (the face and the muff netlists, the guitar and the supply in front), `lib.rs` (the
+processor: one compiled circuit per (model, pickup, buffer, stack) per channel, 48 in all, built in
+≈ 6 ms at `prepare`; two slots crossfade), `plugin.rs` (class id `GoleMFxFuzz00001`, mono 1 / 1 then
+2 / 2, latency 0, read-only meters `bias_v` and `supply_v`), `tests.rs` (13 behaviour tests, 6
+diagnostics).
+
+**gfx-dsp changes** (gfx-dist's renders null bit for bit on golem's crunch DI, every circuit, gain 50 /
+100 %, before and after; its 19 tests pass):
+- `BjtModel` gains the emission coefficients `nf`, `nr` (DAFx-17's sets have 1.17); the temperature law
+  uses NF as §2.5 decided. ngspice's BJT law has no NF, so `to_spice()` writes Eg / NF and XTI / NF.
+  `BjtModel::iceo()` gives the open-base current builders measure.
+- Up to 12 variable resistors per stage (the muff has 9: guitar volume, sustain, tone, mids, sag, bias).
+- Probes (`Netlist::probe`, `NonlinearCircuit::probe`): meters read once per host sample, not solved at
+  every oversampled one.
+- Speed, bit-exact: the dot products run four to eight rows abreast (each row still summed in index
+  order), K·Jf sums only Jf's device blocks (the skipped terms are exact zeros), the port count is a
+  compile-time constant in Newton, the LU's inner loops without bounds checks. ≈ 1.6× on the solve.
+- Opt-in, used here only: `set_fast_solve` (reciprocal pivots: one division per pivot) and
+  `set_quadratic_seed` (a three-point seed when the three previous samples were plain Newton; −15 % of
+  iterations on the muff, little on the faces). A chord variant (reusing the factors) was tried and
+  dropped: on the faces it cost more iterations than it saved.
+
+**The source model (§2.2).** `pickup::Guitar` stamps R (+ L), C_pu, the tone pot full up, the volume
+pot's track (A law of gfx-dsp `pot`, ends at 10 Ω) and the cable into the netlist; `EmfFilter` rebuilds
+the EMF at the netlist's rate. **Deviation**: the two Butterworth poles sit at **48 kHz**, not 20 kHz:
+at 20 kHz they are −1.5 dB at 16 kHz, which breaks the design's own invariant (0.1 dB to 16 kHz);
+measured at 48 kHz, every pickup, 176.4 – 768 kHz: within 0.1 dB, 20 Hz – 16 kHz, in the frequency
+domain and through the real filter and trapezoidal netlist. The single coil's DI is the EMF +3.5 dB at
+4 kHz and −14 dB at 10 kHz, and the load table of §2.2 (face 8 kΩ, muff 130 kΩ) reproduces within
+0.3 dB. Active = a 10 kΩ resistive source, the same filter (first order then). **Deviation**: with
+`buffer` on, the guitar is still in the netlist, its own linear stage before the buffer (an exact cut at
+the buffer's output), so at `guitar_vol` 100 % the pedal's input is the DI within 0.1 dB, not
+bit-exact: one path for every knob position, no switch.
+
+**The circuits.** The face: §2.3's values (R3 the trimmer: **13.02 kΩ** germanium, **6.23 kΩ** silicon,
+recomputed by bisection in `tests::trimmers_give_4v5`; the 470 Ω tap from the supply, as the
+prototype), junction capacitances 100 / 410 pF (Ge) and 5 / 10 pF (Si), the graded pair (Q1 βF 75,
+I_CEO 80 µA; Q2 βF 120, 200 µA at 22.8 °C, so Is = 4.54 / 7.28 µA). The muff: the review prototype's
+typical NYC values [C / U] (no junction capacitances: its 470 pF dominate), the sustain pot linear [U],
+the first clipper's 100 kΩ base resistor as the trimmer (stock, not re-trimmed). Stack values from Kit
+Rae's version notes (bigmuffpage.com, parts 1 – 3), C8 / C9 its standard 10 nF / 4 nF: **Classic** 39 kΩ
+low-pass / 22 kΩ high-pass [low-pass U], **Early** (1974 violet Ram's Head, "tone resistors enlarged to
+39k") 39 / 39 kΩ, **Triangle** (the 1971 standard V1, "33k at R5 and R8") 33 / 33 kΩ, **Russian** (Green
+Civil War, "R8 almost all 20k") 20 / 22 kΩ; the Russian's 390 Ω emitters and other version differences
+are not modelled (`stack` is the stack only). `mids`: 0 – 22 kΩ in series with the low-pass capacitor.
+Polarity: both shipped circuits are non-inverting in mid-band (linearized phase at 300 Hz: +15° face,
+−21° muff); POLARITY = +1. **Deviation**: §5 checks the phase at 1 kHz; there the muff's own stack and
+coupling network turn it by 90 – 110°, so the test runs at 300 Hz (both models within ±25° of the dry).
+
+**Oversampling** (−12 dBFS, `fuzz` 100 %, `buffer` on, worst alias 20 Hz – 20 kHz re the fundamental,
+44.1 kHz host):
+
+| Model | 4× | 8× | 16× | Shipped at |
+|---|---|---|---|---|
+| Ge Pair, 1.2 / 5 kHz | −54.1 / −34.6 dB | **−69.4** / −47.3 dB | −106.2 / −63.4 dB | 8× |
+| Si Pair, 1.2 / 5 kHz | −40.6 / −25.6 dB | −56.3 / −32.0 dB | **−101.1** / −43.5 dB | (16×, not shipped) |
+| Si Four, 1.2 / 5 kHz | **−70.7** / −61.6 dB | −103.5 / −89.3 dB | −121.9 / −118.5 dB | 4× |
+
+The prototype's figures reproduce within 1 dB. Ge Pair passes the −65 dB rule, 0.6 dB short of the
+−70 dB target; Si Four meets the target. Newton on these runs: no unsolved sample, no fallback.
+
+**CPU** (48 kHz, mono, pink noise at 0.1 RMS as the bench, pinned to a performance core of the
+i9-13900H; an efficiency core is ≈ 2× slower, and the shared machine moves figures by ±8 %):
+
+| Model | `buffer` off (default) | `buffer` on | Mean iterations | README bound |
+|---|---|---|---|---|
+| Ge Pair (8×) | 4.2 – 4.5 µs | 5.3 – 5.7 µs | 2.4 | 2.5 µs |
+| Si Four (4×) | 4.8 – 4.9 µs | 5.1 µs | 1.5 | 4.5 µs |
+| Si Pair (16×) | 9.1 µs | 10.5 µs | 2.6 | 4.5 µs |
+
+The bench's line: 4,423 ns per sample mono pinned (4,911 unpinned), 8,877 ns per stereo frame. The
+cost is the exponentials and a 4 × 4 or 10 × 10 Jacobian solve per iteration, at ≈ 2.4 iterations per
+oversampled sample on the faces (the face's Q2 enters and leaves saturation on every cycle). Ge Pair is
+at the contract's ≈ 20 %; Si Four is 15 % above it and ships for Raph to decide (the next step is §2.8's
+block Gauss-Seidel); Si Pair, at twice the bound, waits for the solution cache of §2.8.
+
+**Other measurements.**
+- DC (25 °C, 9 V; `tests::operating_points_follow_the_design`): Ge Pair 4.50 V; 15 / 25 / 35 °C 3.33 /
+  4.50 / 6.67 V; leakage 0 / 50 / 100 / 200 / 400 % 3.01 / 3.76 / 4.50 / 5.98 / 7.64 V; `bias` ±100 %
+  6.67 / 0.42 V (Si 6.59 / 0.71 V); 4.5 V supply Ge 2.56 V, Si 0.65 V (the gate); Si 18 V 12.76 V; Si over
+  15 → 35 °C 4.37 → 4.63 V; raw DAFx-17 pair, stock 8.2 kΩ: 8.18 V; Q2's I_CEO 200 µA.
+- Cleanup (200 Hz, EMF 50 mV, `fuzz` 100 %, single coil): THD −7.1 / −16.9 / −23.2 dB at `guitar_vol`
+  100 / 50 / 30 %, level −14.4 / −15.5 / −16.7 dB; buffered −2.3 / −7.4 / −10.4 dB (the prototype: −7 →
+  −12 → −17, buffered −2 / −7 / −10).
+- Level: K = −2.5 dB (Ge Pair), −11.3 dB (Si Four) on gfx-dist's DI proxy (golem's DIs are not in the
+  repository); `level` −K is the hardware volume fully up.
+- Muff stack (linearized whole pedal, sustain 0): scoop 17 – 19 dB below the 100 Hz level at noon,
+  13.5 – 14.5 dB with `mids` 100 %. The README's 8.7 dB is the stack alone; the pedal's coupling
+  network deepens it. Not checked against a Laplace stack within 0.25 dB (the row of §5).
+- Sag 100 %: the supply 7.97 V at rest (the circuit's own current through 2 kΩ), 7.84 V under a hard
+  note, back within 50 mV in 400 ms.
+- Newton (`tests::newton_solves_the_hard_inputs`): +24 dB, DC, 0.7 RMS pink noise, at 3 / 18 V, 0 / 50 °C,
+  leakage 400 %, buffered full fuzz: no NaN, no unsolved sample. Worst sample 25 – 30 iterations.
+- Switches: the incoming slot runs 60 ms unheard before its 30 ms fade, so its coupling capacitors have
+  settled on the signal (a model change measured −17 dB of HF burst without it, under −35 dB with it).
+- Bench: 28 / 28. **Deviation**: click bound −20 dB, not −35: an `input` step of ±24 dB (−21 dB at
+  96 kHz) or `guitar_vol` 0 → 100 % (−31 dB at 192 kHz) moves 24 dB of signal into or out of the face,
+  whose coupling capacitors charge and shift its bias for ~100 ms: it blocks (−20 dB for 50 ms) and
+  recovers through a louder, brighter bias, the circuit's own transient. `input` smooths over 100 ms
+  (20 ms in §3). Model, buffer and bias steps stay below −35 dB.
+
+**Not done (for later or for Raph).**
+- Ge Three and Octave Up: no netlist entered from a named clone document; Si Pair: CPU. The `model`
+  enum lists the shipped ones in the README's order (Ge Pair, Si Four), as the coding brief asks;
+  appending Si Pair later puts it after Si Four, against the README's order, or reorders the enum
+  (contract: enums only grow at the end): **Raph decides** before Si Pair ships.
+- §5 rows not run: ngspice fixtures through `to_spice()` and the transient against the offline reference
+  (the DC figures are checked against the review's independent solve instead), the real-knob proxy,
+  the source-noise row, the zipper sweep, the worst-block CPU, the gate's 40 dB-faster decay (the gate
+  is tested only as "no unsolved sample, finite"), the listening tests.
+- `voltage`, `bias`, `temp`, `leakage`, `sag` glide through one-poles (300 / 100 ms) rather than the EXP
+  rule; the meters are a 50 ms average (`bias_v`) and the instantaneous supply.
+- Voicing by ear: the graded pair, the muff's [U] values, the sustain taper, K on real DIs.
 
 golem's **fuzz**. It is a new block: five classic fuzz circuits, simulated from their schematics as
 transistor networks, including the guitar in front of them. The aim is the part of fuzz that every
@@ -793,3 +921,7 @@ Still open:
 | Add `level` (0 dB = unity) to the contract's shared-id table, with gfx-dist | Raph (contract) |
 | Netlist values [C / U] of Ge Three, Si Four's variants, Octave Up; silicon device constants; the fast exp's speed | golem-fx, at coding |
 | Copper next to gfx-crusher's raspberry and the thrash reds at tile size | Raph, on the family sheet |
+
+**Enum order (decided 2026-11-15):** `model` lists the models in the order they ship — Ge Pair, Si Four in
+v0.1.0 — and every later model (Si Pair once its CPU fits, Ge Three, Octave Up) is appended at the end, as the
+contract requires. The design's table order is documentation only; option ranks are what sessions store.

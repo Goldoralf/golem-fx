@@ -440,6 +440,11 @@
    "label": "Ducker",
    "uni": "▽",
    "svg": "<path d='M2.5 6.5H8.5V14.5C12.5 14.5 15 6.5 21.5 6.5'/><path d='M7 21.5V20M9.5 21.5V18.5M12 21.5V19.5' opacity='.5'/>"
+  },
+  "fuzz": {
+   "label": "Fuzz (circuit-simulated fuzz, the guitar included)",
+   "uni": "⊓",
+   "svg": "<path d='M2 17V6h5v11h2.5V8.5H13V17h2.5v-6h2.5v6h2v-3.5h1.5V17H22'/>"
   }
  }
 }

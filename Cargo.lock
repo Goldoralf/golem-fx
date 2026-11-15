@@ -260,6 +260,7 @@ dependencies = [
  "gfx-eq",
  "gfx-flanger",
  "gfx-freqshift",
+ "gfx-fuzz",
  "gfx-gapmeter",
  "gfx-gate",
  "gfx-geq",
@@ -408,6 +409,14 @@ dependencies = [
  "gfx-dsp",
  "nih_plug",
  "realfft",
+]
+
+[[package]]
+name = "gfx-fuzz"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
 ]
 
 [[package]]

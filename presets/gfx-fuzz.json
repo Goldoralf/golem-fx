@@ -1,0 +1,538 @@
+{
+ "crate": "gfx-fuzz",
+ "presets": [
+  {
+   "id": "sixties-ge",
+   "type": "fuzz",
+   "name": "Sixties germanium",
+   "desc": "The germanium face at full fuzz, single coil loading its input: warm, round, not fizzy",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "psychedelic-rock",
+    "blues-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Jimi Hendrix",
+     "why": "germanium two-transistor fuzz into a clean-ish stack",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "guitar_vol": 100,
+    "pickup": "Single Coil"
+   },
+   "notes": "The reference face: the pickup's coil and pots in front of Q1 take the top off before anything clips"
+  },
+  {
+   "id": "volume-knob-clean",
+   "type": "fuzz",
+   "name": "Volume-knob clean",
+   "desc": "Full fuzz; roll the guitar volume (EXP) to 30 % for a bright, nearly clean tone at the same level",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "blues-rock",
+    "british-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "guitar_vol": 100
+   },
+   "notes": "Measured: THD −7 dB at 100 %, −17 at 50 %, −23 at 30 % with the level within 2.5 dB; put EXP on guitar_vol"
+  },
+  {
+   "id": "behind-a-buffer",
+   "type": "fuzz",
+   "name": "Behind a buffer",
+   "desc": "The same face after a buffer: the volume knob only turns it down, the fuzz stays",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "buffer": true
+   },
+   "notes": "To hear why a face wants to be first: buffered, the THD is 5 – 13 dB higher at every knob position"
+  },
+  {
+   "id": "summer-stage",
+   "type": "fuzz",
+   "name": "Summer stage",
+   "desc": "Hot germanium at 35 °C: the face drifts off bias, thinner and splattier",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "psychedelic-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "temp": 35
+   },
+   "notes": "Q2's collector moves 4.5 → 6.7 V (bias_v): less swing towards the supply"
+  },
+  {
+   "id": "winter-garage",
+   "type": "fuzz",
+   "name": "Winter garage",
+   "desc": "Cold germanium at 12 °C: the face sinks towards saturation, darker and more compressed",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "stoner-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 90,
+    "temp": 12
+   },
+   "notes": "bias_v about 3 V: Q2 nearer saturation"
+  },
+  {
+   "id": "leaky-pair",
+   "type": "fuzz",
+   "name": "Leaky pair",
+   "desc": "An unselected germanium pair (250 % leakage): biased high, thin and spitty",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "noise-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "leakage": 250
+   },
+   "notes": "The pedal a builder would have rejected: Q2 sits near 6.5 V"
+  },
+  {
+   "id": "misbiased-spitter",
+   "type": "fuzz",
+   "name": "Misbiased spitter",
+   "desc": "The trimmer turned down (bias −70 %): Q2 near saturation, sputter on the decay",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "noise-rock",
+    "stoner-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "bias": -70
+   },
+   "notes": "bias_v ≈ 1 V; which side gates best is for the ear (README §2.6)"
+  },
+  {
+   "id": "starved-gate",
+   "type": "fuzz",
+   "name": "Starved gate",
+   "desc": "A dying 4 V battery with sag on the germanium face: notes chop off as they decay",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "voltage": 4,
+    "bias": -40,
+    "sag": 40
+   },
+   "notes": "The README's velcro gate is a silicon face (not shipped yet); on germanium the bias follows the supply: splattier than gated"
+  },
+  {
+   "id": "dying-battery",
+   "type": "fuzz",
+   "name": "Dying battery",
+   "desc": "Put EXP on voltage and sweep 9 → 3 V: from full fuzz to a broken, sputtering gate",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "noise-rock",
+    "experimental-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "voltage": 9,
+    "sag": 30
+   }
+  },
+  {
+   "id": "parallel-fuzz",
+   "type": "fuzz",
+   "name": "Parallel fuzz",
+   "desc": "Germanium face blended 50 / 50 with the dry guitar: fuzz on top, the attack kept",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "alternative-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 100,
+    "mix": 50
+   }
+  },
+  {
+   "id": "swell-fuzz",
+   "type": "fuzz",
+   "name": "Swell fuzz",
+   "desc": "Put EXP on fuzz: the face's own pot swept under the foot, from boost-like to full fuzz",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Ge Pair",
+    "fuzz": 60
+   }
+  },
+  {
+   "id": "wall-of-sustain",
+   "type": "fuzz",
+   "name": "Wall of sustain",
+   "desc": "Four-transistor muff, classic stack at noon: endless sustain with the mid scoop",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "grunge",
+    "shoegaze"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "The Smashing Pumpkins",
+     "why": "muff-type fuzz walls on 90s alternative records",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "stack": "Classic",
+    "fuzz": 70,
+    "tone": 0
+   }
+  },
+  {
+   "id": "doom-wall",
+   "type": "fuzz",
+   "name": "Doom wall",
+   "desc": "Russian stack, sustain high, tone towards the bass, a little mids: dark and thick",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "doom-metal",
+    "stoner-metal",
+    "stoner-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "stack": "Russian",
+    "fuzz": 90,
+    "tone": -40,
+    "mids": 20
+   }
+  },
+  {
+   "id": "band-mix-muff",
+   "type": "fuzz",
+   "name": "Band-mix muff",
+   "desc": "Muff with the scoop filled (mids 80 %): stays audible in a band mix",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "indie-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "fuzz": 65,
+    "mids": 80
+   },
+   "notes": "22 kΩ-class resistor in series with the low-pass cap: the notch shrinks and moves down"
+  },
+  {
+   "id": "tone-bypassed-muff",
+   "type": "fuzz",
+   "name": "Tone-bypassed muff",
+   "desc": "The muff with its tone stack removed: loud, flat and mid-heavy",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "stoner-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "stack": "Bypass",
+    "fuzz": 70
+   }
+  },
+  {
+   "id": "eighteen-volt-muff",
+   "type": "fuzz",
+   "name": "Eighteen-volt muff",
+   "desc": "The muff on an 18 V supply: more headroom, louder and less compressed",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "hard-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "fuzz": 70,
+    "voltage": 18
+   }
+  },
+  {
+   "id": "triangle-lead",
+   "type": "fuzz",
+   "name": "Triangle lead",
+   "desc": "Early-1970s triangle-era stack, sustain 80 %, tone a touch bright: a singing lead",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "progressive-rock"
+   ],
+   "gain": "clean",
+   "use": "solo",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Si Four",
+    "stack": "Triangle",
+    "fuzz": 80,
+    "tone": 20
+   }
+  },
+  {
+   "id": "fuzz-bass",
+   "type": "fuzz",
+   "name": "Fuzz bass",
+   "desc": "Russian muff for bass: below 120 Hz the dry stays, a 70 % blend keeps the fundamental",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "subgenres": [
+    "stoner-rock",
+    "doom-metal"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": true,
+   "params": {
+    "model": "Si Four",
+    "stack": "Russian",
+    "pickup": "Active",
+    "bass_keep": 120,
+    "mix": 70,
+    "fuzz": 75
+   }
+  }
+ ]
+}

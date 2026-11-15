@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -64,6 +64,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-mbcomp" | "mbcomp" => Some(Box::new(gfx_mbcomp::MbComp::new())),
         "gfx-widener" | "widener" => Some(Box::new(gfx_widener::Widener::new())),
         "gfx-ducker" | "ducker" => Some(Box::new(gfx_ducker::Ducker::new())),
+        "gfx-fuzz" | "fuzz" => Some(Box::new(gfx_fuzz::Fuzz::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -252,6 +253,20 @@ pub fn options(name: &str) -> checks::Options {
         o.skip_latency = true;
         // `phase` changes the reported latency: a set-up switch (fade out, switch, fade in; README §2.3)
         o.skip_steps = vec!["phase"];
+    }
+    if matches!(name, "gfx-fuzz" | "fuzz") {
+        // 4× – 16× minimum-phase oversampling: a few samples of group delay, no delay line, not
+        // reported (README §2.8, the gfx-drive / gfx-emet precedent)
+        o.skip_latency = true;
+        // README §5 asked −35 dB for the structural changes (a model, buffer or bias change moves
+        // the operating point); with the incoming circuit settling 60 ms unheard before its fade they
+        // stay below −35 dB. What does not is a drive step: `input` ±24 dB (−21 dB at 96 kHz, −26 dB
+        // at 48 kHz) and `guitar_vol` 0 → 100 % (−31 dB at 192 kHz) move 24 dB of signal into or out
+        // of the face, whose coupling capacitors charge or discharge and move its bias for ~100 ms:
+        // the output blocks (−20 dB for 50 ms) then recovers through a louder, brighter bias
+        // (blocking distortion), the circuit's own transient as on the real pedal (gfx-fuzz README,
+        // As coded)
+        o.click_bound_db = -20.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

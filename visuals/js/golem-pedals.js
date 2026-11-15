@@ -357,7 +357,10 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // gfx-fuzz's copper at tile size)
     'gfx-tape': '#d8c8a0',
     // ice glass: pale sky, air and open space (gfx-widener's review: utility's amber would read as a boost)
-    'gfx-widener': '#c0e0f8' };
+    'gfx-widener': '#c0e0f8',
+    // germanium copper (gfx-fuzz's review: a third thrash-red drive pedal would be told apart by its
+    // motif alone; no other pedal is copper)
+    'gfx-fuzz': '#b0602a' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
   const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0' };
@@ -381,6 +384,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-mbcomp': 'tiers',
     'gfx-widener': 'fan',
     'gfx-ducker': 'dips',
+    'gfx-fuzz': 'sputter',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -388,7 +392,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -739,6 +743,28 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(xd + s * 3)} ${f1(y - 3.5)}V${f1(y + 3.5)}`);
           }
         }));
+        break;
+      }
+      case 'sputter': {
+        // a square wave each side of the rune, gating out towards it: each pulse narrower and lower
+        // (widths 6 : 4.5 : 3 : 2, heights 100 / 75 / 50 / 30 %), the last two fading (60 / 35 %);
+        // flat tops at ±7 (≤ 0.3 of the cartouche: inside the rune band), 1.5-unit fillets
+        const a0 = Math.min(7, .3 * ch), r = 1.5, wid = [6, 4.5, 3, 2], amp = [1, .75, .5, .3], ops = [1, 1, .6, .35];
+        const inner = cx - cw / 2 - 4, span = inner - 6, unit = span / wid.reduce((s, w) => s + w, 0);
+        [[1, 6], [-1, W - 6]].forEach(([s, x0]) => {
+          let x = x0;
+          wid.forEach((w, k) => {
+            const pw = w * unit, h = a0 * amp[k], rr = Math.min(r, pw / 6, h / 2), half = pw / 2;
+            const up = cy - h, dn = cy + h;
+            // up, across, down through the axis to the bottom, across, back up to the axis
+            let d = `M${f1(x)} ${f1(cy)}V${f1(up + rr)}Q${f1(x)} ${f1(up)} ${f1(x + s * rr)} ${f1(up)}` +
+                    `H${f1(x + s * (half - rr))}Q${f1(x + s * half)} ${f1(up)} ${f1(x + s * half)} ${f1(up + rr)}` +
+                    `V${f1(dn - rr)}Q${f1(x + s * half)} ${f1(dn)} ${f1(x + s * (half + rr))} ${f1(dn)}` +
+                    `H${f1(x + s * (pw - rr))}Q${f1(x + s * pw)} ${f1(dn)} ${f1(x + s * pw)} ${f1(dn - rr)}V${f1(cy)}`;
+            line(d, ops[k]);
+            x += s * pw;
+          });
+        });
         break;
       }
       case 'ticks':
