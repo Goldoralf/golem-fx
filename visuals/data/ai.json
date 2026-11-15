@@ -1,0 +1,1963 @@
+{
+ "_comment": "Hand-curated selection knowledge for golem.fm's patch AI, one entry per bundled pedal, sourced from each crate's README (state of the art, Applications, placement notes, Review) and gfx-bench CPU figures. visuals/tools/build-descriptors.py validates it and writes ai-guide.json. Fields: purpose (<=160), roles, position (input, pre-amp, amp, post-amp, time, master, utility), position_note (<=120), pairs_well_with / avoid [{id, why <=100}], cpu (light <0.5, medium 0.5-2, heavy >=2 µs per mono sample at 48 kHz), cpu_note, setup_only (parameters kept out of scenes and EXP).",
+ "excluded": {
+  "gfx-gapmeter": "a measuring probe, not a sound block"
+ },
+ "pedals": {
+  "gfx-boost": {
+   "purpose": "Transparent gain utility: volume pedal with true silence at the heel, clean level boost, scene level-matching and a polarity flip.",
+   "roles": [
+    "guitar",
+    "bass",
+    "drums"
+   ],
+   "position": "utility",
+   "position_note": "before the amp to push it; after the amp for a solo boost; before delay/reverb for swells",
+   "pairs_well_with": [
+    {
+     "id": "gfx-drive",
+     "why": "use gfx-drive when the boost should add colour; this one stays clean"
+    },
+    {
+     "id": "amp-nam",
+     "why": "+6 to +12 dB in front of an amp pushes it harder"
+    },
+    {
+     "id": "gfx-delay",
+     "why": "volume swells on EXP placed before delay / reverb"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.002 µs/sample"
+  },
+  "gfx-gate": {
+   "purpose": "Zero-latency noise gate / expander with hysteresis, follow-decay release, tail damp, hum-aware detection and an optional key input from the DI.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "input",
+   "position_note": "before a high-gain amp, or after it keyed from the clean DI (source Key)",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "metal: gate before the amp, or after it keyed from the DI so the threshold ignores gain"
+    },
+    {
+     "id": "gfx-drive",
+     "why": "the drive has no built-in gate on purpose: this gate keyed on the DI does it better"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.053 µs/sample"
+  },
+  "gfx-comp": {
+   "purpose": "Zero-latency compressor with five characters (clean, bus, FET, opto, pedal) on one static curve, sidechain low cut, range and parallel mix.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "input",
+   "position_note": "before drive/amp for sustain; Bus character after amp and cab for glue",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "opto/FET before the amp for lead sustain or peak control"
+    },
+    {
+     "id": "gfx-cab",
+     "why": "Bus character after amp and cab glues the tone"
+    },
+    {
+     "id": "gfx-deesser",
+     "why": "the de-esser's relative detection holds with a compressor upstream"
+    },
+    {
+     "id": "gfx-chorus",
+     "why": "Voice profile chorus is suggested after compression on the vocal lane"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "status line: ~0.1 µs / sample; colour stage runs 2x oversampled only when character or drive needs it"
+  },
+  "gfx-limiter": {
+   "purpose": "Peak limiter whose threshold is the output ceiling: zero latency by default with a band-limited clipper, optional lookahead with true peak.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "master",
+   "position_note": "last block of the lane; threshold = the peak you get, no makeup",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Clean or Punchy after an amp: louder lead without clipping the PA"
+    },
+    {
+     "id": "backing-track",
+     "why": "lookahead 2 ms + true peak: fully transparent on backing tracks / keys"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.1 µs/sample",
+   "setup_only": [
+    "lookahead"
+   ]
+  },
+  "gfx-eq": {
+   "purpose": "Zero-latency live EQ: analog-matched low/high cut, shelves, two proportional-Q bells, air, tilt, a dynamic de-harsh band and static auto gain.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "post-amp",
+   "position_note": "after amp and cab for guitar (90 Hz low cut, 7 kHz high cut at 24 dB/oct)",
+   "pairs_well_with": [
+    {
+     "id": "gfx-cab",
+     "why": "24 dB/oct high cut after a cab simulation; the two cuts every mixed guitar gets"
+    },
+    {
+     "id": "amp-nam",
+     "why": "de-harsh tames high-gain fizz only when it is there"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.12 µs/sample"
+  },
+  "gfx-deesser": {
+   "purpose": "Zero-latency de-esser with level-independent detection and shelf/bell/wide reduction; also a high-frequency de-harsh for overdriven guitar.",
+   "roles": [
+    "voice"
+   ],
+   "position": "input",
+   "position_note": "voice: gate, de-esser, pitch correction, comp (golem's voice order); before gfx-formant",
+   "pairs_well_with": [
+    {
+     "id": "gfx-comp",
+     "why": "relative detection keeps working with a compressor upstream"
+    },
+    {
+     "id": "gfx-drive",
+     "why": "Allround / Bell at 3.5 kHz removes pick click and fizz from overdriven guitar"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.16 µs/sample",
+   "setup_only": [
+    "lookahead"
+   ]
+  },
+  "gfx-wah": {
+   "purpose": "Pedal wah with eleven measured voices, per-pedal taper, smooth EXP response, resonance clipping, auto-engage and envelope / LFO modes.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "before the amp (into high gain: q 80 %, volume +3 dB)",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "wah before a high-gain amp, with a little boost, clips at the resonance"
+    },
+    {
+     "id": "gfx-autowah",
+     "why": "sibling: same follower and wah voice when no pedal is used"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.31 µs/sample"
+  },
+  "gfx-autowah": {
+   "purpose": "Envelope filter at any input level: low/band/high-pass, wah and vowel types, 2 or 4 poles, saturated filter, dry lows for bass, LFO or S&H sweeps.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-wah",
+     "why": "the Wah type reuses its voice; use gfx-wah when a pedal drives the sweep"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.46 µs/sample"
+  },
+  "gfx-tremolo": {
+   "purpose": "Amp-style tremolo: clean, bias, optical, neon and harmonic models, synced or free, click-free square, playing-dependent depth, auto-pan.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "post-amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-killswitch",
+     "why": "hard gates, step patterns and pick triggers live there, not here"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.08 µs/sample"
+  },
+  "gfx-vibrato": {
+   "purpose": "Pitch vibrato with depth in cents constant at any speed: clean, bucket-brigade, varistor (zero latency), rotary-style and organ scanner voices.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-phaser",
+     "why": "the Vibe model shares the phaser's Vibe core"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.25 µs/sample"
+  },
+  "gfx-chorus": {
+   "purpose": "Instrument-voiced chorus: classic pedal, dual synth, dimension, ensemble and doubler modes on clean, bucket-brigade or tape engines, mono-safe.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "post-amp",
+   "position_note": "after amp and cab; never before a high-gain stage",
+   "pairs_well_with": [
+    {
+     "id": "gfx-cab",
+     "why": "after amp and cab: stereo from there on, BBD hiss not amplified"
+    },
+    {
+     "id": "amp-nam",
+     "why": "Drive wide preset after a high-gain amp: wide, chugs stay clear"
+    },
+    {
+     "id": "gfx-comp",
+     "why": "Voice profile: on the vocal lane after compression"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "gfx-drive",
+     "why": "a chorus before distortion turns into mush; place it after"
+    }
+   ],
+   "cpu": "medium",
+   "cpu_note": "bench, 48 kHz mono: 0.88 µs/sample"
+  },
+  "gfx-flanger": {
+   "purpose": "Flanger with bucket-brigade, tape through-zero, pseudo through-zero and barberpole modes; LFO, envelope or pedal sweep; safe high feedback.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "pre-amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-chorus",
+     "why": "shares the BBD engine; reach for the chorus for thickening, this for combs"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "bench, 48 kHz mono: 0.68 µs/sample",
+   "setup_only": [
+    "mode"
+   ]
+  },
+  "gfx-phaser": {
+   "purpose": "Exact zero-latency phaser: script/block 4-stage, OTA, rotary-style vibe, dual-phaser, deep 12-stage and barberpole voices, LFO/envelope/pedal sweep.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "pre-amp",
+   "position_note": "Vibe before the amp",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Vibe model before the amp: unequal stages, lamp lag, throb"
+    },
+    {
+     "id": "gfx-vibrato",
+     "why": "same Vibe core; vibe_mode Vibrato covers the pitch side"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.44 µs/sample"
+  },
+  "gfx-rotary": {
+   "purpose": "Rotating-speaker simulator: horn and drum with their own inertia, Doppler and directivity, cabinets, mics, tube drive and a coasting brake.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "post-amp",
+   "position_note": "mono in / stereo out; keys: after the instrument",
+   "pairs_well_with": [
+    {
+     "id": "ep",
+     "why": "keys: the slow / fast transition on electric piano"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "organ",
+     "why": "golem's organ keeps its own rotating speaker; do not add a second one"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "375 ns / sample at 48 kHz, mono in / stereo out (1.8 % of a core)"
+  },
+  "gfx-drive": {
+   "purpose": "Parametric overdrive / distortion / fuzz engine, alias-free at high gain, with tight, tone, sag, asymmetry, clean blend and bass keep.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "in front of the amp; as a tight low-gain boost before a high-gain amp",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Overdrive, low gain, tight 200 Hz tightens a high-gain amp"
+    },
+    {
+     "id": "gfx-gate",
+     "why": "no built-in gate: the gate keyed on the DI does it better"
+    },
+    {
+     "id": "pedal-nam",
+     "why": "NAM captures cover exact pedals; this covers the parametric families"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "bench, 48 kHz mono: 0.73 µs/sample"
+  },
+  "gfx-delay": {
+   "purpose": "Live delay with digital, tape, bucket-brigade and lo-fi engines; ducking, swell, reverse, pitched repeats, multi-tap, hold and trails.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "time",
+   "position_note": "end of the lane; kill_dry + mix 100 % for a parallel wet lane",
+   "pairs_well_with": [
+    {
+     "id": "gfx-reverb",
+     "why": "repeats into a tail for ambient washes"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.4 µs/sample"
+  },
+  "gfx-reverb": {
+   "purpose": "Algorithmic reverb (hall, plate, room, chamber, cathedral, ambience, spring, bloom, cloud, gated, reverse) with freeze, ducking and trails.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "time",
+   "position_note": "end of the lane; Spring and Ambience can also sit right after a dry amp sim",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Room / Ambience early reflections give a dry amp sim air"
+    },
+    {
+     "id": "gfx-shimmer",
+     "why": "use it when the shimmer is the subject (two voices, placement, glide)"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "525 ns / sample at 48 kHz (2.5 % of a core, likely the default stereo layout); 70s era 28-35 % cheaper",
+   "setup_only": [
+    "algo"
+   ]
+  },
+  "gfx-shimmer": {
+   "purpose": "Shimmer reverb: pitch shifters inside the reverb loop (two voices, ±24 st) for rising octave pads, with freeze, bloom, ducking and glide.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "time",
+   "position_note": "end of the lane, as a reverb",
+   "pairs_well_with": [
+    {
+     "id": "volume",
+     "why": "volume-pedal swells into a long shimmer pad"
+    },
+    {
+     "id": "gfx-reverb",
+     "why": "gfx-reverb carries a one-voice shimmer when only a colour is wanted"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "707 ns / sample at 48 kHz (3.4 % of a core), tank + 2 voices, likely stereo"
+  },
+  "gfx-killswitch": {
+   "purpose": "Rhythmic kill switch, stutter and trance gate locked to the song or restarted by the pick; also synced tremolo shapes and autopan. Zero latency.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice"
+   ],
+   "position": "post-amp",
+   "position_note": "after drive / amp so cuts stay hard, before delay / reverb so tails survive the cuts",
+   "pairs_well_with": [
+    {
+     "id": "tremolo",
+     "why": "for amp-style tremolo the README points to gfx-tremolo; killswitch does gates and stutters"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.13 µs/sample"
+  },
+  "gfx-octaver": {
+   "purpose": "Zero-latency octaver: vintage analog-style sub, clean sine sub for bass, synth sub, octave up and a polyphonic mode.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice"
+   ],
+   "position": "pre-amp",
+   "position_note": "early in the lane; octave-up goes before a fuzz",
+   "pairs_well_with": [
+    {
+     "id": "fuzz",
+     "why": "octave-up before a fuzz gives the classic rectifier-octave lead"
+    },
+    {
+     "id": "gfx-pitch",
+     "why": "for arbitrary intervals or harmonies, gfx-pitch instead"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.1 µs/sample"
+  },
+  "gfx-pitch": {
+   "purpose": "Instrument pitch shifter: expression-pedal pitch dives, fixed or in-key harmonies, two voices, and polyphonic transposition (virtual capo, 12-string).",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "before the amp for pitch dives / harmony into drive",
+   "pairs_well_with": [
+    {
+     "id": "gfx-octaver",
+     "why": "for a synth-like sub use the octaver; pitch for intervals"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "bench, 48 kHz mono: 0.64 µs/sample at defaults; Poly engine 0.15-0.79 µs depending on the input",
+   "setup_only": [
+    "engine",
+    "tracking"
+   ]
+  },
+  "gfx-pitch-classic": {
+   "purpose": "Simple two-head delay-line pitch shifter with literal window / overlap controls and independent wet / dry, zero reported latency.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice"
+   ],
+   "position": "pre-amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-pitch",
+     "why": "for clean chords or low-glitch tracking, the modern shifter"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.05 µs/sample",
+   "setup_only": [
+    "search"
+   ]
+  },
+  "gfx-detune": {
+   "purpose": "Micro-pitch detune / doubler: one or two voices a few cents off with an optional doubling delay, for width and thickening at zero latency.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice"
+   ],
+   "position": "post-amp",
+   "position_note": "after the amp for stereo widening; before delay / reverb",
+   "pairs_well_with": [
+    {
+     "id": "gfx-pitch",
+     "why": "for larger intervals or harmonies"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "bench, 48 kHz mono: 0.19 µs/sample"
+  },
+  "gfx-met": {
+   "purpose": "Keyed expander-gate for high gain: listens to the clean DI, silences the gaps between chugs with no audible gating, one threshold knob.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "front of a high-gain lane: met -> shem / emet -> amp; key from the lane DI",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "built and tested in front of / keyed around a NAM high-gain amp"
+    },
+    {
+     "id": "gfx-shem",
+     "why": "high-gain companion: tight boost into the amp"
+    },
+    {
+     "id": "gfx-emet",
+     "why": "high-gain companion: mid-push overdrive into the amp"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "setup_only": [
+    "source"
+   ]
+  },
+  "gfx-emet": {
+   "purpose": "High-headroom mid-hump overdrive: clean mid boost at low gain, a crushing mid push in front of a high-gain amp; also a classic low-headroom diode knee.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "right before a high-gain amp, after met",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "tightens a high-gain amp: the amp clips, not the pedal"
+    },
+    {
+     "id": "gfx-met",
+     "why": "high-gain front: gate first, then the boost into the amp"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "198 ns / sample mono at 8× oversampling"
+  },
+  "gfx-shem": {
+   "purpose": "Clean frequency-shaped tight boost (up to +20 dB, no clipping): cuts bass mud and lifts presence so a high-gain amp stays defined.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "directly in front of an amp that already has gain; lower the amp's gain",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "all the grind is the amp's; shem decides what reaches it"
+    },
+    {
+     "id": "gfx-met",
+     "why": "high-gain front: met -> shem -> amp"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light"
+  },
+  "gfx-golem": {
+   "purpose": "Live vocal doubler: one or two pitch-shifted copies of the singer (an octave-below double first), formants kept or moved, dry never delayed.",
+   "roles": [
+    "voice"
+   ],
+   "position": "pre-amp",
+   "position_note": "voice lane: after deesser and any gate, before delay / reverb",
+   "pairs_well_with": [
+    {
+     "id": "deesser",
+     "why": "placed before gfx-golem on a voice lane"
+    },
+    {
+     "id": "gate",
+     "why": "placed before it; also set thresh above stage bleed"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "50 ns / sample, mono, two voices",
+   "setup_only": [
+    "register"
+   ]
+  },
+  "gfx-glitch": {
+   "purpose": "Spectral (STFT) pedal: sustains partials into pads, blurs into clouds, shifts, crushes, scatters or stutters the spectrum; dry never delayed.",
+   "roles": [
+    "guitar",
+    "bass",
+    "keys",
+    "voice"
+   ],
+   "position": "time",
+   "position_note": "near the end of the lane, before or beside reverb; wet is late by size + hop",
+   "pairs_well_with": [
+    {
+     "id": "gfx-reverb",
+     "why": "glitch is not a reverb; reverb after it smooths the pads"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "169 ns mono at defaults (317 ns stereo frame); everything on ≈ 3.3 % of a core (~0.7 µs)",
+   "setup_only": [
+    "align",
+    "size",
+    "window"
+   ]
+  },
+  "gfx-geq": {
+   "purpose": "Graphic EQ whose response is exactly the curve the faders draw: 11-band octave or 7-band guitar/bass pedal layouts, low/high cuts, solo level.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "post-amp",
+   "position_note": "post-amp or post-cab tone shaping; also before a high-gain amp to tighten, or as a solo-lift stage",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Low faders cut before a high-gain amp tighten the front end without a peak at 125 Hz"
+    },
+    {
+     "id": "cab",
+     "why": "Post-cab cleanup: low cut, 24 dB/oct high cut and a fader where the cab is harsh"
+    },
+    {
+     "id": "gfx-fuzz",
+     "why": "Guitar 7 mid push restores the mids a fuzz scoops out in a band mix"
+    },
+    {
+     "id": "bass-di",
+     "why": "Bass 7 layout for slap smile or growl after the bass preamp"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Busy Octave 11 curve; 0.27 µs while a fader moves; flat 0.019 µs; solver tick 8 µs per 1.33 ms only while moving"
+  },
+  "gfx-freqshift": {
+   "purpose": "Single-sideband frequency shifter with feedback loop, LFO and envelope: endless barber-pole phasing, metallic detune, bells, spiralling echoes.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice"
+   ],
+   "position": "post-amp",
+   "position_note": "stereo by nature (2/2): placed before an amp it turns the whole lane stereo; use gfx-ringmod for clang before the amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-ringmod",
+     "why": "Mono-first ring modulator: the pedal for inharmonic clang before the amp"
+    },
+    {
+     "id": "gfx-delay",
+     "why": "Shifted echoes longer than 2 s are gfx-delay with its loop_shift"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "amp",
+     "why": "Before an amp the 2/2 block turns the lane stereo, so every later block runs (and costs) stereo"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "136 ns per stereo frame with a mono source; ~0.23 µs true stereo, ~0.34 µs with loop Phaser and dry_match on"
+  },
+  "gfx-swell": {
+   "purpose": "Zero-latency auto-swell: each pick, legato change or new chord fades in on its own for bowed, violin-like attacks; one swell per strum.",
+   "roles": [
+    "guitar",
+    "bass",
+    "keys"
+   ],
+   "position": "post-amp",
+   "position_note": "after drive/amp with source Key (clean DI), before delay and reverb; or first in the chain with curve dB",
+   "pairs_well_with": [
+    {
+     "id": "gfx-comp",
+     "why": "A compressor before the swell lengthens the bowed note (raise thresh: it lifts hiss)"
+    },
+    {
+     "id": "gfx-reverb",
+     "why": "Cello pad and ambient presets swell into a long reverb after the block"
+    },
+    {
+     "id": "gfx-delay",
+     "why": "Tempo swells: synced rise, then a dotted-quarter delay and a long reverb"
+    },
+    {
+     "id": "amp-nam",
+     "why": "Sits after drive/amp with source Key reading the clean DI, so detection is not flattened"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "0.14-0.165 µs with every detector on; 0.059 µs with legato 0",
+   "setup_only": [
+    "lookahead"
+   ]
+  },
+  "gfx-crusher": {
+   "purpose": "Bitcrusher and sample-rate reducer simulating a virtual ADC/DAC exactly: band-limited aliasing, gliding clock, µ-law/float words, clean tails.",
+   "roles": [
+    "guitar",
+    "bass",
+    "drums",
+    "voice",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "position_note": "a dirt effect; its Clean tails setting is designed for a gain stage after it",
+   "pairs_well_with": [
+    {
+     "id": "amp",
+     "why": "tails Clean fades sub-LSB sputter that a gain stage after the block would turn into fizz"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Defaults; 0.277 µs worst case (Clean model + track + LFO + jitter); 0.113 µs per stereo frame"
+  },
+  "gfx-ringmod": {
+   "purpose": "Ring modulator with a free oscillator carrier (bells, robot voice, tremolo into clangour) or a phase-locked carrier that follows the played note.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "position_note": "Track carrier needs a clean single-note input; set bass_keep on bass",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "a ring-mod pedal sound feeding the amp, like the classic ring-mod solo use"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Free/Clean 121 ns; Track + lock 263 ns; Track + Diode + LFO + bass_keep 422 ns (over 300 ns budget)"
+  },
+  "gfx-bassdi": {
+   "purpose": "Bass preamp/DI: compressor before the dirt, clean and driven paths blended in phase, tuning-aware low corners, 4-band EQ, switchable speaker emulation.",
+   "roles": [
+    "bass",
+    "guitar"
+   ],
+   "position": "amp",
+   "position_note": "it is the bass amp/DI stage; set cab Off when an amp, a cab or an IR follows",
+   "pairs_well_with": [
+    {
+     "id": "cab",
+     "why": "With cab Off, golem's cab block / IR does the speaker instead of the built-in emulation"
+    },
+    {
+     "id": "ir-fx",
+     "why": "Into an IR: switch the built-in speaker emulation Off"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "self-stack",
+     "why": "One block replaces a two-branch bi-amp chain; a parallel branch outside it is not phase-coherent"
+    },
+    {
+     "id": "amp",
+     "why": "Before an amp, golem writes cab Off; leaving the cab on doubles the speaker colour"
+    }
+   ],
+   "cpu": "medium",
+   "cpu_note": "0.92-1.03 µs mono at defaults (8x oversampling); ~1.64 µs during a model crossfade"
+  },
+  "gfx-tape": {
+   "purpose": "Tape and lo-fi media machine: hysteresis saturation, wow and flutter, dropouts, hiss and tape stop for reel, cassette, VHS, vinyl and 78 colour.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "post-amp",
+   "position_note": "media colour after the amp/cab, before delay and reverb; also usable before an amp as soft tape drive",
+   "pairs_well_with": [
+    {
+     "id": "gfx-crusher",
+     "why": "chained for a 'sampled from a tape' lo-fi sound (both in the lofi category)"
+    },
+    {
+     "id": "gfx-delay",
+     "why": "tape here is the machine in series with no repeats; echoes come from the delay"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "amp-nam",
+     "why": "hiss or 78/vinyl surface noise before a high-gain amp gets magnified; keep noise in Follow or off"
+    }
+   ],
+   "cpu": "medium",
+   "cpu_note": "1.0 µs mono at defaults (bench line 1.4 on a loaded machine), 1.6 µs worst; real stereo input ≈ 2× mono"
+  },
+  "gfx-grit": {
+   "purpose": "Four-band multiband distortion: two antialiased dirt modules per band, level-matched, with Drive/Focus macros. Lo-fi crunch, band-split bass drive.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "pre-amp",
+   "position_note": "voice: after de-esser, before comp; drums/loops: after amp or cab; guitar: before a clean amp",
+   "pairs_well_with": [
+    {
+     "id": "gfx-deesser",
+     "why": "On voice, sits after the de-esser (catalogue order note)"
+    },
+    {
+     "id": "gfx-comp",
+     "why": "On voice, goes before the compressor (catalogue order note)"
+    },
+    {
+     "id": "amp",
+     "why": "Guitar: before the amp when the amp is clean; Chord Clarity keeps chords readable"
+    },
+    {
+     "id": "cab",
+     "why": "Drums and loops: placed after the amp or a cab"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "defaults 236 ns mono; Quality on 392 ns; worst (8 saturators, LR8, 4x) 1.36 us; stereo ~306 ns/frame",
+   "setup_only": [
+    "quality",
+    "slope"
+   ]
+  },
+  "gfx-dist": {
+   "purpose": "Circuit-simulated distortion pedals (op-amp dist, booster dist, clean-blend OD, MOSFET OD) solved as real circuits; swappable diodes and op-amps.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "before the amp (clean or pushed); first-stage pushes can stack into a second instance",
+   "pairs_well_with": [
+    {
+     "id": "amp",
+     "why": "Low-gain crunch into a clean amp, transparent push into a pushed amp (Applications)"
+    },
+    {
+     "id": "amp-nam",
+     "why": "Same into an amp capture; unlike pedal-nam it has every pot position and responds to guitar volume"
+    }
+   ],
+   "avoid": [],
+   "cpu": "heavy",
+   "cpu_note": "per circuit 3.1-4.1 us; 6.8 us on a loaded machine; a circuit switch doubles it for 30 ms; L!=R stereo doubles"
+  },
+  "gfx-transient": {
+   "purpose": "Threshold-free transient shaper: boosts or cuts attacks and sustain in dB, the same at any playing level, for picks, bass, drums and voice.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "drums"
+   ],
+   "position": "pre-amp",
+   "position_note": "before the amp/drive; after the amp only with source Key reading the clean DI",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "placed before the amp: an attack boost hits it harder, an attack cut smooths the pick into it"
+    },
+    {
+     "id": "gfx-comp",
+     "why": "put it before gfx-comp to keep attacks a compressor would dull"
+    },
+    {
+     "id": "gfx-deesser",
+     "why": "Consonants preset on voice: diction lift, with the de-esser after"
+    },
+    {
+     "id": "gfx-gate",
+     "why": "Chug Tight complements a gate on palm-muted metal rhythm"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "gfx-swell",
+     "why": "after gfx-swell is pointless: it already removed the attacks"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "≈ 80 ns shaping; 150 ns with ceiling Limit; 180 – 260 ns with Soft",
+   "setup_only": [
+    "lookahead"
+   ]
+  },
+  "gfx-mbcomp": {
+   "purpose": "3- or 4-band compressor with upward lift/expansion per band, a phase that never moves with gain, noise guard, Amount/Tilt face and auto gain.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "post-amp",
+   "position_note": "after amp and cab on guitar; on voice after the de-esser; before a limiter when pushed",
+   "pairs_well_with": [
+    {
+     "id": "gfx-deesser",
+     "why": "keep the de-esser before gfx-mbcomp on a voice: it does the 's', mbcomp the regions"
+    },
+    {
+     "id": "gfx-limiter",
+     "why": "put a limiter after gfx-mbcomp when the Hyper (OTT-style) setting is pushed"
+    },
+    {
+     "id": "gfx-bassdi",
+     "why": "after the bass preamp's compressor, mbcomp handles string-to-string balance"
+    },
+    {
+     "id": "cab",
+     "why": "Tight chug: after amp and cab, holds palm-mute boom while the top stays open"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "3-band LR4 0.37 – 0.48 µs; 4-band 0.48 – 0.50; LR8 0.50 – 0.52; Linear phase 0.52 – 0.6 µs",
+   "setup_only": [
+    "phase"
+   ]
+  },
+  "gfx-widener": {
+   "purpose": "Stereo widener and imager: turns a mono lane into a wide image (or narrows, mono-izes the lows, places a stereo source) with an exact mono fold.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "post-amp",
+   "position_note": "after the last mono block (amp, mono cab), before stereo delay / reverb",
+   "pairs_well_with": [
+    {
+     "id": "cab",
+     "why": "goes right after the amp / cab: the last mono block must come before the widener"
+    },
+    {
+     "id": "gfx-delay",
+     "why": "stereo delay after the widener sees a wide source; before it, the widener would widen the dry centre"
+    },
+    {
+     "id": "gfx-reverb",
+     "why": "reverb after it sees a wide source; the widener adds width without a room"
+    },
+    {
+     "id": "gfx-limiter",
+     "why": "a linked limiter downstream keeps the exact mono fold all the way to the PA"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "amp-nam",
+     "why": "a mono amp (or any mono block) after the widener sums the width back to the dry"
+    },
+    {
+     "id": "gfx-chorus",
+     "why": "overlap: use the chorus for moving thickening, the widener for static mono-safe width"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "62 ns per stereo frame at default (Velvet); Double mode ≈ 150 ns per stereo frame",
+   "setup_only": [
+    "listen"
+   ]
+  },
+  "gfx-ducker": {
+   "purpose": "Ducker: lowers a signal while a key plays (Follow), on key onsets (Trigger) or on the beat (Pump), full band or Bell/Low/High/Spectral.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys",
+    "drums"
+   ],
+   "position": "utility",
+   "position_note": "tail duck: after the effect on a wet-only branch; Pump: anywhere on pads/keys/clean chords",
+   "pairs_well_with": [
+    {
+     "id": "looper",
+     "why": "Self-ducks a looper's playback under live playing on a wet-only branch, keyed by the lane DI"
+    },
+    {
+     "id": "granular",
+     "why": "Tail duck for effects with no ducking of their own (granular, glitch, captures, third-party)"
+    },
+    {
+     "id": "gfx-glitch",
+     "why": "Tail duck on a wet-only branch after the glitch, keyed by the lane DI"
+    },
+    {
+     "id": "backing-track",
+     "why": "Singer or soloist ducks the backing (Spectral, stereo Mid) once service-bus slots exist"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Wide 38 ns, Bell 39-50 ns, Spectral 157-168 ns mono (174-187 stereo)",
+   "setup_only": [
+    "lookahead"
+   ]
+  },
+  "gfx-fuzz": {
+   "purpose": "Transistor fuzz circuits simulated with the guitar's pickup and volume knob in front: real cleanup, bias, temperature and battery sag.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "first after the input, on the raw DI; before the amp",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Accepted CPU for a pedal used once per lane in front of an amp model"
+    },
+    {
+     "id": "amp",
+     "why": "Fuzz goes in front of the amp; guitar_vol on EXP gives the clean channel"
+    }
+   ],
+   "avoid": [],
+   "cpu": "heavy",
+   "cpu_note": "Ge Pair 4.4 us, Si Four ~4.9 us; buffer on 5.3-5.7 us; 7.9 us loaded machine; model switch doubles for 30 ms",
+   "setup_only": [
+    "pickup",
+    "input"
+   ]
+  },
+  "gfx-tuner": {
+   "purpose": "Strobe-precision tuner with string-aware and strum (polyphonic) readings; bit-exact pass-through or muted while tuning, zero latency.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "one instance first in each instrument lane, inserted bypassed",
+   "pairs_well_with": [],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "30 ns engaged; 94 ns with eight poly tracks; 1.4 ns bypassed"
+  },
+  "gfx-cab": {
+   "purpose": "Zero-latency cabinet IR loader: one or two IRs blended with auto-align and polarity, cuts, bass keep and parallel DI; click-free IR swaps.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "post-amp",
+   "position_note": "after the amp or amp capture (amp-nam / preamp-nam / amp), before EQ, modulation and time effects",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "Supplies the speaker for an amp capture without a cab; zero latency, level-matched IRs"
+    },
+    {
+     "id": "gfx-bassdi",
+     "why": "Bass: bassdi then gfx-cab with bass_keep ~120 Hz; set bassdi's own cab Off"
+    },
+    {
+     "id": "gfx-eq",
+     "why": "Its cuts are the cab's own; a full EQ goes after it"
+    },
+    {
+     "id": "gfx-acoustic",
+     "why": "Acoustic body IR under the piezo with a parallel dry (Acoustic body preset)"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "200 ms cab 0.42% core; with IR B 0.79%; 2 s cab 0.80%; bench built-in 76 ns; block peaks 3.7-4.7x mean",
+   "setup_only": [
+    "align",
+    "normalize",
+    "min_phase",
+    "length",
+    "fade"
+   ]
+  },
+  "gfx-irfx": {
+   "purpose": "Stereo convolution effect for captured springs, echoes and reverb boxes: one IR up to 20 s, predelay, reverse, trim, width, trails, zero latency.",
+   "roles": [
+    "guitar",
+    "bass",
+    "keys",
+    "voice"
+   ],
+   "position": "time",
+   "position_note": "end of the lane on a stereo lane",
+   "pairs_well_with": [
+    {
+     "id": "cab",
+     "why": "same engine; cab handles the speaker, IR FX the captured spring or echo"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "4 s IR stereo 1.0-1.7 % of a core (≈0.2-0.35 µs per frame); 20 s 1.7 %; 40 ns with no IR",
+   "setup_only": [
+    "normalize",
+    "length",
+    "fade",
+    "reverse"
+   ]
+  },
+  "gfx-correct": {
+   "purpose": "Pitch correction for voice and mono instruments: snaps to key/scale while keeping or reshaping vibrato; low-latency live engine or formant-exact studio engine.",
+   "roles": [
+    "voice",
+    "guitar"
+   ],
+   "position": "input",
+   "position_note": "voice lane: after the de-esser, before the compressor (golem's voice order)",
+   "pairs_well_with": [
+    {
+     "id": "deesser",
+     "why": "golem's voice order puts the de-esser just before pitch correction"
+    },
+    {
+     "id": "comp",
+     "why": "The compressor follows pitch correction in golem's voice order"
+    },
+    {
+     "id": "gfx-formant",
+     "why": "Shares the psola engine; its spectral envelope restores formants for larger Live shifts (staged)"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Live mono; 0.064 µs stereo; Studio renders cost about the same",
+   "setup_only": [
+    "fastmode",
+    "register"
+   ]
+  },
+  "gfx-vocoder": {
+   "purpose": "Zero-latency channel vocoder: a voice or guitar shapes a carrier (its own pitch-tracking or song-key oscillators, noise, or itself); intelligible by design.",
+   "roles": [
+    "voice",
+    "guitar",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "position_note": "Talk Box on a guitar lane goes before the amp; on voice it needs no amp",
+   "pairs_well_with": [
+    {
+     "id": "amp",
+     "why": "Talk Box on the guitar lane before the amp: the guitar speaks, the amp after it"
+    },
+    {
+     "id": "amp-nam",
+     "why": "Same Talk Box placement before an amp capture"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "bench 594 ns mono; sung vowel 487 ns; Drone w/o noise bank 451 ns; 40 bands Supersaw stereo 1.13 us",
+   "setup_only": [
+    "bands",
+    "spacing",
+    "low",
+    "high",
+    "width"
+   ]
+  },
+  "gfx-acoustic": {
+   "purpose": "Turns an electric guitar DI (or an acoustic-electric's piezo) into a miked acoustic guitar: measured bodies, string decay, mic position, 12-string.",
+   "roles": [
+    "guitar"
+   ],
+   "position": "amp",
+   "position_note": "Takes the amp slot (category amp) on a clean DI; no cab after it; reverb and delay after.",
+   "pairs_well_with": [
+    {
+     "id": "gfx-reverb",
+     "why": "Its room is only the air around the mic; real space comes from a reverb block after it"
+    },
+    {
+     "id": "amp",
+     "why": "An acoustic amp after it is a stated real use, left without warning"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "cab",
+     "why": "It already models body and mic; golem-rack warns on a cab after it (stacked cab)"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "255-277 ns mono at defaults; + twelve 0.15-0.25 µs, + room 0.08 µs; worst 1.27 µs per stereo frame",
+   "setup_only": [
+    "pickup",
+    "pickup_pos"
+   ]
+  },
+  "gfx-radio": {
+   "purpose": "Small-speaker and transmission simulator (telephone, cell call, megaphone, walkie, AM radio, PA horn, intercom, pocket radio, gramophone, laptop).",
+   "roles": [
+    "voice",
+    "guitar",
+    "keys",
+    "drums"
+   ],
+   "position": "post-amp",
+   "position_note": "Voice: the lane's distortion box, before delay/reverb. Guitar: an intro or breakdown device, full mix 100%.",
+   "pairs_well_with": [
+    {
+     "id": "gfx-tape",
+     "why": "Shellac 78 before the Gramophone model (noise 0 here): record noise there, horn here"
+    },
+    {
+     "id": "gfx-cab",
+     "why": "Set speaker None and put a device IR in a cab after it for a specific phone or radio"
+    },
+    {
+     "id": "gfx-morph",
+     "why": "They chain: morph for the scream, radio for the through-a-walkie device"
+    },
+    {
+     "id": "gfx-grit",
+     "why": "Both lofi: grit seasons a band, radio is the whole device; voice lanes get both"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "Telephone default 568 ns; Pocket Radio 335, AM 860, PA Horn + AM 963 ns; ≈1.55 µs for 40 ms during a chain+room switch",
+   "setup_only": [
+    "mains"
+   ]
+  },
+  "gfx-stretch": {
+   "purpose": "Extreme spectral time stretcher: turns a captured or rolling phrase into a pad or minutes-long drone (x2 to x1024), with freeze, pitch, shift and spread.",
+   "roles": [
+    "voice",
+    "keys",
+    "guitar",
+    "bass"
+   ],
+   "position": "time",
+   "position_note": "end of the lane as an ambient bed; dry passes untouched, wet is seconds late by design",
+   "pairs_well_with": [
+    {
+     "id": "gfx-grains",
+     "why": "complementary: grains for short textured holds, stretch for long spectral drones"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "self-stack",
+     "why": "largest pedal of the suite (58-128 MB of buffers); designed to be used once per rig"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "bench 101 ns mono / 160-179 ns stereo at defaults; coherent mode ≈ 320 ns stereo; size change ×2 while it runs",
+   "setup_only": [
+    "mode",
+    "fft"
+   ]
+  },
+  "gfx-grains": {
+   "purpose": "Granular processor and granular delay: band-limited grain clouds, a loop-free hold of a chord, tempo-synced rhythmic grains, strum and phrase-slice modes.",
+   "roles": [
+    "guitar",
+    "bass",
+    "voice",
+    "keys"
+   ],
+   "position": "time",
+   "position_note": "near the end of the lane, before a reverb (it has no built-in reverb)",
+   "pairs_well_with": [
+    {
+     "id": "gfx-reverb",
+     "why": "no built-in reverb by design: the rack puts gfx-reverb after it"
+    },
+    {
+     "id": "gfx-crusher",
+     "why": "bit-crushing on grains is left to the rack's crusher and filters"
+    },
+    {
+     "id": "gfx-stretch",
+     "why": "complementary hold: short textured time-domain hold vs long spectral stretch"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "74-87 ns at defaults (stereo); 1.13-1.27 µs at 64 pitched grains + glide + feedback, 1.6 µs two layers"
+  },
+  "gfx-sustainer": {
+   "purpose": "Note sustainer and feedback generator: a held note blooms into its own phase-locked harmonic, or is held partial by partial without pumping or hiss.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "pre-amp",
+   "position_note": "before the drive/amp, which gives the squeal its grit; after the amp only with source Key (DI)",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "designed to sit before a drive or amp: the amp gives the feedback its grit"
+    },
+    {
+     "id": "gfx-reverb",
+     "why": "Infinite note preset: sustained note then reverb for ambient beds"
+    },
+    {
+     "id": "gfx-chorus",
+     "why": "on bass: held root under a chorus"
+    }
+   ],
+   "avoid": [],
+   "cpu": "light",
+   "cpu_note": "Feedback 0.21 µs; Sustain 0.47 – 0.51 µs; Both 0.52; chord All 0.84 µs (over budget)"
+  },
+  "gfx-polysynth": {
+   "purpose": "Polyphonic guitar synthesizer from a normal DI, no hex pickup or MIDI: each partial or note becomes a synth tone with filter, envelopes, sub and detune.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "clean DI, first in the lane, before any drive; neck pickup helps the tracked Mono voice",
+   "pairs_well_with": [],
+   "avoid": [
+    {
+     "id": "gfx-drive",
+     "why": "any drive before it: the filterbank needs clean partials"
+    },
+    {
+     "id": "gfx-fuzz",
+     "why": "fuzz before it smears partials into intermodulation (chord grumble)"
+    },
+    {
+     "id": "pedal-nam",
+     "why": "a captured drive pedal before it breaks the clean-partial requirement"
+    }
+   ],
+   "cpu": "medium",
+   "cpu_note": "1.49-1.62 µs on pink noise (worst, 7-8% core); strums 1.0-1.08, Mono + detune up to 1.4 µs"
+  },
+  "gfx-spectralcomp": {
+   "purpose": "Spectral compressor: evens each part of the spectrum downward and guarded-upward without broadband pumping; zero-latency Live or per-bin Studio mode, keyable.",
+   "roles": [
+    "voice",
+    "keys",
+    "guitar",
+    "bass"
+   ],
+   "position": "post-amp",
+   "position_note": "after gate and EQ (or amp/cab), before modulation, delay and reverb; Live mode on stage lanes",
+   "pairs_well_with": [
+    {
+     "id": "gfx-gate",
+     "why": "placed after a gate and EQ"
+    },
+    {
+     "id": "gfx-deesser",
+     "why": "vocal de-harsh preset handles harsh edges, the de-esser the sibilants themselves"
+    },
+    {
+     "id": "cab",
+     "why": "on a guitar lane, Live after the amp/cab keeps the amp's tone and evens it"
+    },
+    {
+     "id": "gfx-reverb",
+     "why": "sits before modulation, delay and reverb"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "Live (default) 0.55-0.63 µs mono, 1.0 µs stereo; Studio 0.28 µs mono",
+   "setup_only": [
+    "mode",
+    "window"
+   ]
+  },
+  "gfx-morph": {
+   "purpose": "Zero-latency live vocal mangler: multiband morphing dirt, a physical object (can, bucket, cone...), comp, filter, slap echo, with a feedback guard.",
+   "roles": [
+    "voice",
+    "guitar",
+    "drums",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "position_note": "Voice: after gate and pitch/formant blocks, before delay/reverb. Guitar: after drive, before amp, or after cab.",
+   "pairs_well_with": [
+    {
+     "id": "gfx-formant",
+     "why": "Change the voice first (e.g. growl an octave down), then mangle it here"
+    },
+    {
+     "id": "gfx-golem",
+     "why": "Pitch/voice change before it; this pedal changes what the voice is put through"
+    },
+    {
+     "id": "gfx-correct",
+     "why": "Pitch correction goes before it on a voice lane"
+    },
+    {
+     "id": "gfx-radio",
+     "why": "Chain them: morph for the scream, radio for a recognisable device"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "gfx-grit",
+     "why": "Not a substitute: grit stays the multiband dirt for guitar, bass, drums; no vocal guard or de-fizz"
+    }
+   ],
+   "cpu": "light",
+   "cpu_note": "392 ns raw at defaults on a loaded box (≈240 ns normalised); Three bands 1.03 µs; worst Three 4x Fuzz ×6 1.87 µs",
+   "setup_only": [
+    "split",
+    "quality",
+    "order",
+    "guard"
+   ]
+  },
+  "gfx-formant": {
+   "purpose": "Formant shifter: moves the spectral envelope without changing pitch (bigger/smaller voice, gender/age change, growl, breath, vowel filter on chords).",
+   "roles": [
+    "voice",
+    "guitar",
+    "bass",
+    "keys"
+   ],
+   "position": "pre-amp",
+   "position_note": "on a voice lane: after the de-esser and any gate, before the octave doubler (gfx-golem)",
+   "pairs_well_with": [
+    {
+     "id": "gfx-deesser",
+     "why": "goes before gfx-formant on a voice lane so shifted sibilants are already tamed"
+    },
+    {
+     "id": "gate",
+     "why": "any gate goes before gfx-formant on a voice lane"
+    },
+    {
+     "id": "gfx-golem",
+     "why": "placed after gfx-formant when both are used on a voice"
+    }
+   ],
+   "avoid": [],
+   "cpu": "medium",
+   "cpu_note": "766 ns mono / 926 ns stereo (Live), to be re-timed; estimate ≈ 3.5 % of a core with breath, more in Grain",
+   "setup_only": [
+    "engine",
+    "register",
+    "lookahead"
+   ]
+  }
+ },
+ "rules": [
+  {
+   "id": "presets-by-id",
+   "text": "Choose each block's factory preset by id (<type>/<id>) from descriptors.json; never write or tweak parameter values.",
+   "applies_to": [
+    "gfx-boost",
+    "gfx-gate",
+    "gfx-comp",
+    "gfx-limiter",
+    "gfx-eq",
+    "gfx-deesser",
+    "gfx-wah",
+    "gfx-autowah",
+    "gfx-tremolo",
+    "gfx-vibrato",
+    "gfx-chorus",
+    "gfx-flanger",
+    "gfx-phaser",
+    "gfx-rotary",
+    "gfx-drive",
+    "gfx-delay",
+    "gfx-reverb",
+    "gfx-shimmer",
+    "gfx-killswitch",
+    "gfx-octaver",
+    "gfx-pitch",
+    "gfx-pitch-classic",
+    "gfx-detune",
+    "gfx-met",
+    "gfx-emet",
+    "gfx-shem",
+    "gfx-golem",
+    "gfx-glitch",
+    "gfx-geq",
+    "gfx-freqshift",
+    "gfx-swell",
+    "gfx-crusher",
+    "gfx-ringmod",
+    "gfx-bassdi",
+    "gfx-tape",
+    "gfx-grit",
+    "gfx-dist",
+    "gfx-transient",
+    "gfx-mbcomp",
+    "gfx-widener",
+    "gfx-ducker",
+    "gfx-fuzz",
+    "gfx-tuner",
+    "gfx-cab",
+    "gfx-irfx",
+    "gfx-correct",
+    "gfx-vocoder",
+    "gfx-acoustic",
+    "gfx-radio",
+    "gfx-stretch",
+    "gfx-grains",
+    "gfx-sustainer",
+    "gfx-polysynth",
+    "gfx-spectralcomp",
+    "gfx-morph",
+    "gfx-formant"
+   ]
+  },
+  {
+   "id": "level-matched-presets",
+   "text": "A preset's level_db is already matched to bypass; never add a volume or boost block, or pick a louder preset, to compensate.",
+   "applies_to": [
+    "gfx-boost",
+    "gfx-gate",
+    "gfx-comp",
+    "gfx-limiter",
+    "gfx-eq",
+    "gfx-deesser",
+    "gfx-wah",
+    "gfx-autowah",
+    "gfx-tremolo",
+    "gfx-vibrato",
+    "gfx-chorus",
+    "gfx-flanger",
+    "gfx-phaser",
+    "gfx-rotary",
+    "gfx-drive",
+    "gfx-delay",
+    "gfx-reverb",
+    "gfx-shimmer",
+    "gfx-killswitch",
+    "gfx-octaver",
+    "gfx-pitch",
+    "gfx-pitch-classic",
+    "gfx-detune",
+    "gfx-met",
+    "gfx-emet",
+    "gfx-shem",
+    "gfx-golem",
+    "gfx-glitch",
+    "gfx-geq",
+    "gfx-freqshift",
+    "gfx-swell",
+    "gfx-crusher",
+    "gfx-ringmod",
+    "gfx-bassdi",
+    "gfx-tape",
+    "gfx-grit",
+    "gfx-dist",
+    "gfx-transient",
+    "gfx-mbcomp",
+    "gfx-widener",
+    "gfx-ducker",
+    "gfx-fuzz",
+    "gfx-tuner",
+    "gfx-cab",
+    "gfx-irfx",
+    "gfx-correct",
+    "gfx-vocoder",
+    "gfx-acoustic",
+    "gfx-radio",
+    "gfx-stretch",
+    "gfx-grains",
+    "gfx-sustainer",
+    "gfx-polysynth",
+    "gfx-spectralcomp",
+    "gfx-morph",
+    "gfx-formant"
+   ]
+  },
+  {
+   "id": "setup-only-not-in-scenes",
+   "text": "Parameters listed in setup_only change latency or are set once at insert: never put them in scenes or on an expression pedal; keep one preset family per song.",
+   "applies_to": [
+    "gfx-limiter",
+    "gfx-deesser",
+    "gfx-flanger",
+    "gfx-reverb",
+    "gfx-pitch",
+    "gfx-pitch-classic",
+    "gfx-met",
+    "gfx-golem",
+    "gfx-glitch",
+    "gfx-swell",
+    "gfx-grit",
+    "gfx-transient",
+    "gfx-mbcomp",
+    "gfx-widener",
+    "gfx-ducker",
+    "gfx-fuzz",
+    "gfx-cab",
+    "gfx-irfx",
+    "gfx-correct",
+    "gfx-vocoder",
+    "gfx-acoustic",
+    "gfx-radio",
+    "gfx-stretch",
+    "gfx-spectralcomp",
+    "gfx-morph",
+    "gfx-formant"
+   ]
+  },
+  {
+   "id": "high-gain-front",
+   "text": "On a high-gain lane the intended front is gfx-met (keyed from the lane DI), then gfx-shem (or gfx-emet), then the amp.",
+   "applies_to": [
+    "gfx-met",
+    "gfx-shem",
+    "gfx-emet",
+    "amp-nam",
+    "amp"
+   ]
+  },
+  {
+   "id": "met-key-from-di",
+   "text": "gfx-met detects on its key bus fed by the lane's clean DI, so its threshold holds whatever gain follows. A gate after the amp should also key from the DI.",
+   "applies_to": [
+    "gfx-met",
+    "gfx-gate"
+   ]
+  },
+  {
+   "id": "shem-needs-gain-amp",
+   "text": "gfx-shem does not clip and can exceed 0 dBFS: it belongs in front of an amp that has gain, never at the end of a lane.",
+   "applies_to": [
+    "gfx-shem",
+    "amp-nam",
+    "amp"
+   ]
+  },
+  {
+   "id": "one-circuit-sim-per-lane",
+   "text": "No more than one circuit-simulation pedal (gfx-fuzz, gfx-dist) per lane: each costs about 4-5 µs per sample, a fifth of a core; keep them on mono lanes.",
+   "applies_to": [
+    "gfx-fuzz",
+    "gfx-dist"
+   ]
+  },
+  {
+   "id": "fuzz-first-on-di",
+   "text": "gfx-fuzz models the guitar's pickup from the raw DI: put it first, before any buffer or drive, then the amp.",
+   "applies_to": [
+    "gfx-fuzz",
+    "amp-nam",
+    "amp"
+   ]
+  },
+  {
+   "id": "voice-first-pedals",
+   "text": "gfx-golem, gfx-correct, gfx-formant and gfx-morph are voice-first: offer them on voice lanes first; correct also suits guitar, formant and morph other lanes as effects.",
+   "applies_to": [
+    "gfx-golem",
+    "gfx-correct",
+    "gfx-formant",
+    "gfx-morph"
+   ]
+  },
+  {
+   "id": "voice-lane-order",
+   "text": "Voice lane, golem's order: gate, gfx-deesser, gfx-correct, compression, EQ. gfx-morph comes after the pitch and formant blocks, before delay and reverb.",
+   "applies_to": [
+    "gate",
+    "gfx-gate",
+    "gfx-deesser",
+    "gfx-correct",
+    "gfx-formant",
+    "gfx-golem",
+    "gfx-morph",
+    "gfx-comp"
+   ]
+  },
+  {
+   "id": "deesser-gate-before-formant",
+   "text": "On a voice lane, gfx-deesser and any gate go before gfx-formant (and before gfx-golem).",
+   "applies_to": [
+    "gfx-deesser",
+    "gate",
+    "gfx-gate",
+    "gfx-formant",
+    "gfx-golem"
+   ]
+  },
+  {
+   "id": "vocal-double-use-golem",
+   "text": "For vocal doubles and octaves use gfx-golem; gfx-pitch is the instrument shifter (dives, harmonies, polyphonic capo).",
+   "applies_to": [
+    "gfx-golem",
+    "gfx-pitch"
+   ]
+  },
+  {
+   "id": "lofi-voice-intents",
+   "text": "Scream, megaphone, robot or in-a-can voice: gfx-morph. Phone, radio, walkie or electronic megaphone: gfx-radio. gfx-grit is the generic lo-fi crunch.",
+   "applies_to": [
+    "gfx-morph",
+    "gfx-radio",
+    "gfx-grit"
+   ]
+  },
+  {
+   "id": "cab-after-amp-capture",
+   "text": "An amp or amp capture without its own speaker needs gfx-cab right after it, before EQ, modulation and time effects.",
+   "applies_to": [
+    "gfx-cab",
+    "cab",
+    "amp-nam",
+    "preamp-nam"
+   ]
+  },
+  {
+   "id": "bassdi-cab-off",
+   "text": "When an amp, a cab or an IR follows gfx-bassdi, pick a gfx-bassdi preset with its own speaker emulation off.",
+   "applies_to": [
+    "gfx-bassdi",
+    "gfx-cab",
+    "cab",
+    "ir-fx",
+    "amp"
+   ]
+  },
+  {
+   "id": "acoustic-no-cab",
+   "text": "gfx-acoustic already models body and microphone: no cab after it (an acoustic amp is fine). It wants a clean DI.",
+   "applies_to": [
+    "gfx-acoustic",
+    "cab",
+    "gfx-cab"
+   ]
+  },
+  {
+   "id": "widener-after-last-mono",
+   "text": "Put gfx-widener after the last mono block (amp, mono cab) and before stereo delay and reverb; a mono block after it folds the width away.",
+   "applies_to": [
+    "gfx-widener",
+    "amp-nam",
+    "cab",
+    "gfx-delay",
+    "gfx-reverb"
+   ]
+  },
+  {
+   "id": "widener-mono-safe",
+   "text": "After gfx-widener keep processing linked on L and R (linked limiter or compressor, no per-side amp or saturation) so its exact mono fold survives.",
+   "applies_to": [
+    "gfx-widener",
+    "gfx-limiter",
+    "limiter"
+   ]
+  },
+  {
+   "id": "ducker-key-routing",
+   "text": "gfx-ducker and gfx-spectralcomp key from the lane's own DI today; keys from another lane or a backing bus wait for golem's key routing.",
+   "applies_to": [
+    "gfx-ducker",
+    "gfx-spectralcomp",
+    "backing-track"
+   ]
+  },
+  {
+   "id": "vocoder-key-carriers",
+   "text": "gfx-vocoder's key-input and talk-box carriers need a key from another lane; until then pick tracked, drone, noise or self-carrier presets.",
+   "applies_to": [
+    "gfx-vocoder"
+   ]
+  },
+  {
+   "id": "chorus-after-drive",
+   "text": "Modulation such as chorus goes after the amp and cab; before a high-gain stage it turns to mush.",
+   "applies_to": [
+    "gfx-chorus",
+    "gfx-drive",
+    "amp-nam"
+   ]
+  },
+  {
+   "id": "octave-up-before-fuzz",
+   "text": "An octave-up octaver goes before a fuzz.",
+   "applies_to": [
+    "gfx-octaver",
+    "gfx-fuzz",
+    "fuzz"
+   ]
+  },
+  {
+   "id": "synth-and-sustainer-before-drive",
+   "text": "gfx-polysynth and gfx-sustainer go before any drive or amp: they need the clean partials of the DI.",
+   "applies_to": [
+    "gfx-polysynth",
+    "gfx-sustainer",
+    "gfx-drive",
+    "gfx-fuzz",
+    "gfx-dist",
+    "amp-nam"
+   ]
+  },
+  {
+   "id": "rotary-not-on-organ",
+   "text": "golem's organ has its own rotating speaker: do not add gfx-rotary after it.",
+   "applies_to": [
+    "gfx-rotary",
+    "organ"
+   ]
+  },
+  {
+   "id": "freqshift-stereo",
+   "text": "gfx-freqshift is stereo-first: before an amp it turns the rest of the lane stereo; for clang before the amp use gfx-ringmod.",
+   "applies_to": [
+    "gfx-freqshift",
+    "gfx-ringmod"
+   ]
+  },
+  {
+   "id": "transient-vs-swell",
+   "text": "To soften, harden or shorten attacks use gfx-transient (before gfx-comp); to remove attacks (bowed swells, pads) use gfx-swell, before delay and reverb.",
+   "applies_to": [
+    "gfx-transient",
+    "gfx-swell",
+    "gfx-comp"
+   ]
+  },
+  {
+   "id": "studio-latency-not-live",
+   "text": "Latent modes (gfx-spectralcomp Studio, gfx-mbcomp linear phase, gfx-correct studio) are for non-live lanes; live lanes keep zero-latency presets.",
+   "applies_to": [
+    "gfx-spectralcomp",
+    "gfx-mbcomp",
+    "gfx-correct"
+   ]
+  },
+  {
+   "id": "trails-by-bypass-param",
+   "text": "Delay, reverb, shimmer, glitch and IR FX switch through their bypass parameter, so tails ring out across scenes.",
+   "applies_to": [
+    "gfx-delay",
+    "gfx-reverb",
+    "gfx-shimmer",
+    "gfx-glitch",
+    "gfx-irfx"
+   ]
+  },
+  {
+   "id": "tuner-first",
+   "text": "One gfx-tuner first in each instrument lane.",
+   "applies_to": [
+    "gfx-tuner"
+   ]
+  },
+  {
+   "id": "limiter-last",
+   "text": "gfx-limiter is the end-of-lane safety: last on the route; put it after gfx-mbcomp when that one pushes hard.",
+   "applies_to": [
+    "gfx-limiter",
+    "gfx-mbcomp"
+   ]
+  },
+  {
+   "id": "reverb-after-texture",
+   "text": "gfx-grains and gfx-glitch have no room of their own: put gfx-reverb after them for clouds and pads.",
+   "applies_to": [
+    "gfx-grains",
+    "gfx-glitch",
+    "gfx-reverb"
+   ]
+  },
+  {
+   "id": "old-record-chain",
+   "text": "For an old-record sound, gfx-tape's 78 model goes before gfx-radio's gramophone model.",
+   "applies_to": [
+    "gfx-tape",
+    "gfx-radio"
+   ]
+  }
+ ]
+}

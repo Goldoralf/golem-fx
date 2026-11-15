@@ -16,8 +16,14 @@ Every rule golem relies on is checked; the build fails on any violation:
   - ids and names are the plugin's; enum labels match the option count;
   - a group's `custom` is a bool parameter of that group; every `depends` names a real parameter.
 
-    python3 visuals/tools/build-descriptors.py            # writes data/descriptors.json
-    python3 visuals/tools/build-descriptors.py --check    # verifies the committed file is current
+It also writes visuals/data/ai-guide.json, golem.fm's patch-AI selection guide: each pedal's blocks and
+preset count from the descriptors, plus the hand-curated data/ai.json (purpose, roles, position, pairs,
+avoid, CPU, setup-only parameters, chain rules). The build fails if a bundled pedal has no ai.json entry,
+if ai.json names an unknown crate, or if any id it cites is not a crate, a block type or (setup_only)
+a parameter of that crate: a new pedal cannot ship without its guide entry.
+
+    python3 visuals/tools/build-descriptors.py            # writes data/descriptors.json and data/ai-guide.json
+    python3 visuals/tools/build-descriptors.py --check    # verifies both committed files are current
     python3 visuals/tools/build-descriptors.py --manifest # regenerates the manifest first (cargo)
 """
 import json
@@ -442,6 +448,125 @@ def render(desc: dict) -> str:
     return json.dumps(head, ensure_ascii=False, indent=1) + "\n"
 
 
+# ---------- hand: data/ai.json -> data/ai-guide.json ----------
+
+AI_GUIDE_VERSION = 1
+AI_ROLES = ("guitar", "bass", "voice", "keys", "drums")
+AI_POSITIONS = ("input", "pre-amp", "amp", "post-amp", "time", "master", "utility")
+AI_CPU = ("light", "medium", "heavy")
+AI_FIELDS = {"purpose", "roles", "position", "position_note", "pairs_well_with", "avoid", "cpu", "cpu_note", "setup_only"}
+KEBAB = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+
+def bundled_crates() -> list:
+    """The crates bundler.toml ships, in its order."""
+    return re.findall(r"^\[(gfx-[a-z0-9-]+)\]", (ROOT / "bundler.toml").read_text(), re.M)
+
+
+def build_ai(desc: dict) -> tuple:
+    """ai-guide.json from data/ai.json and the descriptors; returns (guide, errors)."""
+    src = json.loads((DATA / "ai.json").read_text())
+    errors = []
+    excluded = src.get("excluded", {})
+    pedals_src = src.get("pedals", {})
+    bundled = bundled_crates()
+    blocks = {b for d in desc.values() for b in d["blocks"]}
+    blocks |= {e["type"] for e in json.loads((DATA / "golem-blocks.json").read_text())["effects"]}
+    known = set(desc) | blocks
+
+    def text(where, value, limit):
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"ai.json: {where} must be a non-empty string")
+        elif len(value) > limit:
+            errors.append(f"ai.json: {where} is {len(value)} chars, the limit is {limit}")
+
+    for crate in bundled:
+        if crate not in pedals_src and crate not in excluded:
+            errors.append(f"ai.json: bundled pedal {crate} has no entry (add one to visuals/data/ai.json)")
+    for crate in list(pedals_src) + list(excluded):
+        if crate not in bundled or crate not in desc:
+            errors.append(f"ai.json: {crate} is not a bundled pedal crate with a descriptor")
+    for crate in set(pedals_src) & set(excluded):
+        errors.append(f"ai.json: {crate} is both a pedal and excluded")
+
+    pedals = {}
+    for crate, e in pedals_src.items():
+        if crate not in desc:
+            continue
+        w = crate
+        for k in set(e) - AI_FIELDS:
+            errors.append(f"ai.json: {w} has unknown field {k}")
+        text(f"{w}.purpose", e.get("purpose"), 160)
+        roles = e.get("roles")
+        if not roles or not isinstance(roles, list) or any(r not in AI_ROLES for r in roles) or len(set(roles)) != len(roles):
+            errors.append(f"ai.json: {w}.roles must be a non-empty subset of {list(AI_ROLES)}, got {roles}")
+        if e.get("position") not in AI_POSITIONS:
+            errors.append(f"ai.json: {w}.position must be one of {list(AI_POSITIONS)}, got {e.get('position')!r}")
+        if "position_note" in e:
+            text(f"{w}.position_note", e["position_note"], 120)
+        if e.get("cpu") not in AI_CPU:
+            errors.append(f"ai.json: {w}.cpu must be one of {list(AI_CPU)}, got {e.get('cpu')!r}")
+        if "cpu_note" in e:
+            text(f"{w}.cpu_note", e["cpu_note"], 120)
+        for field, extra in (("pairs_well_with", set()), ("avoid", {"self-stack"})):
+            items = e.get(field)
+            if not isinstance(items, list):
+                errors.append(f"ai.json: {w}.{field} must be a list")
+                continue
+            for n, it in enumerate(items):
+                if it.get("id") not in known | extra or it.get("id") == crate:
+                    errors.append(f"ai.json: {w}.{field}[{n}].id {it.get('id')!r} is not a crate or block type"
+                                  + (" (use self-stack)" if it.get("id") == crate else ""))
+                text(f"{w}.{field}[{n}].why", it.get("why"), 100)
+                if set(it) - {"id", "why"}:
+                    errors.append(f"ai.json: {w}.{field}[{n}] has unknown fields {sorted(set(it) - {'id', 'why'})}")
+        so = e.get("setup_only")
+        if so is not None:
+            if not isinstance(so, list) or not so:
+                errors.append(f"ai.json: {w}.setup_only must be a non-empty list of parameter ids")
+            else:
+                for i in so:
+                    if i not in desc[crate]["params"]:
+                        errors.append(f"ai.json: {w}.setup_only names {i!r}, not a parameter of {crate}")
+        out = {"crate": crate, "name": desc[crate]["name"], "blocks": desc[crate]["blocks"]}
+        for k in ("purpose", "roles", "position", "position_note", "pairs_well_with", "avoid", "cpu", "cpu_note", "setup_only"):
+            if k in e:
+                out[k] = e[k]
+        out["presets"] = len(desc[crate]["presets"])
+        pedals[crate] = out
+
+    ids = set()
+    for n, r in enumerate(src.get("rules", [])):
+        rid = r.get("id")
+        if not isinstance(rid, str) or not KEBAB.match(rid):
+            errors.append(f"ai.json: rules[{n}].id {rid!r} must be kebab-case")
+        elif rid in ids:
+            errors.append(f"ai.json: rule {rid} is defined twice")
+        ids.add(rid)
+        text(f"rule {rid}.text", r.get("text"), 200)
+        at = r.get("applies_to")
+        if not isinstance(at, list) or not at:
+            errors.append(f"ai.json: rule {rid}.applies_to must be a non-empty list")
+        else:
+            for i in at:
+                if i not in known:
+                    errors.append(f"ai.json: rule {rid}.applies_to names {i!r}, not a crate or block type")
+        if set(r) - {"id", "text", "applies_to"}:
+            errors.append(f"ai.json: rule {rid} has unknown fields {sorted(set(r) - {'id', 'text', 'applies_to'})}")
+    if not ids:
+        errors.append("ai.json: no rules")
+
+    guide = {
+        "_comment": "Generated by visuals/tools/build-descriptors.py from visuals/data/ai.json (hand-curated from each "
+                    "crate's README) and descriptors.json. golem.fm's patch AI reads it with descriptors.json to choose "
+                    "blocks and presets; copy it with the sync tool at a commit. Do not edit.",
+        "version": AI_GUIDE_VERSION,
+        "pedals": pedals,
+        "rules": [{"id": r["id"], "text": r["text"], "applies_to": r["applies_to"]} for r in src.get("rules", [])],
+    }
+    return guide, errors
+
+
 def validate_file(path):
     """Checks one presets/<crate>.json against the crate's code; prints the errors."""
     bd = _load_build_data()
@@ -473,21 +598,28 @@ def main(argv):
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
-    text = render(desc)
-    target = DATA / "descriptors.json"
+    guide, errors = build_ai(desc)
+    if errors:
+        print("\n".join(errors), file=sys.stderr)
+        return 1
+    outputs = {DATA / "descriptors.json": render(desc),
+               DATA / "ai-guide.json": json.dumps(guide, ensure_ascii=False, indent=1) + "\n"}
     if "--check" in argv:
-        if not target.exists() or target.read_text() != text:
-            print("descriptors.json is out of date: run visuals/tools/build-descriptors.py", file=sys.stderr)
+        stale = [t.name for t, text in outputs.items() if not t.exists() or t.read_text() != text]
+        if stale:
+            print(f"{', '.join(stale)} out of date: run visuals/tools/build-descriptors.py", file=sys.stderr)
             return 1
-        print("descriptors.json is current")
+        print("descriptors.json and ai-guide.json are current")
         return 0
-    target.write_text(text)
+    for target, text in outputs.items():
+        target.write_text(text)
     n = sum(len(d["params"]) for d in desc.values())
     nohelp = [f"{c}.{i}" for c, d in desc.items() for i, p in d["params"].items() if not p["help"]]
     print(f"{len(desc)} pedals, {n} parameters, {sum(len(d['groups']) for d in desc.values())} groups; "
           f"{sum(len(d['presets']) for d in desc.values())} presets; {len(nohelp)} without help")
     if nohelp:
         print("  no help: " + ", ".join(nohelp))
+    print(f"ai-guide.json: {len(guide['pedals'])} pedals, {len(guide['rules'])} rules")
     return 0
 
 
