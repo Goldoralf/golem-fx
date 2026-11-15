@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -71,6 +71,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-correct" | "correct" => Some(Box::new(gfx_correct::Correct::new())),
         "gfx-vocoder" | "vocoder" => Some(Box::new(gfx_vocoder::Vocoder::new())),
         "gfx-acoustic" | "acoustic" => Some(Box::new(gfx_acoustic::Acoustic::new())),
+        "gfx-radio" | "radio" => Some(Box::new(gfx_radio::Radio::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -257,6 +258,7 @@ pub fn options(name: &str) -> checks::Options {
         o.skip_latency = true;
         // a module change at high Amount creates real high-frequency content (README §5, gfx-crusher's
         // bound)
+        o.click_bound_db = -30.0;
     }
     if matches!(name, "gfx-dist" | "dist") {
         // 8× / 16× minimum-phase oversampling: a few samples of group delay, no delay line, not
@@ -303,6 +305,19 @@ pub fn options(name: &str) -> checks::Options {
         o.skip_latency = true;
         // 2 / 2 is the two-microphone pair: at the default `width` 40 % the channels hear two mic
         // positions (README §2.9); `width` 0 is L = R = the 1 / 1 output, checked by its own test
+        o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-radio" | "radio") {
+        // the half-bands and the IIR filters' minimum phase: group delay, no delay line, not reported
+        // (README §5, the gfx-drive precedent)
+        o.skip_latency = true;
+        // key-up clicks, squelch tails, PLC repeats and crackles are content (README §5, gfx-crusher's
+        // precedent); the behaviour tests check the transitions themselves
+        o.click_bound_db = -30.0;
+        // Hall's 2.2 s tail is about −82 dB three seconds after the burst; the channel noise has
+        // stopped by then (README §5)
+        o.silence_floor_db = -70.0;
+        // 2 / 2 runs the room's two decorrelated outputs (README §2.9): L ≠ R on equal inputs
         o.stereo_by_nature = true;
     }
     if matches!(name, "gfx-drive" | "drive") {

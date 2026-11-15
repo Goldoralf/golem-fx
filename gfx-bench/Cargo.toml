@@ -58,3 +58,4 @@ gfx-cab = { path = "../gfx-cab", default-features = false }
 gfx-correct = { path = "../gfx-correct", default-features = false }
 gfx-vocoder = { path = "../gfx-vocoder", default-features = false }
 gfx-acoustic = { path = "../gfx-acoustic", default-features = false }
+gfx-radio = { path = "../gfx-radio", default-features = false }

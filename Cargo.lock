@@ -336,6 +336,7 @@ dependencies = [
  "gfx-phaser",
  "gfx-pitch",
  "gfx-pitch-classic",
+ "gfx-radio",
  "gfx-reverb",
  "gfx-ringmod",
  "gfx-rotary",
@@ -628,6 +629,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-radio"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

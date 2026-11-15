@@ -819,6 +819,23 @@
    ],
    "category": "amp",
    "color": "#552210"
+  },
+  "gfx-radio": {
+   "name": "Radio",
+   "blocks": [
+    "radio"
+   ],
+   "knobs": [
+    "drive",
+    "noise",
+    "distance",
+    "tune"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "category": "lofi",
+   "color": "#4b5320"
   }
  }
 }

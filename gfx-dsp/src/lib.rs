@@ -11,10 +11,12 @@
 #![allow(clippy::should_implement_trait, clippy::needless_range_loop)]
 
 pub mod adaa;
+pub mod baseband;
 pub mod bbd;
 pub mod blep;
 pub mod circuit;
 pub mod circuit_nl;
+pub mod codec;
 pub mod converter;
 pub mod convolve;
 pub mod cuts;
@@ -49,6 +51,7 @@ pub mod psola;
 pub mod reverb;
 pub mod sidechain;
 pub mod smooth;
+pub mod speaker;
 pub mod ssb;
 pub mod stereo;
 pub mod svf;
