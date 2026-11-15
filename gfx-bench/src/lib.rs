@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-ringmod"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -53,6 +53,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-glitch" | "glitch" => Some(Box::new(gfx_glitch::Glitch::new())),
         "gfx-geq" | "geq" => Some(Box::new(gfx_geq::Geq::new())),
         "gfx-freqshift" | "freqshift" => Some(Box::new(gfx_freqshift::FreqShift::new())),
+        "gfx-ringmod" | "ringmod" => Some(Box::new(gfx_ringmod::RingMod::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -125,6 +126,16 @@ pub fn options(name: &str) -> checks::Options {
         // silence floor is exempt there): its fastest loop modes are the high ones, a burst of
         // −10 dB above 10 kHz at 192 kHz while the runaway starts. That onset is the effect, not a click
         o.step_exempt = vec![("fbk", 110.0)];
+    }
+    if matches!(name, "gfx-ringmod" | "ringmod") {
+        // a ring modulator's wet does not correlate with its input; the minimum-phase oversamplers add a
+        // few samples of group delay to wet and dry alike, not reported (README §2, the gfx-drive
+        // precedent)
+        o.skip_latency = true;
+        // `freq` or `pitch` from end to end moves the carrier 10 octaves (16 kHz ↔ 0, 14 kHz ↔ 14 Hz)
+        // through its 20 ms log smoothing: the products sweep through the band, a chirp, not a click
+        // (−45 dB above 10 kHz at 44.1 kHz)
+        o.click_bound_db = -40.0;
     }
     if matches!(name, "gfx-reverb" | "reverb") {
         // a 1.3 s tail is still at −138 dBFS three seconds after the burst: its own decay, not a residue

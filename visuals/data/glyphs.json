@@ -164,7 +164,7 @@
   "ringmod": {
    "label": "Ring modulator",
    "uni": "⊛",
-   "svg": "<circle cx='12' cy='12' r='9'/><path d='M7 9l10 6M7 15l10-6M12 6v12'/>"
+   "svg": "<circle cx='12' cy='12' r='9'/><path d='M5.5 12L8 10L10.5 15L13.5 8.5L16 14L18.5 12'/>"
   },
   "granular": {
    "label": "Granular freeze",

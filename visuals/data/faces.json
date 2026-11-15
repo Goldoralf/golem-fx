@@ -491,6 +491,24 @@
     "loop"
    ],
    "category": "pitch"
+  },
+  "gfx-ringmod": {
+   "name": "Ring",
+   "blocks": [
+    "ringmod",
+    "surge-treemonster"
+   ],
+   "knobs": [
+    "freq",
+    "pitch",
+    "ring",
+    "mix"
+   ],
+   "selectors": [
+    "carrier"
+   ],
+   "category": "modulation",
+   "color": "#c9b000"
   }
  }
 }

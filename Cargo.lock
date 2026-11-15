@@ -259,6 +259,7 @@ dependencies = [
  "gfx-pitch",
  "gfx-pitch-classic",
  "gfx-reverb",
+ "gfx-ringmod",
  "gfx-rotary",
  "gfx-shem",
  "gfx-shimmer",
@@ -462,6 +463,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-reverb"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-ringmod"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

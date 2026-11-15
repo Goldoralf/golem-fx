@@ -93,6 +93,110 @@ impl HalfSample {
 }
 
 
+/// A memoryless function with a closed-form antiderivative, for [`Adaa1Fn`] (shapers whose parameters
+/// move: both antiderivatives are taken with the current parameters, so a change never spikes).
+pub trait Antiderivative {
+    fn f(&self, x: f64) -> f64;
+    fn antiderivative(&self, x: f64) -> f64;
+}
+
+/// ADAA1 for any [`Antiderivative`]: y = (F(x) − F(x₁)) / (x − x₁), the midpoint value when the step
+/// is tiny. Half a sample of delay, as [`Adaa1`].
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Adaa1Fn {
+    x1: f64,
+}
+
+impl Adaa1Fn {
+    pub fn reset(&mut self) {
+        self.x1 = 0.0;
+    }
+
+    #[inline]
+    pub fn process<G: Antiderivative>(&mut self, g: &G, x: f64) -> f64 {
+        let d = x - self.x1;
+        let y = if d.abs() < 1e-5 * (1.0 + x.abs()) { g.f(0.5 * (x + self.x1)) } else { (g.antiderivative(x) - g.antiderivative(self.x1)) / d };
+        self.x1 = x;
+        y
+    }
+}
+
+/// The residual of a driven tanh, tanh(k x) / k − x: added to x, it gives the saturated signal while x
+/// itself passes straight (no ADAA roll-off on the linear path; gfx-ringmod `drive`).
+#[derive(Clone, Copy, Debug)]
+pub struct TanhResidual {
+    pub k: f64,
+}
+
+impl Antiderivative for TanhResidual {
+    #[inline]
+    fn f(&self, x: f64) -> f64 {
+        (self.k * x).tanh() / self.k - x
+    }
+    #[inline]
+    fn antiderivative(&self, x: f64) -> f64 {
+        ln_cosh(self.k * x) / (self.k * self.k) - 0.5 * x * x
+    }
+}
+
+/// Parker's diode law (*A simple digital model of the diode-based ring-modulator*, DAFx 2011): 0 below
+/// `vb`, a quadratic knee h (v − vb)² / (2 vl − 2 vb) up to `vl`, slope h above. C¹.
+#[derive(Clone, Copy, Debug)]
+pub struct ParkerDiode {
+    pub vb: f64,
+    pub vl: f64,
+    pub h: f64,
+}
+
+impl ParkerDiode {
+    pub const fn new(vb: f64, vl: f64, h: f64) -> Self {
+        Self { vb, vl, h }
+    }
+
+    #[inline]
+    pub fn d(&self, v: f64) -> f64 {
+        if v <= self.vb {
+            0.0
+        } else if v <= self.vl {
+            self.h * (v - self.vb).powi(2) / (2.0 * (self.vl - self.vb))
+        } else {
+            self.h * (v - self.vl) + 0.5 * self.h * (self.vl - self.vb)
+        }
+    }
+
+    /// The integral of D from 0 to v: a piecewise cubic / quadratic, continuous.
+    #[inline]
+    pub fn integral(&self, v: f64) -> f64 {
+        let w = self.vl - self.vb;
+        if v <= self.vb {
+            0.0
+        } else if v <= self.vl {
+            self.h * (v - self.vb).powi(3) / (6.0 * w)
+        } else {
+            let u = v - self.vl;
+            0.5 * self.h * u * u + 0.5 * self.h * w * u + self.h * w * w / 6.0
+        }
+    }
+}
+
+/// One branch of Parker's ring: G(v) = D₁(v) + D₂(−v), a pair of opposed diodes (even when matched).
+#[derive(Clone, Copy, Debug)]
+pub struct DiodePair {
+    pub d1: ParkerDiode,
+    pub d2: ParkerDiode,
+}
+
+impl Antiderivative for DiodePair {
+    #[inline]
+    fn f(&self, v: f64) -> f64 {
+        self.d1.d(v) + self.d2.d(-v)
+    }
+    #[inline]
+    fn antiderivative(&self, v: f64) -> f64 {
+        self.d1.integral(v) - self.d2.integral(-v)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,6 +255,36 @@ mod tests {
             // slope of the asymmetric shaper at 0 is 1 − tanh²(b)
             let s = 1.0 - 0.3f32.tanh().powi(2);
             assert!((y - s * d).abs() < 2e-6, "{i}: {y} vs {}", s * d);
+        }
+    }
+
+    #[test]
+    fn antiderivatives_match_their_functions() {
+        // dF/dx = f, by central differences, across every piece
+        let pair = DiodePair { d1: ParkerDiode::new(0.2 * 1.1, 0.4, 1.0), d2: ParkerDiode::new(0.2 * 0.9, 0.4, 1.0) };
+        let t = TanhResidual { k: 6.0 };
+        for i in -300..=300 {
+            let x = i as f64 * 0.004 + 1e-4;
+            let h = 1e-6;
+            let dp = (pair.antiderivative(x + h) - pair.antiderivative(x - h)) / (2.0 * h);
+            assert!((dp - pair.f(x)).abs() < 1e-6, "diode at {x}: {dp} vs {}", pair.f(x));
+            let dt = (t.antiderivative(x + h) - t.antiderivative(x - h)) / (2.0 * h);
+            assert!((dt - t.f(x)).abs() < 1e-5, "tanh residual at {x}: {dt} vs {}", t.f(x));
+        }
+    }
+
+    #[test]
+    fn adaa_fn_tracks_the_shaper_on_slow_signals() {
+        let pair = DiodePair { d1: ParkerDiode::new(0.2, 0.4, 1.0), d2: ParkerDiode::new(0.2, 0.4, 1.0) };
+        let mut a = Adaa1Fn::default();
+        let mut prev = 0.0;
+        for i in 0..2000 {
+            let x = (i as f64 * 0.003).sin();
+            let y = a.process(&pair, x);
+            // a half-sample delay: compare with the shaper at the midpoint
+            let m = pair.f(0.5 * (x + prev));
+            assert!((y - m).abs() < 1e-4, "{i}: {y} vs {m}");
+            prev = x;
         }
     }
 }

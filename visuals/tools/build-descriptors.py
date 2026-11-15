@@ -71,6 +71,10 @@ def unit_of(expr: str):
     m = re.search(r'\blin\("[^"]*",[^,]+,[^,]+,[^,]+,\s*"([^"]*)",\s*(\d+)\)', s)
     if m:
         return m.group(1), int(m.group(2))
+    m = re.search(r'\blaw\(\d+,\s*(\d+),', s)
+    if m:
+        # gfx-ringmod: a catalogue id on its 0 - 1 scale, shown through its law (no unit stored)
+        return "", int(m.group(1))
     for h, (u, d) in GATE_HELPERS.items():
         if re.match(r"\w+:\s*" + re.escape(h), s):
             return u, d
