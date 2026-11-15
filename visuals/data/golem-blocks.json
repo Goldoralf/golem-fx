@@ -3469,7 +3469,7 @@
   {
    "type": "sustainer",
    "name": "Sustainer",
-   "short": "Feedback",
+   "short": "Sustainer",
    "category": "pitch",
    "engine": "plugin",
    "plugin": "VST3: GoleM FX Sustainer (GoleM)",

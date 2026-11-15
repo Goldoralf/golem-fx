@@ -1,9 +1,20 @@
 # gfx-formant
 
-> **Status: DESIGNED** (2026-11-14), **reviewed** (Fable 5.2, 2026-11-14: see the Review at the end). Not
-> coded. Design by Claude Opus 5.5. It brings two new gfx-dsp modules: `specenv`, the spectral envelope
-> and its filters, and `psola`, gfx-golem's epoch tracker moved into the library with a new fixed-delay
-> reader. **A listening prototype of the Live engine gates the coding** (§5), as it did for gfx-golem.
+> **Status: CODED (v0.1.0, 2026-11-15).** Designed 2026-11-14 by Claude Opus 5.5, reviewed by Fable 5.2
+> (Review section; its decisions override the body where they differ). The listening-prototype gate of
+> §5 was **waived by the maintainer 2026-11-15; listening on the coded pedal** (renders listed in As
+> coded). Built as reviewed: gfx-dsp **`specenv`** (k-period Hann with three spectra, cold-start true
+> envelope, the log ratio with vowels, tilt, clamps and level, the cepstral minimum-phase FIR and its
+> crossfade) and gfx-dsp **`psola`** (already moved by gfx-correct; one opt-in Reader fix, gfx-correct
+> byte-identical) under both engines: **Live** (zero latency, or `lookahead` 0 – 20 ms) and **Grain**
+> (fixed-delay PSOLA, 21.1 / 14.2 / 8.6 ms by `register`, `shift`, falling back to the Live filter on
+> chords and consonants), with growl on the predicted epochs, shaped breath, tilt, five vowel
+> templates. Measured on the §5 synthetic vowels: Live is the input bit for bit at the identity, Grain
+> within 1.5e−8; harmonics against the moved envelope 0.93 – 0.94 dB rms at 100 Hz; steady residue
+> −50 … −58 dBc up to 220 Hz; a 60 ms /a/ → /i/ glide 6.1 – 7.5 dB rms at `lookahead` 0, 1.6 – 1.8 dB at
+> 20 ms, 1.9 – 2.1 dB in Grain; level ±0.4 dB (vowel, ±4 – ±12 st except −12 st: −2.25 dB); 26
+> behaviour tests, gfx-bench 28 / 28 at four rates; CPU about 766 ns / sample mono (to be re-timed: it
+> was measured during the maintainer's listening session). Deviations in As coded.
 
 golem's **formant shifter** moves a sound's spectral envelope (on a voice, the vocal tract) without
 changing its pitch.
@@ -514,7 +525,8 @@ Every check runs at 44.1, 48, 96 and 192 kHz.
 | Determinism, CPU | Strict null (seeded noise and roughness); ≤ 5 % of one core per mono instance at 48 kHz, ≤ 10 % at 192 kHz, both reported |
 | Listening | `gfx-bench apps gfx-formant` (one render per Applications row) on the sung phrase, guitar and bass DIs; blind A / B Live vs Grain at `formant` ±3 / ±7 on voice |
 
-**Prototype gate, before any Rust** (as for gfx-golem): the Live engine offline, on the maintainer's sung phrase
+**Prototype gate** (gate waived by the maintainer 2026-11-15; listening on the coded pedal, with the
+listening renders of As coded): the Live engine offline, on the maintainer's sung phrase
 and a spoken sentence, at `formant` ±3 and ±7, with `lookahead` 0, 10 and 20 ms, against Grain's reader
 with ideal marks. Three questions for the ear: is the blur on fast articulation at 0 ms acceptable for
 singing; is the steady-state residue (−50 dBc and better up to 220 Hz, −35 dBc above) inaudible; +18 or
@@ -541,7 +553,8 @@ gfx-bench options:
   inherits: the envelope lag (1.8 T + 4 ms; harmless there, the vowel is the same before and after the
   shifter, only r moves), the steady residue above 250 Hz, and a cost nearer 2.5 % of a core than its
   3 % estimate. At ±2 st the ratio stays within a few dB, far from the clamps. Its gate (blind
-  preference on the sung phrase) stands; `specenv` must first pass this document's prototype gate.
+  preference on the sung phrase) stands; this document's prototype gate was waived (2026-11-15): the
+  coded pedal is what the ear judges.
 - gfx-pitch Poly formant preservation (deferred there for latency) and gfx-golem's large shifts:
   possible later, tonal frame class.
 - A vocoder's modulator envelope: part 1 alone.
@@ -644,7 +657,7 @@ at y 23.9 of 24, tight but inside.
 
 | Item | For |
 |---|---|
-| **Prototype gate** (§5): Live at `lookahead` 0 / 10 / 20 ms against Grain on the sung phrase and on speech. If 0 ms is not good enough on singing, the default `lookahead` becomes 10 ms and Live is no longer "zero latency" by default | The maintainer |
+| **Prototype gate** (§5): gate waived by the maintainer 2026-11-15; listening on the coded pedal (renders in As coded): Live at `lookahead` 0 / 10 / 20 ms against Grain on the sung phrase and on speech. If 0 ms is not good enough on singing, the default `lookahead` becomes 10 ms and Live is no longer "zero latency" by default | The maintainer |
 | Residue above 250 Hz (−42 … −33 dBc): a period is too short for T / 3 offsets on whole samples. Try fractional offsets (phase ramps on the spectra), five spectra, or 5 – 10 ms of envelope smoothing (measured: about 5 dB) | golem-fx, at the prototype |
 | Reducing the blur at 0 ms: scale L down while the envelope moves fast (spectral flux), so a stale ratio is applied less. Not tried | golem-fx, at the prototype |
 | Clamp +18 or +24 dB; `growl` depth law; vowel bandwidths, F4 / F5; flatness threshold of the frame class | By ear |
@@ -652,3 +665,104 @@ at y 23.9 of 24, tight but inside.
 | 192 kHz cost (≈ 5 – 10 %): accepted, or a shorter FIR there | The maintainer |
 | Who makes the `psola` move (the first of gfx-formant and gfx-correct to be coded) | golem-fx |
 | New catalogue type `formant` (category `pitch`, quarantine note); `depends` and structural flags honoured; `engine`, `register`, `lookahead` never in scenes; voice lane order (deesser and gate before, gfx-golem after) | golem-rack |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `specenv.rs` (new): `Analyzer` (windows `Periods` / `Hann` / `Short`, three spectra T / 3
+  apart, `flatness`, steppable cold-start TE), `Ratio` (shift, vowel templates, tilt, clamps, guard,
+  level, weight, residual mode), `MinPhase` (cepstral fold, 512 taps, 64-tap taper), `KernelFade`
+  (previous / current / next kernels on a shared `fir::Fir` history; `settle`). 6 unit tests.
+- gfx-dsp `psola.rs`: `Reader::set_left_guard` (opt-in, below). gfx-correct's 72 renders (the sung take,
+  12 s; 44.1 / 48 / 96 kHz; Live and Studio; three registers; formant keep on / off; mono and stereo)
+  hash identically before and after; gfx-golem uses only the untouched `Tracker`.
+- `src/lib.rs` (`Formant`, `PARAMS`, `grain_delay`, `lookahead_samples`, `Class`), `src/plugin.rs`
+  (VST3 class `GoleMFxFormant01`, mono 1 / 1 then 2 / 2, latency reported and updated on a setup change,
+  `bypass` = `make_bypass`, meter `state`), `src/tests.rs` (26 tests).
+- `presets/gfx-formant.json`: 17 presets (the 16 ideas of §4, plus `fast-lines-live` for the speech
+  row), no artist names, no refs.
+- Visuals: face, groups (Engine: `shift`, `source`, `register`, `lookahead`; Throat: `unvoiced`, `tilt`,
+  `breath`; Level: `thresh`, `mix`, `output`, `bypass`), motif `formants`, glyph `formant`; the
+  descriptors carry `depends` for `shift` (engine = Grain) and `lookahead` (engine = Live).
+
+**Schedule.** Every hop (256 samples × the rate scale) the frame starts on the newest sample; its work
+runs in stages every 4 samples (spectra and class; TE, one or two iterations per stage; composition and
+the main kernel; Grain's residual kernel; the breath kernel), and the kernels are installed 64 samples
+after the frame, crossfaded over the next hop. Block-size independent (bench: −240 dB between blocks of
+1 and 4,096).
+
+**Measured** (§5's synthetic vowels: the prototype's source, harmonics 1 / k through F1 – F5 and its 15
+higher poles, a noise floor 100 dB down; 48 kHz unless stated).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Identity | Live bit for bit; Grain ≤ −90 dB | Live bit-exact (voice, noise burst, chord, voice; 44.1 – 192 kHz); Grain ≤ −90 dB at every register and rate |
+| Latency | 0 / `lookahead` / D | D = 1,013 / 680 / 413 samples (Low / Mid / High), `lookahead` 10 ms = 480; an impulse lands at the reported sample (Live, Live + 7.3 ms, Grain High) |
+| Pitch kept | Live ±0.5 ct at ±7 st | within 0.5 ct (3rd harmonic's phase slope over 0.5 s) |
+| Envelope moved, Live (/a/) | 100 Hz ≤ 1.5 / 4; 220 Hz ≤ 2.5 / 6; 400 Hz ≤ 4 rms | 100 Hz 0.94 / 2.98 (−4), 0.93 / 2.53 (+4); 220 Hz 1.34 / 3.27 (−4), **2.63 / 7.80 (+4)**; 400 Hz 2.64 (−4), 3.71 (+4) dB. /i/ (reported): 1.15 / 4.11, 1.10 / 2.85; 1.30 / 4.16, 2.02 / 6.78; 4.01, 5.46 |
+| Envelope moved, Grain | the same bounds | **100 Hz 2.26 / 4.72 (−4)**, **1.69 / 3.56 (+4)**; 220 Hz 1.04 / 2.42, 1.96 / **6.63**; 400 Hz 3.02, 3.43 |
+| Glide (60 ms /a/ → /i/, 150 Hz) | reported at 0; ≤ 3 dB at 20 ms and Grain | −4 st: 6.07 (0 ms), 4.12 (10), 1.55 (20), 2.10 (Grain); +7 st: 7.51, 4.53, 1.81, 1.86 dB rms (the measure on the input itself: 1.15) |
+| TE start | within 1 dB of a fresh TE, 100 ms after /a/ → /i/ | a cold-started /i/ analysed after /a/ within 2 dB of a fresh 20-iteration TE (the unit test's bound; the frame never starts warm) |
+| Smoothness | ≤ −50 dBc to 220 Hz, ≤ −35 dBc above | 98.3 Hz −54.4 … −58.4; 147.1 Hz −51.8 … −57.0; 221.7 Hz −50.2 … −56.8; 311 Hz −38.1 … −43.1; 397 Hz −38.4 / −38.1 (±4), **−33.6 / −33.7 (±7)** dBc |
+| Sweep | ≤ −45 dBc | −54.8 dBc beyond ±20 Hz of the harmonics |
+| Level | ±1 dB, −12 … +12 st | pink −0.05 … +0.31 dB; vowel −0.39 … +0.22 dB, **−2.25 dB at −12 st** |
+| FIR truncation | ±0.5 dB, 100 Hz – 0.45 fs, ±12 st | the full-length cepstral design within 0.012 dB of L; 512 taps against it at the harmonics: 0.15 – 0.49 dB rms (worst harmonic 0.56 – 2.0 dB) from −7 to +12 st, **1.2 – 1.4 dB rms (2.8 – 3.3 worst) at −12 st** |
+| Unvoiced | centroid × α^u within 10 % | ×1.396 at 100 % (α = 1.498: −6.8 %), ×1.216 at 50 % (1.224) |
+| Noise floor | −12 st: ≤ +1 dB in the gaps; L ≤ +24 | −0.92 dB; L ≤ 20.4 dB (+ the level correction). At +12 st (not a §5 row): +2.77 dB of hiss in the gaps (the held filter keeps its boosts) |
+| Onset | no burst over the vowel in 20 ms | +0.10 dB (−7 st), −0.92 dB (+7) re the steady level (5 ms RMS) |
+| Polyphony | ≤ −45 dBc, Instrument and Voice | −46.6 dBc both (Voice classes the chord tonal, full α) |
+| Frame class | noise → noise-like, chord → tonal within 2 frames; no flapping | noise-like on noise; tonal 2 frames after the 2,048-sample window holds only the chord; a breathy vowel stays `state` 2 |
+| Vowel | output peaks within 5 % of F1 – F3, five positions | every peak within 5 % of the template's own (worst o's F2 812 / 831 Hz, −2.3 %) |
+| Growl | −7.5 ± 2 (Live), −9.5 ± 2 (Grain); none at 0 % | −7.6 dB and −8.4 dB per sideband (the half-harmonics gather two sidebands: −3 dB applied); −124 dB at 0 %; Live's switches in the period's last 45 % |
+| Breath | −12 ± 2 dB; 0 when the gate is shut | −11.3 dB; < 1e−7 after the voice |
+| Grain pitch | ±5 ct, level ±1 dB | +0.00 / +0.01 ct, +0.00 / +0.01 dB at ±7 st |
+| Grain fallback | chord: the Live filter delayed by D; onset dip ≤ 3 dB | bit-identical to Live with `lookahead` = D; onset worst 5 ms −2.70 dB |
+| Grain bound | identity ≤ −90 dB at the floor ±50 ct and 20 % under | passes (with the Reader's left guard; −26.9 dB without it) |
+| Mono / stereo, determinism | strict | L = R = mono bit for bit, both engines; renders and block sizes bit-identical |
+| Clicks | the common bound | gfx-bench: worst step −59 dB (`formant` ±12 jumps); every `breath` step under −50 dB |
+| CPU | ≤ 5 % at 48 kHz, ≤ 10 % at 192 kHz | gfx-bench 766 ns / sample mono (3.7 %), 926 ns stereo, **to be re-timed** (measured niced during the maintainer's listening session); 192 kHz not timed |
+| `psola` move | bit-exact | the move was gfx-correct's (its README); this crate's Reader change: gfx-correct byte-identical, 72 renders |
+
+**Deviations from the spec, and why.**
+- **No `psola` move here**: gfx-correct was coded first and made it. One Reader fix was needed for §5's
+  Grain bound: while a grain's source mark is unconfirmed, its left half was bounded by 1.3 × the
+  tracker's period; a period that drops under the last mark spacing (a mis-tracked cycle at the floor)
+  started the grain late and broke the identity (−26.9 dB). `Reader::set_left_guard` also bounds it by the
+  last mark spacing; off by default, so gfx-correct is unchanged (its Studio engine likely has the same
+  glitch at the register's floor: the maintainer may turn the guard on there after a listen).
+- **Noise-floor guard made continuous**: no boost where E is 60 dB under its peak, the full +24 dB 6 dB
+  above that floor, a ramp between. The step of §2.2 (L ≤ 0 under the line) put a 20 dB discontinuity
+  into L that 512 taps smear by 5 – 13 dB.
+- **Vowel energy match in power**: c solves Σ P · 10^((V + c − E) / 10) = Σ P. A dB mean weighted by P
+  (the first reading of "weighted by the input spectrum") let pink noise's low bins set c and put the
+  whole formant region on the +24 dB clamp (the vowel then vanished).
+- **Grain level**: the grains' RMS is matched to the fallback filter's (50 ms followers, `level_norm` until
+  both are measured, exact at r = α = 1). gfx-golem's `level_norm` alone left +7 st 1.7 dB low with this
+  reader.
+- **Grain vowel and tilt**: §2.1 draws no vowel or tilt on the grains; they get a residual filter (the
+  vowel against E(f / α), the tilt) designed from the same frame, so `vowel` and `tilt` act in both
+  engines.
+- **Breath**: normalised through the 1 kHz high-pass's own response (12 dB / oct lets the F1 region
+  through: +2.2 dB otherwise); it waits for its first shaped kernel and fades in over 10 ms (unshaped
+  noise at a `breath` step measured −31 dB of HF against the −50 dB click bound).
+- **Frame class**: the noise-like test is the power-weighted fine-structure flatness (the power over its
+  ±8-bin mean) of the 2,048-sample Hann spectrum, over 0.52 to enter and under 0.47 to leave: plain
+  spectral flatness calls a high-passed "s" tonal. Noise measures ≈ 0.6, a dense chord ≈ 0.4.
+- **Bounds not reached**, numbers above: Live at 220 Hz, +4 st (2.63 / 7.80 against 2.5 / 6: the first
+  harmonic reads E below f0, and the large boosts fall short); Grain at 100 Hz (2.26 / 4.72 and 1.69 /
+  3.56 against 1.5 / 4: the grains' windows smooth the envelope they carry); the steady residue at
+  397 Hz, ±7 st (−33.6 against −35 dBc, the prototype's own −33); the vowel's level at −12 st (−2.25 dB:
+  its new formants are narrower than the analysis window's resolution, which counts them between the
+  harmonics); 512-tap truncation at −12 st. The tests hold these at their measured values.
+- **Structural flags**: the descriptors mark enums only as structural; `lookahead` (a float) is not
+  flagged. golem-rack must keep `engine`, `register` and `lookahead` out of scenes and EXP (§3).
+
+**Listening renders** (`bench-out/formant/`, not committed; the maintainer's voice take, 48 kHz):
+`live-la00-formant-4`, `live-la10-formant-4`, `live-la20-formant-4`, `grain-formant-4`, the same four at
+`+4`, and one per preset (`preset-<id>`, the 17 of `presets/gfx-formant.json`, `whisper-ghost` among
+them). RMS within −1.3 … +1.0 dB of the input; `guitar-talkbox` (+2.1 dBFS), `demon` (+1.9),
+`synth-vowel-pad` (+0.7) and `chipmunk-same-notes` (+0.3) peak over 0 dBFS in float on this take.
+
+**Left for the ear**: the gate's three questions (blur at `lookahead` 0 on singing, the residue above
+250 Hz, +18 or +24 dB for the clamp), `growl` depth law, vowel bandwidths and F4 / F5, the flatness
+thresholds, and whether gfx-correct's Studio should turn the Reader's left guard on.

@@ -56,6 +56,7 @@ pub mod shapers;
 pub mod sidechain;
 pub mod smooth;
 pub mod speaker;
+pub mod specenv;
 pub mod ssb;
 pub mod stft;
 pub mod stereo;
