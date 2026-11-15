@@ -46,3 +46,4 @@ gfx-ringmod = { path = "../gfx-ringmod", default-features = false }
 gfx-bassdi = { path = "../gfx-bassdi", default-features = false }
 gfx-tape = { path = "../gfx-tape", default-features = false }
 gfx-grit = { path = "../gfx-grit", default-features = false }
+gfx-dist = { path = "../gfx-dist", default-features = false }

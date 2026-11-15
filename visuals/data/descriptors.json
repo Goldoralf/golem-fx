@@ -43650,6 +43650,830 @@
      "notes": "Drive adds up to +24 dB on each saturator, each along its own law; the make-up keeps the level near"
     }
    ]
+  },
+  "gfx-dist": {
+   "name": "GoleM FX Dist",
+   "class_id": "GoleMFxDist00001",
+   "blocks": [
+    "dist"
+   ],
+   "front": [
+    "circuit",
+    "gain",
+    "tone_stack",
+    "level"
+   ],
+   "groups": [
+    {
+     "id": "circuit",
+     "name": "Circuit",
+     "custom": null,
+     "params": [
+      "diodes",
+      "opamp",
+      "supply",
+      "hp"
+     ]
+    },
+    {
+     "id": "input",
+     "name": "Input",
+     "custom": null,
+     "params": [
+      "input",
+      "tight",
+      "bass_keep"
+     ]
+    }
+   ],
+   "params": {
+    "circuit": {
+     "name": "Circuit",
+     "kind": "enum",
+     "min": 0,
+     "max": 3,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Op-Amp Dist",
+      "Booster Dist",
+      "Blend OD",
+      "MOSFET OD"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Which netlist is solved"
+    },
+    "gain": {
+     "name": "Gain",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The circuit's gain pot, by rotation, with its real taper (Blend OD: both gangs, so the clean fades as the gain rises)"
+    },
+    "tone_stack": {
+     "name": "Tone",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The circuit's tone pot by rotation, 0 % = darkest on every circuit"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Output; 0 dB = unity loudness at the defaults on every circuit"
+    },
+    "diodes": {
+     "name": "Clippers",
+     "kind": "enum",
+     "min": 0,
+     "max": 6,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Circuit",
+      "Silicon",
+      "Germanium",
+      "LED",
+      "MOSFET",
+      "MOSFET + Ge",
+      "None"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Swaps the clipping devices in place (the classic mods)"
+    },
+    "opamp": {
+     "name": "Op-Amp",
+     "kind": "enum",
+     "min": 0,
+     "max": 5,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Circuit",
+      "LM308",
+      "LM358",
+      "4558",
+      "TL072",
+      "Ideal"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "The macromodel of the circuit's gain-stage op-amp(s); linear stamps and followers are not touched"
+    },
+    "supply": {
+     "name": "Supply",
+     "kind": "float",
+     "min": 50,
+     "max": 200,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Relative to the circuit's own supply (9 V; the Blend OD's pumped rails follow; the Discrete OD's 8 V): headroom, bias, rails"
+    },
+    "hp": {
+     "name": "HP Mode",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": {
+      "param": "circuit",
+      "equals": "MOSFET OD"
+     },
+     "help": "MOSFET OD's HP / LP switch (22 kΩ across the 33 kΩ: louder, brighter); inert on the other circuits"
+    },
+    "tight": {
+     "name": "Tight",
+     "kind": "float",
+     "min": 20,
+     "max": 1000,
+     "default": 20,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared id: first-order high-pass at the circuit's input, on top of its own filters; bypassed at 20 Hz"
+    },
+    "input": {
+     "name": "Input",
+     "kind": "float",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Input trim, for a source hotter or weaker than a pickup at 0 dBFS = 1 V"
+    },
+    "bass_keep": {
+     "name": "Bass Keep",
+     "kind": "float",
+     "min": 0,
+     "max": 500,
+     "default": 0,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared id: below it the signal skips the clipping"
+    }
+   },
+   "presets": [
+    {
+     "id": "slew-wall",
+     "type": "dist",
+     "name": "Slew wall",
+     "desc": "Slow op-amp hard clipper at 70 %: a thick, compressed rhythm wall without fizz",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "grunge",
+      "alternative-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [
+      {
+       "artist": "Nirvana",
+       "why": "op-amp distortion pedal rhythm tones of the early 90s",
+       "verified": false
+      }
+     ],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": true,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 70,
+      "tone_stack": 60,
+      "level": -2,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The LM308's slew and narrow closed loop round the clip before the diodes: thick, not fizzy. Into a clean amp"
+    },
+    {
+     "id": "filter-lead",
+     "type": "dist",
+     "name": "Filter lead",
+     "desc": "High gain with the filter just under noon: a vocal, focused op-amp lead",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "alternative-rock"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 85,
+      "tone_stack": 45,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The filter does the voicing: 45 % puts its corner near 3.5 kHz"
+    },
+    {
+     "id": "opamp-crunch",
+     "type": "dist",
+     "name": "Open op-amp crunch",
+     "desc": "Low gain, filter open: the op-amp barely slews, an open crunch into a clean amp",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "indie-rock",
+      "garage-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 30,
+      "tone_stack": 70,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "Below 40 % gain the closed loop stays wide: a crunch that cleans up with the guitar's volume"
+    },
+    {
+     "id": "turbo-lights",
+     "type": "dist",
+     "name": "LED clip",
+     "desc": "LED clippers in the op-amp circuit: louder, more open, the rail clipping heard",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "stoner-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 75,
+      "tone_stack": 50,
+      "level": -6,
+      "diodes": "LED",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The classic LED mod: the clip at 1.6 V lets the op-amp's rails shape the top"
+    },
+    {
+     "id": "opamp-only",
+     "type": "dist",
+     "name": "Op-amp only",
+     "desc": "Diodes lifted: the rail clipping and slew of the raw LM308",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "punk"
+     ],
+     "subgenres": [
+      "noise-rock",
+      "garage-punk"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "extreme",
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 90,
+      "tone_stack": 50,
+      "level": -9,
+      "diodes": "None",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "No clipper: the op-amp's own rails and slew are the whole distortion, raw and loud"
+    },
+    {
+     "id": "dying-battery",
+     "type": "dist",
+     "name": "Dying battery",
+     "desc": "Supply at 70 %: lower rails and bias, a sputtering, gated decay",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "noise-rock",
+      "garage-rock"
+     ],
+     "gain": "clean",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "lo-fi",
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 80,
+      "tone_stack": 50,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 70,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "A tired battery: less headroom and an earlier, uneven breakup as notes decay"
+    },
+    {
+     "id": "opamp-bass",
+     "type": "dist",
+     "name": "Op-amp bass drive",
+     "desc": "Op-amp distortion over a clean fundamental (below 120 Hz kept out of the clip)",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "stoner-rock",
+      "sludge-metal"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [],
+     "default": true,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 60,
+      "tone_stack": 55,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 120
+     },
+     "notes": "bass_keep sends the low band through the filter and output stage only: grit on top, the low end clean"
+    },
+    {
+     "id": "orange-crunch-stack",
+     "type": "dist",
+     "name": "Booster crunch into a stack",
+     "desc": "Transistor booster, op-amp and diodes with the mid scoop, into a cranked amp",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "heavy-metal"
+     ],
+     "gain": "crunch",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage",
+      "tight"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Booster Dist",
+      "gain": 55,
+      "tone_stack": 60,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 120,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "Thin into a clean amp, right into a pushed one: tight 120 Hz keeps the lows from flubbing"
+    },
+    {
+     "id": "booster-lead",
+     "type": "dist",
+     "name": "Booster lead",
+     "desc": "The booster soft-clipping ahead of the diodes: a singing, sustaining lead",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "classic-rock"
+     ],
+     "gain": "crunch",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [],
+     "default": false,
+     "params": {
+      "circuit": "Booster Dist",
+      "gain": 85,
+      "tone_stack": 45,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The common-emitter booster clips softly ahead of the op-amp: sustain without fizz"
+    },
+    {
+     "id": "transparent-push",
+     "type": "dist",
+     "name": "Transparent push",
+     "desc": "Low gain, the clean feeds dominant: mids filled in, a clean boost into a pushed amp",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "blues"
+     ],
+     "subgenres": [
+      "blues-rock",
+      "classic-rock"
+     ],
+     "gain": "crunch",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Blend OD",
+      "gain": 10,
+      "tone_stack": 50,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The sum on the pumped rails never clips: the guitar's own tone with more push"
+    },
+    {
+     "id": "gritty-core",
+     "type": "dist",
+     "name": "Gritty core",
+     "desc": "Germanium grit and a 9 V gain stage over a clean core, the sum phase-coherent by circuit",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "blues"
+     ],
+     "subgenres": [
+      "blues-rock",
+      "indie-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Blend OD",
+      "gain": 50,
+      "tone_stack": 55,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The clean bass path stays at every gain: grit over a clean low end"
+    },
+    {
+     "id": "blend-stack-front",
+     "type": "dist",
+     "name": "Blend into drive",
+     "desc": "Blend overdrive at 15 % as the first of two drives: tightens and pushes the next",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "alternative-rock",
+      "hard-rock"
+     ],
+     "gain": "crunch",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [],
+     "default": false,
+     "params": {
+      "circuit": "Blend OD",
+      "gain": 15,
+      "tone_stack": 50,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "Put a second instance on Op-Amp Dist after it: the first fills the mids and pushes the clipper"
+    },
+    {
+     "id": "amp-in-a-box",
+     "type": "dist",
+     "name": "Amp in a box",
+     "desc": "MOSFET overdrive at 55 %: the body-diode knee into a second gain stage, amp-like",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "indie-rock",
+      "classic-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "MOSFET OD",
+      "gain": 55,
+      "tone_stack": 50,
+      "level": 0,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "Two op-amp stages with the clip between them: louder and more open than a TS"
+    },
+    {
+     "id": "asymmetric-amp-box",
+     "type": "dist",
+     "name": "Asymmetric amp box",
+     "desc": "MOSFET + germanium clip of some units: asymmetric, more even harmonics",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "classic-rock",
+      "blues-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "MOSFET OD",
+      "gain": 55,
+      "tone_stack": 50,
+      "level": 0,
+      "diodes": "MOSFET + Ge",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "The rarer germanium version: 0.6 / 0.9 V clipping, a touch of 2nd harmonic"
+    },
+    {
+     "id": "hp-roar",
+     "type": "dist",
+     "name": "HP roar",
+     "desc": "MOSFET overdrive in HP mode at 70 %: brighter, looser, louder",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "garage-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright",
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "MOSFET OD",
+      "gain": 70,
+      "tone_stack": 50,
+      "level": -3,
+      "diodes": "Circuit",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": true,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "HP parallels 22 kΩ on the 33 kΩ output resistor: less loss, more top"
+    },
+    {
+     "id": "germanium-opamp",
+     "type": "dist",
+     "name": "Germanium op-amp dist",
+     "desc": "Germanium clippers in the op-amp circuit: a softer knee, more output",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "stoner-rock",
+      "psychedelic-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm",
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "circuit": "Op-Amp Dist",
+      "gain": 65,
+      "tone_stack": 50,
+      "level": -3,
+      "diodes": "Germanium",
+      "opamp": "Circuit",
+      "supply": 100,
+      "hp": false,
+      "tight": 20,
+      "input": 0,
+      "bass_keep": 0
+     },
+     "notes": "1N34A at about 0.3 V: a softer, compressed clip"
+    }
+   ]
   }
  }
 }

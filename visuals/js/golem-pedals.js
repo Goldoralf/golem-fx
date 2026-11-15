@@ -374,6 +374,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-bassdi': 'parallel',
     'gfx-tape': 'ribbon',
     'gfx-grit': 'prism',
+    'gfx-dist': 'traces',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -654,6 +655,24 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
           }
           line(d, ops[i]);
         });
+        break;
+      }
+      case 'traces': {
+        // printed-circuit traces: three each side from the body's edge to the rune's cartouche (inside
+        // the rune band, clear of the knob grid), the outer ones jogging 45° away from the centre,
+        // each ending on a round pad; the middle one carries a diode pointing to the rune
+        const L = cx - cw / 2 - 4, sides = [[1, 0], [-1, W]];
+        sides.forEach(([s, x0]) => [-.6, 0, .6].forEach(k => {
+          const y = cy + k * ch, jog = k === 0 ? 0 : 6 * Math.sign(k), xa = x0 + s * 4, xb = x0 + s * W * .18,
+                xe = s > 0 ? L : W - L;
+          line(`M${f1(xa)} ${f1(y)}H${f1(xb)}L${f1(xb + s * 6)} ${f1(y + jog)}H${f1(xe)}`);
+          shape(`M${f1(xe - 2.2)} ${f1(y + jog)}a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0Z`);
+          if (k === 0) {
+            const xd = x0 + s * W * .27;
+            shape(`M${f1(xd - s * 3)} ${f1(y - 3.5)}L${f1(xd + s * 3)} ${f1(y)}L${f1(xd - s * 3)} ${f1(y + 3.5)}Z`);
+            line(`M${f1(xd + s * 3)} ${f1(y - 3.5)}V${f1(y + 3.5)}`);
+          }
+        }));
         break;
       }
       case 'ticks':

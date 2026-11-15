@@ -165,6 +165,107 @@ impl Default for Oversampler2x {
     }
 }
 
+impl Oversampler2x {
+    /// [`Oversampler2x::up`] in f64 (no rounding between cascaded stages).
+    #[inline]
+    pub fn up64(&mut self, x: f64) -> [f64; 2] {
+        let (a, b) = self.up.process(x, x);
+        [a, b]
+    }
+
+    /// [`Oversampler2x::down`] in f64.
+    #[inline]
+    pub fn down64(&mut self, x: [f64; 2]) -> f64 {
+        let (a, b) = self.down.process(x[1], x[0]);
+        0.5 * (a + b)
+    }
+}
+
+/// The largest cascade: 16× (four half-band stages).
+pub const MAX_STAGES: usize = 4;
+pub const MAX_FACTOR: usize = 1 << MAX_STAGES;
+
+/// 2^k× up / down through k cascaded half-band stages (k = 0 – 4), in f64: gfx-emet's 8× cascade
+/// generalised (gfx-emet keeps its own copy, unchanged). The designs' `Oversampler8x` /
+/// `Oversampler16x` are `OversamplerN::new(3)` / `new(4)`: one stage fewer per doubling of the host
+/// rate. No allocation anywhere.
+#[derive(Clone, Debug)]
+pub struct OversamplerN {
+    up: [Oversampler2x; MAX_STAGES],
+    down: [Oversampler2x; MAX_STAGES],
+    stages: usize,
+}
+
+impl OversamplerN {
+    pub fn new(stages: usize) -> Self {
+        Self {
+            up: std::array::from_fn(|_| Oversampler2x::new()),
+            down: std::array::from_fn(|_| Oversampler2x::new()),
+            stages: stages.min(MAX_STAGES),
+        }
+    }
+
+    /// Changes the stage count (and resets).
+    pub fn set_stages(&mut self, stages: usize) {
+        self.stages = stages.min(MAX_STAGES);
+        self.reset();
+    }
+
+    pub fn stages(&self) -> usize {
+        self.stages
+    }
+
+    /// The oversampling factor, 2^stages.
+    pub fn factor(&self) -> usize {
+        1 << self.stages
+    }
+
+    pub fn reset(&mut self) {
+        for o in self.up.iter_mut().chain(self.down.iter_mut()) {
+            o.reset();
+        }
+    }
+
+    /// One input sample → `factor()` samples, written to the start of `out`.
+    #[inline]
+    pub fn up(&mut self, x: f64, out: &mut [f64; MAX_FACTOR]) {
+        out[0] = x;
+        let mut len = 1;
+        let mut tmp = [0.0; MAX_FACTOR];
+        for s in 0..self.stages {
+            // in time order through the stage (it has state), via a copy of the previous stage
+            tmp[..len].copy_from_slice(&out[..len]);
+            for k in 0..len {
+                let u = self.up[s].up64(tmp[k]);
+                out[2 * k] = u[0];
+                out[2 * k + 1] = u[1];
+            }
+            len *= 2;
+        }
+    }
+
+    /// `factor()` samples (the start of `buf`, used as workspace) → one output sample.
+    #[inline]
+    pub fn down(&mut self, buf: &mut [f64; MAX_FACTOR]) -> f64 {
+        let mut len = self.factor();
+        for s in (0..self.stages).rev() {
+            len /= 2;
+            for k in 0..len {
+                buf[k] = self.down[s].down64([buf[2 * k], buf[2 * k + 1]]);
+            }
+        }
+        buf[0]
+    }
+
+    /// Up then down with nothing in between: the group delay of a processed path.
+    #[inline]
+    pub fn identity(&mut self, x: f64) -> f64 {
+        let mut b = [0.0; MAX_FACTOR];
+        self.up(x, &mut b);
+        self.down(&mut b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,6 +310,90 @@ mod tests {
         }
         let db = 20.0 * peak.log10();
         assert!(db < -90.0, "alias at {db} dB");
+    }
+}
+
+#[cfg(test)]
+mod cascade_test {
+    use super::*;
+
+    #[test]
+    fn cascade_is_flat_and_rejects_images() {
+        for stages in 0..=MAX_STAGES {
+            let sr = 48000.0;
+            for f in [100.0, 1000.0, 15000.0] {
+                let mut o = OversamplerN::new(stages);
+                let w = 2.0 * PI * f / sr;
+                let (mut ein, mut eout) = (0.0, 0.0);
+                for i in 0..24000 {
+                    let x = (w * i as f64).sin();
+                    let y = o.identity(x);
+                    if i > 12000 {
+                        ein += x * x;
+                        eout += y * y;
+                    }
+                }
+                let g = 10.0 * (eout / ein).log10();
+                assert!(g.abs() < 0.05, "{stages} stages, {f} Hz: {g} dB");
+            }
+        }
+        // a tone above the base Nyquist at the top rate does not come back down
+        let mut o = OversamplerN::new(4);
+        let fs = 48000.0 * 16.0;
+        let w = 2.0 * PI * 100000.0 / fs;
+        let mut peak: f64 = 0.0;
+        for i in 0..24000 {
+            let mut b = [0.0; MAX_FACTOR];
+            for k in 0..16 {
+                b[k] = (w * (16 * i + k) as f64).sin();
+            }
+            let y = o.down(&mut b);
+            if i > 12000 {
+                peak = peak.max(y.abs());
+            }
+        }
+        assert!(20.0 * peak.log10() < -90.0, "{}", 20.0 * peak.log10());
+    }
+
+    #[test]
+    fn cascade_up_has_no_images() {
+        // a 5 kHz tone up 16×: its first image (43 kHz) and the next ones stay below −90 dB
+        let mut o = OversamplerN::new(4);
+        let mut up = Vec::new();
+        for i in 0..8192 {
+            let mut b = [0.0; MAX_FACTOR];
+            o.up((2.0 * PI * 5000.0 * i as f64 / 48000.0).sin(), &mut b);
+            up.extend_from_slice(&b);
+        }
+        let s = &up[up.len() / 2..];
+        let fs = 48000.0 * 16.0;
+        let probe = |f: f64| {
+            let w = 2.0 * PI * f / fs;
+            let (mut re, mut im) = (0.0, 0.0);
+            for (i, v) in s.iter().enumerate() {
+                let win = 0.5 - 0.5 * (2.0 * PI * i as f64 / s.len() as f64).cos();
+                re += v * win * (w * i as f64).cos();
+                im += v * win * (w * i as f64).sin();
+            }
+            (re * re + im * im).sqrt()
+        };
+        let main = probe(5000.0);
+        for img in [43000.0, 53000.0, 91000.0, 101000.0] {
+            let db = 20.0 * (probe(img) / main).log10();
+            assert!(db < -90.0, "image at {img} Hz: {db:.1} dB");
+        }
+    }
+
+    #[test]
+    fn f64_path_is_the_f32_path_unrounded() {
+        let mut a = Oversampler2x::new();
+        let mut b = Oversampler2x::new();
+        for i in 0..1000 {
+            let x = ((i as f64) * 0.01).sin() as f32;
+            let ya = a.up(x);
+            let yb = b.up64(x as f64);
+            assert!((ya[0] as f64 - yb[0]).abs() < 1e-6 && (ya[1] as f64 - yb[1]).abs() < 1e-6);
+        }
     }
 }
 

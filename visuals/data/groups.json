@@ -1593,6 +1593,29 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-dist": [
+      {
+        "id": "circuit",
+        "name": "Circuit",
+        "custom": null,
+        "params": [
+          "diodes",
+          "opamp",
+          "supply",
+          "hp"
+        ]
+      },
+      {
+        "id": "input",
+        "name": "Input",
+        "custom": null,
+        "params": [
+          "input",
+          "tight",
+          "bass_keep"
+        ]
+      }
     ]
   },
   "help": {
@@ -2126,6 +2149,12 @@
       "stop_time": {
         "param": "stop",
         "equals": true
+      }
+    },
+    "gfx-dist": {
+      "hp": {
+        "param": "circuit",
+        "equals": "MOSFET OD"
       }
     }
   }

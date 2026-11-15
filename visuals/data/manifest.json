@@ -796,6 +796,19 @@
       {"id": "hi_bypass", "name": "High Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "slope", "name": "Crossover Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-dist": [
+      {"id": "circuit", "name": "Circuit", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "gain", "name": "Gain", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "tone_stack", "name": "Tone", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 24, "default": 0, "exp": true},
+      {"id": "diodes", "name": "Clippers", "kind": "enum", "min": 0, "max": 6, "default": 0, "options": 7},
+      {"id": "opamp", "name": "Op-Amp", "kind": "enum", "min": 0, "max": 5, "default": 0, "options": 6},
+      {"id": "supply", "name": "Supply", "kind": "float", "min": 50, "max": 200, "default": 100},
+      {"id": "hp", "name": "HP Mode", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "tight", "name": "Tight", "kind": "float", "min": 20, "max": 1000, "default": 20},
+      {"id": "input", "name": "Input", "kind": "float", "min": -12, "max": 12, "default": 0},
+      {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 500, "default": 0}
     ]
   }
 }
