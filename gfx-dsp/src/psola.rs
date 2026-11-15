@@ -18,6 +18,8 @@
 //!   period clamped to T_max) as the grain boundary; both halves meeting there use it, so they still sum
 //!   to one. Per grain: r, α and a gain. At r = α = 1 the output is the input delayed by D (identity, voiced
 //!   or not: with no marks the reader freewheels on committed marks). The caller owns the gate.
+//!   [`Reader::set_left_guard`] (gfx-formant) keeps the identity when the tracker's period drops under
+//!   the last mark spacing.
 //! - Helpers: [`REGISTERS`], [`voicing_thresholds`], [`level_norm`], [`hermite`].
 
 use crate::detect::PitchDetector;
@@ -503,6 +505,7 @@ pub struct Reader {
     /// next synthesis mark (input-time domain); NaN before the first
     next: f64,
     committed: u64,
+    left_guard: bool,
 }
 
 impl Default for Reader {
@@ -523,7 +526,18 @@ impl Reader {
             ngrains: 0,
             next: f64::NAN,
             committed: 0,
+            left_guard: false,
         }
+    }
+
+    /// The **left-half guard** (off by default: gfx-correct's renders unchanged). While the next
+    /// grain's source mark is not confirmed, its left half is bounded by 1.3 × the tracker's period;
+    /// when that period drops under the last mark spacing (a mis-tracked cycle, a note under the
+    /// register's floor) the grain starts late, its left half is cut short and the halves no longer
+    /// sum to one (−27 dB of identity error measured). With the guard the bound is also at least the
+    /// last mark spacing, the grain's left half when no later mark arrives (gfx-formant).
+    pub fn set_left_guard(&mut self, on: bool) {
+        self.left_guard = on;
     }
 
     /// The delay D (samples, whole) and the longest period the reader predicts with (T_max). Resets.
@@ -677,7 +691,11 @@ impl Reader {
         // window is zero before its left half)
         let mut guard = 0;
         while guard < GRAINS {
-            let lo_bound = self.left_of(self.next).unwrap_or(1.3 * self.period).min(self.t_max);
+            let mut fallback = 1.3 * self.period;
+            if self.left_guard && self.nmarks >= 2 {
+                fallback = fallback.max(self.marks[self.nmarks - 1] - self.marks[self.nmarks - 2]);
+            }
+            let lo_bound = self.left_of(self.next).unwrap_or(fallback).min(self.t_max);
             if self.next - lo_bound > tau + 1.0 && self.ngrains > 0 {
                 break;
             }
