@@ -664,7 +664,7 @@ rates (Ableton's Spin), a shift range switch (the Bode's scale, golem's knob cur
 
 ### Still open
 
-- **Owner (Raph)**
+- **Owner (the maintainer)**
   - Fix `pitch.rs` now (§7.1) and re-listen gfx-delay `loop_shift` and gfx-octaver.
   - gfx-ringmod's design: point Upper / Lower to `ssb`, and settle its own units question in the light
     of §3.1 here (it keeps 0 – 1, this pedal and gfx-crusher convert).

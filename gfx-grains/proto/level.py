@@ -1,3 +1,4 @@
+import os
 import numpy as np, wave
 rng = np.random.default_rng(1)
 fs = 48000; DUR = 30
@@ -11,7 +12,7 @@ def sig(kind):
     elif kind == 'tone440':
         t = np.arange(n) / fs; x = sum(np.sin(2 * np.pi * 440 * k * t + k) / k for k in range(1, 12))
     elif kind == 'di':
-        w = wave.open('/home/raph/code/golem-fx/bench-out/shimmer-ab/for-windows/clean.wav'); 
+        w = wave.open(os.path.expanduser('~/code/golem-fx/bench-out/shimmer-ab/for-windows/clean.wav')); 
         a = np.frombuffer(w.readframes(w.getnframes()), dtype=np.int16 if w.getsampwidth()==2 else np.int32).astype(float)
         a = a.reshape(-1, w.getnchannels())[:, 0]; x = np.tile(a, int(np.ceil(n / len(a))))[:n]
     return x / np.sqrt(np.mean(x ** 2))

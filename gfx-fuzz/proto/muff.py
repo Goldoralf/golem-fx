@@ -1,3 +1,4 @@
+import os
 import numpy as np, scipy.io.wavfile as wav
 from scipy.signal import resample_poly
 from sim import Ckt, vt_of
@@ -23,7 +24,7 @@ def muff(fs,start=1,active=None,sustain=1.0,vdc=0.0):
     c.c('c4','out',100e-9); c.r('out','0',100e3)
     c.build(fs); c.dc(); return c
 fs=384000.
-sr,x=wav.read('/home/raph/golem/library/di-refs/guitar/crunch.wav'); x=x.astype(float)/2**31
+sr,x=wav.read(os.path.expanduser('~/golem/library/di-refs/guitar/crunch.wav')); x=x.astype(float)/2**31
 i=np.argmax(abs(x)); seg=x[max(i-4800,0):i+9600]; u=resample_poly(seg,8,1)
 rms=lambda z:np.sqrt((z**2).mean()); db=lambda z:20*np.log10(z+1e-30)
 for sus in (1.0,0.5):

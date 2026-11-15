@@ -90,7 +90,7 @@ i9-13900H; an efficiency core is ≈ 2× slower, and the shared machine moves fi
 The bench's line: 4,423 ns per sample mono pinned (4,911 unpinned), 8,877 ns per stereo frame. The
 cost is the exponentials and a 4 × 4 or 10 × 10 Jacobian solve per iteration, at ≈ 2.4 iterations per
 oversampled sample on the faces (the face's Q2 enters and leaves saturation on every cycle). Ge Pair is
-at the contract's ≈ 20 %; Si Four is 15 % above it and ships for Raph to decide (the next step is §2.8's
+at the contract's ≈ 20 %; Si Four is 15 % above it and ships for the maintainer to decide (the next step is §2.8's
 block Gauss-Seidel); Si Pair, at twice the bound, waits for the solution cache of §2.8.
 
 **Other measurements.**
@@ -118,11 +118,11 @@ block Gauss-Seidel); Si Pair, at twice the bound, waits for the solution cache o
   recovers through a louder, brighter bias, the circuit's own transient. `input` smooths over 100 ms
   (20 ms in §3). Model, buffer and bias steps stay below −35 dB.
 
-**Not done (for later or for Raph).**
+**Not done (for later or for the maintainer).**
 - Ge Three and Octave Up: no netlist entered from a named clone document; Si Pair: CPU. The `model`
   enum lists the shipped ones in the README's order (Ge Pair, Si Four), as the coding brief asks;
   appending Si Pair later puts it after Si Four, against the README's order, or reorders the enum
-  (contract: enums only grow at the end): **Raph decides** before Si Pair ships.
+  (contract: enums only grow at the end): **The maintainer decides** before Si Pair ships.
 - §5 rows not run: ngspice fixtures through `to_spice()` and the transient against the offline reference
   (the DC figures are checked against the review's independent solve instead), the real-knob proxy,
   the source-noise row, the zipper sweep, the worst-block CPU, the gate's 40 dB-faster decay (the gate
@@ -316,7 +316,7 @@ pedal's volume pot fully up, times a fixed constant K per model.
   The face flattens the resonance and darkens the guitar; rolling the volume back costs 24 dB of drive
   and gives back 18 dB of treble relative to it. The muff only shaves the peak: for it the source model
   is a refinement, for the faces it is the sound.
-- **`pickup`** sets the values (typical, [U]; refined against measurements if Raph has any). The same
+- **`pickup`** sets the values (typical, [U]; refined against measurements if the maintainer has any). The same
   values serve at recording and in the simulation:
 
   | Option | L_pu | R_pu | C_pu | Volume pot | Tone pot | Cable | Resonance on 1 MΩ |
@@ -365,7 +365,7 @@ checked against the references of §5.
     I_CEO 200 µA**, with the measured N_F, N_R and β_R (so Is = 4.5 and 7.3 µA). With it, stock values
     give 6.1 V at 25 °C, and the trimmed pedal moves **3.3 → 4.5 → 6.7 V over 15 → 25 → 35 °C** [P]: a
     pedal that changes with the weather and still plays. The raw DAFx-17 pair stays in the tests, as
-    the set whose waveforms the paper publishes. The graded figures are a voicing start [U]: Raph's
+    the set whose waveforms the paper publishes. The graded figures are a voicing start [U]: The maintainer's
     ears, or a measured pair, decide.
   - **Bias trimmer: Q2's collector resistor** (the 8.2 kΩ, the part builders replace by a trimmer [F]),
     not Q1's as first written: on silicon Q1's resistor cannot reach 4.5 V at all (3.9 V at 100 kΩ,
@@ -775,7 +775,7 @@ become the thresholds' starting point.
 | Sag | `sag` 100 %, a hard chord: `supply_v` droops and recovers with the ≈ 94 ms constant |
 | Zipper | `guitar_vol`, `fuzz`, `tone`, `bias` swept by EXP steps: control-rate sidebands ≤ −80 dB (contract rule) |
 | Determinism, CPU | Strict null; §2.8 bounds per model, mono, 48 kHz, **mean and worst block**; fast exp against `f64::exp`: null ≤ −100 dB |
-| Listening | lead.wav, crunch.wav and clean.wav (Raph's DIs) into a NAM clean and edge-of-breakup amp; A / B against golem's NAM captures of the same families (`fuzz-face`, `big-muff`, `tone-bender`, `octavia`), against gfx-drive Fuzz, the volume-knob roll played live on EXP; high bends at each model's factor against the next one up; graded pair against the raw DAFx-17 pair |
+| Listening | lead.wav, crunch.wav and clean.wav (the maintainer's DIs) into a NAM clean and edge-of-breakup amp; A / B against golem's NAM captures of the same families (`fuzz-face`, `big-muff`, `tone-bender`, `octavia`), against gfx-drive Fuzz, the volume-knob roll played live on EXP; high bends at each model's factor against the next one up; graded pair against the raw DAFx-17 pair |
 
 ## Visual
 
@@ -905,22 +905,22 @@ variant, gate-style fuzzes with their own oscillation controls.
 - a 4× path (two half-band stages) beside `Oversampler8x` / `16x`; node-voltage read-out for meters;
   `to_spice()` with committed fixtures; one fast exp in gfx-dsp for both pedals;
 - alias policy: −85 dB there, −70 dB at 1.2 kHz here, each argued; one sentence in both documents once
-  Raph has chosen.
+  the maintainer has chosen.
 
 Still open:
 
 | Point | Owner |
 |---|---|
 | Who creates `circuit_nl`; first coding task = the solver on Ge Pair and on gfx-dist's Op-Amp Dist, before any plugin code | golem-fx |
-| The graded germanium pair (β 75 / 120, I_CEO 80 / 200 µA) is a starting point: by ear against the raw pair, or a measured pair | Raph |
-| CPU: up to ≈ 20 % of a core per mono instance accepted here; confirm, or cap lower (then the solution cache first) | Raph, after the bench |
-| Alias policy −70 dB (here) vs −85 dB (gfx-dist); Si Pair at 16× depends on C_cb / C_eb from a datasheet | Raph; bench |
-| Cleanup depth: the model gives 5 – 8 dB (Ge) and 17 – 29 dB (Si) of THD advantage over a buffer; whether that matches a real pedal needs a real pedal or a trusted recording | Raph, listening |
-| Pickup of each DI and of each lane's instrument (`pickup`, `input` set at insert); real L / R / C of Raph's guitars if he can measure them | golem-rack, Raph |
+| The graded germanium pair (β 75 / 120, I_CEO 80 / 200 µA) is a starting point: by ear against the raw pair, or a measured pair | The maintainer |
+| CPU: up to ≈ 20 % of a core per mono instance accepted here; confirm, or cap lower (then the solution cache first) | The maintainer, after the bench |
+| Alias policy −70 dB (here) vs −85 dB (gfx-dist); Si Pair at 16× depends on C_cb / C_eb from a datasheet | The maintainer; bench |
+| Cleanup depth: the model gives 5 – 8 dB (Ge) and 17 – 29 dB (Si) of THD advantage over a buffer; whether that matches a real pedal needs a real pedal or a trusted recording | The maintainer, listening |
+| Pickup of each DI and of each lane's instrument (`pickup`, `input` set at insert); real L / R / C of the maintainer's guitars if he can measure them | golem-rack, the maintainer |
 | Catalogue entry `fuzz` (new type, category drive); whether the archetypes `fuzz-face`, `big-muff`, `tone-bender`, `octavia`, `bass-fuzz` also offer gfx-fuzz with `model` pinned; EXP on `guitar_vol` as the default assignment | golem-rack |
-| Add `level` (0 dB = unity) to the contract's shared-id table, with gfx-dist | Raph (contract) |
+| Add `level` (0 dB = unity) to the contract's shared-id table, with gfx-dist | The maintainer (contract) |
 | Netlist values [C / U] of Ge Three, Si Four's variants, Octave Up; silicon device constants; the fast exp's speed | golem-fx, at coding |
-| Copper next to gfx-crusher's raspberry and the thrash reds at tile size | Raph, on the family sheet |
+| Copper next to gfx-crusher's raspberry and the thrash reds at tile size | The maintainer, on the family sheet |
 
 **Enum order (decided 2026-11-15):** `model` lists the models in the order they ship — Ge Pair, Si Four in
 v0.1.0 — and every later model (Si Pair once its CPU fits, Ge Three, Octave Up) is appended at the end, as the

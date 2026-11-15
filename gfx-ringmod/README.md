@@ -638,9 +638,9 @@ gfx-bench additions:
    "FX Parameter n" cannot be ours. **Open on golem's side.**
 3. **Plugin defaults: accepted.** `ring` 1 and `mix` 1 are required (see the notes of §3). `freq`
    0.025 only shows in a bare host, since golem writes the catalogue's value at insert. golem's
-   `ringmod` default should move from 0.3 (4.85 kHz) to 0.025 (450 Hz): **Raph's call**, golem-side.
+   `ringmod` default should move from 0.3 (4.85 kHz) to 0.025 (450 Hz): **The maintainer's call**, golem-side.
 4. **Re-authoring: yes, all three `ringmod` presets, under their ids** (values in §4). Preset ids are
-   stable forever; their values are not. **Raph's ear** confirms the three sounds.
+   stable forever; their values are not. **The maintainer's ear** confirms the three sounds.
 5. **Low / High Cut: active, catalogue defaults kept (0.3 / 0.7).** They are catalogue ids, so they
    must act. They are made safe: they feed the pitch detection only, never the phase band-pass, and
    `lowcut` also sets the lowest tracked note. "Off" defaults (0 / 1) would leave hum and pick noise
@@ -649,7 +649,7 @@ gfx-bench additions:
    octaves, which is all the existing presets use. Two fixes: the law is continuous between
    semitones, and the tritone is 7/5.
 7. **`snap` off by default: kept.** The portamento is the Treemonster block's character and its three
-   presets rely on it. The new "in tune" presets set `snap` on. **Raph's ear** may reverse it.
+   presets rely on it. The new "in tune" presets set `snap` on. **The maintainer's ear** may reverse it.
 8. **PLL: redesigned, and still the main risk.** Own bandwidth, feed-forward from YIN, engage without
    pull-in, quadrature from the SVF, strict engage conditions (§2). **Prototype it in gfx-bench first**,
    on the DIs with `--trace`, before the ids are frozen. If it fails the "Lock engage" and "Bends"
@@ -812,8 +812,8 @@ no reference to copy and no proof yet.
 | **PLL prototype** in gfx-bench on the DIs, before `lock` / `phase` / `state` are frozen (§7.8) | golem-fx, first task |
 | gfx-dsp `ssb` (corrected Hilbert) must land before Upper / Lower; gfx-freqshift's design lists gfx-delay `loop_shift` and gfx-octaver as users of the faulty pair | golem-fx (gfx-freqshift's design) |
 | Engine table: `surge-treemonster` → gfx-ringmod with `init` `carrier` = Track; join that block on `label` or id | golem-rack |
-| Catalogue default of `ringmod.freq` (0.3 → 0.025); re-authored `standard`, `robot-voice`, `bell-tone` | Raph (ear), then golem-rack |
-| `snap` default; `phase` default 90°; the Just table (7/5, 9/5) | Raph's ear |
+| Catalogue default of `ringmod.freq` (0.3 → 0.025); re-authored `standard`, `robot-voice`, `bell-tone` | The maintainer (ear), then golem-rack |
+| `snap` default; `phase` default 90°; the Just table (7/5, 9/5) | The maintainer's ear |
 | Were `lowcut` / `highcut` ever active in golem's rig (Surge's "deactivated" toggles)? | golem-rack, on the rig |
 | New `ringmod` glyph, face, brass crate hue | golem-rack, with the release |
 | External carrier (aux bus) once golem routes key inputs | golem-rack, later |

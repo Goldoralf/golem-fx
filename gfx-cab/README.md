@@ -659,7 +659,7 @@ files** (decision 5).
 - What it is for: an inserted Cab is never a raw amp. It is a smooth curve, without a real cab's comb
   and resonances; the miked cab is slots 1 and up.
 - For bass, a preset picks a bass cab IR, or gfx-bassdi's IIR cab is used.
-- Its voicing is [I] until heard: Raph's ear.
+- Its voicing is [I] until heard: The maintainer's ear.
 
 ### 2.8 gfx-irfx: the stereo IR effect
 
@@ -760,7 +760,7 @@ Expert groups: **IRs** (`level_a`, `level_b`, `polarity_b`, `delay_b`), **Shape*
   - The first proposal, `#00a88a` (169°), sat at 13.4 from modulation and 19.8 from filter. Five degrees
     towards cyan balance the two and bring the pedal closer to its tile.
   - The family already lives with closer pairs (eq / delay 12.5, delay / reverb 5.9), and the motif
-    differs from gfx-wah's and gfx-autowah's. Raph confirms on the family sheet.
+    differs from gfx-wah's and gfx-autowah's. The maintainer confirms on the family sheet.
 - **Finish**: anodized (the family default).
 - **Motif `cone`** (new, in `motifParts`): a loudspeaker seen from the front, **with the rune as its dust
   cap**.
@@ -992,10 +992,10 @@ Still open:
 |---|---|
 | Accept R1 – R8; the index path; who holds the file lock; isolation of test bridges by `GOLEM_FX_IR_INDEX` | golem-rack |
 | Re-measure G_ref on the whole library (cab and effect sets), and list the "pedal" captures to pin Off | golem-rack |
-| Unity (0 dB) or house level (+14 dB) for gfx-cab's Loudness | Raph |
+| Unity (0 dB) or house level (+14 dB) for gfx-cab's Loudness | The maintainer |
 | Converted `ir-fx` chains: pin Off, or convert `wet` by each file's measured gain (`ir-info`) | golem-rack |
-| Fix in golem's nih-plug fork: store the new `process_mode` before `BufferConfig`, and read `ProcessData.processMode`. Not needed by this design; useful to others | Raph |
+| Fix in golem's nih-plug fork: store the new `process_mode` before `BufferConfig`, and read `ProcessData.processMode`. Not needed by this design; useful to others | The maintainer |
 | Throughput (5 Gflop/s is [I]), f32 accuracy on 20 s IRs, the 4× bound on real hardware, split-transform cost against `realfft`'s own | Bench, first coding task |
 | Longest outboard pack; a pack with 4 channels | golem-rack |
-| The built-in voicing; hue and the two motifs on the family sheet | Raph |
+| The built-in voicing; hue and the two motifs on the family sheet | The maintainer |
 | A noise-floor trim for vendor files that carry 1 – 4 s of floor | Later, if the CPU matters |

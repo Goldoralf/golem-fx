@@ -1,6 +1,6 @@
 # gfx-glitch
 
-> **Status: CODED** (v0.1.0, 2026-11-14). The design v2 was reviewed by Fable 5.2 (§7). Then Raph decided:
+> **Status: CODED** (v0.1.0, 2026-11-14). The design v2 was reviewed by Fable 5.2 (§7). Then the maintainer decided:
 > **no footswitch interaction**. You set the pedal up beforehand and play, so the freeze / pad engine
 > and its counters are gone, and pads come from Sustain and the Hold effects.
 >
@@ -12,7 +12,7 @@
 > - **CPU**: 317 ns per stereo frame at default settings (1.5 % of a core). 3.3 % with three slots,
 >   density, sustain, pitch and cloud all on.
 > - **Listening**: renders on golem's DI takes are in `bench-out/glitch/`. 17 factory presets (§5);
->   Raph's ear is still to come.
+>   the maintainer's ear is still to come.
 
 golem's **spectral pedal**. It cuts the guitar into frequency bins and lets you play with them:
 - sustain the partials into a pad;
@@ -320,7 +320,7 @@ Rendered with `gfx-bench render` on golem's guitar DI takes (`library/di-refs/gu
 
 17 factory presets are in `presets/gfx-glitch.json` (format of presets/README.md), default `ringing-partials`.
 They are designed, not copied from any third-party pack. Each is rendered on both DI takes in
-`bench-out/glitch/presets/<take>-<id>.wav`; Raph's listening is still to come.
+`bench-out/glitch/presets/<take>-<id>.wav`; the maintainer's listening is still to come.
 
 ## 6. Measurements
 
@@ -383,7 +383,7 @@ Also from that review:
 
 **golem-rack (2026-11-13)**: a late wet with a reported latency of 0 is fine; `align` stays setup-only.
 
-**Raph (2026-11-14): no footswitch interaction.** This removed the separate pad engine, `freeze`,
+**The maintainer (2026-11-14): no footswitch interaction.** This removed the separate pad engine, `freeze`,
 `clear`, `freeze_mode`, `capture`, `freeze_in` / `freeze_out`, `motion`, `octave`, `pad` and the `state`
 meter (findings B3 and B4 lapse with them). No golem work is needed: no new `foot_mode`, no `trigger`
 flag. Pads come from Sustain and the Hold effects, set before playing.

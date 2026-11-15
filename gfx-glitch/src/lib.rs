@@ -11,7 +11,7 @@
 //! - **Dry** at unity and never delayed unless `align` (then the latency is reported).
 //! - **Modulation**: an LFO and an envelope, one destination each.
 //!
-//! No footswitch: the pedal is set before playing (Raph, 2026-11-14). Real-time safe, deterministic.
+//! No footswitch: the pedal is set before playing (the maintainer, 2026-11-14). Real-time safe, deterministic.
 
 #![allow(clippy::needless_range_loop)]
 

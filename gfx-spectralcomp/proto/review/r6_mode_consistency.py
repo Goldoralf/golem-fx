@@ -1,10 +1,11 @@
+import os
 # Review check 6: do Live and Studio compress the same amount at the same settings? (targets only: ACGE error left out)
 # A = Live as written (detector res held at 6 st, targets point-sampled)
 # B = proposed: detector at `res` as set (Studio's gains), each design point = POWER-weighted mean of those gains over +-1/3 oct, then [1 2 1]/4 along the points
 import numpy as np, sc
 from scipy.io import wavfile
 fs=48000
-def rd(f): sr,x=wavfile.read('/home/raph/golem/library/di-refs/guitar/'+f); x=x/ (2**31 if x.dtype==np.int32 else 2**15); return x[:8*fs] if x.ndim==1 else x[:8*fs,0]
+def rd(f): sr,x=wavfile.read(os.path.expanduser('~/golem/library/di-refs/guitar/')+f); x=x/ (2**31 if x.dtype==np.int32 else 2**15); return x[:8*fs] if x.ndim==1 else x[:8*fs,0]
 rng=np.random.default_rng(3)
 def pink(n,lev):
     X=np.fft.rfft(rng.standard_normal(n)); f=np.fft.rfftfreq(n,1/fs); X[1:]/=np.sqrt(f[1:]); X[0]=0

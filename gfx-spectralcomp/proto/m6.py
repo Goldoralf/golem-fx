@@ -1,7 +1,8 @@
+import os
 import numpy as np, sc, time
 from scipy.io import wavfile
 fs=48000
-def rd(f): sr,x=wavfile.read('/home/raph/golem/library/di-refs/guitar/'+f); return (x/2**31)[:6*fs]
+def rd(f): sr,x=wavfile.read(os.path.expanduser('~/golem/library/di-refs/guitar/')+f); return (x/2**31)[:6*fs]
 sigs={'clean DI':rd('clean.wav'),'lead-clean DI':rd('lead-clean.wav'),'synthetic phrase':sc.guitar_phrase(fs)}
 rms=lambda v: 20*np.log10(np.sqrt(np.mean(v**2)))
 print("== level vs bypass, defaults (thresh -36, down 4, up 1, attack 150, release 300, 1/6 oct), auto gain on / off")

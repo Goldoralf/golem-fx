@@ -549,7 +549,7 @@ for §6, items 2 and 3.
 | EXP | `depth` driven by 50 Hz-stepped 7-bit values | sidebands ≤ −80 dB (contract) |
 | Determinism | two renders | strict null |
 | CPU | per shape, mono / stereo, 48 kHz, while ducking (keyed) | Wide ≤ 50 ns, Bell ≤ 90 ns, Spectral ≤ 300 ns mono and ≤ 400 ns stereo per sample |
-| Listening | clean-pad.wav ducked by voice/female.wav (to record, with drum bleed); bass DI ducked by a kick loop; pad in Pump; delay wet branch keyed from the DI | renders kept for Raph |
+| Listening | clean-pad.wav ducked by voice/female.wav (to record, with drum bleed); bass DI ducked by a kick loop; pad in Pump; delay wet branch keyed from the DI | renders kept for the maintainer |
 
 ## 6. What golem-rack must provide
 
@@ -762,17 +762,17 @@ defaults).
 
 | Point | Owner |
 |---|---|
-| Fix the 0.999-per-sample ducking smoother in gfx-delay, gfx-reverb, gfx-shimmer (question 9): two lines each, 48 kHz behaviour kept; and look at gfx-drive's slew envelope | Raph decides; golem-fx |
-| Relative: the candidate floor rule and its five constants on a **recorded stage vocal mic** with drum bleed (none exists in the bench's DIs); ship Relative in v1 or after | Raph (recording, decision), golem-fx |
-| Spectral: 16 or 24 bands, by listening; `spread` default; solver sweeps per tick | golem-fx bench, Raph's ears |
-| `tension` (renamed by the review) and `sync` default 1/4: keep or revert | Raph |
-| gfx-deesser's continuous `lookahead`: quantise inside the plugin, setup-only in golem | Raph, golem-rack |
+| Fix the 0.999-per-sample ducking smoother in gfx-delay, gfx-reverb, gfx-shimmer (question 9): two lines each, 48 kHz behaviour kept; and look at gfx-drive's slew envelope | The maintainer decides; golem-fx |
+| Relative: the candidate floor rule and its five constants on a **recorded stage vocal mic** with drum bleed (none exists in the bench's DIs); ship Relative in v1 or after | The maintainer (recording, decision), golem-fx |
+| Spectral: 16 or 24 bands, by listening; `spread` default; solver sweeps per tick | golem-fx bench, the maintainer's ears |
+| `tension` (renamed by the review) and `sync` default 1/4: keep or revert | The maintainer |
+| gfx-deesser's continuous `lookahead`: quantise inside the plugin, setup-only in golem | The maintainer, golem-rack |
 | Who writes `onset::Pick` first (gfx-swell or gfx-ducker), and gfx-killswitch's move to it | golem-fx |
 | `key_from` and its taps, service-bus slots, key timing per engine, transport without a backing, momentary foot action, preset-level latency change, the keyless display on Windows / macOS (§6) | golem-rack |
 | Sign of the Pump phase offset with `lookahead` on each engine | golem-fx bench with golem-rack |
 | Catalogue entry `ducker`, glyph, face, `dips` in `motifParts`, block presets | golem-rack / visuals, once coded |
 
-### Decisions after the review (Raph, 2026-11-14)
+### Decisions after the review (the maintainer, 2026-11-14)
 
 - **`detect` Relative ships only after it passes the bench on a recorded stage vocal mic** (drums and
   backline bleed, sung-word tails). Until then the option stays out of v1's enum; Absolute is the only
@@ -894,7 +894,7 @@ Without flush-to-zero the Spectral analysis bands decay into denormals between k
   one octave away, over the 2 dB bound (centred tones give 1.47 dB). That is the Q 2 bells' nature.
 - **EXP sideband check** not run here: `depth` and `freq` go through gfx-dsp `exp_smooth`, which carries
   the contract's tests. **Words** (voice/male.wav as key) and the **Listening** renders need the
-  recordings: left for the bench with Raph.
+  recordings: left for the bench with the maintainer.
 
 **Left for the owner.** Relative detection and its five constants on a recorded stage vocal mic; by-ear
 listening (Spectral 16 vs 24 bands and `spread`, the defaults, `tension` and `sync` 1/4); the Pump phase

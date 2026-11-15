@@ -533,7 +533,7 @@ string is no longer followed, the pitch is held; 1 = followed).
 
 Synthetic notes are Karplus-Strong strings with known f0, inharmonicity B and T60, made in the test. DIs:
 clean.wav, lead-clean.wav (single notes, bends), crunch.wav; plus reference recordings of real amp
-feedback by Raph (same guitar, three distances) for listening.
+feedback by the maintainer (same guitar, three distances) for listening.
 
 | Check | Pass |
 |---|---|
@@ -561,7 +561,7 @@ feedback by Raph (same guitar, three distances) for listening.
 with the default floor. `param_steps` skips `feed`, `trigger` and `carry` (gestures and rules, not levels). Mono 1 / 1, not
 stereo by nature.
 
-**Listening**: on clean.wav and lead-clean.wav, into a high-gain NAM amp, against Raph's real-feedback
+**Listening**: on clean.wav and lead-clean.wav, into a high-gain NAM amp, against the maintainer's real-feedback
 recordings, blind and level-matched: does it sound like the amp, or like a synth?
 
 ## Visual
@@ -712,9 +712,9 @@ automatic vibrato (the DF-2's fault), an amp saturation inside the pedal (questi
 |---|---|
 | **Tracker prototype in gfx-bench on the DIs** (lead-clean.wav bends and vibrato, a bass DI), before `lock`, `harm` and gfx-ringmod's `phase` are frozen: every figure of §2.2 is from synthetic strings with an emulated YIN | golem-fx, first task |
 | gfx-ringmod's README still specifies the band-pass pair; to be aligned on `track` when it is coded | golem-fx |
-| Vibrato ripple on low strings' upper partials (2.7 – 4 dB at E2, k ≥ 6): acceptable, or should Sustain's K fall to 6 below 110 Hz? | Raph's ear |
-| Sustain's held spectrum (the body's, 80 ms after the pick, may be bright): `tone` default 0 or negative | Raph's ear |
-| `max_time` default (15 s); Natural weights w_k, c and β_j; `color`'s −30 dBc | Raph's ear, with the reference recordings |
+| Vibrato ripple on low strings' upper partials (2.7 – 4 dB at E2, k ≥ 6): acceptable, or should Sustain's K fall to 6 below 110 Hz? | The maintainer's ear |
+| Sustain's held spectrum (the body's, 80 ms after the pick, may be bright): `tone` default 0 or negative | The maintainer's ear |
+| `max_time` default (15 s); Natural weights w_k, c and β_j; `color`'s −30 dBc | The maintainer's ear, with the reference recordings |
 | Touch-noise and mute-drop levels on quiet DIs; the weak-fundamental rule; CPU of 32 partials | Bench |
 | Catalogue entry, footswitch rule (question 8), glyph and motif `modes`; `bloom` and `duck` also exist in gfx-shimmer / gfx-delay with other meanings | golem-rack |
 | Natural competing across a chord's notes; an external (key) pitch reference from another lane | v2 |
@@ -827,7 +827,7 @@ one reference loop per voice ≈ 85 ns (gfx-dsp `track`'s per-sample path, kept 
 ≈ 20 ns per partial. The ways down: an opt-in decimated reference loop in `track` (4 references in
 `chord` All), Sustain's K to 8 under 110 Hz (an open question already).
 
-Not run (need recordings or golem's rig): the DI rows (clean.wav, lead-clean.wav, crunch.wav), Raph's
+Not run (need recordings or golem's rig): the DI rows (clean.wav, lead-clean.wav, crunch.wav), the maintainer's
 real-feedback recordings, the open-chord renders (six strings: `notes()` keeps the four most salient), the
 touch-noise level on quiet DIs, the listening A / B.
 

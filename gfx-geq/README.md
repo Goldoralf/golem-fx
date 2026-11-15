@@ -573,11 +573,11 @@ Still open for the owner:
 | Point | Owner |
 |---|---|
 | Reproduce the [P] table in gfx-bench; tune c (0.35 – 0.5) and the weights on it | golem-fx, first coding task |
-| Pedal mode: ρ, Q_max and the 6.4 kHz branch from the 7-band pedals' schematics + a SPICE check [U]; whether Pedal ships in v1 or second | golem-fx / Raph |
-| `amount`: keep (reviewer's addition) or drop | Raph |
-| 20 sections on Octave 11 (≈ 0.7 % of a core, 1.5 – 3 % while a fader moves): accepted, or cap the tick cost lower | Raph, after the bench |
+| Pedal mode: ρ, Q_max and the 6.4 kHz branch from the 7-band pedals' schematics + a SPICE check [U]; whether Pedal ships in v1 or second | golem-fx / the maintainer |
+| `amount`: keep (reviewer's addition) or drop | The maintainer |
+| 20 sections on Octave 11 (≈ 0.7 % of a core, 1.5 – 3 % while a fader moves): accepted, or cap the tick cost lower | The maintainer, after the bench |
 | One `eq-graphic` block with `depends`, or three blocks pinning `layout`; catalogue range ±12 → ±15 | golem rack session |
-| Add `level` to the contract's shared-ids table | Raph (contract) |
+| Add `level` to the contract's shared-ids table | The maintainer (contract) |
 | `faders` / `fader_sets` / `shape: "wide"` in the renderer; the wide stomp on golem's pedalboard | visuals / golem rack session |
 | Upstream guitarix now limits its ports to +5.2 dB (installed build: +20); no effect on us, noted for golem's catalogue | golem rack session |
 

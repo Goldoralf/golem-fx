@@ -1,8 +1,9 @@
+import os
 # Review check 8: Live A vs B on program (realised vs target at the centres, largest section gain), step lag at the OUTPUT, tick spurs
 import numpy as np, sc, live2
 from scipy.io import wavfile
 fs=48000
-def rd(f): sr,x=wavfile.read('/home/raph/golem/library/di-refs/guitar/'+f); return (x/2**31)[:4*fs]
+def rd(f): sr,x=wavfile.read(os.path.expanduser('~/golem/library/di-refs/guitar/')+f); return (x/2**31)[:4*fs]
 print("== program: thresh -40, down 3, up 2, attack 30, release 200, N 1024")
 for nm in ('clean.wav','high-gain.wav'):
     x=rd(nm)

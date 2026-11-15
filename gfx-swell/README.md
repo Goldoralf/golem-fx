@@ -466,7 +466,7 @@ Placement advice for golem's AI and its docs:
 
 Synthetic signals are Karplus-Strong strings, made in the test, with known onsets. The DIs (clean.wav,
 lead-clean.wav, funk.wav, crunch.wav) get hand-annotated onset lists stored next to the tests: a task for
-Raph or the coding agent.
+The maintainer or the coding agent.
 
 | Check | Pass |
 |---|---|
@@ -500,7 +500,7 @@ Raph or the coding agent.
 
 **Listening**: violin, cello pad, legato lead and reverse tape on clean.wav and lead-clean.wav, with the
 swell placed before and after a NAM amp. Compared with the gfx-delay `swell` (same law) and a manual
-volume-pedal swell recorded by Raph.
+volume-pedal swell recorded by the maintainer.
 
 ## 6. Open questions for review
 
@@ -586,7 +586,7 @@ time before the decay, the Attack Decay's fuzz and loop, the Pico Swello's filte
 - **Listening** (cannot be settled on paper): B's δ and C's clarity bound against the negative tests;
   whether the zero-latency legato "blip" is acceptable at the default `legato` 50 %, or whether the default
   should fall to 0 with legato as an opt-in; the `reset` default on clean.wav; the pick leak figure.
-- **Onset annotations** for clean.wav, lead-clean.wav, funk.wav and crunch.wav (Raph or the coding agent),
+- **Onset annotations** for clean.wav, lead-clean.wav, funk.wav and crunch.wav (the maintainer or the coding agent),
   and a let-ring and a bass DI.
 - **golem-rack**: the catalogue entry (decision 9); key routing for a block after the amp; confirmation
   that a preset-level latency change (`lookahead` here, as in gfx-limiter and gfx-glitch `align`) re-syncs

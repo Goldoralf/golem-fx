@@ -123,7 +123,7 @@ to re-measure on them (±1 LU target).
 10. **Netlist values marked [U] in `circuits.rs`**: the Booster Dist's inter-stage 47 nF and the exact
     wiring of its tone arms; the Blend OD's gang A modelled as the leg rheostat only (its shunt of the
     stage's input at minimum gain is not modelled), its + input network (100 nF, 10 kΩ, 1 MΩ) and its
-    clean network's topology; the 1N34A, 2N7000 body-diode and 2SC2240-class constants (generic). Raph:
+    clean network's topology; the 1N34A, 2N7000 body-diode and 2SC2240-class constants (generic). The maintainer:
     by ear, and from the documents when they are re-read.
 11. **gfx-emet keeps its own 8× cascade** (the brief: never change a coded effect without a null).
     `OversamplerN` is the shared one from here on.
@@ -887,16 +887,16 @@ Still open:
 | Point | Owner |
 |---|---|
 | The solver on the four circuits not prototyped (iteration counts, cuts, aliases at 8×); this is the first coding task, on the Op-Amp Dist, before any plugin code | golem-fx |
-| CPU: ≈ 10 % of a core per mono instance accepted, or cap lower (then the cache / tabulation path) | Raph, after the bench |
-| Fast op-amp swaps on the Op-Amp Dist at −65 dB aliases: ship, run at 32×, or drop TL072 / Ideal from `opamp` there | Raph, after the bench |
+| CPU: ≈ 10 % of a core per mono instance accepted, or cap lower (then the cache / tabulation path) | The maintainer, after the bench |
+| Fast op-amp swaps on the Op-Amp Dist at −65 dB aliases: ship, run at 32×, or drop TL072 / Ideal from `opamp` there | The maintainer, after the bench |
 | Discrete OD: macro vs transistor-level stages; the level pot's fixed position; the gyrator's lift (6 vs 11.7 dB) | Bench (reference run) |
-| DS-1 version: dual-op-amp topology with pre-1994 values is modelled, not the TA7136P itself (no model of that IC exists); LM358-class constants [U] | Raph, by ear; datasheets |
+| DS-1 version: dual-op-amp topology with pre-1994 values is modelled, not the TA7136P itself (no model of that IC exists); LM358-class constants [U] | The maintainer, by ear; datasheets |
 | LM308 slew asymmetry and output current limit; SPICE constants of every part; ngspice cross-check (not installed) | golem-fx |
-| Who creates `circuit_nl` (gfx-dist or gfx-fuzz first); gfx-fuzz's document to adopt the same module, type and oversampler names, the Newton rules of §2.2 (its cap of 8 and "keep the last iterate" have the same flaw) and the per-sample pot update | Raph / the gfx-fuzz review |
-| Add `level` and `tone_stack` to the contract's shared-id table, with "0 dB = unity" for a multi-circuit pedal | Raph (contract) |
+| Who creates `circuit_nl` (gfx-dist or gfx-fuzz first); gfx-fuzz's document to adopt the same module, type and oversampler names, the Newton rules of §2.2 (its cap of 8 and "keep the last iterate" have the same flaw) and the per-sample pot update | The maintainer / the gfx-fuzz review |
+| Add `level` and `tone_stack` to the contract's shared-id table, with "0 dB = unity" for a multi-circuit pedal | The maintainer (contract) |
 | Catalogue entry `dist` (new type, category drive, no ids to keep); golem already has pedal archetypes `rat`, `ds-1`, `blues-driver`, `klon`, `ocd` bound to `pedal-nam` captures: whether each also offers gfx-dist with `circuit` pinned | golem-rack |
 | Whether EXP may target `gain` on a block whose `circuit` is pinned; presets per archetype | golem-rack |
-| `traces` beside gfx-drive's flames on the same red at tile size | Raph, on the family sheet |
+| `traces` beside gfx-drive's flames on the same red at tile size | The maintainer, on the family sheet |
 
 ### Alignment with gfx-fuzz (2026-11-14, after both reviews)
 
@@ -911,7 +911,7 @@ The gfx-fuzz review (its §2.9 holds the shared `circuit_nl` API table) asks thi
 - alias policy: this design targets −85 dB, gfx-fuzz −70 dB at 1.2 kHz (≤ −65 dB worst); one policy for
   both is the owner's call.
 
-**Policy settled by Raph (2026-11-14):** one alias policy for all circuit simulations — worst alias ≤ −70 dB
+**Policy settled by the maintainer (2026-11-14):** one alias policy for all circuit simulations — worst alias ≤ −70 dB
 for a 1.2 kHz sine at full gain (≤ −65 dB worst model or part swap), oversampling chosen per circuit from the
 measured aliases; CPU up to ~20 % of a core per mono instance accepted (see `docs/golem-contract.md`). The
 −85 dB target and the fixed 16× for the Op-Amp Dist above are re-decided by the bench against this policy.

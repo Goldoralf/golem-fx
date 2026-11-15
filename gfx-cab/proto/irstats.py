@@ -2,7 +2,7 @@ import numpy as np, glob, os, sys, warnings
 from scipy.io import wavfile
 from scipy import signal
 warnings.filterwarnings("ignore")
-files=sorted(set(glob.glob('/home/raph/golem/assets/.cache/*.wav')+glob.glob('/home/raph/golem/assets/irs/**/*.wav',recursive=True)))
+files=sorted(set(glob.glob(os.path.expanduser('~/golem/assets/.cache/*.wav'))+glob.glob(os.path.expanduser('~/golem/assets/irs/**/*.wav'),recursive=True)))
 rows=[]
 def load(f):
     sr,d=wavfile.read(f)

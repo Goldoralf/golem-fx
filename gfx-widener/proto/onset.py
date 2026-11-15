@@ -1,3 +1,4 @@
+import os
 import numpy as np, scipy.io.wavfile as wf, scipy.signal as sg, sys
 def follower(x,att_ms,rel_ms,fs):
     a=np.exp(-1/(att_ms*1e-3*fs)); r=np.exp(-1/(rel_ms*1e-3*fs)); y=np.empty_like(x); e=0.
@@ -13,7 +14,7 @@ def duck(o,fs,rel_ms=60,hold_ms=0):
         y[i]=e
     return y
 for name in ('funk','clean','high-gain'):
-    fs,x=wf.read(f'/home/raph/golem/library/di-refs/guitar/{name}.wav'); x=x.astype(np.float64)
+    fs,x=wf.read(os.path.expanduser(f'~/golem/library/di-refs/guitar/{name}.wav')); x=x.astype(np.float64)
     if x.ndim>1: x=x.mean(1)
     x/=np.max(np.abs(x)); x=x[:fs*12]; ax=np.abs(x)+1e-6
     # reference onsets: energy rise > 9 dB between 10 ms frames, level above -40 dB

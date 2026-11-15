@@ -479,7 +479,7 @@ Test signals:
   f0 100, 220 and 400 Hz, with and without 6 Hz ±50 ct vibrato;
 - noise bursts ("s", "f");
 - a guitar chord DI and a bass DI;
-- Raph's sung phrase (gfx-golem's listening voice).
+- The maintainer's sung phrase (gfx-golem's listening voice).
 
 Every check runs at 44.1, 48, 96 and 192 kHz.
 
@@ -514,7 +514,7 @@ Every check runs at 44.1, 48, 96 and 192 kHz.
 | Determinism, CPU | Strict null (seeded noise and roughness); ≤ 5 % of one core per mono instance at 48 kHz, ≤ 10 % at 192 kHz, both reported |
 | Listening | `gfx-bench apps gfx-formant` (one render per Applications row) on the sung phrase, guitar and bass DIs; blind A / B Live vs Grain at `formant` ±3 / ±7 on voice |
 
-**Prototype gate, before any Rust** (as for gfx-golem): the Live engine offline, on Raph's sung phrase
+**Prototype gate, before any Rust** (as for gfx-golem): the Live engine offline, on the maintainer's sung phrase
 and a spoken sentence, at `formant` ±3 and ±7, with `lookahead` 0, 10 and 20 ms, against Grain's reader
 with ideal marks. Three questions for the ear: is the blur on fast articulation at 0 ms acceptable for
 singing; is the steady-state residue (−50 dBc and better up to 220 Hz, −35 dBc above) inaudible; +18 or
@@ -644,11 +644,11 @@ at y 23.9 of 24, tight but inside.
 
 | Item | For |
 |---|---|
-| **Prototype gate** (§5): Live at `lookahead` 0 / 10 / 20 ms against Grain on the sung phrase and on speech. If 0 ms is not good enough on singing, the default `lookahead` becomes 10 ms and Live is no longer "zero latency" by default | Raph |
+| **Prototype gate** (§5): Live at `lookahead` 0 / 10 / 20 ms against Grain on the sung phrase and on speech. If 0 ms is not good enough on singing, the default `lookahead` becomes 10 ms and Live is no longer "zero latency" by default | The maintainer |
 | Residue above 250 Hz (−42 … −33 dBc): a period is too short for T / 3 offsets on whole samples. Try fractional offsets (phase ramps on the spectra), five spectra, or 5 – 10 ms of envelope smoothing (measured: about 5 dB) | golem-fx, at the prototype |
 | Reducing the blur at 0 ms: scale L down while the envelope moves fast (spectral flux), so a stale ratio is applied less. Not tried | golem-fx, at the prototype |
 | Clamp +18 or +24 dB; `growl` depth law; vowel bandwidths, F4 / F5; flatness threshold of the frame class | By ear |
-| A `sens` parameter (gfx-golem's id) if breathy voices drop out of Grain: can be appended later | Raph |
-| 192 kHz cost (≈ 5 – 10 %): accepted, or a shorter FIR there | Raph |
+| A `sens` parameter (gfx-golem's id) if breathy voices drop out of Grain: can be appended later | The maintainer |
+| 192 kHz cost (≈ 5 – 10 %): accepted, or a shorter FIR there | The maintainer |
 | Who makes the `psola` move (the first of gfx-formant and gfx-correct to be coded) | golem-fx |
 | New catalogue type `formant` (category `pitch`, quarantine note); `depends` and structural flags honoured; `engine`, `register`, `lookahead` never in scenes; voice lane order (deesser and gate before, gfx-golem after) | golem-rack |

@@ -1,7 +1,7 @@
 # gfx-grains
 
 > **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Fable 5.2
-> the same day ([Review](#review-fable-52-2026-11-14)), coded as reviewed with Raph's decisions and the
+> the same day ([Review](#review-fable-52-2026-11-14)), coded as reviewed with the maintainer's decisions and the
 > deviations listed in [As coded](#as-coded-v010-2026-11-15). gfx-dsp's new `grain` module (multi-rate
 > buffer with its 51-tap half-band copy, the 17-kernel ratio-tracking bank read through the octave switch,
 > the window and its incremental Hann, the drop-never-steal pool), the four schedulers, the hold with
@@ -517,7 +517,7 @@ engine. But **block presets are re-authored by intent** (presets file), because 
 was the dry signal (§1). "Standard", "Shimmer cloud" and "Stutter" keep their ids and names and get new
 settings (§4). A saved rig chain with `freeze` 0 played the dry signal; with gfx-grains it plays a cloud
 at `mix` 50 %. That is the contract's "new sounds, presets will sound different", and it is kept (§7.7).
-golem-rack counts such chains; `mix` 0 % is the faithful fallback if Raph wants one.
+golem-rack counts such chains; `mix` 0 % is the faithful fallback if the maintainer wants one.
 
 ### Front panel
 
@@ -673,13 +673,13 @@ lag 0). Click bound at the default.
 | Pool | `grains` 64 through a release with 64: each layer capped at 48, fewer than 0.1 % of grains dropped, no click, level of each layer within 1 dB of its uncapped level; `active` reports |
 | Trails | `bypass` with `trails` on: the cloud finishes within `size`; off: wet gone in 20 ms, no click |
 | CPU | ≤ 120 ns / sample at defaults, ≤ 900 ns at `grains` 64 + `pitch_rand` 12 + `glide` + `feedback`, ≤ 1,300 ns worst (two layers, `pitch` +11), 48 kHz stereo |
-| Listening | clean.wav, lead.wav, keys and voice renders through every §4 preset; Hold Chord against GoleM Freeze on the same chord (texture vs sustain, not a winner); blind against a reference granulator owned by Raph (§7.9) |
+| Listening | clean.wav, lead.wav, keys and voice renders through every §4 preset; Hold Chord against GoleM Freeze on the same chord (texture vs sustain, not a winner); blind against a reference granulator owned by the maintainer (§7.9) |
 
 ## 6. Positioning
 
 | Pedal | Its sustain / grains | Difference |
 |---|---|---|
-| golem `freeze` (GoleM Freeze, spectral; quarantined) | Smooth, grainless sustain of the **notes**; 21 – 85 ms reported latency | gfx-grains: zero latency, a **textured** hold you can move, pitch, scatter, stretch. **gfx-grains does not stand for `freeze`**, and neither does gfx-stretch (its review, the same day): the block is reworked as a thin crate on gfx-dsp `stft`, Raph's call. Until then "Hold Chord" is golem's only working hold. Shared ids `freeze`, `mix` mean the same gesture; `decay` differs in unit (§7.5) |
+| golem `freeze` (GoleM Freeze, spectral; quarantined) | Smooth, grainless sustain of the **notes**; 21 – 85 ms reported latency | gfx-grains: zero latency, a **textured** hold you can move, pitch, scatter, stretch. **gfx-grains does not stand for `freeze`**, and neither does gfx-stretch (its review, the same day): the block is reworked as a thin crate on gfx-dsp `stft`, the maintainer's call. Until then "Hold Chord" is golem's only working hold. Shared ids `freeze`, `mix` mean the same gesture; `decay` differs in unit (§7.5) |
 | gfx-glitch (spectral Sustain, Hold effects) | Spectral max-hold, set up beforehand, no footswitch | gfx-grains is time-domain, footswitch-held, rhythmic, onset-aware |
 | gfx-delay (reverse, loop pitch) | A pitched or reversed **repeat** in a delay loop | gfx-grains is many grains, random or rhythmic; its `grain` module can give gfx-delay a band-limited reverse later |
 | gfx-shimmer / gfx-reverb freeze | Shifters inside a reverb tank; a frozen tank | gfx-grains is dry granular: no tank, positions you choose |
@@ -716,17 +716,17 @@ pitch.
 5. **`decay`** → **T60 here**, as in gfx-reverb and gfx-shimmer, the two coded pedals with a `decay` in
    seconds. GoleM Freeze's value is a time constant (T60 = 6.91 × it: its 0.6 s default fades in
    4.1 s) [V]. The reworked `freeze` block should move to T60 and convert its saved values once
-   (× 6.91, range 0.35 – 69 s). Raph's call, with that rework.
+   (× 6.91, range 0.35 – 69 s). The maintainer's call, with that rework.
 6. **Memory** → **f32, *L*max 10 s, accepted**: 17 MB at 48 kHz now that the quarter-rate level is gone
    (69 MB at 192 kHz). 16-bit storage would requantise the feedback loop on every pass. To check with
    golem-rack: 17 MB written in `initialize` against the engine's stall check (gfx-stretch's review
    raises the same point for 51 MB).
 7. **Defaults** → **kept** (`mix` 50 %, `spray` 10 %, `spread` 50 %). A block that does nothing when
    inserted is ZamGrains' fault, not a behaviour to preserve, and the contract accepts new sounds.
-   golem-rack counts the saved chains with `granular`; converting them to `mix` 0 is Raph's call.
+   golem-rack counts the saved chains with `granular`; converting them to `mix` 0 is the maintainer's call.
 8. **Glyph and hue** → the **new glyph**; **no crate hue** (§3, Visual): moss green is ΔE 15 from the
    modulation green. golem's catalogue entry (❄, `#5ec8e0`) changes with the swap.
-9. **Reference for blind listening**: Raph's (open).
+9. **Reference for blind listening**: The maintainer's (open).
 10. **Absolute key** → **not in v1, no id reserved.** The sets are relative to the played note, as in
     the references. Only Octaves and Fifths are safe on any note of a key; the triads and scales move
     in parallel (a major third on every note) and are a colour, not a harmoniser. A key-aware version
@@ -797,22 +797,22 @@ the working hold.
 | Point | Owner |
 |---|---|
 | Catalogue: plugin swap, lane turns stereo, `freeze` bool, presets re-authored, glyph / colour; footswitch → `freeze` (`switch_param_of`); per-mode caption of `grains`; count of saved chains and whether they get `mix` 0; 17 MB in `initialize` against the stall check | golem-rack |
-| `live`: keep (reviewer's addition) or drop; reference granulator for the blind test; the `freeze` rework and its `decay` conversion | Raph |
+| `live`: keep (reviewer's addition) or drop; reference granulator for the blind test; the `freeze` rework and its `decay` conversion | The maintainer |
 | Who writes gfx-dsp `onset` first (gfx-swell, gfx-ducker or this crate) | golem-fx |
 | Reproduce [P] in gfx-bench: kernel stop bands, the alias table, the level table. The half-band's 80 dB is still a Kaiser estimate | Bench |
-| By ear: the measured level on note changes at 64 grains and small `spray` (the gain may move up to 16 dB in 400 ms there; fallback: the model alone); the first second of a hold pressed early (short grains), and whether the hold should keep capturing for a moment after the press; `skip`'s 40 ms and 100 ms; Hold Chord against a spectral hold | Raph, on `gfx-bench apps gfx-grains` |
+| By ear: the measured level on note changes at 64 grains and small `spray` (the gain may move up to 16 dB in 400 ms there; fallback: the model alone); the first second of a hold pressed early (short grains), and whether the hold should keep capturing for a moment after the press; `skip`'s 40 ms and 100 ms; Hold Chord against a spectral hold | The maintainer, on `gfx-bench apps gfx-grains` |
 | Flux and pitch-jump onsets for Strum on legato playing; key-aware pitch sets | Later, after listening |
 
-### Decisions by Raph (2026-11-14)
+### Decisions by the maintainer (2026-11-14)
 
 - **`live` is kept** (0 % = silent until `freeze`, the hold-pedal gesture).
-- **Blind-test reference, chosen by Claude on Raph's delegation**: Mutable Instruments **Clouds** in its
+- **Blind-test reference, chosen by Claude on the maintainer's delegation**: Mutable Instruments **Clouds** in its
   Granular mode, played through VCV Rack's free Audible Instruments port (MIT-licensed firmware, runs on
   Linux, Windows and macOS, so the comparison is reproducible by anyone). Rationale: it is the open
   reference every granular pedal of the survey is measured against (Beads and several pedals descend from
   it), it covers cloud, freeze and pitched grains, and its parameters (position, size, pitch, density,
   texture) map onto ours for a matched A/B. The test: the guitar DIs through both at matched loudness, at
-  four settings (sparse cloud, dense cloud, freeze, +12 st grains), blind to Raph.
+  four settings (sparse cloud, dense cloud, freeze, +12 st grains), blind to the maintainer.
 
 ## As coded (v0.1.0, 2026-11-15)
 
@@ -875,7 +875,7 @@ notes and five-string strums with exponential decays).
 Not run here: the DI rows (guitar DIs, voice and keys renders), REAPER vs Golem Engine (golem-rack's), the
 EXP sideband row (every grain parameter is drawn at the grain's start; `mix`, `live`, `feedback`, `scan`
 are smoothed 20 ms, the cuts by gfx-dsp `cuts`), the copy's per-block timing, the listening rows (Clouds
-in VCV Rack as the blind reference, Raph's).
+in VCV Rack as the blind reference, the maintainer's).
 
 **Deviations from the design, and why.**
 - **CPU over the 64-grain targets** (1.13 – 1.27 µs against 900 ns; 1.6 µs against 1,300 ns for two

@@ -1,3 +1,4 @@
+import os
 import numpy as np, scipy.io.wavfile as wf
 from onset import follower, duck
 def detB(ax,fs,slow_ms=20,rel=100,rng=9,dead=1.5):
@@ -16,7 +17,7 @@ for nm,det in (('draft',detDraft),('B cascade',detB)):
     seg=lambda a,b: d[int(a*fs):int(b*fs)]
     print(f"synthetic {nm:10s}: min d at pick1 {seg(.2,.22).min():.2f}, pick2 (over ringing note) {seg(.9,.92).min():.2f}; sustain .45-.85 s: mean {seg(.45,.85).mean():.3f} min {seg(.45,.85).min():.3f}; time to d>0.9 after pick1: {np.argmax(seg(.2,1.)[int(.005*fs):]>0.9)/fs*1000+5:.0f} ms")
 for name in ('funk','clean','high-gain','crunch'):
-    fs,x=wf.read(f'/home/raph/golem/library/di-refs/guitar/{name}.wav'); x=x.astype(np.float64)
+    fs,x=wf.read(os.path.expanduser(f'~/golem/library/di-refs/guitar/{name}.wav')); x=x.astype(np.float64)
     if x.ndim>1: x=x.mean(1)
     x/=np.max(np.abs(x)); x=x[:fs*12]
     for nm,det in (('draft',detDraft),('B cascade',detB)):

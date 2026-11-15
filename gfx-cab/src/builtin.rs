@@ -3,7 +3,7 @@
 //! designed from gfx-dsp `matched` sections, not derived from any file. Rendered at the host's rate
 //! into a 100 ms impulse response (the sections are minimum-phase), at the Loudness reference
 //! (+14 dB), so slot 0 and a library cab play at the same level with `normalize` Loudness or Off.
-//! The voicing is [I] until heard (Raph's ear).
+//! The voicing is [I] until heard (the maintainer's ear).
 
 use gfx_dsp::ir::{self, Source};
 use gfx_dsp::matched::{design, Analog, Biquad};

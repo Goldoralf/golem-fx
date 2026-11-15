@@ -1,6 +1,6 @@
 # gfx-golem
 
-> **Status: CODED** (v0.1.0, 2026-11-13) — the prototype gate passed (Raph, on his own sung phrase: "génial");
+> **Status: CODED** (v0.1.0, 2026-11-13) — the prototype gate passed (the maintainer, on his own sung phrase: "génial");
 > the real-time engine matches it on that voice (double exactly an octave down on 98 % of the frames, level
 > −1 dB re the dry at Double Level 0 dB); 7 behaviour tests, bench green (28 checks); CPU 50 ns / sample.
 > Design reviewed by Fable 5.2 (folded in). `align` is deferred to a later version (§4).
@@ -234,7 +234,7 @@ listening test of 2026-11-13, one preset each.
 
 **Prototype gate (before plugin code).** An offline Python prototype of §3 renders a real sung phrase
 (dry, the singer of the rig) at `shift` −12 with `formant` 0 and −4, against gfx-pitch's Whammy at −12 as
-a baseline. Raph listens against the *Emergence* passage. If the octave-down PSOLA sounds buzzy or hoarse
+a baseline. The maintainer listens against the *Emergence* passage. If the octave-down PSOLA sounds buzzy or hoarse
 beyond repair, the fallback is an LPC source-filter engine: a different design, to write then.
 
 **Bench** (on top of gfx-bench's common checks). Test signals: a synthetic voice (Rosenberg glottal pulses

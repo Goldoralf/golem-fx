@@ -1,3 +1,4 @@
+import os
 import numpy as np, scipy.io.wavfile as wf, scipy.signal as sg
 from onset import follower, duck
 def detB(ax,fs,slow_ms=20,rel=100,rng=9,dead=1.5):
@@ -14,7 +15,7 @@ for hold in (0,20,40):
     g=lambda a,b: 20*np.log10(np.sqrt(np.mean(seg(a,b)**2))+1e-9)
     print(f"hold {hold} ms: pick1 side gain 0-20 ms {g(.2,.22):+.1f} dB, 20-40 ms {g(.22,.24):+.1f}, 40-80 {g(.24,.28):+.1f}, 100-150 {g(.3,.35):+.1f}; pick2 0-20 ms {g(.9,.92):+.1f}; sustain mean d {seg(.45,.85).mean():.3f}")
 for name in ('funk','clean','high-gain','crunch'):
-    fsr,x=wf.read(f'/home/raph/golem/library/di-refs/guitar/{name}.wav'); x=x.astype(np.float64)
+    fsr,x=wf.read(os.path.expanduser(f'~/golem/library/di-refs/guitar/{name}.wav')); x=x.astype(np.float64)
     if x.ndim>1: x=x.mean(1)
     x/=np.max(np.abs(x)); x=x[:fsr*12]; o=detB(np.abs(x)+1e-6,fsr); d=1-duck(o,fsr,60,20); act=np.abs(x)>1e-3
     print(f"{name:9s}: mean d {d[act].mean():.3f}; d<0.5 {np.mean(d[act]<.5)*100:.0f}% of the time; d<0.95 {np.mean(d[act]<.95)*100:.0f}%")

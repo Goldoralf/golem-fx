@@ -1,8 +1,9 @@
+import os
 # Review check 11: legacy follower is linear-magnitude, ours is dB-domain. Does scaling attack / release improve the preset fit on the DIs?
 import numpy as np, sc, ref
 exec(open('m5.py').read().split("for sig_name")[0])
 from scipy.io import wavfile
-def rd(f): sr,x=wavfile.read('/home/raph/golem/library/di-refs/guitar/'+f); return (x/2**31)
+def rd(f): sr,x=wavfile.read(os.path.expanduser('~/golem/library/di-refs/guitar/')+f); return (x/2**31)
 for dn in ('clean.wav','lead-clean.wav','crunch.wav'):
     x=rd(dn)[:12*fs]; R={}
     for name,p in PRE.items():

@@ -659,7 +659,7 @@ Targets for the coded plugin, and what the prototype measured [P]:
 | Switches | `mode`, `window`, `source`, `bypass` under a held 82 Hz note: clicks ≤ −60 dB re peak | to bench |
 | Legacy conversion | the seven converted presets within 2 dB RMS of the reference's per-octave gain on the clean, lead-clean and crunch DIs | 1.7 dB (clean); review with `attack` halved: 1.45 / 1.52 / 1.66 dB |
 | CPU (48 kHz) | Live ≤ 0.7 µs mono / 1.2 µs stereo, Studio ≤ 0.3 / 0.55 µs; worst 64-sample block ≤ 25 % | detector / Studio timed 60 – 177 ns; ACGE scaled |
-| Listening | the DIs through every preset, Live vs Studio level-matched; Studio's pre-echo on pick attacks; Live's two-thirds octave against Studio's bins | Raph |
+| Listening | the DIs through every preset, Live vs Studio level-matched; Studio's pre-echo on pick attacks; Live's two-thirds octave against Studio's bins | The maintainer |
 
 ## 6. What golem-rack must provide
 
@@ -735,7 +735,7 @@ Targets for the coded plugin, and what the prototype measured [P]:
 Settled at the review of 2026-11-15, except those marked open (the Review's "Still open" table).
 
 1. **`mode` of the converted legacy presets**: **Studio** (closest to their voicing, latency already paid
-   through PDC). The block's default is **Live**. Open for Raph: whether golem later moves them to Live.
+   through PDC). The block's default is **Live**. Open for the maintainer: whether golem later moves them to Live.
 2. **Live's resolution and accuracy**: **ship it, with the review's target rule** (power-weighted ±1/3
    octave, then [¼ ½ ¼]) and c = 0.5: a two-thirds-octave compressor, ±1 dB to −18 dB on lone tones,
    ≤ 0.5 dB on program. Sixth-octave bells (about 0.9 µs mono) and the hybrid stay deferred.
@@ -874,15 +874,15 @@ B = blocking: apply before coding. R = recommended.
 | Point | Owner |
 |---|---|
 | Rule 1 in Rust with ramped coefficients: lone tones, program, Key mode (weights from the key's power), 44.1 – 192 kHz; tick spurs ≤ −70 dBc (the prototype, held per tick, gives −57 dBc at a 64-sample tick, −65.5 dBc at 16) | golem-fx, at coding; bench |
-| Live's two-thirds-octave duck in Key mode (the draft's −6.5 dB at 200 Hz for a 330 Hz key will be wider): acceptable against gfx-ducker's Spectral shape, or keep Key for Studio in the presets | Bench, then Raph |
+| Live's two-thirds-octave duck in Key mode (the draft's −6.5 dB at 200 Hz for a 330 Hz key will be wider): acceptable against gfx-ducker's Spectral shape, or keep Key for Studio in the presets | Bench, then the maintainer |
 | An asymmetric analysis window for Live, where nothing is resynthesised. With a fall of N / 4, the gain reaches 63 % at 5.3 ms instead of 8.0 at the frame's end, and the tone reading is ±0.4 dB (`r10`) | golem-fx, after v1 |
 | Studio hop N / 16 if the −58 dBc images are heard on bass or low guitar notes | Bench, by ear |
-| Bass and voice DIs: every bass and vocal preset, and the conversion fit on voice and keys (the presets' real roles; the fit rests on guitar DIs only) | Raph / golem-rack |
+| Bass and voice DIs: every bass and vocal preset, and the conversion fit on voice and keys (the presets' real roles; the fit rests on guitar DIs only) | The maintainer / golem-rack |
 | Catalogue entry: `source` instead of `detect`, `window` default 1024, `thresh` −80, the converted presets with `attack` halved and the two `mix` / `out` pairs, the keyless display on Windows / macOS | golem-rack |
 | Latency at 96 / 192 kHz changing with the channel count (change 7), and with `mode` at preset recall | golem-rack, to measure |
-| `skyline` against `bins` at tile size (same bar grid and baseline; only the line and the clipping differ); the new glyph at 16 px | Raph, on the family sheet |
+| `skyline` against `bins` at tile size (same bar grid and baseline; only the line and the clipping differ); the new glyph at 16 px | The maintainer, on the family sheet |
 | `geq` changes (27 sections, per-plan clamp and c, targets at the points), with gfx-geq's renders nulling before and after | golem-fx, with this crate |
-| Converted presets on dense sources: 6 – 11 dB more cut at 8 kHz than the legacy on pink noise, by design of the band detector | Raph, by ear |
+| Converted presets on dense sources: 6 – 11 dB more cut at 8 kHz than the legacy on pink noise, by design of the band detector | The maintainer, by ear |
 
 ## As coded (v0.1.0, 2026-11-15)
 

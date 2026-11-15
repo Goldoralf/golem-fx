@@ -441,7 +441,7 @@ yet, and one low E alone lights the B3 and E4 bands with its own 3rd and 4th par
 
 Later (v2, not in v1): cancel a shared partial whose frequency is known from the lower string's own
 measurement (k · f_low with an estimated inharmonicity) by a two-component fit. It is a research item, to
-try on the bench with Raph's strum DIs.
+try on the bench with the maintainer's strum DIs.
 
 ### 2.6 Outputs, smoothing, and what golem-rack needs
 
@@ -651,7 +651,7 @@ strobe and poly rows below on these signals; its figures are the bounds, with a 
 | Reference | `reference` 415 / 432 / 466: a tone at the reference reads 0.00 ± 0.05 ¢; every sample rate 44.1 – 192 kHz agrees ± 0.05 ¢ |
 | Speed, coarse | Onset → `state` ≥ 1 within ±5 ¢: E4 ≤ 35 ms, E2 ≤ 45 ms, B1 ≤ 50 ms, B0 ≤ 95 ms |
 | Speed, strobe | First strobe reading: E4 ≤ 80 ms, E2 ≤ 0.18 s, B0 ≤ 0.45 s. `state` 2 on a clean note, Fast: E4 ≤ 0.25 s, E2 ≤ 0.35 s, B0 ≤ 0.8 s; Strobe: E4 ≤ 0.4 s, E2 ≤ 0.5 s, B0 ≤ 1.1 s |
-| Octave errors | 200 plucks per string from DIs (neck and bridge pickups, guitar and bass; `clean.wav` + Raph's bass DI): 0 octave errors in string tunings, ≤ 1 % in chromatic |
+| Octave errors | 200 plucks per string from DIs (neck and bridge pickups, guitar and bass; `clean.wav` + the maintainer's bass DI): 0 octave errors in string tunings, ≤ 1 % in chromatic |
 | Open string or harmonic | The "bridge pickup" open E2 reads `note` 40, `string` 1; the synthetic 12th-fret harmonic reads `note` 52, `string` 1 (§2.3) |
 | Needle jitter | Steady tone, noise −60 dBFS: `cents` σ ≤ 0.1 ¢ (Fast), ≤ 0.02 ¢ (Strobe) after settling; no published step > 0.5 ¢ while the input is constant |
 | Error bar | Clean notes: σ within a factor 3 of the measured standard deviation of the readings. With a neighbour 200 ¢ away at 0 dB: σ ≥ 0.5 ¢ |
@@ -663,13 +663,13 @@ strobe and poly rows below on these signals; its figures are the bounds, with a 
 | Coincidence (DADGAD) | D2's harmonic → the D3 string (the fundamental wins); documented behaviour |
 | Poly | Synthetic strums of every tuning: each string at a random offset ±30 ¢, 20 ms strum spread. Clean strings ±1 ¢ at their T_i + 0.1 s (0.35 s on 6-std, 0.75 s on bass-4, 0.95 s on bass-5-std); shared strings flagged `sN_conf` ≤ 0.5 and their sign right when more than 10 ¢ off; `state` 3 at the first band reading. A single pluck after a strum returns to Mono |
 | Poly, false strum | One open low string alone, in every tuning: `state` never 3 (its partials light the shared bands) |
-| Poly on DIs | Raph's strum recordings (neck / thumb and bridge / pick): readings against the same strings plucked alone and read in Strobe. Report the error per string, clean and shared; no pass bound until measured |
+| Poly on DIs | The maintainer's strum recordings (neck / thumb and bridge / pick): readings against the same strings plucked alone and read in Strobe. Report the error per string, clean and shared; no pass bound until measured |
 | Mute | `mute` toggled on a 1 kHz sine, and `bypass` turned on while muted: no HF burst > −50 dB re peak (the ramp). Unmuted and bypassed: output bit-exact to the input |
 | Freshness | `seq` adds exactly 1 per 10 ms at block sizes 32 – 2,048 and at every sample rate, in silence too; it stops when bypassed without `always_on` |
 | Bypassed CPU | `bypass` on, `always_on` off: cost of a copy (≤ 2 ns / sample) |
 | CPU | Mono ≤ 1 % of a core, Poly 8 strings ≤ 1.5 %, 48 kHz, 128-sample blocks; worst block ≤ 0.1 ms |
 | Tuning table | The 20 embedded tunings equal `~/golem/library/catalog/tunings.json` (MIDI notes) when the file is present; every named option and Custom with the same notes give identical meters |
-| Against references | Same DIs through x42 Tuna and golem's JSFX: report the differences (no bound). A hardware strobe reading if Raph has one |
+| Against references | Same DIs through x42 Tuna and golem's JSFX: report the differences (no bound). A hardware strobe reading if the maintainer has one |
 
 ## 6. Positioning
 
@@ -740,7 +740,7 @@ appended, if asked).
    → golem-rack confirms its engine table takes one catalogue value to nine parameters.
 2. **Mute by default.** The plugin's default stays off (a safe insert). For golem's insert value the
    review recommends **on**: an engaged tuner on a stage is a silent one, and `always_on` covers
-   watching the pitch while playing. → Raph.
+   watching the pitch while playing. → the maintainer.
 3. **Placement.** One instance per instrument lane, first in the lane's own chain on both engines,
    inserted bypassed; the marker picks which one to engage. Not REAPER's input FX (§2.6). A bypassed
    instance is a copy. → golem-rack confirms.
@@ -750,19 +750,19 @@ appended, if asked).
    parameters as it does `gr`; the Golem Engine's Lua can read 7 – 23 values at 30 Hz.
 5. **Poly on shared strings.** v1 flags them: accepted. The limit is physical (the two partials are less
    than 1 Hz apart) and every strum tuner has it; the flagged reading is still right in sign (§2.5). The
-   two-component fit stays v2 and needs Raph's strum DIs first.
+   two-component fit stays v2 and needs the maintainer's strum DIs first.
 6. **In-tune band and settle times.** Lamp ±2 ¢ in Fast, ±0.3 ¢ in Strobe, golem-side (§2.6). Fast is the
    stage mode: settled in 0.2 – 0.75 s on a clean note. Strobe is the bench mode: 0.4 – 1 s, and up to 2 s
-   on a hard-plucked low B, which is the string settling. → Raph, by feel, on the pedal.
+   on a hard-plucked low B, which is the string settling. → the maintainer, by feel, on the pedal.
 7. **Inharmonicity.** Reported raw. Estimating B per string is possible later (Strobe, Mono, partials 1
    and 2 on two tracks, which §2.3's harmonic test already runs); not in v1.
 8. **Reference.** 410 – 470 Hz is enough: it covers every pitch standard in use; x42's 220 – 880 Hz is an
    octave choice, not a need. `reference` is **one golem-wide setting written to every instance at
    insert**, not a parameter of the `tuner` block: a band has one A. → golem-rack.
 9. **Sweetener sets.** The plugin is ready (Custom + `offset_n`). The values are data for golem.fm,
-   later. → Raph.
+   later. → the maintainer.
 10. **Hue and motif.** `#23bf18` is too close to gfx-glitch's lime; replaced by deep green `#126e1c` with
-    a lamp-green rune light. Segment counts halved (Visual). → Raph, on the family sheet.
+    a lamp-green rune light. Segment counts halved (Visual). → the maintainer, on the family sheet.
 11. **CPU spike.** Removed at the source: the long YIN runs at a quarter of the rate (§2.2).
 
 ## Review (Fable 5.2, 2026-11-14)
@@ -805,10 +805,10 @@ Still open:
 | Point | Owner |
 |---|---|
 | Engine table: one catalogue `tuning` → `tuning` + `string_1…8`; `reference` as a golem-wide setting; placement first in the lane; the 30 Hz reader on each engine with the `seq` guard; Designer hiding the 23 meters | golem-rack |
-| golem's `mute` insert value; the lamp bands (±2 ¢ / ±0.3 ¢); sweetener data; hue on the family sheet | Raph |
-| Real glides and real neighbours: every [A] figure of §2.4 – 2.5 comes from synthetic plucks. The settle spans (150 / 300 ms, 0.2 / 0.07 ¢), the 20 dB harmonic test and the capture guard are to set on DIs | Bench, with Raph's guitar, bass and strum DIs |
+| golem's `mute` insert value; the lamp bands (±2 ¢ / ±0.3 ¢); sweetener data; hue on the family sheet | The maintainer |
+| Real glides and real neighbours: every [A] figure of §2.4 – 2.5 comes from synthetic plucks. The settle spans (150 / 300 ms, 0.2 / 0.07 ¢), the 20 dB harmonic test and the capture guard are to set on DIs | Bench, with the maintainer's guitar, bass and strum DIs |
 | Fast growing to Strobe's window while unsettled; full confidence for a shared string whose peak is far from the lower string's partial; the two-component fit (v2) | Bench |
-| The strobe above 1.5 kHz (violin, voice harmonics): needs a third coarse range; not in v1 | Raph, if asked |
+| The strobe above 1.5 kHz (violin, voice harmonics): needs a third coarse range; not in v1 | The maintainer, if asked |
 | `zoom`'s frames estimator sits 2 – 3 times above the Cramér–Rao bound (one case): fine for a tuner, to remeasure before gfx-pitch or gfx-crusher reuse it | Bench |
 
 ## As coded (v0.1.0, 2026-11-15)
@@ -839,7 +839,7 @@ Still open:
 | Reference | 0.00 ± 0.05 ¢, every rate | 415 / 432 / 466 Hz at 44.1 / 48 / 96 / 192 kHz: within ±0.05 ¢, note 69 |
 | Speed, coarse | E4 35, E2 45, B1 50, B0 95 ms | 20, 30, 40, 80 ms |
 | Speed, strobe | first E4 0.08, E2 0.18, B0 0.45 s; settled Fast 0.25 / 0.35 / 0.8, Strobe 0.4 / 0.5 / 1.1 s | 0.06 / 0.16 / 0.43 s; 0.21 / 0.31 / 0.73 s; 0.36 / 0.46 / 1.03 s |
-| Octave errors (synthetic) | no wrong note | low B, A0, A1 and E2 with the fundamental 20 – 34 dB under: their note and string from the first reading, nothing flashed, within 0.5 ¢. The DI rows (200 plucks) need Raph's recordings |
+| Octave errors (synthetic) | no wrong note | low B, A0, A1 and E2 with the fundamental 20 – 34 dB under: their note and string from the first reading, nothing flashed, within 0.5 ¢. The DI rows (200 plucks) need the maintainer's recordings |
 | Open string or harmonic | E2 open, harmonic 52 | bridge-pickup E2 (fundamental −20 dB): note 40, string 1. Even partials only: note 52. Even partials with the fundamental at −17 dB: YIN reads 2 f, the probe finds the fundamental, the strobe moves down (note 40, within 0.1 ¢); at −23 dB and under: the harmonic |
 | 12th-fret harmonic, B = 2e-4 | +0.5 ± 0.1 ¢ | +0.518 ¢ over the open string's fundamental |
 | Coincidence (DADGAD) | D2's harmonic → D3 | string 3, not a harmonic |
@@ -923,11 +923,11 @@ Strum shown (first `state` 3 after the strum, worst of 3): 6-std 0.51 s, eb-std 
   should re-apply the lane's tuning (Custom + `string_1…8`) after loading a tuner preset (golem-rack).
 
 **Left for the owner.**
-- The DI rows of §5: octave errors on 200 plucks per string, Poly on Raph's strum DIs, against x42 Tuna
+- The DI rows of §5: octave errors on 200 plucks per string, Poly on the maintainer's strum DIs, against x42 Tuna
   and the JSFX. Real glides, the settle spans (0.2 / 0.07 ¢), the 20 dB harmonic test and the onset
   constants are to set on those recordings.
 - golem-rack: the engine table (`tuning` → Custom + strings), `reference` written to every instance,
   placement first in the lane, the 30 Hz reader with the `seq` guard, Designer hiding the 23 meters, and
   re-applying the lane's tuning after a tuner preset.
-- Raph: `mute` at insert, the lamp bands, the hue on the family sheet.
+- The maintainer: `mute` at insert, the lamp bands, the hue on the family sheet.
 

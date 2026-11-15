@@ -126,7 +126,7 @@ Honest boundaries, so expectations are right:
 
 ### Priority effects: reverb, delay, shimmer
 
-Raph's priority (2026-11-12): these three must be as complete as possible. Extended after the review:
+The maintainer's priority (2026-11-12): these three must be as complete as possible. Extended after the review:
 
 - **gfx-reverb**: 11 algorithms (Hall, Plate, Room, Chamber, Cathedral, Ambience, Spring, Bloom, Cloud, Gated,
   Reverse), `era` (Modern / 80s / 70s), three-band decay, wet shelves, swell, drive / dwell, modulation rate,
@@ -147,7 +147,7 @@ Raph's priority (2026-11-12): these three must be as complete as possible. Exten
 | Values marked [I] / [U] in the documents (Dimension D absolute delays, GxDetune range, ReaEQ shelf frequency, Solina rates, 105Q voicing) | Bench / measurement |
 | Real EXP update intervals per engine | golem rack session (measurement promised) |
 | golem UI for step patterns (killswitch), learn-threshold (gate), key routing | golem rack session |
-| DIs: bass (fingers, pick), voice (male, female); keys rendered from MIDI | Raph / golem rack session |
+| DIs: bass (fingers, pick), voice (male, female); keys rendered from MIDI | The maintainer / golem rack session |
 | Expert parameter counts (15 – 44): which ones golem's Designer exposes | golem catalogue, per effect, when it ships |
 
 ## 8. Suggested implementation order

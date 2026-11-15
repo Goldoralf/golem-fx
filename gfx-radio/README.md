@@ -853,7 +853,7 @@ Every preset is level-matched to the bypass (±2 LU on the bench DIs) with `leve
     stencil, deep green **anodized** with a lamp-green light.
   - Olive drab is a greyed colour (HSL saturation 44 %), where the rule for the metal hues is "no grey mixed
     into the hue". It is an exception of the same kind as gapmeter grey, rosewood and champagne, and it is
-    the point: the colour *is* the object. Raph confirms on the family sheet (§7.12).
+    the point: the colour *is* the object. The maintainer confirms on the family sheet (§7.12).
 - **Finish: thrash** (the lofi family's, as gfx-crusher proposes). Olive gloss with the motif in yellow
   (`#ffd400`) lined in black reads as stencilled equipment; the diamond plate fits.
   **`RUNE_LIGHT['gfx-radio'] = '#c8d86a'`** is set, not a fallback: the default `mix(hue, '#fff', .3)` gives
@@ -928,7 +928,7 @@ Every preset is level-matched to the bypass (±2 LU on the bench DIs) with `leve
     level-unbounded by nature and a live-rig hazard. If it is wanted later: a *synthesised* howl (a sine
     at the horn's main peak, keyed by the input level, level-bounded), appended as an expert parameter
     defaulting to off.
-12. **Hue** → olive drab `#4b5320` thrash accepted, rune light `#c8d86a` (Visual). Raph, on the family
+12. **Hue** → olive drab `#4b5320` thrash accepted, rune light `#c8d86a` (Visual). The maintainer, on the family
     sheet, at tile size next to gfx-tuner.
 
 ## As coded (v0.1.0, 2026-11-15)
@@ -1027,7 +1027,7 @@ table): re-run both after any voicing change and paste the tables into `voicing.
 
 **Verdict: Good.** The central idea is right and it is what no futz plugin does: the artefacts come out of a
 simulated chain. It was tested where it could fail, with prototypes
-(`/tmp/claude-1000/-home-raph-code/e0dc0b09-d78a-4463-a90e-9918eadd7ea8/scratchpad/proto-gfx-radio/`:
+(the design session's scratchpad, `proto-gfx-radio/`:
 `fm.py`, `am.py`, `motor.py`, `alias.py`, `mix.py`, `codec.py`), and the radio half holds without
 reservation: FM clicks do emerge from a discrete-time baseband discriminator, at Rice's rate and at any host
 rate; AM detuning distortion emerges from the IF filter; the baseband needs no oversampling; the motor ODE
@@ -1068,10 +1068,10 @@ Still open:
 
 | Point | Owner |
 |---|---|
-| Every voicing constant (speakers, bells, carbon h, crossover widths, AGC times, codec q and α, squelch-tail level): device measurements and listening (§7.7). The pedal's rank against Speakerphone depends on this, not on the algorithms | Raph, then the bench |
+| Every voicing constant (speakers, bells, carbon h, crossover widths, AGC times, codec q and α, squelch-tail level): device measurements and listening (§7.7). The pedal's rank against Speakerphone depends on this, not on the algorithms | The maintainer, then the bench |
 | Does the LPC coder *sound* like a cell call? Proven stable, exact and bounded; not heard. If listening rejects it, the fallback is the draft's bell stepper (recorded in §2.3's first paragraph) | Listening, at coding |
 | The worst part swap for aliasing (hard rail, `speaker` None, `drive` 100 %: −64 dB at 4× in the prototype): second-order ADAA or not | Bench |
-| gfx-tape's README: remove the deferred AM Radio slot (§7.1). gfx-crusher's README: `converter` / `blep` start in gfx-dsp with separable halves (§7.8) | Raph (other documents) |
+| gfx-tape's README: remove the deferred AM Radio slot (§7.1). gfx-crusher's README: `converter` / `blep` start in gfx-dsp with separable halves (§7.8) | The maintainer (other documents) |
 | New block type `radio`, category `lofi`, roles voice / guitar / keys / drums; `depends` greying for the inert parameters; `tune` as an EXP target; `mains` set at insert if golem knows the country; AI vocabulary: `radio` before grit's Megaphone / Telephone and eq-graphic's Hygiaphone / Lo-fi radio for "phone / megaphone / radio" intents; `noise` float here vs gfx-tape's toggle | golem-rack |
 | The Oksanen & Välimäki paper's curve and noise values (PDF not readable at survey): to read before voicing the carbon mic | Coding |
-| Olive drab next to gfx-tuner at tile size; the greyed-hue exception | Raph, on the family sheet |
+| Olive drab next to gfx-tuner at tile size; the greyed-hue exception | The maintainer, on the family sheet |

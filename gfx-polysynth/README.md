@@ -15,7 +15,7 @@
 > −24 dB); Dual follows a vibrato with 14 – 16 ms of lag at 91 – 97 % depth and a hammer-on in 14 ms; Mono's
 > voice within 2.8 – 4.0 ¢ RMS of bends and vibrato, no gap over 2.7 dB at the take-over; bench 28 / 28 at
 > 44.1 – 192 kHz; CPU 1.49 – 1.62 µs per sample on the bench's pink noise (7.1 – 7.8 % of a core, budget
-> 8 %; a shared machine), 4.9 – 6.7 % on strums. The DI rows of §5 wait for Raph's recordings.
+> 8 %; a shared machine), 4.9 – 6.7 % on strums. The DI rows of §5 wait for the maintainer's recordings.
 
 golem's **polyphonic guitar synthesizer**, from a normal guitar or bass DI (no hex pickup, no MIDI).
 Each note of a chord becomes a synth tone: a band-limited waveform, a resonant filter with its own
@@ -620,7 +620,7 @@ partials). Neck pickup helps the tracked voice (a stronger fundamental; gfx-tune
 
 ## 5. Bench suite (on top of gfx-bench's common checks)
 
-Synthetic strings as §1.3 (generated in the test), plus Raph's DIs (lead-clean.wav, funk.wav, strums,
+Synthetic strings as §1.3 (generated in the test), plus the maintainer's DIs (lead-clean.wav, funk.wav, strums,
 a bass DI). Every check at 44.1 / 48 / 96 / 192 kHz. Rows marked (Poly) are that engine's entry exam, run
 on a bench build; they are not v1's.
 
@@ -742,7 +742,7 @@ Answered at the review of 2026-11-14 (details in the sections named and in the R
    note, or Poly's), not as an `engine` option: an engine says where the sound comes from.
 6. **`vcf`** → SVF only in v1, the code gfx-autowah has shipped. A ZDF ladder can be appended to this
    pedal's `type` later (ranks are per plugin; gfx-autowah's fourth option is Wah).
-7. **Defaults by ear** → stay open for Raph: `compress` 40 %, `cutoff` 3 kHz, `filt_env` +24 st, the purity
+7. **Defaults by ear** → stay open for the maintainer: `compress` 40 %, `cutoff` 3 kHz, `filt_env` +24 st, the purity
    gate's 0.25 B, the handover's 3.5 τ → 7.5 τ, the selection's 6 dB and 3 / 50 ms, f̂'s 10 ms.
 8. **Synthetic strings only** → stays open: every [A] and [P] figure must be rerun on DIs (neck and
    bridge pickup, a real pick) before §5's thresholds are frozen.
@@ -824,12 +824,12 @@ modulation pedals after it do that job; a `cutoff` LFO is the first thing to add
 |---|---|
 | **Spectral core in gfx-bench on the DIs** before anything is frozen: selection constants, f̂ smoothing (10 or 30 ms), the two local handover events (not prototyped), per-harmonic dips in the crossfade | golem-fx, first task |
 | Open E reads −38 dB with one band per partial against −44 dB drafted (close partial pairs, E2 × 5 against G♯3 × 2): tune the selection's release, or accept | Bench |
-| CPU: 8 % of a core for one pedal, the dearest non-circuit effect of the suite | Raph, after the measurement |
+| CPU: 8 % of a core for one pedal, the dearest non-circuit effect of the suite | The maintainer, after the measurement |
 | Poly: a naming method that reaches ≤ 1 wrong voice per 100 strums (FFT readings alone are unmeasured here; the semitone bank is not it), then the listening test of its 0.13 – 0.4 s handover | golem-fx research, with `multipitch` |
 | **gfx-sustainer to align** (its README is not edited here): `multipitch::Analyzer::prepare(sample_rate, f_min, max_notes)`, passing 4; `notes()` = the `max_notes` most salient confirmed notes, sorted by pitch, and a 4-note caller unaffected by a 6-note build; `early()` reserved; `track` unchanged. `OCTAVE_CONFIRM_MS` moves from gfx-golem into `detect` only under gfx-golem's null | golem-fx |
 | gfx-vocoder to note: `filterbank` gains an explicit (centre, width, order) design beside `GammaBank`; widths there are half-widths | golem-fx |
 | gfx-autowah on `vcf`: only if bit-identical; otherwise it keeps its code | golem-fx |
-| Defaults by ear (question 7); `residue` default 100 % in Mono (a chord's other notes stay on the core) or 0 % (a classic mono synth) | Raph's ear |
+| Defaults by ear (question 7); `residue` default 100 % in Mono (a chord's other notes stay on the core) or 0 % (a classic mono synth) | The maintainer's ear |
 | Catalogue entry `polysynth` (category `pitch`), block presets, `faces.json`, glyph, motif `saws`, hue `#ff9ecf` on the family sheet next to raspberry and the pitch magenta; note output to `vital` (question 4) | golem-rack |
 
 ## As coded (v0.1.0, 2026-11-15)

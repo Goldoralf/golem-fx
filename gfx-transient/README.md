@@ -571,7 +571,7 @@ voice DIs when they exist (design-review §7).
 common checks start from silence with neutral defaults, so they also prove transparency.
 
 **Listening**: Snap Pick, Soft Pick, Funk Pop, Chug Tight (before a NAM amp), Pick Definition after the
-amp, Bass Click / Thump, Drum Punch, Room Dry. Blind, level-matched A / B against a commercial shaper Raph
+amp, Bass Click / Thump, Drum Punch, Room Dry. Blind, level-matched A / B against a commercial shaper the maintainer
 owns (SPL-style), and Soft Pick against gfx-swell's "Soft attack".
 
 ## Visual
@@ -688,8 +688,8 @@ attack, clip), Trans-X Wide (sensitivity, duration, range). Left out on purpose:
 | Point | Owner |
 |---|---|
 | Reproduce the [P] figures in gfx-bench (Karplus-Strong strings and DIs, not only the prototype's synthetic notes) | golem-fx, first coding task |
-| By ear: `sens` default; one `sens` or one per section; D_0 (1 – 2 dB); `smooth` default; whether Room Dry wobbles on a held voice; blind A / B against an SPL-style shaper | Raph, on the bench renders |
-| A band for the sustain (`sus_band`, the same shelf on G_sus): cheap, asked by Softube users; not in v1 | Raph |
+| By ear: `sens` default; one `sens` or one per section; D_0 (1 – 2 dB); `smooth` default; whether Room Dry wobbles on a held voice; blind A / B against an SPL-style shaper | The maintainer, on the bench renders |
+| A band for the sustain (`sus_band`, the same shelf on G_sus): cheap, asked by Softube users; not in v1 | The maintainer |
 | gfx-gate and gfx-ducker keep W = 1.2 / `hpf`. The gate's hysteresis covers the ripple; gfx-ducker's "the level never ripples" and its Trigger (rise > R / 2) should be re-checked with a key note under its `hpf` corner | golem-fx (not edited here) |
 | One level helper in gfx-dsp (filters + `SlidingMax` + window rule with its divisor) for gate, ducker, swell's `onset::Pick` and `transient.rs` | golem-fx, when the second of them is coded |
 | gfx-limiter's core to gfx-dsp `limiter`: pure move, bit-for-bit null, announced first | golem-fx → golem-rack |
@@ -794,7 +794,7 @@ under a bit-exact null of its renders: left for the move to gfx-dsp `limiter`.
   There, the raw unsmoothed shares meet the absolute floor (−96 dB) at one level and not at the other
   (up to 0.8 dB at −24 dB). After the effect's smoothing, the gain holds within 0.04 dB.
 
-**Left for Raph.**
+**Left for the maintainer.**
 - The by-ear points of the Review: `sens` default, one `sens` or two, D_0, `smooth` default, Room Dry
   on a held voice, and an A / B against an SPL-style shaper. No DI renders were made: they need the bench
   WAVs and ears.

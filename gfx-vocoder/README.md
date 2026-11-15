@@ -9,7 +9,7 @@
 > freeze, formant remap and tilt. Zero latency. Measured: summed ripple 1.8 dB at 24 ERB bands, lag ≤ 15.6
 > ms in every band at every setting, wet level within 1 dB of the modulator at 8 – 40 bands, V/UV on in
 > 2 ms, tracking within 0.1 ¢, bench 28 / 28 at 44.1 – 192 kHz; CPU 487 – 594 ns per sample at the
-> defaults (over the 450 ns budget, see "As coded"). The voice-DI rows of §5 wait for Raph's recordings.
+> defaults (over the 450 ns budget, see "As coded"). The voice-DI rows of §5 wait for the maintainer's recordings.
 
 golem's **channel vocoder**. A bank of band-pass filters measures the spectral envelope of a
 **modulator** (a voice, or a guitar) and imposes it, band by band, on a **carrier** (a synth, a guitar, or
@@ -599,7 +599,7 @@ modulator the wet is silence and every check would pass trivially.
 | No key | Key Input / Talk Box with an unconnected key | Wet silent, dry passes, no NaN |
 | EXP | `formant`, `sib`, `flatten`, `mix`, `noise`, `tilt`, `env_rel` driven by the contract's 50 Hz-stepped sweep | Control sidebands ≤ −80 dB |
 | CPU | 48 kHz, mono / stereo | ≤ 450 ns at 24 bands Tracked Saw with the noise bank; ≤ 1.4 µs at 40 bands Supersaw Ninth, stereo carrier |
-| Listening | voice/male, voice/female (to record), lead guitar; A / B against TAL-Vocoder and a 20-band reference; 24 vs 40 bands on a fast rhythmic phrase (the lag) ; the 40 Hz floor against 30 and 50 Hz | Renders kept for Raph; intelligibility judged on spoken counting ("one, two, six, seven") |
+| Listening | voice/male, voice/female (to record), lead guitar; A / B against TAL-Vocoder and a 20-band reference; 24 vs 40 bands on a fast rhythmic phrase (the lag) ; the 40 Hz floor against 30 and 50 Hz | Renders kept for the maintainer; intelligibility judged on spoken counting ("one, two, six, seven") |
 
 ## 6. What golem-rack must provide
 
@@ -716,7 +716,7 @@ effect blocks.
    thing as the balance. If the bench falls under 90 %, aperiodicity is added as a second way in.
 6. **MIDI input in v1**: no (§6, item 3).
 7. **`vocoder.rs` → `pv_shift.rs`**: yes, as its own commit, proven by gfx-pitch's bit-exact null (§2.9).
-   Raph can still veto it; nothing in this design depends on it.
+   the maintainer can still veto it; nothing in this design depends on it.
 8. **`chord` list**: kept. Octave and Fifth with the octave below are the right thickeners for a voice
    (the added notes stay under the sung one, so the melody stays on top). Sus2 / Sus4 can be appended.
 9. **`key` / `scale` per block**: yes, song-bound by id in the engine table (§6, item 4).
@@ -779,7 +779,7 @@ Log earns its place only through the vintage presets.
 
 ### Still open
 
-- **Owner (Raph)**
+- **Owner (the maintainer)**
   - Record the voice DIs (open question 10): without them five bench rows cannot run and the verdict
     stays Good.
   - Rename `vocoder.rs` → `pv_shift.rs` (recommended, own commit, bit-exact null).

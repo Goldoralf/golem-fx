@@ -1,5 +1,6 @@
+import os
 import json,math
-d=json.load(open('/home/raph/golem/library/catalog/tunings.json'))
+d=json.load(open(os.path.expanduser('~/golem/library/catalog/tunings.json')))
 f=lambda m:440*2**((m-69)/12)
 c=lambda a,b:1200*math.log2(a/b)
 for t in d['tunings']:

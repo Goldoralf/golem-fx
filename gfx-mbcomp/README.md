@@ -785,12 +785,12 @@ Still open:
 | Both engines following a latency change made by a parameter (`phase`) while running | golem-rack, to measure |
 | Per-band meters `<b>_dyn` (signed) in golem's UI; a band view in the Designer for 4 × 8 parameters; EXP on `amount` and `tilt` (non-catalogue ids) | golem-rack |
 | R (−24 dBFS), the per-band default times, Tilt's ±12 dB, the 80 Hz limit of the fit rule | Bench, by ear |
-| Guard: absolute level kept. If presets prove too level-dependent, gfx-transient's relative floor (phrase level − 48 dB). Whether the guard should also take the make-up back under it (a soft expander below the guard, so that hiss never comes out above its input level) | Bench, then Raph |
+| Guard: absolute level kept. If presets prove too level-dependent, gfx-transient's relative floor (phrase level − 48 dB). Whether the guard should also take the make-up back under it (a soft expander below the guard, so that hiss never comes out above its input level) | Bench, then the maintainer |
 | Lift and transients: attack as the only time (OTT's way) or a fixed fast fall for boosts | Bench, on the pick-attack DI |
 | LR8: Butterworth-8 detection if the 24 dB selectivity gap is heard; a third `phase` option at 85 ms if LR8 below 80 Hz needs full correction | Bench |
 | Audibility of 4 – 5.7 ms (LR4) and 9 – 13 ms (LR8) of low-frequency dispersion on bass and kick, Minimum against Linear; pre-ringing of a compressing band in Linear | Bench, by ear (shared with gfx-grit) |
 | `crossover`: one set of names for layers 1 – 3 across gfx-bassdi, gfx-grit and this crate; who writes it first | golem-fx, at coding order |
 | gfx-comp: `next_gain_db`, `detector_low_hz`, with a bit-exact null of gfx-comp before and after | golem-fx, with this crate |
-| `tiers` against gfx-comp, gfx-ducker and gfx-transient at tile size; the printed word "Bands" | Raph, on the family sheet |
-| Bass DIs (fingers, pick, slap), voice DIs: every §4 preset and the Listening row wait for them | Raph / golem-rack |
+| `tiers` against gfx-comp, gfx-ducker and gfx-transient at tile size; the printed word "Bands" | The maintainer, on the family sheet |
+| Bass DIs (fingers, pick, slap), voice DIs: every §4 preset and the Listening row wait for them | The maintainer / golem-rack |
 | OTT's attack times could not be re-read [U]; the Waves C4 and Fractal rows rest on secondary sources [I] | Not blocking |

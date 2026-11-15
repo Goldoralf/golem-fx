@@ -149,7 +149,7 @@ latency.
    - **calibrated loudness**: the wet's power equals the power of the stretched region (Parseval, §2.6),
      whatever the window, the amount or `cloud`.
 3. **Add what a live player needs**:
-   - a **hands-free Rolling mode** (Raph's no-footswitch rule for gfx-glitch, 2026-11-14), next to the
+   - a **hands-free Rolling mode** (the maintainer's no-footswitch rule for gfx-glitch, 2026-11-14), next to the
      catalogue's capture gesture;
    - `cloud`, to move from a Paulstretch wash to a coherent slow-motion;
    - stereo `width`;
@@ -580,7 +580,7 @@ Per stereo frame at 48 kHz, default settings (683 ms window, N = 32,768, H = 8,1
 | `freeze` | Freeze | b | off / on | off | frame | | Holds the current instant forever (both modes) |
 | `thru` | Pass input through | b | off / on | on | 20 ms | | The dry at unity, never delayed. Off = the stretched sound only |
 
-**Default mode.** Rolling, so the bare pedal does something with no footswitch: Raph's rule since gfx-glitch.
+**Default mode.** Rolling, so the bare pedal does something with no footswitch: The maintainer's rule since gfx-glitch.
 golem's `stretch` block **pins `mode` Capture** (contract: per-block values are golem's pins), so its foot
 gesture keeps working (§3.4; Open question 1).
 - The pin must also reach **saved rig chains**, which have no `mode`: the block's entry is `defaults:
@@ -764,7 +764,7 @@ gfx-bench options:
 All answered at the review of 2026-11-14 (details in the Review below).
 
 1. **Default `mode`** → **Rolling**, and golem pins Capture for the `stretch` block, saved chains included
-   (§3.2). A bare pedal that is silent until a stomp breaks Raph's rule; the block's foot gesture is kept by
+   (§3.2). A bare pedal that is silent until a stomp breaks the maintainer's rule; the block's foot gesture is kept by
    the pin.
 2. **Units** → `spread` in ¢ (with the 0.59 factor, §3.4), `fft` in ms, `maxlen` 1 – 60 s, `compress` kept.
    A correct use of the 2026-11-14 rule. golem-rack must accept the catalogue change (open point).
@@ -777,7 +777,7 @@ All answered at the review of 2026-11-14 (details in the Review below).
    here would give this pedal two identities. gfx-grains' design also keeps GoleM Freeze as its own block.
    - What is true: Rolling at ×1 + `freeze` **is** a spectral freeze of the present, with overlap 4 and a
      calibrated level. So the rework of the quarantined block should be a **thin crate on gfx-dsp `stft`**
-     (held magnitudes, `cloud` as `smear`, the six catalogue ids), after this one is benched. Raph's call.
+     (held magnitudes, `cloud` as `smear`, the six catalogue ids), after this one is benched. The maintainer's call.
 5. **Coherent end** → **peak-locked phase vocoder** in v1. The code exists (`pv_shift.rs`, `regions`,
    `map_freq`), it gives the exact identity at ×1, and every pass of it can be cut into units. RTPGHI's
    heap over 131,073 bins cannot be cut into bounded units, which the schedule requires. It stays a
@@ -886,11 +886,11 @@ the 12-bit phasor table; linear ranges; no mode-dependent default; 2 / 2 first; 
 | Catalogue change: `spread` in ¢, `fft` in ms, `maxlen` max 60; conversion of saved chains (§3.4); `mode` Capture pinned for the `stretch` block, saved chains included | golem-rack |
 | Switch-on: `prepare` writes 51 MB (7 ms) to 121 MB (40 ms). Is that inside the stall check's tolerance (PaulXStretch passed it at 2 ms)? If not, a fallback has to be designed (for instance the pool touched in small units over the first seconds, `maxlen` limited meanwhile) | golem-rack to measure; then golem-fx |
 | `amount` above ×100 in the catalogue (only for presets such as `glacier`) | golem-rack |
-| gfx-glitch: its worst block (cut the map, density, sustain and slot steps into units, bit-exact), the wrong cause in its README, then its move onto gfx-dsp `stft` | golem-fx, after gfx-stretch's bench; Raph's go, as for any change to a shipped pedal |
-| The `freeze` block's rework as a thin crate on gfx-dsp `stft` | Raph |
-| By ear: the fading of a single note at long windows against PaulXStretch (ours fades slightly deeper); `cloud` 0 – 30 % at ×1.5 – ×4 on keys and voice; the first take's fade-in; Rolling's "ghost ends when you stop" against "finishes its phrase" | Raph, on `gfx-bench apps gfx-stretch` |
+| gfx-glitch: its worst block (cut the map, density, sustain and slot steps into units, bit-exact), the wrong cause in its README, then its move onto gfx-dsp `stft` | golem-fx, after gfx-stretch's bench; the maintainer's go, as for any change to a shipped pedal |
+| The `freeze` block's rework as a thin crate on gfx-dsp `stft` | The maintainer |
+| By ear: the fading of a single note at long windows against PaulXStretch (ours fades slightly deeper); `cloud` 0 – 30 % at ×1.5 – ×4 on keys and voice; the first take's fade-in; Rolling's "ghost ends when you stop" against "finishes its phrase" | The maintainer, on `gfx-bench apps gfx-stretch` |
 | Six-step (transposed) form of the four-step FFT, if the 3.4 × is worth winning back | golem-fx, at coding |
-| The lowest labels and the lit rune on the periwinkle body; `chirp` against `waves` at tile size | Raph, on the family sheet |
+| The lowest labels and the lit rune on the periwinkle body; `chirp` against `waves` at tile size | The maintainer, on the family sheet |
 
 ## As coded (v0.1.0, 2026-11-15)
 

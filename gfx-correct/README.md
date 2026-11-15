@@ -1,7 +1,7 @@
 # gfx-correct
 
 > **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Claude
-> Fable 5.2 (Review section), decided by Raph (end of file), coded as reviewed with the deviations listed
+> Fable 5.2 (Review section), decided by the maintainer (end of file), coded as reviewed with the deviations listed
 > in "As coded". gfx-golem's epoch tracker moved to gfx-dsp `psola` (gfx-golem byte-identical before and
 > after, 54 renders) with the new fixed-delay `Reader`; gfx-dsp `pitch` gained `PeriodShifter`.
 >
@@ -13,7 +13,7 @@
 >   re-centring; a midpoint vibrato of ±60 / ±100 ¢ flips the target 3 times before the model engages,
 >   never after; jitter 0.78 × the input's at `filter` 0 (Live), 0.89 × (Studio).
 > - 15 behaviour tests, bench 28 / 28 at 44.1 – 192 kHz; CPU 55 ns / sample mono (0.26 % of a core),
->   64 ns stereo. Raph's sung phrase in E minor, hard settings: mean distance to the scale 44 → 7 – 9 ¢.
+>   64 ns stereo. The maintainer's sung phrase in E minor, hard settings: mean distance to the scale 44 → 7 – 9 ¢.
 
 golem's **pitch correction** for voice and mono instruments: it hears the note sung, chooses the note
 it should be, and moves the voice there, as hard as a robot or as gently as a good singer on a good day.
@@ -322,7 +322,7 @@ FIR with no latency. Run on the shifter's output with α = 1 / r, it puts the fo
 - **Stage 2**, once `specenv` has passed gfx-formant's bench: the filter after the shifter, with weight
   clamp((|s| − 30 ¢) / 70 ¢, 0, 1), so small corrections never pay for it (two 512-tap convolutions per
   sample, ≈ 49 M MAC / s, about 3 % of a core while it runs).
-- **Gate for stage 2**: on Raph's sung phrase and a soprano recording, the filter at `offset` ±2 st must
+- **Gate for stage 2**: on the maintainer's sung phrase and a soprano recording, the filter at `offset` ±2 st must
   be preferred blind to plain resampling. If not, Live stays as in v1 and Studio remains the
   formant-exact path.
 - **Why not the first design's LPC re-filter** (A_y(z) · y / A_x(z), order 20, lattice). Prototype on
@@ -432,7 +432,7 @@ v1: golem routes no MIDI to voice-lane effects today [I, golem-rack question].
 - No mode-dependent defaults: new parameters default to x42's behaviour (`transition` 0, `vibrato` 0 %,
   `flex` 0 %, `hysteresis` 23 ¢), so a bare insert sounds like the block it replaces.
   - `vibrato` 100 % (kept) would be the neutral value, and the better default. It stays at 0 % until the
-    vibrato rows of the bench pass on sung DIs, because of the trill case (§2.3). Raph decides then;
+    vibrato rows of the bench pass on sung DIs, because of the trill case (§2.3). The maintainer decides then;
     golem's presets carry 100 % from the start where it matters (§3.5).
 - **Setup parameters**: `fastmode` and `register` change the reported latency. They belong to golem's
   Settings, not to scenes, EXP or the pedal's face.
@@ -514,7 +514,7 @@ artist names in names. Place after the de-esser and before the compressor (golem
 ## 5. Bench suite (on top of gfx-bench's common checks)
 
 Signals: gfx-golem's synthetic voice (Rosenberg pulses through /a/ formants 700, 1,220, 2,600 Hz), with
-0.7 % cycle jitter, vibrato, scoops, slides, trills, melismas, aspiration noise and /s/ bursts; Raph's
+0.7 % cycle jitter, vibrato, scoops, slides, trills, melismas, aspiration noise and /s/ bursts; the maintainer's
 sung DI; an x42 render of the same inputs (golem REAPER) for A / B. All measured after removing the reported latency.
 
 | Check | Pass |
@@ -545,7 +545,7 @@ sung DI; an x42 render of the same inputs (golem REAPER) for A / B. All measured
 | Changes | `key`, `scale`, `corr`, `vibrato` changed mid-note: no click; target glides at `transition` |
 | Onset (Live) | Corrected pitch within 10 ¢ ≤ 25 ms after a sung onset (Mid, 220 Hz), ≤ 40 ms at 100 Hz |
 | Onset (Studio) | The first cycle of a note sung 40 ¢ flat after silence and after /s/ plays within 5 ¢ of the target (filter 0, transition 0), 100 and 220 Hz in Mid |
-| A / B | Blind, level-matched, Raph's voice: preferred to x42 at Transparent and Hard settings |
+| A / B | Blind, level-matched, the maintainer's voice: preferred to x42 at Transparent and Hard settings |
 | Determinism, CPU | Strict null; ≤ 1 % of a core at 48 kHz mono in Live, ≤ 1.5 % in Studio |
 | gfx-golem | After the move to `psola`: gfx-golem's tests and its strict null against its own earlier render |
 
@@ -584,7 +584,7 @@ Answered at the review of 2026-11-14.
    that leave it off**, and pins it on at insert until then. All golem presets carry the same value, so a
    preset recall never re-syncs the host.
 3. **Song key** → **recommended: follow by default, never over Chromatic** (as written in §3.5). Today two
-   of the three presets are tuned to C in every song. Raph decides.
+   of the three presets are tuned to C in every song. The maintainer decides.
 4. **Vibrato thresholds** → the band-pass split is replaced by the model fit (§2.3), with prototype values:
    window 1.25 periods, 4 – 8 Hz, extent 12 – 110 ¢, residual < 0.3 · A, exit at max(30 ¢, 0.5 · A) for two
    cycles, ramps 60 / 20 ms. They and the onset-phase end (2 st / s for 30 ms, 250 ms cap) are still [A]:
@@ -617,7 +617,7 @@ golem's side (catalogue, three presets, `_expand_pitch_correct`, `song_key_of`, 
 is as described, bar the presets' scales. No x42 code is used: every algorithm here is a different one,
 and the licence (GPL-2-or-later) is compatible in any case. The design had two mechanisms that fail by
 their own bench rows, one claim its numbers did not carry, and one module that duplicates a sister
-design. Prototypes: `/tmp/claude-1000/-home-raph-code/e0dc0b09-d78a-4463-a90e-9918eadd7ea8/scratchpad/proto-gfx-correct/`
+design. Prototypes: the design session's scratchpad (`proto-gfx-correct/`)
 (`vib.py` the first design's split, `vib3.py` the model fit, `lpc.py` the re-filter, `de.py` the hues).
 
 Changes made, and why:
@@ -653,16 +653,16 @@ Still open:
 | Point | Owner |
 |---|---|
 | Catalogue: `filter` label and note (a time, higher = looser), `fastmode` label (Live), default `fastmode` on, the three presets re-voiced (§3.5), `key` / `scale` written by rank, `fastmode` and `register` as Settings only | golem-rack |
-| `song_key` for `pitch-correct` (recommended: on, never over Chromatic) | Raph, then golem-rack |
-| `vibrato` default: 0 % now; 100 % once the vibrato rows pass on sung DIs | Raph, after the bench |
-| Studio at 17 – 37 ms (first cycle corrected) against the first design's 12 – 25 ms (first 0 – 16 ms of some onsets uncorrected) | Raph, if a shorter Studio matters more than the claim |
+| `song_key` for `pitch-correct` (recommended: on, never over Chromatic) | The maintainer, then golem-rack |
+| `vibrato` default: 0 % now; 100 % once the vibrato rows pass on sung DIs | The maintainer, after the bench |
+| Studio at 17 – 37 ms (first cycle corrected) against the first design's 12 – 25 ms (first 0 – 16 ms of some onsets uncorrected) | The maintainer, if a shorter Studio matters more than the claim |
 | Vibrato model thresholds, onset-phase end, the semitone trill, jitter at `filter` 0 (two or four cycles) | Bench, on sung DIs (male, female) |
 | Live formants, stage 2: after gfx-formant's `specenv`, behind the blind gate | golem-fx, after gfx-formant |
 | Who moves gfx-golem's engine to `psola` (the first of gfx-formant and gfx-correct to be coded), and gfx-formant's review agreeing to the API in §2.8 | golem-fx |
 | MIDI to a voice lane (v2) | golem-rack |
-| Plum against gfx-golem's blackwork at tile size; three staff lines or five | Raph, on the family sheet |
+| Plum against gfx-golem's blackwork at tile size; three staff lines or five | The maintainer, on the family sheet |
 
-### Decisions by Raph (2026-11-14)
+### Decisions by the maintainer (2026-11-14)
 
 - **Song key**: `pitch-correct` follows golem's song key (`song_key_of`), never over Chromatic.
 - **Studio latency** 17.3 / 26.2 / 37.3 ms (Low / Mid / High `register`) is accepted.

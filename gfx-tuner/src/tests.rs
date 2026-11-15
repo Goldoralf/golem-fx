@@ -813,7 +813,7 @@ fn cpu() {
     }
 }
 
-/// README §5 "Octave errors" on synthetic notes (the DI rows need Raph's recordings): low strings with
+/// README §5 "Octave errors" on synthetic notes (the DI rows need the maintainer's recordings): low strings with
 /// a weak fundamental (bridge pickups) keep their note and string, with no wrong note flashed.
 #[test]
 fn weak_fundamentals_keep_their_string() {

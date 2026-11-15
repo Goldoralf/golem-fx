@@ -1,8 +1,9 @@
+import os
 # Legacy presets: reference vs converted gfx-spectralcomp (Studio), mean gain per octave, pink noise and the clean DI
 import numpy as np, sc, ref
 from scipy.io import wavfile
 fs=48000
-sr,di=wavfile.read('/home/raph/golem/library/di-refs/guitar/clean.wav'); di=di/2**31
+sr,di=wavfile.read(os.path.expanduser('~/golem/library/di-refs/guitar/clean.wav')); di=di/2**31
 rng=np.random.default_rng(7)
 def pink(n,lev):
     X=np.fft.rfft(rng.standard_normal(n)); f=np.fft.rfftfreq(n,1/fs); X[1:]/=np.sqrt(f[1:]); X[0]=0

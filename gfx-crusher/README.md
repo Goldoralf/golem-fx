@@ -647,10 +647,10 @@ Still open:
 |---|---|
 | Catalogue entry: real units (min / max / default), category `lofi`, new default preset; engine-table conversion; count of saved rig chains using `bitcrusher` (decides whether the faithful conversion exists at all) | golem-rack |
 | Whether golem's EXP assignment can target `rate_shift` (a non-catalogue id) | golem-rack |
-| References for the Sampler / Drum Machine / Console voicings (§7.9) | Raph |
+| References for the Sampler / Drum Machine / Console voicings (§7.9) | The maintainer |
 | Kernel group delay (the dry's alignment), Console FIR coefficients, CVSD time constant, 2-bit ADPCM table, ladder magnitude: all [I] / [A] until measured | Bench |
 | YIN range down to 40 Hz for bass lanes: only if the CPU bound holds | Bench |
-| Raspberry against drive's thrash red at tile size | Raph, on the family sheet |
+| Raspberry against drive's thrash red at tile size | The maintainer, on the family sheet |
 
 **Note (2026-11-14, after the gfx-radio review):** the virtual converter and the minBLEP renderer start life in
 gfx-dsp (`converter`, `blep`), not in this crate, with the ADC and DAC halves callable separately: gfx-radio's

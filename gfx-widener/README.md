@@ -113,7 +113,7 @@ one degree of freedom per band.
   Velvet vs Comb at 20 ms on sustain, the 20 ms low spread on bass; Exact Double's place.
 - Whether Allpass's `variant` should be documented as "a different colour" rather than "a distinct
   image" (0.62), or Allpass variants dropped from the "two lanes" advice.
-- The Review's open items for Raph and golem-rack are unchanged (balance law, source-side slope
+- The Review's open items for the maintainer and golem-rack are unchanged (balance law, source-side slope
   wording, catalogue entry, `listen` never stored, "mono safe" badge, linked master limiter).
 
 golem's **stereo widener and imager**. It turns a mono lane (guitar, bass, voice, keys) into a stereo image,
@@ -723,9 +723,9 @@ Still open:
 |---|---|
 | `tools/vnd-design.py` must reproduce the prototype's figures for 8 variants across 20 – 40 ms and 44.1 – 96 kHz; if it cannot hold ±2 dB at 96 kHz rounding or for all 8, the bound is revised from its output, not assumed | golem-fx, first coding task |
 | Two-band against single-band velvet, and the 1 kHz split, by ear on picked DIs; the amount at which the side's 20 ms low spread is heard as "soft" on bass | Bench (listening) |
-| `balance` as the sum-constant law (+6 dB on one side at ±100 %): keep (reviewer's change), or add a level compensation outside the Exact law | Raph |
-| Source-side filter at 12 dB / octave: a stereo source's lows are less mono than the contract's "Linkwitz-Riley" wording suggests (−12 dB at half the cut). Accept, or word the shared id's row for side-only filters | Raph (contract) |
-| Exact Double: whether it earns its place next to Velvet once heard, or Double becomes Classic-only in a later version (enum options cannot be removed, the law switch can stay inert) | Raph, after the bench |
+| `balance` as the sum-constant law (+6 dB on one side at ±100 %): keep (reviewer's change), or add a level compensation outside the Exact law | The maintainer |
+| Source-side filter at 12 dB / octave: a stereo source's lows are less mono than the contract's "Linkwitz-Riley" wording suggests (−12 dB at half the cut). Accept, or word the shared id's row for side-only filters | The maintainer (contract) |
+| Exact Double: whether it earns its place next to Velvet once heard, or Double becomes Classic-only in a later version (enum options cannot be removed, the law switch can stay inert) | The maintainer, after the bench |
 | Catalogue entry `widener` (utility, roles), `listen` never stored and reset to Stereo, "mono safe" badge from `mono_err` ≤ −60 dB, master limiter linked, blind A/B renders against Wider and Stereoize II | golem-rack |
-| `fan` motif against reverb's `rays`, the lit rune on a pale body, ice glass beside the lot-3 designs not yet written | Raph, on the family sheet |
+| `fan` motif against reverb's `rays`, the lit rune on a pale body, ice glass beside the lot-3 designs not yet written | The maintainer, on the family sheet |
 | Schlecht's repository licence [U] (irrelevant if the script is written from the papers, as specified) | — |

@@ -3,7 +3,7 @@ name = "duckbench"
 version = "0.1.0"
 edition = "2021"
 [dependencies]
-gfx-dsp = { path = "/home/raph/code/golem-fx/gfx-dsp" }
+gfx-dsp = { path = "../../../gfx-dsp" }
 [profile.release]
 opt-level = 3
 [workspace]

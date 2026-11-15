@@ -874,14 +874,14 @@ Still open:
 
 | Point | Owner |
 |---|---|
-| Voicing by ear of c(bias), the drive-boost table, MOL per model, hiss spectra: all [I]. The 100 % default must be compared blind with ChowTape at its default (c ≈ 0.7): if players prefer the heavier loop, the answer is the default `bias` of presets, not c at 100 % | Raph / listening |
-| Reference recordings per model (§7.3) | Raph |
+| Voicing by ear of c(bias), the drive-boost table, MOL per model, hiss spectra: all [I]. The 100 % default must be compared blind with ChowTape at its default (c ≈ 0.7): if players prefer the heavier loop, the answer is the default `bias` of presets, not c at 100 % | The maintainer / listening |
+| Reference recordings per model (§7.3) | The maintainer |
 | IEC 386 / AES6 weighting table against the standard | golem-fx, before `wf_out` ships |
-| CPU ≈ 0.95 µs / sample (4.6 % of a core, mono): accepted, or 4× with the −60 dB aliasing it measures | Raph, after the bench |
+| CPU ≈ 0.95 µs / sample (4.6 % of a core, mono): accepted, or 4× with the −60 dB aliasing it measures | The maintainer, after the bench |
 | Reproduce the [P] figures in gfx-bench (they come from a piecewise-linear H at the oversampled rate, ideal resampling: the half-bands will add their own) | golem-fx, first coding task |
-| Champagne against the family sheet; `RUNE_LIGHT`; the `ribbon` motif at tile size. gfx-fuzz's copper is itself still a proposal: if it is refused, ferric brown is free again | Raph |
+| Champagne against the family sheet; `RUNE_LIGHT`; the `ribbon` motif at tile size. gfx-fuzz's copper is itself still a proposal: if it is refused, ferric brown is free again | The maintainer |
 | New type `tape` in `lofi`, `role_blocks.drums`; EXP on expert ids (`spacing`, `bias`, `dropouts`); `wf_out` display; D0 offset against parallel lanes | golem-rack |
-| Add `input` and `level` to the contract's shared-ids table | Raph (contract) |
+| Add `input` and `level` to the contract's shared-ids table | The maintainer (contract) |
 
 **Note (2026-11-14, after the gfx-radio review):** AM radio lives in gfx-radio, whose channel is simulated in
 complex baseband (detuning distortion, fading, static, whistle). It is no longer a deferred `model` option of

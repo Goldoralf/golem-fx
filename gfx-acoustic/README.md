@@ -924,7 +924,7 @@ humbuckers, a lighter touch than on an amp, palm-mute long notes when `decay` is
 F̂ = 0 the modes ring down to exactly 0 after the f64 flush.
 
 **DIs needed**: golem's clean.wav (6-string; pickup to be named) and, for the real test, **phrases played
-twice by Raph, on an electric (neck single coil, DI) and on a steel-string acoustic (miked as in §2.6)**.
+twice by the maintainer, on an electric (neck single coil, DI) and on a steel-string acoustic (miked as in §2.6)**.
 Until then the rows run on clean.wav and synthetic plucks.
 
 | Check | Pass |
@@ -1053,12 +1053,12 @@ Still open:
 
 | Point | Owner |
 |---|---|
-| The decay stage on real playing: the listening row of §5 (arpeggio, fingerstyle, melody). First coding task, before any voicing; fallback in §2.3 | golem-fx, then Raph by ear |
-| Measurement campaign: four steel-string guitars, a sound-hole single coil (L, R, x_s), three omni mics, the room; the paired electric / acoustic phrases | Raph |
-| Open gnu.org's licence list at `#ccby` once; choose the archive's guitar (gNN) and put it in the notice; add the `NOTICE` file to the bundle and the credit to golem's about page | Raph; golem-rack |
+| The decay stage on real playing: the listening row of §5 (arpeggio, fingerstyle, melody). First coding task, before any voicing; fallback in §2.3 | golem-fx, then the maintainer by ear |
+| Measurement campaign: four steel-string guitars, a sound-hole single coil (L, R, x_s), three omni mics, the room; the paired electric / acoustic phrases | The maintainer |
+| Open gnu.org's licence list at `#ccby` once; choose the archive's guitar (gNN) and put it in the notice; add the `NOTICE` file to the bundle and the credit to golem's about page | The maintainer; golem-rack |
 | The IEM fit: how much of the CUBE's room sits in the low modes; if too much, Concert stays parametric below 300 Hz until the campaign | golem-fx, on the bench |
 | x_p per `pickup_pos` [U], the pickup values [U], k_b per model, the piezo voice's bell, the noise floor of the decay: on the bench with real DIs | golem-fx |
 | Catalogue entry `acoustic-sim` in category `amp`; `stacked_cab` warning; `pickup` and `pickup_pos` written at insert from the lane's instrument (gfx-fuzz asks the same); `depends` for `quack`, `pickup_pos`, `width`, `twelve_*` | golem-rack |
 | gfx-dsp: who creates `pickup` (with gfx-fuzz), `crossover` (with gfx-bassdi / gfx-grit), `filterbank` (moved out of gfx-octaver), `fir` | golem-fx |
-| Rosewood next to the blackwork companions at tile size; the rosette as the first motif drawn around the rune | Raph, on the family sheet |
-| Add `level` to the contract's shared-id table (asked by gfx-fuzz, gfx-dist, gfx-geq too) | Raph (contract) |
+| Rosewood next to the blackwork companions at tile size; the rosette as the first motif drawn around the rune | The maintainer, on the family sheet |
+| Add `level` to the contract's shared-id table (asked by gfx-fuzz, gfx-dist, gfx-geq too) | The maintainer (contract) |

@@ -3,7 +3,7 @@
 One file per crate, `presets/<crate>.json`: the **source of truth** of that pedal's factory presets. They
 are exported in `visuals/data/descriptors.json` (golem-rack imports it), seeded by golem into
 `library/block-presets/<type>/` as factory block presets, and read by golem.fm's patch AI, which **picks
-a preset by its id** (`"preset": "<type>/<id>"`) and never writes values itself (Raph's decision,
+a preset by its id** (`"preset": "<type>/<id>"`) and never writes values itself (the maintainer's decision,
 2026-11-13). The same preset therefore plays in the rack, in the Designer and in an AI-built patch.
 
 Written in **English** (the product and the model are). Built and checked by
@@ -59,7 +59,7 @@ Written in **English** (the product and the model are). Built and checked by
 A preset sets **every** parameter of the block (the export is complete): on load golem resets every setting
 to its default, then applies the preset. It **wins over any value golem pins at insert** for that block
 type (e.g. the generic `reverb`: a Spring preset plays Spring). The user then changes whatever they like
-from there (Raph, 2026-11-13).
+from there (the maintainer, 2026-11-13).
 
 One exception, the type's **identity** (golem's engine table, field `identity`): a block type that exists to
 be one voicing keeps it, hidden from the sheet and never written by a preset. Today: `reverb-plate` = algo
@@ -77,5 +77,5 @@ habit. References are researched and sourced; a sound that is widely associated 
 documented is still useful, marked `verified: false`. A preset never imitates a trademark: names
 describe the sound ("Dotted-eighth arena"), the artist stays in `refs`.
 
-About fifteen per pedal (Raph, 2026-11-13): deeper banks for the big pedals (delay, reverb, drive,
+About fifteen per pedal (the maintainer, 2026-11-13): deeper banks for the big pedals (delay, reverb, drive,
 chorus, shimmer, pitch…), a handful for utilities (boost, limiter, gapmeter).

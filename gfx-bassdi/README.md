@@ -673,7 +673,7 @@ latency. The captures remain the reference for "that exact pedal".
 2. **Block type** `bass-di`, roles bass and guitar, golem-fx-only quarantine → golem-rack.
 3. **`drive`'s shared meaning** → the id is **`gain`** (0 – 100 %), named "Drive" on the panel (§3).
 4. **Cab targets** → v1 ships designed targets (Smooth; box alignments and published responses for the
-   three cabs); fits to freely licensed IRs replace them when Raph has chosen and checked them. 2×12 is
+   three cabs); fits to freely licensed IRs replace them when the maintainer has chosen and checked them. 2×12 is
    staged (§2.7).
 5. **`low_note` at insert** → golem-rack writes it by `init`. It should write it again when the lane's
    tuning changes: the parameter is smoothed over 100 ms and safe to move at any time. A user's own
@@ -727,10 +727,10 @@ Still open:
 
 | Point | Owner |
 |---|---|
-| Voicing of every [A] value: gains, corners (4 L, 1.5 k, 3 k, 12 k, fizz), b, sag depths, the comp map | Raph, by ear, once the bass DIs exist |
-| LR2 or LR4 for the low pre section: LR2 decided on shape and dispersion; LR4 isolates the fundamental from the clipper more sharply. One A / B on a low-B DI | Bench, then Raph |
-| Bass DIs (fingers, pick, slap, 5-string B); NAM captures of the three references | Raph / golem-rack |
-| Cab targets from freely licensed IRs; the three box alignments until then [A] | Raph, with licence checks |
+| Voicing of every [A] value: gains, corners (4 L, 1.5 k, 3 k, 12 k, fizz), b, sag depths, the comp map | The maintainer, by ear, once the bass DIs exist |
+| LR2 or LR4 for the low pre section: LR2 decided on shape and dispersion; LR4 isolates the fundamental from the clipper more sharply. One A / B on a low-B DI | Bench, then the maintainer |
+| Bass DIs (fingers, pick, slap, 5-string B); NAM captures of the three references | The maintainer / golem-rack |
+| Cab targets from freely licensed IRs; the three box alignments until then [A] | The maintainer, with licence checks |
 | Catalogue entry `bass-di` (category `preamp`, roles, quarantine); `init` writing `low_note` from the lane's tuning, again on a tuning change, and `cab` Off when an amp, a cab or an IR follows | golem-rack |
 | `METAL_HUE.preamp`, `RUNE_LIGHT.preamp`, the `parallel` motif, the face and the glyph | golem-fx visuals, with the release; hue to confirm on the family sheet at tile size |
 | gfx-dsp `crossover` shared with gfx-grit: gfx-grit's document describes only the tree; the two-way `Split`, `BandGain` and `Twin` layers are specified here (§2.9) and must be written once, first | golem-fx, before either crate |
