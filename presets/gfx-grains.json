@@ -1,0 +1,664 @@
+{
+ "crate": "gfx-grains",
+ "presets": [
+  {
+   "id": "standard",
+   "type": "granular",
+   "name": "Standard",
+   "desc": "A gentle band-limited cloud of the last second under the dry playing, half wet",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "mode": "Cloud",
+    "grains": 8,
+    "pos": 0.5,
+    "length": 1000,
+    "size": 120,
+    "spray": 10,
+    "mix": 50
+   },
+   "notes": "ZamGrains' Standard played the dry signal; re-authored by intent: grains from ~500 ms back, level matched to the source"
+  },
+  {
+   "id": "hold-chord",
+   "type": "granular",
+   "name": "Hold chord",
+   "desc": "Silent until held: stomp freeze after a chord and it rings on as a grain field you solo over",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "size": 450,
+    "grains": 12,
+    "pos": 0.4,
+    "length": 2000,
+    "spray": 60,
+    "detune": 8,
+    "spread": 70,
+    "skip": 70,
+    "live": 0,
+    "decay": 3,
+    "mix": 70
+   },
+   "notes": "Freeze on the footswitch. skip 70 % keeps the pick out: the hold is what rings after the last strum; press it a beat after the chord"
+  },
+  {
+   "id": "hold-over-cloud",
+   "type": "granular",
+   "name": "Hold over a cloud",
+   "desc": "The hold chord gesture with the live cloud running behind the playing until the stomp",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "size": 450,
+    "grains": 12,
+    "pos": 0.4,
+    "length": 2000,
+    "spray": 60,
+    "detune": 8,
+    "spread": 70,
+    "skip": 70,
+    "live": 100,
+    "decay": 3,
+    "mix": 50
+   },
+   "notes": "The live cloud stops feeding while held and resumes on release"
+  },
+  {
+   "id": "granular-delay",
+   "type": "granular",
+   "name": "Granular delay",
+   "desc": "Metronomic grains 400 ms back with feedback: smeared, darkened echoes of the line",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "pos": 0.4,
+    "length": 1000,
+    "size": 80,
+    "grains": 4,
+    "regular": 100,
+    "spray": 0,
+    "feedback": 40,
+    "high_cut": 6000,
+    "mix": 35
+   },
+   "notes": "Spray 0 and ratio 1: the coherent normalisation makes a clean delay; each pass through the cuts darkens it"
+  },
+  {
+   "id": "shimmer-cloud",
+   "type": "granular",
+   "name": "Shimmer cloud",
+   "desc": "An octave halo: grains an octave up or down climbing through the feedback, no fizz",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "grains": 16,
+    "size": 220,
+    "pitch_rand": 12,
+    "scale": "Octaves",
+    "feedback": 45,
+    "spray": 30,
+    "high_cut": 8000,
+    "mix": 40
+   },
+   "notes": "Re-authored from ZamGrains' Shimmer cloud (which played the dry). Band-limited +12 grains in the loop stay clean as they climb"
+  },
+  {
+   "id": "fifths-halo",
+   "type": "granular",
+   "name": "Fifths halo",
+   "desc": "Grains in fifths and octaves around the note, fed back into a widening halo",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "pitch_rand": 19,
+    "scale": "Fifths",
+    "grains": 12,
+    "size": 300,
+    "spray": 40,
+    "feedback": 30,
+    "mix": 40
+   },
+   "notes": "Fifths are safe on any note of a key"
+  },
+  {
+   "id": "chord-cloud",
+   "type": "granular",
+   "name": "Chord cloud",
+   "desc": "One note becomes a major triad: grains on its root, third and fifth, spread wide",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "pitch_rand": 12,
+    "scale": "Major Triad",
+    "grains": 10,
+    "size": 250,
+    "detune": 6,
+    "spread": 80
+   },
+   "notes": "Relative to the played note: a colour, not a harmoniser (the third moves with every note)"
+  },
+  {
+   "id": "reverse-swells",
+   "type": "granular",
+   "name": "Reverse swells",
+   "desc": "Every grain backwards with a swelling envelope: half-second reverse blooms",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "experimental",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "reverse": 100,
+    "skew": 100,
+    "size": 500,
+    "grains": 4,
+    "pos": 0.6,
+    "mix": 50
+   },
+   "notes": "The envelope is independent of the direction: skew +100 makes the classic reverse swell"
+  },
+  {
+   "id": "stutter",
+   "type": "granular",
+   "name": "Stutter",
+   "desc": "Beat-repeat glitches: sixteenth slices of the last bar, flat grains on the grid, some skipped",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/16",
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Rhythm",
+    "sync": "1/16",
+    "grains": 1,
+    "pos": 0.3,
+    "length_sync": "1/1",
+    "spray": 25,
+    "chance": 70,
+    "shape": 0,
+    "mix": 60
+   },
+   "notes": "Re-authored from ZamGrains' Stutter. Positions land on whole steps back; flat grains keep C1 edges"
+  },
+  {
+   "id": "tape-stop-repeats",
+   "type": "granular",
+   "name": "Tape-stop repeats",
+   "desc": "Eighth-note repeats that sag an octave over each grain, like a tape stopping",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Rhythm",
+    "sync": "1/8",
+    "glide": -12,
+    "size": 250,
+    "grains": 1,
+    "mix": 50
+   }
+  },
+  {
+   "id": "strum-chains",
+   "type": "granular",
+   "name": "Strum chains",
+   "desc": "Your last four notes replayed in sixteenths, attack kept: a rhythmic chain of what you played",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "rock",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/16",
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Strum",
+    "sync": "1/16",
+    "grains": 4,
+    "pos": 0.6,
+    "length": 2000,
+    "size": 180,
+    "skew": -60,
+    "mix": 45
+   },
+   "notes": "Grains start 5 ms before each note onset so they keep the pick"
+  },
+  {
+   "id": "arp-shards",
+   "type": "granular",
+   "name": "Arp shards",
+   "desc": "Recent notes cycled in sixteenths, each shifted by a minor-pentatonic step and panned",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/16",
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Strum",
+    "sync": "1/16",
+    "grains": 3,
+    "pitch_rand": 12,
+    "scale": "Minor Pent",
+    "size": 140,
+    "spread": 90
+   }
+  },
+  {
+   "id": "repeat-last-note",
+   "type": "granular",
+   "name": "Repeat the last note",
+   "desc": "The last note you played repeats in eighths, fading through light feedback",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/8",
+   "tags": [],
+   "default": false,
+   "params": {
+    "mode": "Strum",
+    "grains": 1,
+    "sync": "1/8",
+    "size": 300,
+    "feedback": 20
+   }
+  },
+  {
+   "id": "phrase-loop",
+   "type": "granular",
+   "name": "Phrase loop",
+   "desc": "The last bar loops behind you as a looping delay; freeze holds the bar",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/1",
+   "tags": [],
+   "default": false,
+   "params": {
+    "mode": "Phrase",
+    "length_sync": "1/1",
+    "grains": 8,
+    "mix": 50
+   },
+   "notes": "Contiguous slices crossfade amplitude-complementary: exact unity; the seams are looper crossfades"
+  },
+  {
+   "id": "octave-mosaic",
+   "type": "granular",
+   "name": "Octave mosaic",
+   "desc": "Half a bar sliced in eight, each slice an octave up, down or home, a few left out",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/2",
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Phrase",
+    "length_sync": "1/2",
+    "grains": 8,
+    "pitch_rand": 12,
+    "scale": "Octaves",
+    "chance": 85
+   }
+  },
+  {
+   "id": "phrase-shuffle",
+   "type": "granular",
+   "name": "Phrase shuffle",
+   "desc": "The last bar in sixteen slices, half of them shuffled and a quarter reversed",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "sync": "1/1",
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Phrase",
+    "length_sync": "1/1",
+    "grains": 16,
+    "spray": 50,
+    "reverse": 25
+   },
+   "notes": "Shuffled and reversed slices meet with equal-power seams"
+  },
+  {
+   "id": "glide-loops",
+   "type": "granular",
+   "name": "Glide loops",
+   "desc": "A 1.5 s loop in six slices, each gliding up an octave over its length",
+   "inst": "any",
+   "genres": [
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Phrase",
+    "length": 1500,
+    "grains": 6,
+    "glide": 12,
+    "mix": 50
+   }
+  },
+  {
+   "id": "particle-buzz",
+   "type": "granular",
+   "name": "Particle buzz",
+   "desc": "Tiny metronomic grains a fifth up: the grain rate itself sounds as a synth-like formant",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "size": 8,
+    "grains": 24,
+    "regular": 100,
+    "pos": 0.05,
+    "pitch": 7,
+    "mix": 60
+   },
+   "notes": "A synchronous stream is a pitch (3 kHz grain rate here), on purpose"
+  },
+  {
+   "id": "dust",
+   "type": "granular",
+   "name": "Dust",
+   "desc": "Sparse percussive specks from anywhere in the last second, scattered across the field",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "grains": 1,
+    "chance": 30,
+    "size": 25,
+    "spray": 100,
+    "pos": 1,
+    "spread": 100,
+    "skew": -80,
+    "mix": 40
+   }
+  },
+  {
+   "id": "time-stretch-freeze",
+   "type": "granular",
+   "name": "Time-stretch freeze",
+   "desc": "Freeze four seconds and scan through them at quarter speed: the phrase, stretched",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "screen"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "freeze": true,
+    "scan": 25,
+    "size": 200,
+    "grains": 8,
+    "spray": 5,
+    "length": 4000
+   },
+   "notes": "Freeze is on in the preset: it holds what the last four seconds held when the block came in"
+  },
+  {
+   "id": "granular-doubler",
+   "type": "granular",
+   "name": "Granular doubler",
+   "desc": "A close doubled part: grains 20 ms back, detuned and spread a little, for voice or keys",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "pos": 0.02,
+    "size": 90,
+    "grains": 6,
+    "detune": 15,
+    "spray": 2,
+    "spread": 60,
+    "mix": 35
+   }
+  },
+  {
+   "id": "bass-pad",
+   "type": "granular",
+   "name": "Bass pad",
+   "desc": "A cloud over the bass with its lows kept dry and clean; freeze holds a note as a pad",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "electronic",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "mode": "Cloud",
+    "low_cut": 180,
+    "size": 400,
+    "grains": 8,
+    "spray": 30,
+    "skip": 50,
+    "mix": 40
+   },
+   "notes": "The low end stays in the unity dry; freeze as a gesture"
+  }
+ ]
+}

@@ -332,6 +332,7 @@ dependencies = [
  "gfx-geq",
  "gfx-glitch",
  "gfx-golem",
+ "gfx-grains",
  "gfx-grit",
  "gfx-irfx",
  "gfx-killswitch",
@@ -548,6 +549,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-golem"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-grains"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

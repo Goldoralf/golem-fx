@@ -33,6 +33,7 @@ pub mod filterbank;
 pub mod fir;
 pub mod flanger;
 pub mod geq;
+pub mod grain;
 pub mod ir;
 #[cfg(feature = "ir-host")]
 pub mod ir_engine;

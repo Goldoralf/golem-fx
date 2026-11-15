@@ -88,7 +88,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 46 | [gfx-formant](gfx-formant/) | new block `formant` (formant shifter) | — | **designed**, reviewed by Fable 5.2 |
 | 47 | [gfx-vocoder](gfx-vocoder/) | new block `vocoder` (channel vocoder) | — | **coded** (Tracked, Drone, Noise, Self carriers), bench green, to test in golem |
 | 48 | [gfx-radio](gfx-radio/) | new block `radio` (telephone, megaphone, AM, walkie…) | — | **coded**, bench green, to test in golem |
-| 49 | [gfx-grains](gfx-grains/) | `granular` | ZamGrains | **designed**, reviewed by Fable 5.2 |
+| 49 | [gfx-grains](gfx-grains/) | `granular` | ZamGrains | **coded** (Cloud, Rhythm, Strum, Phrase; hold), bench green, to test in golem |
 | 50 | [gfx-stretch](gfx-stretch/) | `stretch` | PaulXStretch | **coded** (Capture + Rolling + Freeze), bench green, to test in golem |
 | 51 | [gfx-sustainer](gfx-sustainer/) | new block `sustainer` (controlled feedback / sustain) | — | **designed**, reviewed by Fable 5.2 |
 | 52 | [gfx-polysynth](gfx-polysynth/) | new block `polysynth` (polyphonic guitar synth) | — | **designed**, reviewed by Fable 5.2 (v1: Spectral + Mono; Poly held back) |

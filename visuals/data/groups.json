@@ -2259,6 +2259,75 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-grains": [
+      {
+        "id": "grain",
+        "name": "Grain",
+        "custom": null,
+        "params": [
+          "spray",
+          "shape",
+          "skew",
+          "reverse",
+          "chance",
+          "regular"
+        ]
+      },
+      {
+        "id": "pitch",
+        "name": "Pitch",
+        "custom": null,
+        "params": [
+          "pitch_rand",
+          "scale",
+          "detune",
+          "glide"
+        ]
+      },
+      {
+        "id": "time",
+        "name": "Time",
+        "custom": null,
+        "params": [
+          "length",
+          "length_sync",
+          "scan",
+          "sync",
+          "seed"
+        ]
+      },
+      {
+        "id": "hold",
+        "name": "Hold",
+        "custom": null,
+        "params": [
+          "decay",
+          "skip",
+          "live"
+        ]
+      },
+      {
+        "id": "space",
+        "name": "Space & tone",
+        "custom": null,
+        "params": [
+          "spread",
+          "feedback",
+          "low_cut",
+          "high_cut",
+          "kill_dry"
+        ]
+      },
+      {
+        "id": "bypass",
+        "name": "Bypass",
+        "custom": null,
+        "params": [
+          "trails",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2633,6 +2702,9 @@
       "piezo": "Adds an under-saddle piezo voice to the mic: the stage sound",
       "quack": "Piezo source only: tames the piezo's mid peak on the attacks",
       "width": "2 / 2 only: the spacing of the two microphones"
+    },
+    "gfx-grains": {
+      "trails": "With bypass: on, the cloud finishes its grains and a hold releases in its decay; off, the wet fades out in 20 ms"
     }
   },
   "depends": {
@@ -2996,6 +3068,12 @@
       "compress": {
         "param": "comp_on",
         "equals": true
+      }
+    },
+    "gfx-grains": {
+      "regular": {
+        "param": "mode",
+        "equals": "Cloud"
       }
     }
   }

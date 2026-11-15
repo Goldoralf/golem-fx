@@ -403,7 +403,8 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-vocoder': 'bank',
     'gfx-acoustic': 'rosette',
     'gfx-radio': 'grille',
-    'gfx-stretch': 'chirp' };
+    'gfx-stretch': 'chirp',
+    'gfx-grains': 'grains' };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
@@ -645,6 +646,29 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
           let d = '';
           for (let x = 0; x <= W + .01; x += 1) d += (d ? 'L' : 'M') + f1(x) + ' ' + f1(cy + dy + a * Math.sin(phi(x) + ph));
           line(d, op);
+        });
+        break;
+      }
+      case 'grains': {
+        // a cloud of grains converging on the rune: seven small Hann arches each side (3 – 7 units wide,
+        // 2 – 6 high), each with a dot at its peak, placed by a fixed seed (from the crate's name, so the
+        // drawing is stable), larger, denser and brighter toward the rune (35 → 90 %); inside the
+        // rune's band, clear of the knobs
+        let seed = 0;
+        for (const c of 'gfx-grains') seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
+        const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+        const inner = cx - cw / 2 - 3, outer = 4, n = 7;
+        [[1, outer, inner], [-1, W - outer, W - inner]].forEach(([s, a, b]) => {
+          for (let k = 0; k < n; k++) {
+            // denser toward the rune: positions on a square-root law
+            const t = Math.sqrt((k + .5 + .4 * (rnd() - .5)) / n), x = a + s * t * Math.abs(b - a);
+            const w = 3 + 4 * t * (.7 + .3 * rnd()), h = 2 + 4 * t * (.7 + .3 * rnd());
+            const y0 = cy + (ch / 2 - h - 1) * (rnd() - .5) * 1.6 + h / 2, op = .35 + .55 * t;
+            line(`M${f1(x - w / 2)} ${f1(y0)}C${f1(x - w / 6)} ${f1(y0)} ${f1(x - w / 6)} ${f1(y0 - h)} ${f1(x)} ${f1(y0 - h)}` +
+              `S${f1(x + w / 2 - w / 3)} ${f1(y0)} ${f1(x + w / 2)} ${f1(y0)}`, op);
+            const r = .55 + .25 * t;
+            shape(`M${f1(x - r)} ${f1(y0 - h - 1.6)}a${r} ${r} 0 1 0 ${f1(2 * r)} 0a${r} ${r} 0 1 0 ${f1(-2 * r)} 0Z`, op);
+          }
         });
         break;
       }

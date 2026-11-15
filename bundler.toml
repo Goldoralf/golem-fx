@@ -138,3 +138,6 @@ name = "GoleM FX Acoustic"
 name = "GoleM FX Radio"
 [gfx-stretch]
 name = "GoleM FX Stretch"
+
+[gfx-grains]
+name = "GoleM FX Grains"
