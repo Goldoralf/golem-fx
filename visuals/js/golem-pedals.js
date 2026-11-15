@@ -355,10 +355,12 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000', 'gfx-ringmod': '#c9b000',
     // deck champagne: the pale gold-anodized faceplate of a reel deck (gfx-tape's review: brown is
     // gfx-fuzz's copper at tile size)
-    'gfx-tape': '#d8c8a0' };
+    'gfx-tape': '#d8c8a0',
+    // ice glass: pale sky, air and open space (gfx-widener's review: utility's amber would read as a boost)
+    'gfx-widener': '#c0e0f8' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -377,6 +379,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-dist': 'traces',
     'gfx-transient': 'spikes',
     'gfx-mbcomp': 'tiers',
+    'gfx-widener': 'fan',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -384,7 +387,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -664,6 +667,20 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             const small = near.includes(p), s = small ? 3 : 4;
             shape(`M${f1(p.x - s / 2)} ${f1(p.y - s / 2)}h${s}v${s}h${-s}Z`, small ? .55 : 1);
           });
+        });
+        break;
+      }
+      case 'fan': {
+        // the mono axis and the spread image: a vertical centre line from just under the rune to above
+        // the switch zone (the mid, untouched), and either side five straight rays opening upward from
+        // a point 6 units below the rune's centre, at ±18° … ±66° from the vertical, 0.9 · ch down to
+        // 0.5 · ch long, fainter outward (the side, L = M + S, R = M − S)
+        line(`M${f1(cx)} ${f1(cy + ch / 2 + 3)}V${f1(H - 34)}`);
+        const oy = cy + 6;
+        [18, 30, 42, 54, 66].forEach((deg, i) => {
+          const a = deg * Math.PI / 180, len = ch * (.9 - .1 * i), op = 1 - .1625 * i;
+          const y1 = Math.max(cy - ch, oy - len * Math.cos(a)), dx = (oy - y1) * Math.tan(a);
+          [-1, 1].forEach(sgn => line(`M${f1(cx)} ${f1(oy)}L${f1(cx + sgn * dx)} ${f1(y1)}`, op));
         });
         break;
       }

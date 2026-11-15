@@ -82,7 +82,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 40 | [gfx-ducker](gfx-ducker/) | new block `ducker` (key / self / pump ducking) | — | **designed**, reviewed by Fable 5.2 |
 | 41 | [gfx-cab](gfx-cab/) | `cab` (+ `ir-fx` as sibling crate gfx-irfx) | x42 IR Convolver Mono / Stereo | **designed**, reviewed by Fable 5.2 |
 | 42 | [gfx-acoustic](gfx-acoustic/) | new block `acoustic-sim` (electric to acoustic) | — | **designed**, reviewed by Fable 5.2 |
-| 43 | [gfx-widener](gfx-widener/) | new block `widener` (mono-safe stereo width) | — | **designed**, reviewed by Fable 5.2 |
+| 43 | [gfx-widener](gfx-widener/) | new block `widener` (mono-safe stereo width) | — | **coded**, bench green, to test in golem |
 | 44 | [gfx-tuner](gfx-tuner/) | `tuner` | golem_tuner.jsfx | **designed**, reviewed by Fable 5.2 |
 | 45 | [gfx-correct](gfx-correct/) | `pitch-correct` | x42-Autotune (Zita-AT1) | **designed**, reviewed by Fable 5.2 |
 | 46 | [gfx-formant](gfx-formant/) | new block `formant` (formant shifter) | — | **designed**, reviewed by Fable 5.2 |

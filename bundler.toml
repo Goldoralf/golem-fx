@@ -113,3 +113,6 @@ name = "GoleM FX Transient"
 
 [gfx-mbcomp]
 name = "GoleM FX MB Comp"
+
+[gfx-widener]
+name = "GoleM FX Widener"

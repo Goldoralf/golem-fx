@@ -35,6 +35,7 @@ pub mod reverb;
 pub mod sidechain;
 pub mod smooth;
 pub mod ssb;
+pub mod stereo;
 pub mod svf;
 pub mod swell;
 pub mod track;

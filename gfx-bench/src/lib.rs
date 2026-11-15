@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -62,6 +62,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-dist" | "dist" => Some(Box::new(gfx_dist::Dist::new())),
         "gfx-transient" | "transient" => Some(Box::new(gfx_transient::Transient::new())),
         "gfx-mbcomp" | "mbcomp" => Some(Box::new(gfx_mbcomp::MbComp::new())),
+        "gfx-widener" | "widener" => Some(Box::new(gfx_widener::Widener::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -126,6 +127,11 @@ pub fn options(name: &str) -> checks::Options {
         // through it as they decay: moving distortion for a moment (−42 dB); the Ringing window has hard
         // frame edges by design and its engine fades in over 50 ms (−45 dB at 192 kHz)
         o.click_bound_db = -40.0;
+        o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-widener" | "widener") {
+        // a side generated from the mid: L ≠ R on equal inputs by design (README §5); the one-channel
+        // checks render the fold, which is the dry (exact law)
         o.stereo_by_nature = true;
     }
     if matches!(name, "gfx-freqshift" | "freqshift") {

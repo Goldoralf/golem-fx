@@ -652,6 +652,24 @@
     "character"
    ],
    "category": "dynamics"
+  },
+  "gfx-widener": {
+   "name": "Wide",
+   "blocks": [
+    "widener"
+   ],
+   "knobs": [
+    "amount",
+    "width",
+    "time",
+    "bass_keep"
+   ],
+   "selectors": [
+    "mode",
+    "mono_law"
+   ],
+   "category": "utility",
+   "color": "#c0e0f8"
   }
  }
 }
