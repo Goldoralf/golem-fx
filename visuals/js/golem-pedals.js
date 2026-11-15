@@ -380,6 +380,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-transient': 'spikes',
     'gfx-mbcomp': 'tiers',
     'gfx-widener': 'fan',
+    'gfx-ducker': 'dips',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -608,6 +609,20 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(x0)} ${f1(y0)}L${f1(x0 + 1.5)} ${f1(y0 - 12)}Q${f1(x0 + .3 * w)} ${f1(y0 - 6)} ${f1(x0 + w)} ${f1(y0)}`, .35);
             line(`M${f1(x0)} ${f1(y0)}L${f1(x0 + 1.2)} ${f1(yTop)}Q${f1(x0 + .25 * w)} ${f1(y0 - 9)} ${f1(x0 + w)} ${f1(y0 - t)}`);
           }
+        }
+        break;
+      }
+      case 'dips': {
+        // the swells' band and slots, the figure hung from a level line: in each of four beats the
+        // level runs flat, drops at once to near the baseline and climbs back along a curve (a pump);
+        // under each drop, three faint ticks are the key's burst that caused it. The dips get
+        // shallower by 2 px from left to right, so the row is not a repeated stamp
+        const y0 = H - 40, sw = W / 4, w = sw - 4, yTop = cy + ch / 2 + 8;
+        line(`M0 ${f1(y0)}H${W}`, .4);
+        for (let k = 0; k < 4; k++) {
+          const x0 = k * sw + 2, xd = x0 + .12 * w, yb = y0 - 10 - 2 * k;
+          line(`M${f1(x0)} ${f1(yTop)}H${f1(xd)}L${f1(xd + 1.5)} ${f1(yb)}Q${f1(x0 + .45 * w)} ${f1(yb)} ${f1(x0 + .9 * w)} ${f1(yTop)}H${f1(x0 + w)}`);
+          line(`M${f1(xd - 1)} ${f1(y0)}v-3M${f1(xd + .75)} ${f1(y0)}v-6M${f1(xd + 2.5)} ${f1(y0)}v-4`, .35);
         }
         break;
       }

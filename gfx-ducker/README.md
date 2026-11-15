@@ -1,9 +1,29 @@
 # gfx-ducker
 
-> **Status: DESIGNED** (2026-11-14), **reviewed** the same day (Fable 5.2, see the Review section). Not
-> coded. Design by Claude Opus 5.5. New golem block (no catalogue entry): proposed type `ducker`,
-> category `dynamics`. Brings a new gfx-dsp module (`duck`) and uses gfx-dsp `onset`, the module
-> gfx-swell's design creates (one module for gfx-swell, gfx-killswitch and this crate).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Review section and the
+> decisions after it), coded as decided. New golem block (no catalogue entry): proposed type `ducker`,
+> category `dynamics`. Follow, Trigger and Pump on Wide, Bell, Low, High and Spectral, Absolute
+> detection only (Relative waits for a recorded stage mic).
+>
+> - **gfx-dsp**: a new `duck` module (knee + hysteresis target, linear activation with hold, raised-cosine
+>   map, the dip with its `tension` recovery, the Spectral analysis, weights, interaction matrix,
+>   cut-only Gauss-Seidel and coefficient tables), `svf::SvfCoefs` for the tables, and a default
+>   `Effect::process_with_key` that changes no existing effect (gfx-gate, gfx-met, gfx-swell and
+>   gfx-transient forward theirs). Reused as they are: `onset::Pick` on the sliding-maximum level,
+>   `sidechain` (filters, the halved window rule), `matched`.
+> - **Measured**: depth exact to 0.001 dB; static curve 0.000 dB from the formula at `knee` 0 / 6 / 24;
+>   attack, hold and release to the sample; the edge table of §2.3 reproduces to 1 dB (e.g. 0.5 ms /
+>   60 dB: −15 / −43 dB); recovery corners −70 / −77 / −65 dB; Bell and shelves within 0.21 dB of the
+>   analog designs to 0.45 fs; Spectral's deepest point within 0.44 dB of `depth` (uniform ripple 0.49 /
+>   1.01 / 1.61 dB at 6 / 12 / 18); Mid / Side null
+>   under −100 dB; one dip per kick on the prototype's signals, ≤ 3 ms late; Pump on the beat to the
+>   sample, also with lookahead.
+> - **gfx-bench now has a key**: `Options::key`, so the ducker's common checks run while it ducks and
+>   releases. **28 / 28** at 44.1 – 192 kHz; CPU 34 ns / sample mono (bench), Wide 38, Bell 39 – 50,
+>   Spectral 157 – 168 mono and 174 – 187 stereo (budgets 50 / 90 / 300 / 400).
+>
+> Open: Relative detection (recorded stage mic), by-ear listening (Spectral 16 vs 24 bands, `spread`,
+> the defaults), the Pump phase sign in both engines, and golem-rack's §6 items.
 
 golem's **ducker**: it lowers a signal while another one plays. Three ways to drive the same gain stage:
 
@@ -439,11 +459,11 @@ musical dip as soon as they are selected (at 120 BPM: 375 ms, of which 10 ms fal
 | id | Name | Type | Range | Default | Curve | Smooth | EXP | Role |
 |---|---|---|---|---|---|---|---|---|
 | `hpf` | Key Low Cut | f | 0 – 2,000 Hz | 0 (off) | log | 20 | | Butterworth high-pass on the key. Also sizes the sliding-max window |
-| `lpf` | Key High Cut | f | 500 – 22,000 Hz | 22,000 Hz (off) | log | 20 | | Butterworth low-pass on the key |
+| `lpf` | Key High Cut | f | 100 – 22,000 Hz | 22,000 Hz (off) | log | 20 | | Butterworth low-pass on the key (range widened from 500 Hz when coded: the kick settings use 150 Hz) |
 | `knee` | Knee | f | 0 – 24 dB | 6 dB | lin | 20 | | Key range over which the duck grows from 0 to `depth`. 6 dB = gfx-delay / gfx-reverb; 24 dB feels like a sidechain compressor; 0 = a switch |
 | `hyst` | Hysteresis | f | −24 – 0 dB | −3 dB | lin | 20 | | Release threshold = T + `hyst` |
-| `detect` | Detection | e | Absolute · Relative | Absolute | — | — | | Relative = threshold measured above the key's own floor (live mics with bleed) |
-| `margin` | Margin | f | 0 – 40 dB | 10 dB | lin | 20 | | Relative only: how far above its floor the key must rise |
+| `detect` | Detection | e | Absolute · Relative | Absolute | — | — | | **Not in v1** (appended with Relative). Relative = threshold measured above the key's own floor (live mics with bleed) |
+| `margin` | Margin | f | 0 – 40 dB | 10 dB | lin | 20 | | **Not in v1** (appended with Relative). Relative only: how far above its floor the key must rise |
 | `freq` | Band Frequency | f | 40 – 12,000 Hz | 1,000 Hz | log | EXP rule (in log f) | ✓ | Bell centre; Low / High: where half the duck applies |
 | `width` | Band Width | f | 0.3 – 4 oct | 2 oct | lin | 20 | | Bell bandwidth |
 | `spread` | Spectral Spread | f | 3 – 30 dB | 12 dB | lin | 20 | | Spectral: how far below the key's loudest band a band still ducks |
@@ -765,3 +785,118 @@ defaults).
   `no_chatter_on_low_notes_under_the_sidechain_highpass`); for this block, whose gain follows the level
   continuously, use gfx-transient's halved rule for the Follow detector and bench its ripple with a key note
   under `hpf`.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `duck.rs` (new): `s_curve` / `s_inverse` (the raised cosine as an odd polynomial, error
+  < 7e−10, exact 0 and 1 at the ends), `recovery`, `KeyGate` (knee + hysteresis), `Activation` (linear
+  ramps, hold), `DipShape` / `dip_db` / `Dip` (the dip, restartable from the current gain),
+  `SpectralAnalysis`, `weights`, `SpectralPlan` (interaction matrix from the digital designs at 12 dB,
+  cut-only projected Gauss-Seidel, 16 × 121 coefficient tables). 8 unit tests.
+- gfx-dsp `svf.rs`: `SvfCoefs` (TPT coefficients precomputed from a biquad, with `lerp`) and
+  `Svf::set_coefs` / `set_coefs_ramped`. Nothing existing changed.
+- gfx-dsp `effect.rs`: `Effect::process_with_key(buffers, key)`, defaulting to `process`. gfx-gate,
+  gfx-met, gfx-swell and gfx-transient forward it to their own inherent `process_with_key`; their
+  `process` is untouched and gfx-bench gives them no key, so their renders and checks are unchanged
+  (`every_effect_passes_at_48k` green).
+- gfx-bench: `Options::key` (a key generator), `render_with_key`, the checks run through it; the CPU line
+  makes the key before the clock starts. `signals::key_bursts`: a 200 Hz key at −12 dBFS, 120 ms bursts
+  every 700 ms with 5 ms edges, so at the defaults the ducker ducks fully and releases before the next
+  burst. Options for gfx-ducker: that key and `skip_steps = ["lookahead"]`.
+- The crate: `src/lib.rs` (the processor), `src/plugin.rs` (the VST3, class id `GoleMFxDucker001`, mono
+  1 / 1 + key 1 first, then 2 / 2 + key 2, `gr` and `state` read-only, latency reported from
+  `lookahead`), `src/tests.rs` (22 behaviour tests and an ignored CPU test).
+- `presets/gfx-ducker.json`: the 15 preset ideas of §4.
+
+**Choices where the spec was silent.**
+- **One level for Follow and Trigger**: the sliding maximum with the halved window rule (the decision
+  above). With `hpf` under 60 Hz it is gfx-gate's 40 ms window anyway.
+- **Trigger's detector**: `onset::Pick::detect(L_dB, L > thresh)` with R = `Pick::rise_for(sens)`, slope
+  window max(3 ms, 0.5 / `lpf`), the slope reference at the window's start (`hold_ms` 0: the sliding
+  maximum is already ripple-free), refractory 40 ms. It runs only while Trigger is in use (or fading).
+- **The dip**: a retrigger restarts the fall from the activation whose raised cosine gives the current
+  duck, so the gain never jumps; times are taken when the dip fires. Pump reads the dip stateless from
+  the phase (position − L when playing; a free counter at the host tempo from reset when stopped; with
+  `sync` Off a free period of attack + hold + release). `offset` delays the dip by its share of the period.
+- **`force`** has its own activation (same attack / hold / release); the duck is the larger of it and the
+  mode's.
+- **Band shapes** read the duck at each tick and ramp to it over the tick (one tick of lag, 0.67 ms).
+  A filter enters from its reset state at its 0 dB coefficients and ramps in; it leaves the path one tick
+  after it has ramped back to 0 dB. The 0 dB and the current designs are cached, so a steady duck costs
+  no design. Each `shape` (Bell, Low, High, Spectral) and each `stereo` line (L / R, Mid, Side) has its
+  own filters, so `shape` and `stereo` crossfade over 20 ms by running both for the fade.
+- **Spectral weights** are updated only while the key is above T + `hyst` and hold otherwise: between
+  words the spectrum is silence, whose weights would be uniform. Before any key they are uniform (Pump
+  Spectral ducks evenly). The analysis reads the mean of the filtered key channels; it runs only while
+  Spectral is in use and restarts from silence when selected.
+- **`listen`** outputs the filtered key, not delayed by the lookahead (a monitor for setting the filters).
+- **Meters**: `gr` is the largest duck of the block; `state` is `gr` > 1 dB.
+
+### Measurements (`cargo test -p gfx-ducker -p gfx-dsp`, 48 kHz)
+
+| Check (§5) | Target | Measured |
+|---|---|---|
+| Transparency | bit-identical with no key or a silent key, any shape and `stereo`; and after a release | Bit-identical (5 shapes × 3 stereo settings × absent / silent key, depth 60); bit-identical 100 ms after a release in every shape |
+| Depth | `depth` ± 0.1 dB, Wide | 6 / 12 / 18 / 40 dB to 0.001 dB on the main |
+| Static curve | depth · S(clamp((L − T) / knee)) ± 0.2 dB | 0.000 dB worst at `knee` 0, 6 and 24 |
+| Times | attack ± 1 sample; no rise during hold; release ± 1 sample | Exact to the sample; the release starts after the sliding window (40 ms) + `hold` ± 2 samples |
+| Hysteresis | starts at T; closes at T + `hyst` ± 0.1 dB; the curve sits `hyst` lower | −40.00 / −46.00 dB (`hyst` −6) at `knee` 0 and 6; the knee curve within 0.3 dB of its shifted formula |
+| No flutter | ≤ 0.1 dB, 41 Hz at T + 3 dB, `hpf` 0 | 0.0000 dB (`hyst` 0, so the level sits inside the knee) |
+| Key note under `hpf` (decision) | ripple measured | 0.000 dB for 82 / 62 Hz under 100, 150, 200 Hz and 41 Hz under 150 Hz; 0.011 dB for 41 Hz under 200 Hz (12 ms window against a 12.2 ms rectified period), `hold` 0, release 50 ms; with the default `hold` nothing ripples |
+| Edges (§2.3 table, above 2 k / 10 k, dB re the sine) | within 3 dB of the table | 0.5 ms: −26 / −58, −23 / −55, −15 / −43 (12 / 18 / 60 dB); 1 ms: −38 / −71, −34 / −68, −23 / −57; 2 ms: −52 / −83, −48 / −80, −36 / −69; 5 ms: −68 / −99, −65 / −96, −54 / −85; 10 ms: −81 / −111, −77 / −108, −66 / −97. The table, to 1 dB |
+| Recovery corners | ≤ −60 dB above 10 kHz (prototype −65 / −77 / −65) | −70 / −77 / −65 dB at `tension` −100 / 0 / +100 |
+| Band-shape stability | peak ≤ input + 0.5 dB; no NaN; no ringing after release | Bell, Low, High, Spectral at 60 dB, 0.5 ms (two ticks), pink noise and 80 Hz: within bounds, finite, bit-identical to the input after the release |
+| Bell / shelves | ± 0.5 dB of the analog design to 0.45 fs | Bell 0.07 / 0.21 dB (12 / 24 dB), Low 0.000, High 0.01 / 0.05 dB |
+| Spectral, sum (4 sweeps from cold) | deepest = `depth` ± 0.5; centres ± 1; uniform ripple ≤ 1 / 1.5 / 2 dB | Deepest 5.81 – 6.00 / 11.65 – 12.00 / 17.56 – 18.12 dB (uniform, one band, triangle, blocks); centres within 1 dB; ripple 0.49 / 1.01 / 1.61 dB |
+| Spectral, key | deepest at the key ± ¼ oct; ≤ 2 dB at 1 oct, ≤ 0.5 at 2 | 905 Hz: 12.00 dB at 905 Hz, 1.47 / 0.28 dB. 1,076 Hz: 12.15 dB at 946 Hz, **2.30** / 0.39 dB (see deviations). Pink key: 8.3 – 11.6 dB across the bank |
+| Spectral, motion | no cut faster than the ramps | Largest step 1.57 dB per tick (bound 3.77) on a key jumping 400 ↔ 2,500 Hz |
+| Stereo Mid / Side | the other component null ≤ −100 dB | Below −100 dB in Wide, Bell and Spectral, Mid and Side; Wide ducks the chosen one by 18.00 dB |
+| Trigger | one dip per kick (4, 1, 4), ≤ 3 ms after the onset; equal depth ±12 dB; 16ths at 180 BPM all fire | 4 / 1 / 4 with `lpf` 150 and with no key filter, every dip ≤ 3 ms late; 12.00 dB at hits −12 / 0 / +12 dB; 16ths: **7 of 12** at `hpf` 0 / `sens` 50, 12 of 12 with `hpf` 150 or `sens` 100 (see deviations) |
+| Trigger, synced | `sync` 1/4 at 120 BPM, `length` 75 % → 375 ms | 375.0 ms |
+| Pump sync | each dip on the beat ± 1 sample; with lookahead L later | Playing from beat 9.25: every dip within 1 sample of the beat, and of beat + 240 samples with 5 ms; stopped transport: free-running at 120 BPM from reset, to the sample |
+| Latency | reported = measured; Off = 0 | 0 / 96 / 240 / 480 samples, impulse exact |
+| Lookahead | the fall completes as the onset reaches the output | −12.00 dB at the onset's arrival (5 ms, `attack` 5) |
+| Structural changes | no step | `mode` Follow → Pump, `shape` Wide → Spectral and Bell → High, `stereo` Both → Mid, `lookahead` Off → 10 ms while ducking: under −50 dB above 10 kHz |
+| force / listen / bypass / meters | | Duck Now: −18.00 dB without a key, `gr` 18, `state` 1; listen: the filtered key, silence without one; bypass: the input bit for bit while the meter still reads the duck |
+
+gfx-bench `check gfx-ducker`, **with the bench key**: **28 / 28** at 44.1, 48, 96 and 192 kHz. Worst
+parameter step −73 dB (`force` 0 → 1; bound −50). CPU line 34.2 ns / sample mono, 40.5 ns / frame stereo.
+
+**CPU** (48 kHz, blocks of 128, release, flush-to-zero; `cpu_per_shape`, steady key / key in bursts):
+
+| Case | Mono | Stereo | Budget |
+|---|---|---|---|
+| Wide | 38 / 34 | 43 / 37 | 50 |
+| Bell | 39 / 49 | 48 / 55 | 90 |
+| Low | 41 / 52 | 47 / 55 | 90 |
+| Spectral | 165 / 168 | 187 / 177 | 300 / 400 |
+| Trigger, Wide | 49 / 43 | 44 / 52 | |
+| Pump, Wide | 61 / 66 | 64 / 71 | |
+
+Without flush-to-zero the Spectral analysis bands decay into denormals between key bursts (about
+1,200 ns / sample); nih-plug and gfx-bench run with FTZ, as gfx-dsp's rule 4 assumes.
+
+**Deviations from the spec, and why.**
+- **`detect` and `margin` are not parameters in v1.** The decision keeps Relative out of v1's enum, and an
+  enum with one option breaks nih-plug (its normalisation divides by max − min = 0). Absolute is the
+  behaviour with neither parameter. Both are appended later with Relative (an enum Absolute · Relative
+  defaulting to Absolute, and `margin`), which changes nothing for saved values. The floor tracker of
+  §2.2 is not coded.
+- **`lpf` goes down to 100 Hz**, not 500: §2.2 and the kick presets of §4 use 150 Hz, which the
+  table's range could not hold.
+- **16th-note kicks at 180 BPM** fire 7 of 12 at `hpf` 0 and the default `sens`. With the full-band key the
+  window is 40 ms: the level holds each hit's peak for 40 ms, the 150 ms reference sits only 4 – 5 dB
+  under it, and R is 7.5 dB. `hpf` 150 Hz (a 16 ms window) or `sens` 100 catches all 12. Not changed
+  (the detector is the spec's and gfx-swell's); the kick presets keep the spec's values. For dense
+  parts, raise `hpf` to about 150 Hz or `sens` toward 100.
+- **Spectral key between two centres**: two bells share the cut (8.9 dB each) and their skirts give 2.3 dB
+  one octave away, over the 2 dB bound (centred tones give 1.47 dB). That is the Q 2 bells' nature.
+- **EXP sideband check** not run here: `depth` and `freq` go through gfx-dsp `exp_smooth`, which carries
+  the contract's tests. **Words** (voice/male.wav as key) and the **Listening** renders need the
+  recordings: left for the bench with Raph.
+
+**Left for the owner.** Relative detection and its five constants on a recorded stage vocal mic; by-ear
+listening (Spectral 16 vs 24 bands and `spread`, the defaults, `tension` and `sync` 1/4); the Pump phase
+sign with lookahead in REAPER and the Golem Engine; golem-rack's §6 (key routing, service-bus slots,
+momentary foot action, catalogue entry `ducker`).

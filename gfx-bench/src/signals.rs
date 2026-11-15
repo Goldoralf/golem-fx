@@ -55,3 +55,27 @@ pub fn burst_then_silence(burst: usize, silence: usize, amp: f32, seed: u64) -> 
     v.extend(std::iter::repeat_n(0.0, silence));
     v
 }
+
+/// The key the common checks give a keyed effect (gfx-ducker): a 200 Hz sine at −12 dBFS in 120 ms
+/// bursts every 700 ms, with 5 ms raised-cosine edges. At gfx-ducker's defaults (threshold −40 dB,
+/// attack 10, hold 150, release 400 ms) each burst ducks fully and is released just before the next.
+pub fn key_bursts(n: usize, sample_rate: f32) -> Vec<f32> {
+    let sr = sample_rate as f64;
+    let (period, on, edge) = ((0.7 * sr) as usize, 0.12 * sr, 0.005 * sr);
+    let w = 2.0 * std::f64::consts::PI * 200.0 / sr;
+    (0..n)
+        .map(|i| {
+            let t = (i % period) as f64;
+            let env = if t >= on {
+                0.0
+            } else if t < edge {
+                0.5 * (1.0 - (std::f64::consts::PI * t / edge).cos())
+            } else if t > on - edge {
+                0.5 * (1.0 - (std::f64::consts::PI * (on - t) / edge).cos())
+            } else {
+                1.0
+            };
+            (0.25 * env * (w * i as f64).sin()) as f32
+        })
+        .collect()
+}

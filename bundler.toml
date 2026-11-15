@@ -116,3 +116,5 @@ name = "GoleM FX MB Comp"
 
 [gfx-widener]
 name = "GoleM FX Widener"
+[gfx-ducker]
+name = "GoleM FX Ducker"

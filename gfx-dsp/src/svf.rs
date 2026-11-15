@@ -82,6 +82,28 @@ impl Coefs {
     }
 }
 
+/// TPT coefficients precomputed from a biquad (coefficient tables: gfx-ducker's Spectral bells), so
+/// a control tick costs an interpolation instead of a design and a conversion.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SvfCoefs {
+    c: Coefs,
+}
+
+impl SvfCoefs {
+    /// The TPT realisation of a stable biquad (`None` if it has none).
+    pub fn from_biquad(b: &crate::matched::Biquad) -> Option<Self> {
+        Coefs::from_biquad(b).map(|c| Self { c })
+    }
+
+    /// Linear interpolation between two sets (t = 0 → self, 1 → other).
+    #[inline]
+    pub fn lerp(&self, other: &SvfCoefs, t: f64) -> SvfCoefs {
+        let (a, b) = (&self.c, &other.c);
+        let l = |x: f64, y: f64| x + (y - x) * t;
+        SvfCoefs { c: Coefs { a1: l(a.a1, b.a1), a2: l(a.a2, b.a2), a3: l(a.a3, b.a3), m0: l(a.m0, b.m0), m1: l(a.m1, b.m1), m2: l(a.m2, b.m2) } }
+    }
+}
+
 impl Svf {
     pub fn new() -> Self {
         Self::default()
@@ -185,6 +207,28 @@ impl Svf {
             };
             self.left = n;
         }
+    }
+
+    /// Sets precomputed coefficients at once.
+    pub fn set_coefs(&mut self, c: &SvfCoefs) {
+        self.c = c.c;
+        self.left = 0;
+    }
+
+    /// Reaches precomputed coefficients linearly over `n` samples (as `set_biquad_ramped`).
+    pub fn set_coefs_ramped(&mut self, c: &SvfCoefs, n: u32) {
+        let t = c.c;
+        let n = n.max(1);
+        let k = 1.0 / n as f64;
+        self.step = Coefs {
+            a1: (t.a1 - self.c.a1) * k,
+            a2: (t.a2 - self.c.a2) * k,
+            a3: (t.a3 - self.c.a3) * k,
+            m0: (t.m0 - self.c.m0) * k,
+            m1: (t.m1 - self.c.m1) * k,
+            m2: (t.m2 - self.c.m2) * k,
+        };
+        self.left = n;
     }
 
     pub fn reset(&mut self) {

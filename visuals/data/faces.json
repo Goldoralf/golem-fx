@@ -670,6 +670,26 @@
    ],
    "category": "utility",
    "color": "#c0e0f8"
+  },
+  "gfx-ducker": {
+   "name": "Duck",
+   "blocks": [
+    "ducker"
+   ],
+   "knobs": [
+    "thresh",
+    "depth",
+    "hold",
+    "release"
+   ],
+   "selectors": [
+    "mode",
+    "shape"
+   ],
+   "toggles": [
+    "force"
+   ],
+   "category": "dynamics"
   }
  }
 }
