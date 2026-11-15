@@ -586,6 +586,22 @@
    ],
    "category": "lofi",
    "color": "#d8c8a0"
+  },
+  "gfx-grit": {
+   "name": "Grit",
+   "blocks": [
+    "grit"
+   ],
+   "knobs": [
+    "drive",
+    "focus",
+    "wet",
+    "level"
+   ],
+   "toggles": [
+    "quality"
+   ],
+   "category": "lofi"
   }
  }
 }

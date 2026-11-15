@@ -1511,6 +1511,88 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-grit": [
+      {
+        "id": "low",
+        "name": "Low",
+        "custom": null,
+        "params": [
+          "lo_m1",
+          "lo_v1",
+          "lo_y1",
+          "lo_m2",
+          "lo_v2",
+          "lo_y2",
+          "lo_gain",
+          "lo_mix",
+          "lo_solo",
+          "lo_bypass"
+        ]
+      },
+      {
+        "id": "low-mid",
+        "name": "Low Mid",
+        "custom": null,
+        "params": [
+          "lm_m1",
+          "lm_v1",
+          "lm_y1",
+          "lm_m2",
+          "lm_v2",
+          "lm_y2",
+          "lm_gain",
+          "lm_mix",
+          "lm_solo",
+          "lm_bypass"
+        ]
+      },
+      {
+        "id": "high-mid",
+        "name": "High Mid",
+        "custom": null,
+        "params": [
+          "hm_m1",
+          "hm_v1",
+          "hm_y1",
+          "hm_m2",
+          "hm_v2",
+          "hm_y2",
+          "hm_gain",
+          "hm_mix",
+          "hm_solo",
+          "hm_bypass"
+        ]
+      },
+      {
+        "id": "high",
+        "name": "High",
+        "custom": null,
+        "params": [
+          "hi_m1",
+          "hi_v1",
+          "hi_y1",
+          "hi_m2",
+          "hi_v2",
+          "hi_y2",
+          "hi_gain",
+          "hi_mix",
+          "hi_solo",
+          "hi_bypass"
+        ]
+      },
+      {
+        "id": "crossovers",
+        "name": "Crossovers",
+        "custom": null,
+        "params": [
+          "x1",
+          "x2",
+          "x3",
+          "slope",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1749,6 +1831,48 @@
       "noise_mode": "Follow: noise only under the playing; Constant: always; Duck: in the gaps",
       "stop": "Tape stop: the motor winds down; off spins it back up",
       "spread": "Stereo: the random wobble and failures differ left and right"
+    },
+    "gfx-grit": {
+      "lo_m1": "The low band's first dirt module (slot 1 runs before slot 2)",
+      "lo_v1": "Amount of the low band's first module, in that module's own law (dB, bits, Hz, exponent)",
+      "lo_y1": "Gain of a Peak module in the low band's slot 1 (a cut before a clipper is a scoop); inert for other types",
+      "lo_m2": "The low band's second dirt module (slot 2 runs after slot 1)",
+      "lo_v2": "Amount of the low band's second module, in that module's own law (dB, bits, Hz, exponent)",
+      "lo_y2": "Gain of a Peak module in the low band's slot 2 (a cut before a clipper is a scoop); inert for other types",
+      "lo_gain": "Level of the whole low band after its dirt and mix; −60 dB is a mute",
+      "lo_mix": "The low band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
+      "lo_solo": "Hear the low band alone (several soloed: their sum); a set-up switch",
+      "lo_bypass": "The low band passes clean at 0 dB: its modules, mix and gain are ignored",
+      "lm_m1": "The low-mid band's first dirt module (slot 1 runs before slot 2)",
+      "lm_v1": "Amount of the low-mid band's first module, in that module's own law (dB, bits, Hz, exponent)",
+      "lm_y1": "Gain of a Peak module in the low-mid band's slot 1 (a cut before a clipper is a scoop); inert for other types",
+      "lm_m2": "The low-mid band's second dirt module (slot 2 runs after slot 1)",
+      "lm_v2": "Amount of the low-mid band's second module, in that module's own law (dB, bits, Hz, exponent)",
+      "lm_y2": "Gain of a Peak module in the low-mid band's slot 2 (a cut before a clipper is a scoop); inert for other types",
+      "lm_gain": "Level of the whole low-mid band after its dirt and mix; −60 dB is a mute",
+      "lm_mix": "The low-mid band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
+      "lm_solo": "Hear the low-mid band alone (several soloed: their sum); a set-up switch",
+      "lm_bypass": "The low-mid band passes clean at 0 dB: its modules, mix and gain are ignored",
+      "hm_m1": "The high-mid band's first dirt module (slot 1 runs before slot 2)",
+      "hm_v1": "Amount of the high-mid band's first module, in that module's own law (dB, bits, Hz, exponent)",
+      "hm_y1": "Gain of a Peak module in the high-mid band's slot 1 (a cut before a clipper is a scoop); inert for other types",
+      "hm_m2": "The high-mid band's second dirt module (slot 2 runs after slot 1)",
+      "hm_v2": "Amount of the high-mid band's second module, in that module's own law (dB, bits, Hz, exponent)",
+      "hm_y2": "Gain of a Peak module in the high-mid band's slot 2 (a cut before a clipper is a scoop); inert for other types",
+      "hm_gain": "Level of the whole high-mid band after its dirt and mix; −60 dB is a mute",
+      "hm_mix": "The high-mid band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
+      "hm_solo": "Hear the high-mid band alone (several soloed: their sum); a set-up switch",
+      "hm_bypass": "The high-mid band passes clean at 0 dB: its modules, mix and gain are ignored",
+      "hi_m1": "The high band's first dirt module (slot 1 runs before slot 2)",
+      "hi_v1": "Amount of the high band's first module, in that module's own law (dB, bits, Hz, exponent)",
+      "hi_y1": "Gain of a Peak module in the high band's slot 1 (a cut before a clipper is a scoop); inert for other types",
+      "hi_m2": "The high band's second dirt module (slot 2 runs after slot 1)",
+      "hi_v2": "Amount of the high band's second module, in that module's own law (dB, bits, Hz, exponent)",
+      "hi_y2": "Gain of a Peak module in the high band's slot 2 (a cut before a clipper is a scoop); inert for other types",
+      "hi_gain": "Level of the whole high band after its dirt and mix; −60 dB is a mute",
+      "hi_mix": "The high band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
+      "hi_solo": "Hear the high band alone (several soloed: their sum); a set-up switch",
+      "hi_bypass": "The high band passes clean at 0 dB: its modules, mix and gain are ignored"
     }
   },
   "depends": {

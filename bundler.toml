@@ -102,3 +102,6 @@ name = "GoleM FX Ringmod"
 name = "GoleM FX Bass DI"
 [gfx-tape]
 name = "GoleM FX Tape"
+
+[gfx-grit]
+name = "GoleM FX Grit"
