@@ -56516,6 +56516,1129 @@
      "notes": "The keys are the modulator; scenes move `degree` with the progression"
     }
    ]
+  },
+  "gfx-acoustic": {
+   "name": "GoleM FX Acoustic",
+   "class_id": "GoleMFxAcoustic1",
+   "blocks": [
+    "acoustic-sim"
+   ],
+   "front": [
+    "model",
+    "body",
+    "top",
+    "mic",
+    "mix",
+    "twelve"
+   ],
+   "groups": [
+    {
+     "id": "guitar",
+     "name": "Guitar",
+     "custom": null,
+     "params": [
+      "pickup",
+      "pickup_pos"
+     ]
+    },
+    {
+     "id": "body",
+     "name": "Body",
+     "custom": null,
+     "params": [
+      "size",
+      "decay",
+      "piezo",
+      "quack"
+     ]
+    },
+    {
+     "id": "twelve",
+     "name": "12-String",
+     "custom": null,
+     "params": [
+      "twelve_level",
+      "twelve_detune",
+      "twelve_delay"
+     ]
+    },
+    {
+     "id": "output",
+     "name": "Output",
+     "custom": null,
+     "params": [
+      "low_cut",
+      "comp",
+      "room",
+      "width",
+      "level",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "model": {
+     "name": "Model",
+     "kind": "enum",
+     "min": 0,
+     "max": 5,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Dreadnought",
+      "Jumbo",
+      "Concert",
+      "Parlor",
+      "Classical",
+      "Round-back"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "The body; owns its modes, high band, decay and K"
+    },
+    "body": {
+     "name": "Body",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The body's resonances (the boom, the breath): 50 % = the model's own, ±12 dB"
+    },
+    "top": {
+     "name": "Top",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Attack and sparkle, and the trim for a guitar that is not the pickup guess: 50 % = the model's own"
+    },
+    "mic": {
+     "name": "Mic",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 75,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Microphone blend: 0 bridge, 50 sound hole, 100 neck (12th – 14th fret)"
+    },
+    "mix": {
+     "name": "Mix",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Law: linear crossfade, 0 = the DI, 100 = the acoustic"
+    },
+    "twelve": {
+     "name": "12-String",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Adds the octave and unison courses"
+    },
+    "pickup": {
+     "name": "Pickup",
+     "kind": "enum",
+     "min": 0,
+     "max": 4,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Single Coil",
+      "Humbucker",
+      "P-90",
+      "Active",
+      "Piezo"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "The guitar's pickup, so its EMF can be rebuilt from the DI (golem sets it at insert)"
+    },
+    "pickup_pos": {
+     "name": "Pickup Position",
+     "kind": "enum",
+     "min": 0,
+     "max": 4,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Neck",
+      "Middle",
+      "Bridge",
+      "Neck + Middle",
+      "Middle + Bridge"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Position shelf R(s)"
+    },
+    "size": {
+     "name": "Size",
+     "kind": "float",
+     "min": 70,
+     "max": 140,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Body scale: every mode at f · 100 / size"
+    },
+    "decay": {
+     "name": "Decay",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shortens the electric's sustain as an acoustic body drains the strings: 50 % = the model's own, 0 = off"
+    },
+    "piezo": {
+     "name": "Piezo Blend",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Adds an under-saddle piezo voice to the mic: the stage sound"
+    },
+    "quack": {
+     "name": "Quack Cut",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": {
+      "param": "pickup",
+      "equals": "Piezo"
+     },
+     "help": "Piezo source only: tames the piezo's mid peak on the attacks"
+    },
+    "low_cut": {
+     "name": "Low Cut",
+     "kind": "float",
+     "min": 20,
+     "max": 300,
+     "default": 20,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "2-pole high-pass after the body: band mix, feedback"
+    },
+    "comp": {
+     "name": "Comp",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "One-knob Opto compressor, auto make-up"
+    },
+    "room": {
+     "name": "Room",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The small room around the mic"
+    },
+    "width": {
+     "name": "Width",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 40,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "2 / 2 only: the spacing of the two microphones"
+    },
+    "twelve_level": {
+     "name": "Courses Level",
+     "kind": "float",
+     "min": -12,
+     "max": 6,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Octave and unison strings relative to the main courses"
+    },
+    "twelve_detune": {
+     "name": "Courses Detune",
+     "kind": "float",
+     "min": 0,
+     "max": 20,
+     "default": 4,
+     "unit": "ct",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Course detune (shifter ratio)"
+    },
+    "twelve_delay": {
+     "name": "Strum Offset",
+     "kind": "float",
+     "min": 0,
+     "max": 10,
+     "default": 2.5,
+     "unit": "ms",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Delay of the course voices on top of the shifter's 3 ms centre and the octave bands' own 5 – 9 ms"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "0 dB = the bypass loudness on every model"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shipped bypass parameter"
+    }
+   },
+   "presets": [
+    {
+     "id": "studio-dreadnought",
+     "type": "acoustic-sim",
+     "name": "Studio dreadnought",
+     "desc": "Electric DI to a miked dreadnought between sound hole and neck, a light comp and room",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "folk-rock",
+      "singer-songwriter"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": true,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 25,
+      "room": 15,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The reference: neck single coil, modal lows, the decay stage at the model's own shortening"
+    },
+    {
+     "id": "big-jumbo-strum",
+     "type": "acoustic-sim",
+     "name": "Big jumbo strum",
+     "desc": "A jumbo body with more boom under strummed chords, compressed for a band mix",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "folk"
+     ],
+     "subgenres": [
+      "classic-rock",
+      "americana"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "model": "Jumbo",
+      "body": 60,
+      "top": 50,
+      "mic": 65,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 30,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Body 60 % lifts the modal bank 2.4 dB: the deeper air and top modes of the larger box"
+    },
+    {
+     "id": "fingerstyle-concert",
+     "type": "acoustic-sim",
+     "name": "Fingerstyle concert",
+     "desc": "The measured grand-concert body, a brighter attack and shorter sustain between picks",
+     "inst": "guitar",
+     "genres": [
+      "folk",
+      "pop"
+     ],
+     "subgenres": [
+      "contemporary-folk",
+      "singer-songwriter"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": false,
+     "params": {
+      "model": "Concert",
+      "body": 50,
+      "top": 55,
+      "mic": 85,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 60,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 20,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Concert is fitted from public-domain recordings of a steel-string; decay 60 % shortens tails between picks"
+    },
+    {
+     "id": "single-note-lead",
+     "type": "acoustic-sim",
+     "name": "Single-note lead",
+     "desc": "Long electric notes decay like an acoustic's: the sustain that gives a sim away is gone",
+     "inst": "guitar",
+     "genres": [
+      "folk",
+      "rock"
+     ],
+     "subgenres": [
+      "americana",
+      "folk-rock"
+     ],
+     "gain": "clean",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 70,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 70,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 15,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Where the decay stage acts fully: single lines and long notes"
+    },
+    {
+     "id": "parlor-blues",
+     "type": "acoustic-sim",
+     "name": "Parlor blues",
+     "desc": "A small-body parlor: boxy midrange, a little more top, a small room",
+     "inst": "guitar",
+     "genres": [
+      "blues"
+     ],
+     "subgenres": [
+      "delta-blues",
+      "country-blues"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "model": "Parlor",
+      "body": 40,
+      "top": 60,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 20,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Parlor's modes sit about 20 % higher than the dreadnought's (body area); body 40 % keeps the boom down"
+    },
+    {
+     "id": "nylon-bossa",
+     "type": "acoustic-sim",
+     "name": "Nylon bossa",
+     "desc": "The archive-fitted classical body, dark top and a short nylon decay, miked near the neck",
+     "inst": "guitar",
+     "genres": [
+      "latin",
+      "jazz"
+     ],
+     "subgenres": [
+      "bossa-nova"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm",
+      "dark"
+     ],
+     "default": false,
+     "params": {
+      "model": "Classical",
+      "body": 50,
+      "top": 35,
+      "mic": 80,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 20,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Classical is fitted from a measured Spanish concert guitar (CC BY 4.0 archive); its k is higher in the highs"
+    },
+    {
+     "id": "twelve-string-jangle",
+     "type": "acoustic-sim",
+     "name": "Twelve-string jangle",
+     "desc": "Octave and unison courses added before the body, detuned and strummed late, compressed",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "folk"
+     ],
+     "subgenres": [
+      "folk-rock",
+      "jangle-pop"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 100,
+      "twelve": true,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 35,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Octave voice below 400 Hz from the ERB bank, unison above 150 Hz; 4 cents and 2.5 ms on the shifter's 3 ms"
+    },
+    {
+     "id": "stage-acoustic",
+     "type": "acoustic-sim",
+     "name": "Stage acoustic",
+     "desc": "Piezo and mic blended with the lows cut: cuts through a loud band and resists feedback",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "pop-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 60,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 40,
+      "quack": 0,
+      "low_cut": 100,
+      "comp": 35,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The piezo voice is F̂ through the force conversion plus a 2 kHz bell; low cut 100 Hz keeps the body boom out"
+    },
+    {
+     "id": "round-back-stage",
+     "type": "acoustic-sim",
+     "name": "Round-back stage",
+     "desc": "A subdued round-back body with a strong piezo voice: the bright stage acoustic",
+     "inst": "guitar",
+     "genres": [
+      "pop",
+      "rock"
+     ],
+     "subgenres": [
+      "soft-rock",
+      "pop-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": false,
+     "params": {
+      "model": "Round-back",
+      "body": 50,
+      "top": 60,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 60,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Few low-Q modes and a short tail, as the round-back's subdued body resonance"
+    },
+    {
+     "id": "piezo-restore",
+     "type": "acoustic-sim",
+     "name": "Piezo restore",
+     "desc": "An acoustic-electric's piezo DI given back its body and mic, quack tamed, blended with the DI",
+     "inst": "guitar",
+     "genres": [
+      "folk",
+      "pop"
+     ],
+     "subgenres": [
+      "contemporary-folk",
+      "singer-songwriter"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "model": "Concert",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 70,
+      "twelve": false,
+      "pickup": "Piezo",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 40,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Concert with a piezo source is the measured guitar's own piezo-to-mic response; pick the nearest body"
+    },
+    {
+     "id": "electric-to-acoustic",
+     "type": "acoustic-sim",
+     "name": "Electric to acoustic",
+     "desc": "Mix on the expression pedal: morph the electric DI into the miked acoustic mid-song",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "pop-rock",
+      "alternative-rock"
+     ],
+     "gain": "clean",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 0,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Put EXP on mix 0 → 100 %: the wet has no bulk delay, so the sweep has no comb"
+    },
+    {
+     "id": "wide-doubled-acoustic",
+     "type": "acoustic-sim",
+     "name": "Wide doubled acoustic",
+     "desc": "Two microphones from one body on a stereo lane, a little room",
+     "inst": "guitar",
+     "genres": [
+      "pop",
+      "folk"
+     ],
+     "subgenres": [
+      "indie-folk",
+      "indie-pop"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "model": "Concert",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 25,
+      "width": 80,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "2 / 2 only: the mics sit at mic ± width / 2 on the same modal bank; the lows stay coherent"
+    },
+    {
+     "id": "bridge-pickup-rescue",
+     "type": "acoustic-sim",
+     "name": "Bridge-pickup rescue",
+     "desc": "A bridge humbucker turned into a usable acoustic: position shelf and aperture shelf",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "classic-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "warm"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 45,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Humbucker",
+      "pickup_pos": "Bridge",
+      "size": 100,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "The position shelf adds up to 13.8 dB of lows re the treble; top 45 % trims what the guess leaves"
+    },
+    {
+     "id": "small-body-morph",
+     "type": "acoustic-sim",
+     "name": "Small-body morph",
+     "desc": "The body shrinks under the expression pedal: every mode glides up, no click",
+     "inst": "guitar",
+     "genres": [
+      "experimental",
+      "rock"
+     ],
+     "subgenres": [
+      "post-rock"
+     ],
+     "gain": "clean",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "extreme"
+     ],
+     "default": false,
+     "params": {
+      "model": "Dreadnought",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 140,
+      "decay": 50,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 0,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Put EXP on size 140 → 80 %: modes at f · 100 / size, coefficients ramped every 32 samples"
+    },
+    {
+     "id": "ringing-sustain",
+     "type": "acoustic-sim",
+     "name": "Ringing sustain",
+     "desc": "The measured concert body with the electric's full sustain kept, a larger room",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "model": "Concert",
+      "body": 50,
+      "top": 50,
+      "mic": 75,
+      "mix": 100,
+      "twelve": false,
+      "pickup": "Single Coil",
+      "pickup_pos": "Neck",
+      "size": 100,
+      "decay": 0,
+      "piezo": 0,
+      "quack": 0,
+      "low_cut": 20,
+      "comp": 0,
+      "room": 30,
+      "width": 40,
+      "twelve_level": 0,
+      "twelve_detune": 4,
+      "twelve_delay": 2.5,
+      "level": 0,
+      "bypass": false
+     },
+     "notes": "Decay 0 is bit-exact pass-through of the strings' sustain: long notes ring as on the electric"
+    }
+   ]
   }
  }
 }

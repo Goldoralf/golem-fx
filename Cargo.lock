@@ -270,6 +270,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gfx-acoustic"
+version = "0.1.0"
+dependencies = [
+ "gfx-comp",
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
 name = "gfx-autowah"
 version = "0.1.0"
 dependencies = [
@@ -291,6 +300,7 @@ dependencies = [
 name = "gfx-bench"
 version = "0.1.0"
 dependencies = [
+ "gfx-acoustic",
  "gfx-autowah",
  "gfx-bassdi",
  "gfx-boost",

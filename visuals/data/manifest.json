@@ -1080,6 +1080,29 @@
       {"id": "spread", "name": "Spread", "kind": "float", "min": 0, "max": 100, "default": 0},
       {"id": "output", "name": "Output", "kind": "float", "min": -18, "max": 18, "default": 0},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-acoustic": [
+      {"id": "model", "name": "Model", "kind": "enum", "min": 0, "max": 5, "default": 0, "options": 6},
+      {"id": "body", "name": "Body", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "top", "name": "Top", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "mic", "name": "Mic", "kind": "float", "min": 0, "max": 100, "default": 75, "exp": true},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "twelve", "name": "12-String", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "pickup", "name": "Pickup", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "pickup_pos", "name": "Pickup Position", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "size", "name": "Size", "kind": "float", "min": 70, "max": 140, "default": 100, "exp": true},
+      {"id": "decay", "name": "Decay", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "piezo", "name": "Piezo Blend", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "quack", "name": "Quack Cut", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "low_cut", "name": "Low Cut", "kind": "float", "min": 20, "max": 300, "default": 20},
+      {"id": "comp", "name": "Comp", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "room", "name": "Room", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "width", "name": "Width", "kind": "float", "min": 0, "max": 100, "default": 40},
+      {"id": "twelve_level", "name": "Courses Level", "kind": "float", "min": -12, "max": 6, "default": 0},
+      {"id": "twelve_detune", "name": "Courses Detune", "kind": "float", "min": 0, "max": 20, "default": 4},
+      {"id": "twelve_delay", "name": "Strum Offset", "kind": "float", "min": 0, "max": 10, "default": 2.5},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

@@ -1,0 +1,448 @@
+{
+ "crate": "gfx-acoustic",
+ "presets": [
+  {
+   "id": "studio-dreadnought",
+   "type": "acoustic-sim",
+   "name": "Studio dreadnought",
+   "desc": "Electric DI to a miked dreadnought between sound hole and neck, a light comp and room",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "folk-rock",
+    "singer-songwriter"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "model": "Dreadnought",
+    "mic": 75,
+    "comp": 25,
+    "room": 15
+   },
+   "notes": "The reference: neck single coil, modal lows, the decay stage at the model's own shortening"
+  },
+  {
+   "id": "big-jumbo-strum",
+   "type": "acoustic-sim",
+   "name": "Big jumbo strum",
+   "desc": "A jumbo body with more boom under strummed chords, compressed for a band mix",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "americana"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "model": "Jumbo",
+    "body": 60,
+    "mic": 65,
+    "comp": 30
+   },
+   "notes": "Body 60 % lifts the modal bank 2.4 dB: the deeper air and top modes of the larger box"
+  },
+  {
+   "id": "fingerstyle-concert",
+   "type": "acoustic-sim",
+   "name": "Fingerstyle concert",
+   "desc": "The measured grand-concert body, a brighter attack and shorter sustain between picks",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop"
+   ],
+   "subgenres": [
+    "contemporary-folk",
+    "singer-songwriter"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "model": "Concert",
+    "mic": 85,
+    "decay": 60,
+    "top": 55,
+    "comp": 20
+   },
+   "notes": "Concert is fitted from public-domain recordings of a steel-string; decay 60 % shortens tails between picks"
+  },
+  {
+   "id": "single-note-lead",
+   "type": "acoustic-sim",
+   "name": "Single-note lead",
+   "desc": "Long electric notes decay like an acoustic's: the sustain that gives a sim away is gone",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "rock"
+   ],
+   "subgenres": [
+    "americana",
+    "folk-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "model": "Dreadnought",
+    "decay": 70,
+    "mic": 70,
+    "room": 15
+   },
+   "notes": "Where the decay stage acts fully: single lines and long notes"
+  },
+  {
+   "id": "parlor-blues",
+   "type": "acoustic-sim",
+   "name": "Parlor blues",
+   "desc": "A small-body parlor: boxy midrange, a little more top, a small room",
+   "inst": "guitar",
+   "genres": [
+    "blues"
+   ],
+   "subgenres": [
+    "delta-blues",
+    "country-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Parlor",
+    "top": 60,
+    "body": 40,
+    "room": 20
+   },
+   "notes": "Parlor's modes sit about 20 % higher than the dreadnought's (body area); body 40 % keeps the boom down"
+  },
+  {
+   "id": "nylon-bossa",
+   "type": "acoustic-sim",
+   "name": "Nylon bossa",
+   "desc": "The archive-fitted classical body, dark top and a short nylon decay, miked near the neck",
+   "inst": "guitar",
+   "genres": [
+    "latin",
+    "jazz"
+   ],
+   "subgenres": [
+    "bossa-nova"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "model": "Classical",
+    "top": 35,
+    "mic": 80,
+    "room": 20
+   },
+   "notes": "Classical is fitted from a measured Spanish concert guitar (CC BY 4.0 archive); its k is higher in the highs"
+  },
+  {
+   "id": "twelve-string-jangle",
+   "type": "acoustic-sim",
+   "name": "Twelve-string jangle",
+   "desc": "Octave and unison courses added before the body, detuned and strummed late, compressed",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "folk"
+   ],
+   "subgenres": [
+    "folk-rock",
+    "jangle-pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "model": "Dreadnought",
+    "twelve": true,
+    "twelve_detune": 4,
+    "twelve_delay": 2.5,
+    "comp": 35
+   },
+   "notes": "Octave voice below 400 Hz from the ERB bank, unison above 150 Hz; 4 cents and 2.5 ms on the shifter's 3 ms"
+  },
+  {
+   "id": "stage-acoustic",
+   "type": "acoustic-sim",
+   "name": "Stage acoustic",
+   "desc": "Piezo and mic blended with the lows cut: cuts through a loud band and resists feedback",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "pop-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "model": "Dreadnought",
+    "piezo": 40,
+    "mic": 60,
+    "low_cut": 100,
+    "comp": 35
+   },
+   "notes": "The piezo voice is F̂ through the force conversion plus a 2 kHz bell; low cut 100 Hz keeps the body boom out"
+  },
+  {
+   "id": "round-back-stage",
+   "type": "acoustic-sim",
+   "name": "Round-back stage",
+   "desc": "A subdued round-back body with a strong piezo voice: the bright stage acoustic",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "soft-rock",
+    "pop-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "model": "Round-back",
+    "piezo": 60,
+    "top": 60
+   },
+   "notes": "Few low-Q modes and a short tail, as the round-back's subdued body resonance"
+  },
+  {
+   "id": "piezo-restore",
+   "type": "acoustic-sim",
+   "name": "Piezo restore",
+   "desc": "An acoustic-electric's piezo DI given back its body and mic, quack tamed, blended with the DI",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop"
+   ],
+   "subgenres": [
+    "contemporary-folk",
+    "singer-songwriter"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "pickup": "Piezo",
+    "model": "Concert",
+    "mic": 75,
+    "mix": 70,
+    "quack": 40
+   },
+   "notes": "Concert with a piezo source is the measured guitar's own piezo-to-mic response; pick the nearest body"
+  },
+  {
+   "id": "electric-to-acoustic",
+   "type": "acoustic-sim",
+   "name": "Electric to acoustic",
+   "desc": "Mix on the expression pedal: morph the electric DI into the miked acoustic mid-song",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "alternative-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "model": "Dreadnought",
+    "mix": 0
+   },
+   "notes": "Put EXP on mix 0 → 100 %: the wet has no bulk delay, so the sweep has no comb"
+  },
+  {
+   "id": "wide-doubled-acoustic",
+   "type": "acoustic-sim",
+   "name": "Wide doubled acoustic",
+   "desc": "Two microphones from one body on a stereo lane, a little room",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "folk"
+   ],
+   "subgenres": [
+    "indie-folk",
+    "indie-pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "model": "Concert",
+    "width": 80,
+    "room": 25
+   },
+   "notes": "2 / 2 only: the mics sit at mic ± width / 2 on the same modal bank; the lows stay coherent"
+  },
+  {
+   "id": "bridge-pickup-rescue",
+   "type": "acoustic-sim",
+   "name": "Bridge-pickup rescue",
+   "desc": "A bridge humbucker turned into a usable acoustic: position shelf and aperture shelf",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "pickup": "Humbucker",
+    "pickup_pos": "Bridge",
+    "model": "Dreadnought",
+    "top": 45
+   },
+   "notes": "The position shelf adds up to 13.8 dB of lows re the treble; top 45 % trims what the guess leaves"
+  },
+  {
+   "id": "small-body-morph",
+   "type": "acoustic-sim",
+   "name": "Small-body morph",
+   "desc": "The body shrinks under the expression pedal: every mode glides up, no click",
+   "inst": "guitar",
+   "genres": [
+    "experimental",
+    "rock"
+   ],
+   "subgenres": [
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Dreadnought",
+    "size": 140
+   },
+   "notes": "Put EXP on size 140 → 80 %: modes at f · 100 / size, coefficients ramped every 32 samples"
+  },
+  {
+   "id": "ringing-sustain",
+   "type": "acoustic-sim",
+   "name": "Ringing sustain",
+   "desc": "The measured concert body with the electric's full sustain kept, a larger room",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "model": "Concert",
+    "decay": 0,
+    "room": 30
+   },
+   "notes": "Decay 0 is bit-exact pass-through of the strings' sustain: long notes ring as on the electric"
+  }
+ ]
+}

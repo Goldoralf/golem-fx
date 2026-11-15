@@ -799,6 +799,26 @@
     "freeze"
    ],
    "category": "modulation"
+  },
+  "gfx-acoustic": {
+   "name": "Acoustic",
+   "blocks": [
+    "acoustic-sim"
+   ],
+   "knobs": [
+    "body",
+    "top",
+    "mic",
+    "mix"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "toggles": [
+    "twelve"
+   ],
+   "category": "amp",
+   "color": "#552210"
   }
  }
 }

@@ -2109,6 +2109,51 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-acoustic": [
+      {
+        "id": "guitar",
+        "name": "Guitar",
+        "custom": null,
+        "params": [
+          "pickup",
+          "pickup_pos"
+        ]
+      },
+      {
+        "id": "body",
+        "name": "Body",
+        "custom": null,
+        "params": [
+          "size",
+          "decay",
+          "piezo",
+          "quack"
+        ]
+      },
+      {
+        "id": "twelve",
+        "name": "12-String",
+        "custom": null,
+        "params": [
+          "twelve_level",
+          "twelve_detune",
+          "twelve_delay"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "low_cut",
+          "comp",
+          "room",
+          "width",
+          "level",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2473,6 +2518,16 @@
       "m09": "Note mask: A allowed as a target (intersected with key / scale; written by golem's compile)",
       "m10": "Note mask: A# allowed as a target (intersected with key / scale; written by golem's compile)",
       "m11": "Note mask: B allowed as a target (intersected with key / scale; written by golem's compile)"
+    },
+    "gfx-acoustic": {
+      "body": "The body's resonances (the boom, the breath): 50 % = the model's own, ±12 dB",
+      "top": "Attack and sparkle, and the trim for a guitar that is not the pickup guess: 50 % = the model's own",
+      "mic": "Microphone blend: 0 bridge, 50 sound hole, 100 neck (12th – 14th fret)",
+      "decay": "Shortens the electric's sustain as an acoustic body drains the strings: 50 % = the model's own, 0 = off",
+      "pickup": "The guitar's pickup, so its EMF can be rebuilt from the DI (golem sets it at insert)",
+      "piezo": "Adds an under-saddle piezo voice to the mic: the stage sound",
+      "quack": "Piezo source only: tames the piezo's mid peak on the attacks",
+      "width": "2 / 2 only: the spacing of the two microphones"
     }
   },
   "depends": {
@@ -2820,6 +2875,12 @@
       "degree": {
         "param": "source",
         "equals": "Drone"
+      }
+    },
+    "gfx-acoustic": {
+      "quack": {
+        "param": "pickup",
+        "equals": "Piezo"
       }
     }
   }

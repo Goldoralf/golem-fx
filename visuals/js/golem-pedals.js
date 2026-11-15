@@ -367,10 +367,12 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-tuner': '#126e1c',
     // deep plum: a darker sister of the pitch family's magenta (gfx-correct's review: ΔE00 16 from it,
     // 20.6 from preamp violet); it sits beside gfx-formant on a voice lane
-    'gfx-correct': '#7a1450' };
+    'gfx-correct': '#7a1450',
+    // rosewood: a dark, saturated wood (gfx-acoustic's review: ΔE 36 to the copper)
+    'gfx-acoustic': '#552210' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -397,6 +399,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-irfx': 'impulse',
     'gfx-correct': 'staff',
     'gfx-vocoder': 'bank',
+    'gfx-acoustic': 'rosette',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -404,7 +407,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -838,6 +841,28 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(xd + s * 3)} ${f1(y - 3.5)}V${f1(y + 3.5)}`);
           }
         }));
+        break;
+      }
+      case 'rosette': {
+        // the sound-hole rosette drawn around the rune (gfx-acoustic): circles at r0 and r0 + 2.5, a
+        // herringbone ring of 36 strokes every 10° alternately slanted ±25° from the radius between
+        // r0 + 3.3 and r0 + 7.2, circles at r0 + 8 and r0 + 10.5; the face's clip cuts what leaves it
+        const r0 = Math.hypot(cw, ch) / 2 + 3;
+        const ring = (r, op) => line(arcPath(cx, cy, r, 0, 359.9), op);
+        ring(r0, 1);
+        ring(r0 + 2.5, .6);
+        const ri = r0 + 3.3, ro = r0 + 7.2, tilt = Math.tan(25 * Math.PI / 180) * (ro - ri);
+        let d = '';
+        for (let k = 0; k < 36; k++) {
+          const a = k * 10 * Math.PI / 180, s = k % 2 ? -1 : 1;
+          const t = [-Math.sin(a), Math.cos(a)];
+          const x0 = cx + ri * Math.cos(a), y0 = cy + ri * Math.sin(a);
+          const x1 = cx + ro * Math.cos(a) + s * tilt * t[0], y1 = cy + ro * Math.sin(a) + s * tilt * t[1];
+          d += `${k ? 'L' : 'M'}${f1(x0)} ${f1(y0)}L${f1(x1)} ${f1(y1)}`;
+        }
+        line(d + 'Z', .8);
+        ring(r0 + 8, .6);
+        ring(r0 + 10.5, 1);
         break;
       }
       case 'sputter': {

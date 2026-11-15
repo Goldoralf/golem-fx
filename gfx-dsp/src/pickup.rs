@@ -171,6 +171,59 @@ impl Guitar {
     }
 }
 
+/// gfx-acoustic's band limit (§2.1): the inverse's two Butterworth poles at **min(12 kHz, 3 × the
+/// pickup's resonance)**, so the lift levels off at ≈ +18 – 19 dB for every pickup instead of lifting
+/// the interface's hiss. An active pickup has no inverse (0 here).
+pub const ACOUSTIC_MAX_POLE_HZ: f64 = 12_000.0;
+
+/// The speed of a wave on the strings, c = 2 · scale · f_open, over the six open strings' geometric
+/// mean (166 Hz, a 648 mm scale) [gfx-acoustic §2.2, P]: m/s.
+pub const STRING_SPEED: f64 = 2.0 * 0.648 * 166.0;
+
+impl Guitar {
+    /// The coil's resonance against its own and the cable's capacitance (Hz); 0 for an active pickup.
+    pub fn resonance_hz(&self) -> f64 {
+        if self.l <= 0.0 {
+            return 0.0;
+        }
+        1.0 / (2.0 * PI * (self.l * (self.c + self.cable)).sqrt())
+    }
+
+    /// gfx-acoustic's band limit: min(12 kHz, 3 × resonance) (0 for an active pickup).
+    pub fn acoustic_pole_hz(&self) -> f64 {
+        ACOUSTIC_MAX_POLE_HZ.min(3.0 * self.resonance_hz())
+    }
+
+    /// The inverse as an **analog prototype** (each client discretizes it its own way): numerator
+    /// p₀ + p₁ s + p₂ s² ([`Guitar::inverse_poly`]) and the band limit's denominator
+    /// 1 + √2 s / ω_p + s² / ω_p², s in rad/s.
+    pub fn emf_prototype(&self, pole_hz: f64) -> ([f64; 3], [f64; 3]) {
+        let wc = 2.0 * PI * pole_hz;
+        (self.inverse_poly(), [1.0, std::f64::consts::SQRT_2 / wc, 1.0 / (wc * wc)])
+    }
+
+    /// The prototype's response at `freq` Hz (Laplace).
+    pub fn emf_response(&self, freq: f64, pole_hz: f64) -> (f64, f64) {
+        let (n, d) = self.emf_prototype(pole_hz);
+        let w = 2.0 * PI * freq;
+        cdiv((n[0] - n[2] * w * w, n[1] * w), (d[0] - d[2] * w * w, d[1] * w))
+    }
+}
+
+/// The corner of the string's velocity → bridge-force shelf for a pickup `x` metres from the bridge
+/// (gfx-acoustic §2.2): f_x = c / (2√2 π x).
+pub fn position_corner_hz(x: f64) -> f64 {
+    STRING_SPEED / (2.0 * std::f64::consts::SQRT_2 * PI * x)
+}
+
+/// The position shelf R(s) = (s + ω_e) / (s + ω_s) of a pickup at `x_e` re the sound-hole reference
+/// at `x_s` (0 dB above both corners, x_s / x_e at DC), at `freq` Hz.
+pub fn position_shelf(freq: f64, x_e: f64, x_s: f64) -> (f64, f64) {
+    let w = 2.0 * PI * freq;
+    let (we, ws) = (2.0 * PI * position_corner_hz(x_e), 2.0 * PI * position_corner_hz(x_s));
+    cdiv((we, w), (ws, w))
+}
+
 /// The EMF filter: one biquad (transposed direct form II, f64).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct EmfFilter {
@@ -216,6 +269,59 @@ mod tests {
     }
 
     const ALL: [Guitar; 4] = [SINGLE_COIL, HUMBUCKER, P90, ACTIVE];
+
+    #[test]
+    fn acoustic_band_limits_and_lifts() {
+        // gfx-acoustic §2.1: f_p 12 / 8.7 / 7.2 kHz; lift re the DI (EMF prototype × the recording
+        // network = the Butterworth poles) at 4 / 6 / 8 / 10 kHz and the plateau, within 0.3 dB
+        let rows = [
+            (SINGLE_COIL, 12000.0, [-3.6, 3.0, 8.9, 12.5], 17.8),
+            (HUMBUCKER, 8700.0, [0.4, 9.5, 13.9, 16.2], 18.5),
+            (P90, 7200.0, [5.5, 12.8, 16.1, 17.5], 18.8),
+        ];
+        for (g, fp, lifts, plateau) in rows {
+            let p = g.acoustic_pole_hz();
+            assert!((p - fp).abs() / fp < 0.02, "{p}");
+            for (hz, want) in [4000.0, 6000.0, 8000.0, 10000.0].into_iter().zip(lifts) {
+                let got = db(g.emf_response(hz, p));
+                assert!((got - want).abs() < 0.3, "{g:?} {hz}: {got:.2} vs {want}");
+            }
+            let got = db(g.emf_response(200_000.0, p));
+            // the README rounds the plateau from the prototype's 24 kHz end; the analog limit is ≈ 0.8 dB above
+            assert!((got - plateau).abs() < 1.0, "plateau {got:.2} vs {plateau}");
+        }
+        assert_eq!(ACTIVE.acoustic_pole_hz(), 0.0);
+    }
+
+    #[test]
+    fn prototype_times_network_is_the_butterworth() {
+        // §5 source invariant as run by gfx-acoustic: within 0.2 dB, 20 Hz – 16 kHz, every pickup
+        for g in [SINGLE_COIL, HUMBUCKER, P90] {
+            let p = g.acoustic_pole_hz();
+            for k in 0..60 {
+                let hz = 20.0 * (800.0f64).powf(k as f64 / 59.0);
+                let t = db(cmul(g.emf_response(hz, p), g.recording(hz)));
+                let r = hz / p;
+                let bw = -10.0 * (1.0 + r.powi(4)).log10();
+                assert!((t - bw).abs() < 0.2, "{g:?} {hz}: {t} vs {bw}");
+            }
+        }
+    }
+
+    #[test]
+    fn position_shelf_table() {
+        // gfx-acoustic §2.2: corners 152 / 243 / 592 Hz (reference 121 Hz); DC gain x_s / x_e
+        for (x, f) in [(0.16, 152.0), (0.10, 243.0), (0.041, 592.0), (0.2, 121.0)] {
+            assert!((position_corner_hz(x) - f).abs() < 2.0, "{x}: {}", position_corner_hz(x));
+        }
+        let at = |hz: f64, x: f64| db(position_shelf(hz, x, 0.2));
+        assert!((at(0.01, 0.041) - 13.8).abs() < 0.1);
+        assert!((at(120.0, 0.041) - 11.0).abs() < 0.3);
+        assert!((at(300.0, 0.041) - 6.2).abs() < 0.3);
+        assert!((at(1500.0, 0.041) - 0.6).abs() < 0.2);
+        assert!((at(0.01, 0.16) - 1.9).abs() < 0.1);
+        assert!((at(120.0, 0.10) - 4.0).abs() < 0.3);
+    }
 
     #[test]
     fn the_di_holds_the_resonance() {
