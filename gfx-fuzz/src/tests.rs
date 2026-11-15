@@ -724,3 +724,150 @@ fn cpu_models() {
         }
     }
 }
+
+// ---- linked mono (README, As coded): L == R runs channel 0 alone
+
+/// A stereo instance (`no_link`: true stereo always, the reference).
+fn fuzz2(set: &[(&str, f32)], no_link: bool) -> Fuzz {
+    let mut e = Fuzz::new();
+    for (k, v) in set {
+        e.set_param(k, *v);
+    }
+    e.no_link = no_link;
+    e.prepare(48000.0, 4096, 2);
+    e
+}
+
+/// Renders (l, r) in blocks of `block`; each event (sample, id, value) lands on a block start.
+fn run_pair(
+    e: &mut Fuzz,
+    l: &[f32],
+    r: &[f32],
+    block: usize,
+    ev: &[(usize, &str, f32)],
+) -> [Vec<f32>; 2] {
+    let (mut a, mut b) = (l.to_vec(), r.to_vec());
+    let mut i = 0;
+    while i < a.len() {
+        for &(t, id, v) in ev {
+            assert!(t % block == 0, "event {t} off the block grid {block}");
+            if t == i {
+                e.set_param(id, v);
+            }
+        }
+        let m = block.min(a.len() - i);
+        e.process(&mut [&mut a[i..i + m], &mut b[i..i + m]]);
+        i += m;
+    }
+    [a, b]
+}
+
+/// The link test stream's right channel: L on [0, 6000) and [12000, 20000) (long enough to relink:
+/// 60 ms hold + 30 ms fade), L + `d` elsewhere (a different input: the unlinks).
+fn link_right(l: &[f32], d: &[f32]) -> Vec<f32> {
+    (0..l.len())
+        .map(|i| {
+            if (6000..12000).contains(&i) || i >= 20000 {
+                l[i] + d[i]
+            } else {
+                l[i]
+            }
+        })
+        .collect()
+}
+
+/// A knob and a model change on both sides of the relink; the unlink at 20000 falls inside the
+/// model's settle + fade (16384 + 90 ms).
+const LINK_EVENTS: [(usize, &str, f32); 3] = [
+    (4096, "fuzz", 40.0),
+    (8192, "model", 1.0),
+    (16384, "model", 0.0),
+];
+
+#[test]
+fn linked_stereo_is_the_mono_output() {
+    let x = pink(24576, 0.1, 3);
+    let mut m = fuzz(48000.0, &[]);
+    let mut y = x.clone();
+    for (k, c) in y.chunks_mut(512).enumerate() {
+        for &(t, id, v) in &LINK_EVENTS {
+            if t == 512 * k {
+                m.set_param(id, v);
+            }
+        }
+        m.process(&mut [c]);
+    }
+    let [l, r] = run_pair(&mut fuzz2(&[], false), &x, &x, 512, &LINK_EVENTS);
+    assert!(l == y && r == y, "L == R stereo differs from mono");
+}
+
+#[test]
+fn link_switches_are_exact_and_click_free() {
+    let sr = 48000.0;
+    let n = 26112;
+    let l = sine(1000.0, 0.25, n, sr);
+    let r = link_right(&l, &pink(n, 1e-3, 5));
+    let [l1, r1] = run_pair(&mut fuzz2(&[], false), &l, &r, 512, &LINK_EVENTS);
+    let [l0, r0] = run_pair(&mut fuzz2(&[], true), &l, &r, 512, &LINK_EVENTS);
+    // channel 0 never changes; channel 1 is true stereo, bit for bit, until the relink fade starts
+    // (the 2880th sample of L == R)
+    let relink = 12000 + 2880 - 1;
+    assert!(l1 == l0, "channel 0 moved");
+    let first = (0..relink).find(|&i| r1[i] != r0[i]);
+    assert!(
+        first.is_none(),
+        "the unlink is not exact from {first:?}: {:?}",
+        first.map(|i| (r1[i], r0[i]))
+    );
+    // the transitions: no click by the bench's metric (HF > 10 kHz in the 100 ms after, minus
+    // channel 0's, re peak; bound −20 dB as the bench's) nor a sample step above channel 0's own
+    let hp = |y: &[f32]| {
+        let mut f1 = gfx_dsp::svf::Svf::new();
+        let mut f2 = gfx_dsp::svf::Svf::new();
+        f1.set(
+            gfx_dsp::svf::SvfMode::HighPass,
+            10000.0,
+            0.541_196,
+            0.0,
+            sr as f32,
+        );
+        f2.set(
+            gfx_dsp::svf::SvfMode::HighPass,
+            10000.0,
+            1.306_563,
+            0.0,
+            sr as f32,
+        );
+        y.iter()
+            .map(|&v| f2.process(f1.process(v)))
+            .collect::<Vec<f32>>()
+    };
+    let pk = |s: &[f32]| s.iter().fold(0.0f32, |m, v| m.max(v.abs()));
+    let step = |s: &[f32]| s.windows(2).fold(0.0f32, |m, w| m.max((w[1] - w[0]).abs()));
+    let (h0, h1) = (hp(&l1), hp(&r1));
+    let peak = pk(&l1);
+    for t in [6000, 12000, relink, 20000] {
+        let w = t - 480..t + 4800;
+        let burst = 20.0 * ((pk(&h1[w.clone()]) - pk(&h0[w.clone()])).max(1e-9) / peak).log10();
+        let (s1, s0) = (step(&r1[w.clone()]), step(&l1[w.clone()]));
+        eprintln!(
+            "link transition at {t}: HF burst {burst:.0} dB re peak, max step {s1:.4} (L {s0:.4})"
+        );
+        assert!(burst <= -20.0, "{t}: {burst} dB");
+        assert!(s1 <= 1.05 * s0, "{t}: step {s1} vs {s0}");
+    }
+}
+
+#[test]
+fn linked_mono_is_block_size_invariant() {
+    let n = 24576;
+    let l = pink(n, 0.1, 3);
+    let r = link_right(&l, &pink(n, 0.05, 4));
+    let reference = run_pair(&mut fuzz2(&[], false), &l, &r, 512, &LINK_EVENTS);
+    for b in [1usize, 64, 4096] {
+        assert!(
+            run_pair(&mut fuzz2(&[], false), &l, &r, b, &LINK_EVENTS) == reference,
+            "block {b}"
+        );
+    }
+}

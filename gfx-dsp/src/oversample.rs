@@ -257,6 +257,15 @@ impl OversamplerN {
         buf[0]
     }
 
+    /// Copies another cascade's stage count and state without allocating: the copy continues
+    /// bit-identically.
+    pub fn copy_from(&mut self, other: &OversamplerN) {
+        self.stages = other.stages;
+        for (a, b) in self.up.iter_mut().zip(&other.up).chain(self.down.iter_mut().zip(&other.down)) {
+            a.copy_from(b);
+        }
+    }
+
     /// Up then down with nothing in between: the group delay of a processed path.
     #[inline]
     pub fn identity(&mut self, x: f64) -> f64 {
@@ -381,6 +390,27 @@ mod cascade_test {
         for img in [43000.0, 53000.0, 91000.0, 101000.0] {
             let db = 20.0 * (probe(img) / main).log10();
             assert!(db < -90.0, "image at {img} Hz: {db:.1} dB");
+        }
+    }
+
+    #[test]
+    fn cascade_copy_continues_bit_identically() {
+        let x = |i: usize| ((i as f64) * 0.013).sin() + 0.3 * ((i as f64) * 0.29).cos();
+        let mut a = OversamplerN::new(3);
+        for i in 0..500 {
+            a.identity(x(i));
+        }
+        let mut b = OversamplerN::new(1);
+        b.identity(0.7);
+        b.copy_from(&a);
+        assert_eq!(b.stages(), 3);
+        for i in 500..1500 {
+            let mut ua = [0.0; MAX_FACTOR];
+            let mut ub = [0.0; MAX_FACTOR];
+            a.up(x(i), &mut ua);
+            b.up(x(i), &mut ub);
+            assert_eq!(ua, ub);
+            assert_eq!(a.down(&mut ua).to_bits(), b.down(&mut ub).to_bits());
         }
     }
 

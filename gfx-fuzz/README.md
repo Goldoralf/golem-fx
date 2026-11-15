@@ -93,6 +93,35 @@ oversampled sample on the faces (the face's Q2 enters and leaves saturation on e
 at the contract's ≈ 20 %; Si Four is 15 % above it and ships for the maintainer to decide (the next step is §2.8's
 block Gauss-Seidel); Si Pair, at twice the bound, waits for the solution cache of §2.8.
 
+**Linked mono** (after v0.1.0, from golem's first live test). REAPER hands every block 2-in / 2-out;
+on a guitar lane the mono DI arrives as L == R, and two circuits (≈ 8 µs per sample each on the
+maintainer's loaded machine, ≈ 16 – 22 µs per stereo frame) overran the 20.8 µs sample period at 48 kHz:
+silence with faint stutters live, offline renders fine. The rule, decided per sample (so the output does
+not depend on the block size):
+- After `prepare` / `reset` a stereo instance is linked: channel 0's circuit runs alone and its output
+  is copied to channel 1 (the meters read channel 0, as before).
+- Linked, the first sample whose L and R differ (bit comparison) unlinks: channel 1 takes a copy of
+  channel 0's whole state, without allocating (every compiled circuit's states, pots, devices and supply
+  by `NonlinearCircuit::copy_state_from`, both slots' oversamplers by gfx-dsp's new
+  `OversamplerN::copy_from`, the tilt, the bass-keep split, the DC guard), and runs on from there with its
+  own input. Its history was channel 0's, so this is exactly true stereo, with no step of any kind.
+- Unlinked, after 60 ms of bit-identical L and R, channel 1's output fades linearly onto channel 0's in
+  30 ms (`FADE_MS`), then channel 1 stops; if L and R differ during the fade it runs back at the same
+  rate. After such a relink channel 1 plays channel 0's output, not what its own different past would
+  have given (a decaying tail at most): the only case where linked mono is not bit-exact with true
+  stereo, and only after 60 ms of identical inputs.
+- Nulls against v0.1.0 (48 kHz, blocks of 192 as golem's REAPER, 2.4 s of pink noise with a knob, a
+  model, a mix, a bass-keep and a temperature change on the way): mono, stereo L != R, stereo L == R, and
+  L == R switching to L != R at 0.85 s (inside a model change's settle): **bit-identical**. Tests:
+  `linked_stereo_is_the_mono_output` (bit for bit), `link_switches_are_exact_and_click_free` (channel 1
+  bit-identical to true stereo up to the relink; HF burst at each transition −60 dB or less re peak, bound
+  −20 dB; no sample step above channel 0's own), `linked_mono_is_block_size_invariant` (blocks 1, 64, 512,
+  4096, bit for bit, transitions included). Bench 28 / 28.
+- CPU (same loaded machine, unpinned, 48 kHz, pink noise, blocks of 64): mono 7.9 µs per sample;
+  stereo L == R **16.5 → 8.2 µs per frame**; stereo L != R 15.7 – 15.9 µs (unchanged: two circuits). The
+  bench's line: 8,401 ns mono, 7,996 ns per stereo frame (its stereo feeds L == R). The tone tilt's two
+  gains are now recomputed only when `tone` moves (bit-exact; within the noise).
+
 **Other measurements.**
 - DC (25 °C, 9 V; `tests::operating_points_follow_the_design`): Ge Pair 4.50 V; 15 / 25 / 35 °C 3.33 /
   4.50 / 6.67 V; leakage 0 / 50 / 100 / 200 / 400 % 3.01 / 3.76 / 4.50 / 5.98 / 7.64 V; `bias` ±100 %

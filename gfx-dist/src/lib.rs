@@ -72,6 +72,9 @@ pub const K_DB: [f64; N_CIRCUITS] = [-14.0, -3.6, -27.0, -16.3];
 const MAX_CH: usize = 2;
 const FADE_CIRCUIT_MS: f64 = 30.0;
 const FADE_PART_MS: f64 = 20.0;
+/// Linked mono: L == R for this long before channel 1 fades onto channel 0's output (over
+/// FADE_CIRCUIT_MS).
+const LINK_HOLD_MS: f64 = 60.0;
 
 /// A circuit build: the netlist's description and its compiled solvers.
 pub fn build(k: usize) -> Circuit {
@@ -304,6 +307,17 @@ pub struct Dist {
     /// (input dB, level dB, input gain, level gain), recomputed when they move.
     gains: (f32, f32, f64, f64),
     k_lin: [f64; N_CIRCUITS],
+    /// Linked mono (README, As coded): while channel 1's input is bit-identical to channel 0's, only
+    /// channel 0's circuit runs and channel 1 outputs its output. On the first sample that differs,
+    /// channel 1 takes a copy of channel 0's whole state and runs from there.
+    linked: bool,
+    /// Unlinked: consecutive samples with L == R, and the linear fade of channel 1 onto channel 0's
+    /// output (0 – 1) that relinks them.
+    same_run: u32,
+    relink: f64,
+    /// Tests: true stereo always (the reference linked mono is checked against).
+    #[doc(hidden)]
+    pub no_link: bool,
     /// Tests: forces the half-band stage count of every circuit (the alias measurements).
     #[doc(hidden)]
     pub stages_override: Option<usize>,
@@ -334,6 +348,10 @@ impl Dist {
             split_set: f64::NAN,
             gains: (f32::NAN, f32::NAN, 1.0, 1.0),
             k_lin: std::array::from_fn(|k| 10f64.powf(K_DB[k] / 20.0)),
+            linked: false,
+            same_run: 0,
+            relink: 0.0,
+            no_link: false,
             stages_override: None,
         }
     }
@@ -359,7 +377,8 @@ impl Dist {
     fn start_slot(&mut self, s: usize, cfg: Config) {
         let (g, t) = (self.gain.value() as f64 / 100.0, self.tone.value() as f64 / 100.0);
         let vs = self.supply_volts(cfg.circuit);
-        for c in &mut self.ch {
+        let live = self.live();
+        for c in self.ch.iter_mut().take(live) {
             let dst = &mut c.slots[s];
             dst.cfg = cfg;
             let k = dst.variant(cfg);
@@ -375,6 +394,40 @@ impl Dist {
             dst.os.set_stages(st);
             dst.twin_os.set_stages(st);
         }
+    }
+
+    /// The channels whose circuits run: channel 0 alone while linked.
+    fn live(&self) -> usize {
+        if self.linked {
+            1
+        } else {
+            self.ch.len()
+        }
+    }
+
+    /// Unlinks channel 1: a copy of channel 0's whole state (every compiled circuit and twin, both
+    /// slots, the filters), so it continues exactly as if it had run on the same input all along. No
+    /// allocation.
+    fn unlink(&mut self) {
+        self.linked = false;
+        self.same_run = 0;
+        self.relink = 0.0;
+        let (a, b) = self.ch.split_at_mut(1);
+        let (src, dst) = (&a[0], &mut b[0]);
+        for (d, s) in dst.slots.iter_mut().zip(&src.slots) {
+            d.cfg = s.cfg;
+            d.var = s.var;
+            for (dc, sc) in d.circuits.iter_mut().zip(&s.circuits) {
+                dc.nc.copy_state_from(&sc.nc);
+                dc.twin.copy_state_from(&sc.twin);
+            }
+            d.os.copy_from(&s.os);
+            d.twin_os.copy_from(&s.twin_os);
+        }
+        dst.tight = src.tight;
+        dst.dc = src.dc;
+        dst.split_lo.clone_from(&src.split_lo);
+        dst.split_hi.clone_from(&src.split_hi);
     }
 
     fn update_controls(&mut self) {
@@ -499,6 +552,10 @@ impl Effect for Dist {
         self.update_controls();
         self.active = 0;
         self.fade = 0.0;
+        // every channel is put on the same state below, then linked (at the end)
+        self.linked = false;
+        self.same_run = 0;
+        self.relink = 0.0;
         let cfg = self.target();
         self.start_slot(0, cfg);
         for c in &mut self.ch {
@@ -516,6 +573,7 @@ impl Effect for Dist {
                 }
             }
         }
+        self.linked = self.ch.len() == 2 && !self.no_link;
     }
 
     fn set_param(&mut self, id: &str, value: f32) {
@@ -542,7 +600,30 @@ impl Effect for Dist {
             return;
         }
         let n = buffers[0].len();
+        let hold = (LINK_HOLD_MS * 0.001 * self.sr) as u32;
+        let relink_step = 1.0 / (FADE_CIRCUIT_MS * 0.001 * self.sr);
         for i in 0..n {
+            // ---- linked mono, decided per sample (block-size independent)
+            if nch == 2 && !self.no_link {
+                let same = buffers[0][i].to_bits() == buffers[1][i].to_bits();
+                if self.linked {
+                    if !same {
+                        self.unlink();
+                    }
+                } else {
+                    self.same_run = if same { self.same_run.saturating_add(1) } else { 0 };
+                    if self.same_run >= hold {
+                        self.relink += relink_step;
+                    } else if self.relink > 0.0 {
+                        self.relink = (self.relink - relink_step).max(0.0);
+                    }
+                    if self.relink >= 1.0 {
+                        self.linked = true;
+                        self.relink = 0.0;
+                    }
+                }
+            }
+            let live = self.live();
             // ---- discrete changes: a fade to the other slot
             if self.fade == 0.0 {
                 let tgt = self.target();
@@ -574,7 +655,7 @@ impl Effect for Dist {
             let n_run = if self.fade > 0.0 { 2 } else { 1 };
             if pots || sup {
                 let pct = self.supply.value() as f64 / 100.0;
-                for c in &mut self.ch {
+                for c in self.ch.iter_mut().take(live) {
                     for &s in &running[..n_run] {
                         let slot = &mut c.slots[s];
                         let k = slot.cfg.circuit;
@@ -616,7 +697,7 @@ impl Effect for Dist {
             self.tight_mix.set_target(if self.tight.value() > 20.5 { 1.0 } else { 0.0 });
             let tmix = self.tight_mix.next() as f64;
             let split = self.split_set > 0.5;
-            for (ci, c) in self.ch.iter_mut().enumerate().take(nch) {
+            for (ci, c) in self.ch.iter_mut().enumerate().take(nch.min(live)) {
                 let mut x = buffers[ci][i] as f64 * in_g;
                 let h = c.tight.process(x);
                 if tmix > 0.0 {
@@ -646,6 +727,14 @@ impl Effect for Dist {
                 }
                 let y = c.dc.process(y);
                 buffers[ci][i] = y as f32;
+            }
+            if nch == 2 {
+                if self.linked {
+                    buffers[1][i] = buffers[0][i];
+                } else if self.relink > 0.0 {
+                    let (o0, o1) = (buffers[0][i] as f64, buffers[1][i] as f64);
+                    buffers[1][i] = (o1 + self.relink * (o0 - o1)) as f32;
+                }
             }
             if self.fade > 0.0 {
                 self.fade += self.fade_step;
