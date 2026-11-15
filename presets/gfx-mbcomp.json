@@ -308,7 +308,7 @@
    "id": "keys-glue",
    "type": "mb-comp",
    "name": "Keys bus glue",
-   "desc": "Three bands at 2:1 from −20 dB, Bus dynamics, slow times, linear phase: no low-end smear",
+   "desc": "Three bands at 2:1 from −20 dB, Bus dynamics, slow times; zero latency for live keys",
    "inst": "keys",
    "genres": [
     "pop",
@@ -344,9 +344,9 @@
     "lo_release": 300,
     "lm_release": 300,
     "hi_release": 300,
-    "phase": "Linear"
+    "phase": "Minimum"
    },
-   "notes": "Linear adds 42.7 ms of reported latency at 48 kHz: for a lane that is not played live"
+   "notes": "Minimum phase, zero latency: playable live. On a lane that is not played live, phase Linear removes the low-end smear for 42.7 ms of reported latency at 48 kHz"
   },
   {
    "id": "hyper",

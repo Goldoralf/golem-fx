@@ -62,6 +62,24 @@ def plugin_meta(crate: str) -> dict:
 GATE_HELPERS = {"db(": (" dB", 1), "ms(": (" ms", 1), "hz(": (" Hz", 0)}
 
 
+def plugin_meters(crate: str, settable: set) -> list:
+    """The read-only meters of one plugin: the `#[id]` fields of plugin.rs that the effect's PARAMS
+    does not hold (golem reads them, never writes them; golem contract §Parameters)."""
+    src = (ROOT / crate / "src" / "plugin.rs").read_text()
+    out = []
+    for pid, field in re.findall(r'#\[id = "([^"]+)"\]\s*(?:pub\s+)?(\w+)\s*:', src):
+        if pid in settable or pid == "bypass":
+            continue
+        m = re.search(field + r':\s*(Float|Int|Bool)Param::new\(\s*"([^"]+)"(.*?)\)\s*(?:\.|,)', src, flags=re.S)
+        entry = {"id": pid, "name": m.group(2) if m else pid,
+                 "kind": {"Float": "float", "Int": "int", "Bool": "bool"}[m.group(1)] if m else "float"}
+        r = re.search(r"min:\s*([-\d.e_]+)\s*,\s*max:\s*([-\d.e_]+)", m.group(3)) if m else None
+        if r:
+            entry["min"], entry["max"] = float(r.group(1).replace("_", "")), float(r.group(2).replace("_", ""))
+        out.append(entry)
+    return out
+
+
 def unit_of(expr: str):
     """(unit, decimals) of one parameter's constructor expression."""
     s = expr.strip()
@@ -410,6 +428,7 @@ def build(manifest: dict) -> tuple:
             "front": front,
             "groups": [{"id": g["id"], "name": g["name"], "custom": g.get("custom"), "params": g["params"]} for g in groups],
             "params": pout,
+            "meters": plugin_meters(crate, {p["id"] for p in params}),
             "presets": (file_presets(crate, kinds, labels, face["blocks"], errors, {p["id"]: p for p in params})
                         or (chorus_presets(labels) if crate == "gfx-chorus" else hand_presets(crate, kinds, labels, errors))),
         }

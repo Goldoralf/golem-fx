@@ -19,7 +19,7 @@
    "tags": [
     "subtle"
    ],
-   "default": true,
+   "default": false,
    "params": {
     "mode": "Follow",
     "shape": "Wide",
@@ -87,7 +87,7 @@
     "modern",
     "subtle"
    ],
-   "default": true,
+   "default": false,
    "params": {
     "mode": "Follow",
     "shape": "Spectral",
@@ -305,7 +305,7 @@
    "tags": [
     "tight"
    ],
-   "default": true,
+   "default": false,
    "params": {
     "mode": "Trigger",
     "sync": "Off",
