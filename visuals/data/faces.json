@@ -948,6 +948,22 @@
    ],
    "category": "lofi",
    "color": "#9a0d2a"
+  },
+  "gfx-formant": {
+   "name": "Formant",
+   "blocks": [
+    "formant"
+   ],
+   "knobs": [
+    "formant",
+    "growl",
+    "vowel",
+    "vowel_amt"
+   ],
+   "selectors": [
+    "engine"
+   ],
+   "category": "pitch"
   }
  }
 }

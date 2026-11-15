@@ -152,3 +152,6 @@ name = "GoleM FX Spectral Comp"
 
 [gfx-morph]
 name = "GoleM FX Morph"
+
+[gfx-formant]
+name = "GoleM FX Formant"

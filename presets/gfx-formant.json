@@ -1,0 +1,464 @@
+{
+ "crate": "gfx-formant",
+ "presets": [
+  {
+   "id": "bigger-voice",
+   "type": "formant",
+   "name": "Bigger voice",
+   "desc": "The same singer a little larger and darker: formants 3 semitones down, pitch and timing untouched",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Live",
+    "formant": -3
+   },
+   "notes": "README 4: Live, formant -2 to -4. Zero latency in the in-ears; the TE envelope keeps it from sounding metallic"
+  },
+  {
+   "id": "lighter-voice",
+   "type": "formant",
+   "name": "Lighter voice",
+   "desc": "Formants 3 semitones up on the same notes: female formants sit 15 - 20 % above male ones",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": 3
+   },
+   "notes": "README 4: +2.4 to +3.2 st is the male-female formant distance (Peterson & Barney); pitch stays put"
+  },
+  {
+   "id": "child",
+   "type": "formant",
+   "name": "Child",
+   "desc": "A small throat on the sung melody: formants 6 semitones up, consonants moved half as much",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": 6,
+    "unvoiced": 50
+   },
+   "notes": "README 4: Live +6 to +10 with unvoiced 50 % so sibilants do not thin out"
+  },
+  {
+   "id": "chipmunk-same-notes",
+   "type": "formant",
+   "name": "Chipmunk, same notes",
+   "desc": "The cartoon-chipmunk timbre without the pitch jump: formants 10 semitones up on the sung notes",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": 10,
+    "unvoiced": 50
+   },
+   "notes": "Beyond +7 the +24 dB boost clamp already limits how far the valleys rise; unvoiced 50 % keeps the s and t"
+  },
+  {
+   "id": "giant",
+   "type": "formant",
+   "name": "Giant",
+   "desc": "Pitch 5 semitones and formants 7 semitones down, with some growl and a darker source",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "experimental"
+   ],
+   "subgenres": [
+    "doom-metal"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Grain",
+    "shift": -5,
+    "formant": -7,
+    "growl": 40,
+    "tilt": -2
+   },
+   "notes": "README 4: pitch and formant together; the growl is epoch-synchronous in Grain"
+  },
+  {
+   "id": "demon",
+   "type": "formant",
+   "name": "Demon",
+   "desc": "An octave down, formants 5 semitones down, heavy growl and breath: the horror-film voice",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "screen"
+   ],
+   "subgenres": [
+    "death-metal",
+    "film-score"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "extreme",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Grain",
+    "shift": -12,
+    "formant": -5,
+    "growl": 60,
+    "breath": 20,
+    "mix": 100
+   },
+   "notes": "README 4: every throat option at once; mix 100 % so the dry octave above never shows"
+  },
+  {
+   "id": "gender-up",
+   "type": "formant",
+   "name": "Gender up",
+   "desc": "Pitch a fifth up and formants 3 semitones up: a lower voice turned higher, both cues moved",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Grain",
+    "register": "Low",
+    "shift": 7,
+    "formant": 3
+   },
+   "notes": "README 4: formant alone gives a small man; a real change needs pitch too. Register Low tracks male voices"
+  },
+  {
+   "id": "gender-down",
+   "type": "formant",
+   "name": "Gender down",
+   "desc": "Pitch a fifth down and formants 3 semitones down: a higher voice turned lower, both cues moved",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Grain",
+    "register": "Low",
+    "shift": -7,
+    "formant": -3
+   },
+   "notes": "README 4: the reverse of gender-up. Grain is the engine that moves the pitch"
+  },
+  {
+   "id": "sung-growl",
+   "type": "formant",
+   "name": "Sung growl",
+   "desc": "Alternate glottal periods dropped on the predicted epochs: a rough growl on a sung line, zero latency",
+   "inst": "voice",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "alternative-metal"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": -1,
+    "growl": 40
+   },
+   "notes": "README 4: growl 30 - 50 %; the modulation runs at f0 / 2, heard as roughness, not tremolo"
+  },
+  {
+   "id": "whisper-ghost",
+   "type": "formant",
+   "name": "Whisper ghost",
+   "desc": "Aspiration noise shaped by the shifted envelope on top of a darker voice",
+   "inst": "voice",
+   "genres": [
+    "experimental",
+    "screen"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "dark"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": 2,
+    "breath": 80,
+    "tilt": -3
+   },
+   "notes": "README 4: the breath follows the voice's level and the voicing gate; tilt -3 dB/oct for a slacker source"
+  },
+  {
+   "id": "fast-lines-live",
+   "type": "formant",
+   "name": "Fast lines, live",
+   "desc": "A slightly bigger voice whose filter keeps up with fast articulation: 20 ms lookahead",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "formant": -3,
+    "lookahead": 20
+   },
+   "notes": "README 4: lookahead 20 ms centres the analysis (glide error about 2 dB rms instead of 7) at 20 ms of latency"
+  },
+  {
+   "id": "other-singer-double",
+   "type": "formant",
+   "name": "Another singer",
+   "desc": "A parallel double with formants 2 semitones up: same notes, another throat",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Grain",
+    "formant": 2,
+    "shift": 0,
+    "mix": 50
+   },
+   "notes": "README 4: Grain's identity is exact, so only the formants differ; best on a parallel lane"
+  },
+  {
+   "id": "guitar-small-box",
+   "type": "formant",
+   "name": "Small box",
+   "desc": "Guitar body made smaller: the envelope 4 semitones up, notes and attack untouched",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "source": "Instrument",
+    "formant": 4
+   },
+   "notes": "README 4: a tone effect that leaves pitch and attack alone, polyphonic, zero latency"
+  },
+  {
+   "id": "guitar-big-box",
+   "type": "formant",
+   "name": "Big box",
+   "desc": "Guitar body made bigger: the envelope 4 semitones down, a wider, darker box",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "dark"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Live",
+    "source": "Instrument",
+    "formant": -4
+   },
+   "notes": "README 4: Instrument's fixed window and 150 ms envelope smoothing keep chords free of new partials"
+  },
+  {
+   "id": "guitar-talkbox",
+   "type": "formant",
+   "name": "Talk-box sweep",
+   "desc": "Vowels imposed on the chord: a talk-box without the tube, the vowel on the expression pedal",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "funk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Live",
+    "source": "Instrument",
+    "formant": 0,
+    "vowel_amt": 85,
+    "vowel": 0
+   },
+   "notes": "README 4: put vowel on EXP and sweep a to u; vowel_amt 85 % keeps a little of the guitar's own body"
+  },
+  {
+   "id": "bass-giant",
+   "type": "formant",
+   "name": "Bass giant",
+   "desc": "Bass body 5 semitones down: a bigger cabinet in the low mids, the noise floor guarded",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Live",
+    "source": "Instrument",
+    "formant": -5,
+    "register": "Low"
+   },
+   "notes": "README 4: the noise-floor guard keeps the shift from lifting hiss"
+  },
+  {
+   "id": "synth-vowel-pad",
+   "type": "formant",
+   "name": "Vowel pad",
+   "desc": "A pad sung on the vowel i: the synth's own envelope replaced by the template",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Live",
+    "source": "Instrument",
+    "formant": 0,
+    "vowel": 50,
+    "vowel_amt": 100
+   },
+   "notes": "README 4: vowel 50 % is i; vowel_amt 100 % replaces the input's envelope entirely"
+  }
+ ]
+}

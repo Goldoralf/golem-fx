@@ -754,6 +754,11 @@ impl KernelFade {
         self.lam = if self.ident[self.prev] && self.ident[self.cur] { 1.0 } else { 0.0 };
     }
 
+    /// Ends the crossfade at once: the current kernel alone (a filter switched in from nothing).
+    pub fn settle(&mut self) {
+        self.lam = 1.0;
+    }
+
     /// Both kernels are the identity: the filter passes its input exactly.
     #[inline]
     pub fn is_identity(&self) -> bool {

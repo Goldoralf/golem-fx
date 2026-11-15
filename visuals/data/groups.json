@@ -2603,6 +2603,40 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-formant": [
+      {
+        "id": "engine",
+        "name": "Engine",
+        "custom": null,
+        "params": [
+          "shift",
+          "source",
+          "register",
+          "lookahead"
+        ]
+      },
+      {
+        "id": "throat",
+        "name": "Throat",
+        "custom": null,
+        "params": [
+          "unvoiced",
+          "tilt",
+          "breath"
+        ]
+      },
+      {
+        "id": "level",
+        "name": "Level",
+        "custom": null,
+        "params": [
+          "thresh",
+          "mix",
+          "output",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {

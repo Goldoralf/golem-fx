@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp", "gfx-morph"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp", "gfx-morph", "gfx-formant"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -78,6 +78,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-polysynth" | "polysynth" => Some(Box::new(gfx_polysynth::Polysynth::new())),
         "gfx-spectralcomp" | "spectralcomp" => Some(Box::new(gfx_spectralcomp::SpectralComp::new())),
         "gfx-morph" | "morph" => Some(Box::new(gfx_morph::Morph::new())),
+        "gfx-formant" | "formant" => Some(Box::new(gfx_formant::Formant::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -378,6 +379,16 @@ pub fn options(name: &str) -> checks::Options {
         o.skip_latency = true;
         // a type change at high drive makes real high-frequency content (gfx-grit's bound)
         o.click_bound_db = -30.0;
+    }
+    if matches!(name, "gfx-formant" | "formant") {
+        // README §5: the latency check runs on the identity rows only (the crate's own test: Live 0 or
+        // `lookahead`, Grain D, the impulse at the reported sample); at the default `formant` −3 st the
+        // minimum-phase envelope filter adds the group delay of the resonances it moves (gfx-crusher's
+        // precedent). `engine`, `register` and `lookahead` change the reported latency: setup
+        // parameters (fade out, engines reset, new latency, fade in; README §2.5). Step-click bound:
+        // default
+        o.skip_latency = true;
+        o.skip_steps = vec!["engine", "register", "lookahead"];
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)
