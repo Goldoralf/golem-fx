@@ -48,3 +48,4 @@ gfx-tape = { path = "../gfx-tape", default-features = false }
 gfx-grit = { path = "../gfx-grit", default-features = false }
 gfx-dist = { path = "../gfx-dist", default-features = false }
 gfx-transient = { path = "../gfx-transient", default-features = false }
+gfx-tuner = { path = "../gfx-tuner", default-features = false }

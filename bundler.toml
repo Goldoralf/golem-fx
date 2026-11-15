@@ -110,3 +110,6 @@ name = "GoleM FX Dist"
 
 [gfx-transient]
 name = "GoleM FX Transient"
+
+[gfx-tuner]
+name = "GoleM FX Tuner"

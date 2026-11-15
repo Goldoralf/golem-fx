@@ -44,5 +44,6 @@ pub mod transport;
 pub mod util;
 pub mod vibe;
 pub mod wah;
+pub mod zoom;
 
 pub use effect::{Effect, ParamInfo, ParamKind};

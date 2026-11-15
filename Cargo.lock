@@ -281,6 +281,7 @@ dependencies = [
  "gfx-tape",
  "gfx-transient",
  "gfx-tremolo",
+ "gfx-tuner",
  "gfx-vibrato",
  "gfx-wah",
 ]
@@ -573,6 +574,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-tremolo"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-tuner"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

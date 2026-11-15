@@ -5,6 +5,9 @@
 //!   and music*, JASA 2002) on the input low-passed and decimated to ~12 kHz, analysed every 32 decimated
 //!   samples (~2.7 ms). Range 75 Hz – 1.5 kHz (drop-D to the 22nd fret of the high E with room). Cost is
 //!   bounded: one analysis is a fixed `W × τmax` difference function. Allocates in `prepare` only.
+//!   A caller that owns its decimator (gfx-tuner) uses [`PitchDetector::prepare_decimated`] and
+//!   [`PitchDetector::push_decimated`], with its own hop ([`PitchDetector::set_hop`]) and silence floor
+//!   ([`PitchDetector::set_floor`]); [`PitchDetector::candidates`] gives the two deepest distinct dips.
 //! - [`NoteTracker`]: the played pitch class, with confirmation and hysteresis (a bend between two notes
 //!   keeps the old one until it is clearly the new one; unvoiced frames hold the last note).
 //! - [`harmony_interval`]: the interval that keeps a voice in a key / scale.
@@ -49,6 +52,12 @@ pub struct PitchDetector {
     harmonic_lock: bool,
     /// the lowest lag the buffers were sized for (prepare_range's f_min)
     tau_alloc: usize,
+    /// decimated samples between analyses (HOP unless `set_hop`)
+    hop: usize,
+    /// silence floor on the window's mean square (1e-7 ≈ −70 dBFS unless `set_floor`)
+    floor: f32,
+    /// the two deepest distinct dips of the last analysis: (Hz, CMNDF); (0, 1) when none
+    cands: [(f32, f32); 2],
 }
 
 impl PitchDetector {
@@ -76,7 +85,49 @@ impl PitchDetector {
         self.frame = vec![0.0; len];
         self.d = vec![0.0; self.tau_max + 2];
         self.raw = vec![0.0; self.tau_max + 2];
+        self.hop = HOP;
+        self.floor = 1e-7;
         self.reset();
+    }
+
+    /// A detector fed at `rate` by a caller that owns the decimator: no low-pass, no decimation of its
+    /// own (feed it with [`Self::push_decimated`]). Buffers and window as in [`Self::prepare_range`].
+    pub fn prepare_decimated(&mut self, rate: f32, f_min: f32, f_max: f32, harmonic_lock: bool) {
+        self.prepare_range(rate, f_min, f_max, harmonic_lock);
+        // prepare_range derived a decimator from `rate` as if it were the host rate: undo it
+        self.dec = 1;
+        self.rate = rate;
+        self.tau_alloc = (self.rate / f_min).ceil() as usize + 1;
+        self.tau_min = (self.rate / f_max).floor().max(2.0) as usize;
+        self.tau_max = self.tau_alloc;
+        self.w = self.tau_max;
+        let len = self.w + self.tau_max;
+        self.ring = vec![0.0; len];
+        self.frame = vec![0.0; len];
+        self.d = vec![0.0; self.tau_max + 2];
+        self.raw = vec![0.0; self.tau_max + 2];
+        self.reset();
+    }
+
+    /// Decimated samples between analyses (default 32). No allocation.
+    pub fn set_hop(&mut self, n: usize) {
+        self.hop = n.max(1);
+    }
+
+    /// The silence floor (dBFS, on the window's mean square): below it an analysis is unvoiced.
+    /// The default is −70 dBFS.
+    pub fn set_floor(&mut self, dbfs: f32) {
+        self.floor = 10f32.powf(0.1 * dbfs);
+    }
+
+    /// The analysis rate (Hz).
+    pub fn rate(&self) -> f32 {
+        self.rate
+    }
+
+    /// The analysis window (seconds).
+    pub fn window_s(&self) -> f32 {
+        self.w as f32 / self.rate
     }
 
     /// Narrows the range within what `prepare_range` allocated (no allocation: safe in `process`).
@@ -101,6 +152,7 @@ impl PitchDetector {
         self.voiced = false;
         self.fresh = false;
         self.raw_hz = 0.0;
+        self.cands = [(0.0, 1.0); 2];
     }
 
     /// Feeds one input sample. Returns true when a new analysis is ready.
@@ -113,13 +165,20 @@ impl PitchDetector {
             return false;
         }
         self.phase = 0;
+        self.push_decimated(y)
+    }
+
+    /// Feeds one sample already at the analysis rate (after [`Self::prepare_decimated`]). Returns true
+    /// when a new analysis is ready.
+    #[inline]
+    pub fn push_decimated(&mut self, y: f32) -> bool {
         self.ring[self.at] = y;
         self.at += 1;
         if self.at == self.ring.len() {
             self.at = 0;
         }
         self.since += 1;
-        if self.since < HOP {
+        if self.since < self.hop {
             return false;
         }
         self.since = 0;
@@ -138,10 +197,11 @@ impl PitchDetector {
         // the most recent `w` samples against `tau` earlier ones (w + tmax ≤ the ring's length)
         let cur = &self.frame[len - w..];
         let energy: f32 = cur.iter().map(|v| v * v).sum::<f32>() / w as f32;
-        if energy < 1e-7 {
-            // below about −70 dBFS: silence
+        if energy < self.floor {
+            // below the floor (−70 dBFS by default): silence
             self.voiced = false;
             self.clarity = 0.0;
+            self.cands = [(0.0, 1.0); 2];
             return;
         }
         self.d[0] = 0.0;
@@ -204,6 +264,7 @@ impl PitchDetector {
         }
         let dm = self.d[best];
         self.clarity = (1.0 - dm).max(0.0);
+        self.find_candidates(best);
         if best > self.tau_min && best < tmax - 1 {
             let (y0, y1, y2) = (self.raw[best - 1], self.raw[best], self.raw[best + 1]);
             let den = y0 - 2.0 * y1 + y2;
@@ -220,6 +281,39 @@ impl PitchDetector {
         let off = if den.abs() > 1e-12 { (0.5 * (y0 - y2) / den).clamp(-0.5, 0.5) } else { 0.0 };
         self.hz = self.rate / (best as f32 + off);
         self.voiced = true;
+    }
+
+    /// The candidates: the chosen lag (harmonic lock applied) first, then the deepest local minimum of
+    /// the CMNDF at least 20 % away from it in lag. Writes only `cands`.
+    fn find_candidates(&mut self, best: usize) {
+        let tmax = self.tau_max;
+        let refine = |s: &Self, t: usize| -> f32 {
+            if t <= s.tau_min || t + 1 >= tmax {
+                return s.rate / t.max(1) as f32;
+            }
+            let (y0, y1, y2) = (s.raw[t - 1], s.raw[t], s.raw[t + 1]);
+            let den = y0 - 2.0 * y1 + y2;
+            let off = if den.abs() > 1e-12 { (0.5 * (y0 - y2) / den).clamp(-0.5, 0.5) } else { 0.0 };
+            s.rate / (t as f32 + off)
+        };
+        self.cands[0] = (refine(self, best), self.d[best]);
+        let mut second = (0usize, f32::MAX);
+        for t in self.tau_min.max(1) + 1..tmax - 1 {
+            let v = self.d[t];
+            if v <= self.d[t - 1] && v < self.d[t + 1] && v < second.1 {
+                let (lo, hi) = (t.min(best) as f32, t.max(best) as f32);
+                if hi >= 1.2 * lo {
+                    second = (t, v);
+                }
+            }
+        }
+        self.cands[1] = if second.0 > 0 { (refine(self, second.0), second.1) } else { (0.0, 1.0) };
+    }
+
+    /// The last analysis' two deepest distinct dips as (Hz, CMNDF), the detector's choice first
+    /// (harmonic lock applied), voiced or not; (0, 1) for a missing one or in silence.
+    pub fn candidates(&self) -> [(f32, f32); 2] {
+        self.cands
     }
 
     /// The last analysis' fundamental (Hz), when voiced.
@@ -371,6 +465,52 @@ mod tests {
                 assert!(err.abs() < 0.1, "{f} Hz at {sr}: detected {hz} ({err:+.3} st)");
             }
         }
+    }
+
+    #[test]
+    fn decimated_feed_matches_and_candidates_hold_the_octave() {
+        // a caller-owned decimator: the same tone fed at 3 kHz, range 25 – 150 Hz, one 10 ms hop
+        let rate = 3000.0;
+        let mut d = PitchDetector::default();
+        d.prepare_decimated(rate, 25.0, 150.0, true);
+        d.set_hop(30);
+        d.set_floor(-90.0);
+        assert!((d.window_s() - 0.04).abs() < 0.002);
+        for f in [27.5f32, 30.87, 41.2, 61.7] {
+            d.reset();
+            let x = saw(f, rate, (0.3 * rate) as usize);
+            let mut n = 0;
+            let mut last = None;
+            for v in x {
+                if d.push_decimated(0.05 * v) {
+                    n += 1;
+                    last = d.hz();
+                }
+            }
+            assert_eq!(n, 30);
+            let hz = last.unwrap_or_else(|| panic!("unvoiced at {f} Hz"));
+            assert!((midi_of(hz) - midi_of(f)).abs() < 0.1, "{f}: {hz}");
+            let c = d.candidates();
+            assert!((c[0].0 - hz).abs() < 1e-3, "first candidate = the choice");
+            // the second dip, when the range holds one, is at least 20 % away in lag
+            assert!(c[1].0 == 0.0 || (c[0].0 / c[1].0 - 1.0).abs() >= 0.19, "a distinct second dip: {c:?}");
+            if f > 50.0 {
+                assert!(c[1].0 > 0.0, "{f}: no second dip in {c:?}");
+            }
+        }
+        // the floor: −80 dBFS is silence at the default −70, a reading at −90
+        let mut q = PitchDetector::default();
+        q.prepare_decimated(rate, 25.0, 150.0, true);
+        q.set_hop(30);
+        for v in saw(41.2, rate, 900) {
+            q.push_decimated(1e-4 * v);
+        }
+        assert!(q.hz().is_none() && q.candidates()[0].0 == 0.0);
+        q.set_floor(-100.0);
+        for v in saw(41.2, rate, 900) {
+            q.push_decimated(1e-4 * v);
+        }
+        assert!(q.hz().is_some());
     }
 
     #[test]

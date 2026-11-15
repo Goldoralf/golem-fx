@@ -355,10 +355,14 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000', 'gfx-ringmod': '#c9b000',
     // deck champagne: the pale gold-anodized faceplate of a reel deck (gfx-tape's review: brown is
     // gfx-fuzz's copper at tile size)
-    'gfx-tape': '#d8c8a0' };
+    'gfx-tape': '#d8c8a0',
+    // deep scope green: separated from gfx-glitch's lime and modulation's green by lightness (L* 40)
+    'gfx-tuner': '#126e1c' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a',
+    // the "in tune" lamp
+    'gfx-tuner': '#3ddc2e' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -376,6 +380,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-grit': 'prism',
     'gfx-dist': 'traces',
     'gfx-transient': 'spikes',
+    'gfx-tuner': 'strobe',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -383,7 +388,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-tuner': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -436,6 +441,20 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
       case 'crescent':
         line(arcPath(cx, cy, W * .44, 200, 340)); line(arcPath(cx, cy, W * .53, 205, 335), .6);
         line(arcPath(cx, cy, W * .44, 20, 160), .45);
+        break;
+      case 'strobe':
+        // the bands of a strobe disc round the rune: 12, 24 and 48 segments per turn (the octave bands),
+        // equal gaps, on crescent's two spans (clear of the knobs); the middle band offset by half a
+        // segment so the eye reads motion
+        [[.40, 12, 1, 0], [.47, 24, .7, .5], [.54, 48, .45, 0]].forEach(([k, n, op, off]) => {
+          const per = 360 / n, r = W * k;
+          for (const [a0, a1] of [[200, 340], [20, 160]]) {
+            for (let s = Math.ceil(a0 / per - off); (s + off) * per + per / 2 <= a1 + 1e-9; s++) {
+              const b = (s + off) * per;
+              if (b >= a0 - 1e-9) line(arcPath(cx, cy, r, b, b + per / 2), op);
+            }
+          }
+        });
         break;
       case 'curve':
         for (let i = 1; i < 8; i++) line(`M${f1(W * i / 8)} ${f1(cy - ch)}V${f1(cy + ch)}`, .35);

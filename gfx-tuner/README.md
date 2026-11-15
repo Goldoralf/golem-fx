@@ -1,8 +1,26 @@
 # gfx-tuner
 
-> **Status: DESIGNED** (2026-11-14, design only, no code; reviewed 2026-11-14, see the Review section at
-> the end). Design by Claude Opus 5.5. It needs five small extensions to gfx-dsp `detect` and one new
-> gfx-dsp module, `zoom` (§2.7).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed the same day
+> (Review section), coded as reviewed with the deviations listed in "As coded". A coarse YIN names the
+> note, a digital strobe measures it, the tuning is the prior, and everything leaves as 23 read-only
+> meters; the audio is a bit-exact copy or a 10 ms mute ramp, zero latency.
+>
+> - **gfx-dsp**: the new `zoom` module (demodulator, wide low-pass, ring; nine Hann frames and a weighted
+>   phase line fit with error bar and capture range; a Blackman-Harris grid and peak for Poly) and the
+>   five `detect` additions (`prepare_decimated`, `push_decimated`, `set_hop`, `set_floor`,
+>   `candidates()`). gfx-pitch, gfx-swell, gfx-ringmod, gfx-crusher, gfx-golem and gfx-octaver render
+>   **bit-identically** to before; their tests are green.
+> - **The prototype's figures reproduce in Rust**: coarse reading E4 20 ms, E2 30 ms, B1 40 ms, B0 80 ms;
+>   first strobe reading E4 0.06 s, E2 0.16 s, B0 0.43 s; settled (Fast) 0.21 / 0.31 / 0.73 s and
+>   (Strobe) 0.36 / 0.46 / 1.03 s; worst error while settled 0.038 ¢ over 138 notes in Fast (every string
+>   of every tuning, A0 – F6, offsets 0 to −100 ¢), 0.006 ¢ in Strobe (A0 – E6); 0.26 ¢ / 0.033 ¢ after a
+>   20 ¢ glide. A D3 with a whole E2 ringing 10 dB under: 0.30 ¢ (Fast), 0.011 ¢ settled at 0.55 s (Strobe).
+> - **Strum**: clean strings within 0.08 ¢ on all 20 tunings (3 random strums each, strings ±30 ¢ out),
+>   shared strings flagged (≤ 0.5) and right in sign; shown 0.36 – 0.59 s after the strum on a 6- or
+>   7-string, 0.55 – 0.84 s on an 8-string, 0.66 – 1.07 s on a bass (slower than the design's 0.35 / 0.75 /
+>   0.95 s: windows of 5 / Δ instead of 4 / Δ, which left 1.1 – 1.5 ¢ of pull).
+> - **Bench 28 / 28** at 44.1 – 192 kHz with the default options. CPU 30 ns / sample (0.15 % of a core)
+>   at the defaults, 94 ns (0.45 %) with eight poly tracks, 1.4 ns bypassed; worst block 0.095 ms.
 
 golem's **tuner**, measured inside the audio engine. It stands for golem's `tuner` block (category
 `utility`, today a marker whose runtime is the system JSFX `golem_tuner`) and keeps its parameter id
@@ -792,3 +810,124 @@ Still open:
 | Fast growing to Strobe's window while unsettled; full confidence for a shared string whose peak is far from the lower string's partial; the two-component fit (v2) | Bench |
 | The strobe above 1.5 kHz (violin, voice harmonics): needs a third coarse range; not in v1 | Raph, if asked |
 | `zoom`'s frames estimator sits 2 – 3 times above the Cramér–Rao bound (one case): fine for a tuner, to remeasure before gfx-pitch or gfx-crusher reuse it | Bench |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `zoom.rs` (new): `Zoom` (`start`, `push`, `estimate`, `set_capture`, `frame_power`,
+  `grid_peak`, `refine`, `refine_pv`), `Estimate`, `cents`. 6 unit tests.
+- gfx-dsp `detect.rs`: `prepare_decimated`, `push_decimated` (`push` now ends in it: same operations),
+  `set_hop`, `set_floor`, `rate`, `window_s`, `candidates()`. One unit test. Bit-exact null: renders of
+  gfx-pitch (default, Harmony, Tracking), gfx-pitch Poly, gfx-swell (two sources), gfx-ringmod,
+  gfx-crusher, gfx-golem and gfx-octaver are byte-identical to the previous commit's.
+- gfx-dsp `effect.rs`: `Effect::meter(id)` with a default `None` (§5's "meters() accessor"), so the bench
+  and the tests read the read-only values. No other effect changes.
+- `src/lib.rs`: the processor (`Tuner`, `Settings`, `Target`, `Counters`, `PARAMS`, `TUNINGS`,
+  `TUNING_NAMES`, `METERS`). `src/plugin.rs`: the VST3, class id `GoleMFxTuner0001`, mono 1 / 1 first then
+  2 / 2, latency 0, `bypass` = `make_bypass`, the 23 meters `read_only()` and published with
+  `set_output_value` after each block. `src/tests.rs`: 21 behaviour tests (§5) + `survey` (§2.4's table)
+  and `cpu`, ignored.
+- `presets/gfx-tuner.json`: 14 presets from §4.
+
+**Measured** (synthetic plucks as the review's prototype: partials 1 / k to 5 kHz, decay, −60 dBFS noise;
+48 kHz unless stated).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Accuracy, Fast | ≤ 0.3 ¢ after `state` 2 | 0.038 ¢ worst over 138 notes (120 strings of the 20 tunings + 18 chromatic A0 – F6; offsets 0, ±3, ±20, ±49, −80, −100 ¢); slowest settle 0.78 s (A0) |
+| Accuracy, Strobe | ≤ 0.1 ¢, σ ≤ 0.03 ¢, settled ≤ 1.2 s | 0.006 ¢, shown σ 0.000 ¢, slowest settle 1.09 s (A0 – E6 × 3 offsets) |
+| Reference | 0.00 ± 0.05 ¢, every rate | 415 / 432 / 466 Hz at 44.1 / 48 / 96 / 192 kHz: within ±0.05 ¢, note 69 |
+| Speed, coarse | E4 35, E2 45, B1 50, B0 95 ms | 20, 30, 40, 80 ms |
+| Speed, strobe | first E4 0.08, E2 0.18, B0 0.45 s; settled Fast 0.25 / 0.35 / 0.8, Strobe 0.4 / 0.5 / 1.1 s | 0.06 / 0.16 / 0.43 s; 0.21 / 0.31 / 0.73 s; 0.36 / 0.46 / 1.03 s |
+| Octave errors (synthetic) | no wrong note | low B, A0, A1 and E2 with the fundamental 20 – 34 dB under: their note and string from the first reading, nothing flashed, within 0.5 ¢. The DI rows (200 plucks) need Raph's recordings |
+| Open string or harmonic | E2 open, harmonic 52 | bridge-pickup E2 (fundamental −20 dB): note 40, string 1. Even partials only: note 52. Even partials with the fundamental at −17 dB: YIN reads 2 f, the probe finds the fundamental, the strobe moves down (note 40, within 0.1 ¢); at −23 dB and under: the harmonic |
+| 12th-fret harmonic, B = 2e-4 | +0.5 ± 0.1 ¢ | +0.518 ¢ over the open string's fundamental |
+| Coincidence (DADGAD) | D2's harmonic → D3 | string 3, not a harmonic |
+| Needle jitter | σ ≤ 0.1 / 0.02 ¢, no step > 0.5 ¢ | 0.000 / 0.000 ¢ (the dead band), no step |
+| Error bar | within × 3; ≥ 0.5 ¢ with a 0 dB neighbour | σ 0.070 ¢ against a measured spread of 0.171 ¢ (× 2.4, noise at −40 dBFS); ≥ 5.4 ¢ |
+| Neighbour strings | D3 + E2 −10 dB: 0.4 ¢ Fast, 0.1 ¢ and settled ≤ 0.7 s Strobe; −20 dB partial: 0.2 ¢ and settled; 0 dB: Strobe 0.2 ¢, never settled; G2 + B0 −10 dB: 0.1 ¢ | 0.295 ¢; 0.011 ¢ settled at 0.55 s; 0.071 ¢ (settled 0.42 s) and 0.018 ¢ (0.65 s); 0.187 ¢, never settled; 0.034 ¢ |
+| Capture guard | within ±35 ¢; Strobe 0.1 ¢ | held at the edge for one hop, then 0.006 ¢ |
+| Glide (8 ¢ / 150 ms, 20 ¢ / 250 ms; E1, E2, E4) | ≤ 0.3 / 0.1 ¢ at the first `state` 2; nominal ± 0.1 | ≤ 0.26 ¢ (Fast), ≤ 0.033 ¢ (Strobe); all end within 0.1 ¢ |
+| Peg turn | within 8 ¢, no gap, no restart, settled ≤ 0.45 s after | 6.6 ¢ behind, no gap, no restart, settled 0.36 s after the stop |
+| Poly | clean ±1 ¢ at T_i + 0.1 s; shared ≤ 0.5 and right sign | clean ≤ 0.08 ¢ (every tuning, 3 strums); shared ≤ 12 ¢, flagged unless separated, sign right beyond 10 ¢ |
+| Poly, false strum; back to Mono | never 3; Mono after a pluck | a lone low string never reads as a strum in any tuning; a pluck after a strum shows its string |
+| Mute | no burst > −50 dB; bit-exact | −124 dB (bench, every rate); bit-exact unmuted, bypassed, bypassed + `always_on`, bypassed + `mute` |
+| Freshness | +1 per 10 ms | exactly 100 per second at 44.1 – 192 kHz, blocks of 32 / 333 / 2,048; frozen when bypassed, running with `always_on` |
+| Tuning table | = golem's file; named = Custom | the 20 lists equal `~/golem/library/catalog/tunings.json`; DADGAD named and Custom give identical meters |
+| CPU | Mono ≤ 1 %, Poly 8 ≤ 1.5 %, worst block ≤ 0.1 ms, bypassed ≤ 2 ns | 33 – 35 ns (0.17 %); 89 – 94 ns (0.45 %); 0.095 ms; 1.4 ns |
+
+Strum shown (first `state` 3 after the strum, worst of 3): 6-std 0.51 s, eb-std 0.53, d-std 0.56, drop-d
+0.36, dadgad 0.40, drop-c 0.40, 7-std 0.59, 7-drop-a 0.45, 7-gdgcfad 0.50, 8-std 0.84, 8-e 0.68, 8-drop-e
+0.55, 8-dbdadgbe 0.61, bass-4-std 0.87, bass-4-eb 0.99, bass-4-d-std 1.04, bass-4-drop-d 0.66, bass-5-std
+1.07, bass-5-high-c 0.87, bass-5-drop-a 0.94.
+
+**Deviations from the spec, and why.**
+1. **Poly windows T_i = clamp(5 / Δ_i, 0.25, 1 s)**, not 4 / Δ_i, and Δ_i taken on the side where the
+   foreign partial is (the review's script took the upward distance for partials below too, 10 – 20 %
+   too large for a neighbour 500 ¢ under). At 4 / Δ a neighbour 60 ¢ closer than nominal sits on the
+   Blackman-Harris main lobe's edge: 1.5 ¢ of pull measured (A1 beside E1), 1.1 – 1.3 ¢ on string 2 of the
+   basses and the 8-string. At 5 / Δ: 0.003 ¢. The strum reads later than §2.5's figures (list above).
+2. **Poly refinement**: the full window's magnitude peak (Gaussian interpolation of three points a bin
+   apart, recentred three times), not the phase difference of two 2T / 3 frames. The shorter frames have a
+   main lobe of ±6 / T, so the neighbour the window was sized for is inside it. The magnitude of a real
+   envelope is symmetric about its frequency, so a decay does not bias it. The design's estimator is kept
+   as `zoom::refine_pv`; a unit test shows it pulled where `refine` is not.
+3. **Capture guard as a clamp**, as in the prototype: the estimate is held at ±35 ¢ around the track's
+   coarse reading and that hop shows the coarse reading only. A restart there would reset the window to 8
+   periods, which can never split the louder neighbour: the track would restart forever. The track still
+   restarts when the coarse reading leaves the wide filter (170 ¢, two hops running).
+4. **The short YIN runs without harmonic lock, over 60 – 1,800 Hz.** With the lock, a D3 over a ringing
+   E2 was read as D2 (the doubled lag is deeper with two notes) and the strobe had nothing to read. With
+   1.5 kHz as the top, F6 + 49 ¢ (1,437 Hz) had its lag on τmin, went unvoiced, and the long window
+   answered a sub-harmonic (143 Hz). Octave-high errors are the tuning prior's and the probe's job, as
+   designed.
+5. **Choosing between the windows** (the spec: short when voiced, else long). Two additions, both found on
+   a weak-fundamental low B. The long window is used only when the short one's period estimate is under
+   200 Hz. A barely voiced short reading (CMNDF over 0.1) that is no harmonic of the long window's clear
+   reading (twice as deep) is a partial cluster: the long window wins. Before the long window can answer
+   (40 ms + one 33 ms period), a barely voiced short reading waits, so no wrong note is flashed.
+6. **The octave rule needs a 20 ¢ margin**: the other candidate wins only within 80 ¢ of a string, so a
+   string 100 ¢ out does not flip between two strings an octave apart.
+7. **Strum decision**: at least min(3, clean strings) and never fewer than 2 lit clean strings, so a
+   one-string Custom tuning does not show every pluck as a strum.
+8. **Full confidence back for a shared string**: its peak must lie 1.5 main lobes (6 / T) from **every**
+   foreign partial within 150 ¢ whose string is lit. One lobe from the nearest one only left 2.2 ¢ on the
+   8-e's G3, which sits between E1 × 5 and B1 × 3.
+9. **No block carries the whole poly work**: one grid search per hop, each string's as soon as its own
+   window is full, and the 50 ms refreshes staggered (string i on hops ≡ −i mod 5). The grid sums the
+   windowed samples in fours (the grid spans ±0.04 fc at fb ≈ 4 fc). Worst block 0.095 ms.
+
+**Choices where the spec was silent.**
+- Onsets: peak followers on the decimated signal, fast 0.5 / 20 ms, slow 10 / 400 ms. An onset is fast
+  over slow by 6 dB and above `threshold`, re-armed under 3.5 dB, at most one per 50 ms while sounding. A
+  note that grows in without an onset starts where the level crosses `threshold`.
+- The mono track starts at the first coarse reading after the onset and **replays the input since the
+  onset** from a 4,096-sample history at fd, so a late coarse reading costs no strobe time.
+- The coarse reading waits until the window lies inside the note: since the onset ≥ the window + one
+  period of the reading.
+- Note hysteresis: the first target after an onset or silence is taken at once; changes need 2 hops (and
+  60 ¢ in chromatic).
+- Settled: the span rule uses T_max (as the prototype), and needs a strobe reading at every hop of it.
+- Level and `threshold`: the slow follower's peak in dBFS. The detectors' floors are `threshold` − 10 dB
+  (they measure a mean square).
+- The harmonic probe compares one Hann frame of 4 fundamental periods in both bands, once, past the
+  hold-off: `> −20 dB` = the open string (the probe's track becomes the strobe), else the harmonic.
+- Poly windows start 30 ms after the strum's first onset + 2 periods (the prototype's hold-off); a
+  shared string's window is the longest clean one.
+- Meters are published at each 10 ms hop and handed to the host once per block. `freq` is the strobe's
+  reading, or the coarse one while settling; the strings' columns are 0 when no strum is shown.
+- Expert groups: `tuning` joins Strings and `bypass` joins Detection (every parameter must be on the face
+  or in one group).
+- Presets: no "Sweetened Electric": its offsets are data for golem.fm (question 9), not values to invent.
+  Presets about the lane's own tuning leave `tuning` out, so the export completes it as Chromatic. golem
+  should re-apply the lane's tuning (Custom + `string_1…8`) after loading a tuner preset (golem-rack).
+
+**Left for the owner.**
+- The DI rows of §5: octave errors on 200 plucks per string, Poly on Raph's strum DIs, against x42 Tuna
+  and the JSFX. Real glides, the settle spans (0.2 / 0.07 ¢), the 20 dB harmonic test and the onset
+  constants are to set on those recordings.
+- golem-rack: the engine table (`tuning` → Custom + strings), `reference` written to every instance,
+  placement first in the lane, the 30 Hz reader with the `seq` guard, Designer hiding the 23 meters, and
+  re-applying the lane's tuning after a tuner preset.
+- Raph: `mute` at insert, the lamp bands, the hue on the family sheet.
+
