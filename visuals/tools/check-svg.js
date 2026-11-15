@@ -38,6 +38,16 @@ for (const kind of ['piano', 'epiano', 'organ', 'synth']) for (const compact of 
 for (const a of (P.RACK_GENERIC ? Object.keys(P.RACK_GENERIC) : [])) {
   cases.push([`namRack ${a}`, P.namRack({ kind: a })], [`namModule ${a}`, P.namModule({ kind: a })]);
 }
+// every outboard unit (archetypes and generics) in both formats, on and off, rack and module
+{
+  const units = (window.GOLEM_VISUALS.archetypes.outboard || []).map(a => ({ archetype: a }))
+    .concat(Object.keys(P.RACK_GENERIC).map(kind => ({ kind })));
+  for (const u of units) for (const format of ['nam', 'ir']) for (const on of [true, false]) for (const label of ['', 'Tank <A&B> Spring Reverb 3', 'delay 12 - B']) {
+    const o = Object.assign({ on, format, label }, u), n = `${u.archetype ? u.archetype.id : u.kind} ${format} on=${on} label=${label || '-'}`;
+    cases.push([`namRack ${n}`, P.namRack(o)], [`namModule ${n}`, P.namModule(o)]);
+  }
+  cases.push(['namRack ir program', P.namRack({ format: 'ir', label: 'Studio unit', program: 'Hall <3>' })]);
+}
 
 const D = window.GOLEM_VISUALS;
 for (const crate of Object.keys(D.gfx || {})) for (const style of P.STYLES) { P.setStyle(style); cases.push([`gfxPedal ${crate} ${style}`, P.gfxPedal(crate, { on: true })]); }

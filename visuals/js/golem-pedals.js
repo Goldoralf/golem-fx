@@ -25,6 +25,7 @@
     enamelSmall: "'Saira Semi Condensed','Arial Narrow',sans-serif",
     nam: "'Big Shoulders Display','Oswald','Arial Narrow',sans-serif",
     blackletter: "'Pirata One','UnifrakturCook','Georgia',serif",
+    lcd: "'Share Tech Mono','DejaVu Sans Mono','Courier New',monospace",
   };
 
   // ---------- colour ----------
@@ -1351,6 +1352,12 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
     'module-70s': { panel: '#1d1f22', tex: 'gp-brush-lines', ink: '#e2e6ea', sub: '#7fa6d6', scale: '#b9c1c9', lamp: '#ff3b2a' },
     'modern-90s': { panel: '#141518', tex: 'gp-brush-lines', ink: '#dfe3e7', sub: '#8a94a3', scale: '#aab3bd', lamp: '#ff3b2a' },
     'tube-50s': { panel: '#6f767c', tex: 'gp-hammer', ink: '#0f1214', sub: '#23282c', scale: '#1b1f22', lamp: '#ffb03a' },
+    // the IR units (ir-fx): an amp-tank spring unit in tolex, a cream 70s tape echo, a brushed-steel
+    // analog echo, a charcoal 80s digital rack with its program LCD
+    'tolex-60s': { panel: '#211e1b', tex: 'gp-tolex', ink: '#efe6cf', sub: '#c9b98f', scale: '#d9cca8', lamp: '#ff5a3c' },
+    'cream-70s': { panel: '#d6ccb0', tex: 'gp-speckle', ink: '#1d1b17', sub: '#5a4e3a', scale: '#3a342a', lamp: '#ff5a3c' },
+    'steel-70s': { panel: '#9ba2a9', tex: 'gp-brush-lines', ink: '#121417', sub: '#2b3036', scale: '#1d2125', lamp: '#ff3b2a' },
+    'digital-80s': { panel: '#25282d', tex: 'gp-brush-lines', ink: '#e6e9ec', sub: '#7fb0d8', scale: '#b9c1c9', lamp: '#2ecc71', lcd: '#9fd0e8' },
   };
   // a unit golem has no archetype for: voiced by kind
   const RACK_GENERIC = {
@@ -1364,7 +1371,36 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
     eq: { id: 'eq', short: 'EQ', kind: 'eq', sub: 'equalizer', look: 'module-70s', u: 1, controls: [
       { type: 'knob', label: 'low', cap: 'black' }, { type: 'knob', label: 'low mid', cap: 'black' }, { type: 'knob', label: 'high mid', cap: 'black' },
       { type: 'knob', label: 'high', cap: 'black' }, { type: 'toggle', label: 'in', on: true }, { type: 'badge', bind: 'channel', label: 'ch' }] },
+    // IR units (ir-fx): a digital reverb rack with its program LCD, a generic echo with a program LED
+    reverb: { id: 'reverb', short: 'REVERB', kind: 'reverb', sub: 'digital reverb', look: 'digital-80s', u: 1, controls: [
+      { type: 'program', style: 'lcd', label: 'program', default: 'Hall 1' }, { type: 'knob', label: 'decay', cap: 'grey' },
+      { type: 'knob', label: 'pre-delay', cap: 'grey' }, { type: 'knob', label: 'mix', cap: 'grey' }, { type: 'leds', label: 'in' }] },
+    echo: { id: 'echo', short: 'ECHO', kind: 'echo', sub: 'studio echo', look: 'console-80s', u: 1, controls: [
+      { type: 'program', style: 'led', label: 'program', default: 'Echo 1' }, { type: 'knob', label: 'time', cap: 'black' },
+      { type: 'knob', label: 'repeats', cap: 'black' }, { type: 'knob', label: 'mix', cap: 'black' }, { type: 'knob', label: 'tone', cap: 'black' }] },
   };
+  // the kind of a unit golem has no archetype for, from its label
+  const rackKindOf = label => {
+    const l = String(label || '').toLowerCase();
+    return /reverb|spring|\bhall\b|\broom\b|\bplate\b|chamber|ambien/.test(l) ? 'reverb' : /echo|delay/.test(l) ? 'echo'
+      : /comp|limit|level(?:l)?er/.test(l) ? 'comp' : /\beq\b|equali/.test(l) ? 'eq' : 'preamp';
+  };
+  const rackArch = opts => opts.archetype || archetypeFor('outboard', opts.label || opts.title)
+    || RACK_GENERIC[opts.kind] || RACK_GENERIC[rackKindOf(opts.label || opts.title)] || RACK_GENERIC.preamp;
+  const rackGlyph = (kind, ir) => ir ? 'ir-fx' : { comp: 'comp-nam', eq: 'eq', reverb: 'reverb', echo: 'delay-tape' }[kind] || 'preamp-nam';
+  // an IR's program, from its label: "… Spring Reverb 3" -> "Spring 3", "… delay 7" -> "Delay 7", "… Hall 3"
+  const PROGRAM_WORD = 'spring(?:\\s*reverb)?|reverb|hall|room|plate|chamber|ambience|ambiance|echo|delay|tape|repeat|mode|program|prog|preset|patch|bank|setting|head|tank';
+  function programOf(label) {
+    const l = String(label || '').replace(/\.(wav|aiff?|flac)$/i, '').trim();
+    const title = w => w.toLowerCase().replace(/^spring\s*reverb$/, 'spring').replace(/^program$/, 'prog').replace(/^./, x => x.toUpperCase());
+    let m = new RegExp(`(?:^|[\\s\\-–_/(])(${PROGRAM_WORD})\\s*[#.]?\\s*(\\d{1,3}[a-z]?)\\s*\\)?$`, 'i').exec(l);
+    if (m) return `${title(m[1])} ${m[2].toUpperCase()}`;
+    m = /(?:^|[\s\-–_/(])(hall|room|plate|chamber|spring|ambience)\s*\)?$/i.exec(l);
+    if (m) return title(m[1]);
+    m = /\s[-–_]\s*(\d{1,2})\s*$/.exec(l);
+    return m ? `Prog ${m[1]}` : null;
+  }
+  const programNum = p => { const m = /(\d+)[a-z]?\s*$/i.exec(String(p || '')); return m ? +m[1] : null; };
   const RACK_U = 56;
 
   // the setting a capture was taken at, from its label: "1073MP - 60 dB Hard - B", "1176 L", "Bus comp 4:1"
@@ -1377,6 +1413,7 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
     const c = /(?:^|[\s\-–_/(])(?:ch(?:annel)?\s*)?([A-D]|L|R)\s*\)?\s*$/i.exec(l.trim()); if (c) s.channel = c[1].toUpperCase();
     if (/\blimit\b/i.test(l)) s.limit = true;
     const t = /\btime\s*(\d)\b/i.exec(l); if (t) s.time = +t[1];
+    const p = programOf(l); if (p) s.program = p;
     return s;
   }
 
@@ -1390,11 +1427,11 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
   <path d="M${cx - r * .28} ${cy + r * .45}L${cx} ${cy - r * 1.05}L${cx + r * .28} ${cy + r * .45}Z" fill="#141210"/><path d="M${cx} ${cy - r * .15}V${cy - r * .95}" stroke="#f3ead2" stroke-width="1.1"/></g>${lbl}</g>`;
     }
     if (cap === 'alu') return knobAlu(cx, cy, r, { min: 0, max: 1, default: frac }, '', L.ink).replace('</g>', '') + lbl + '</g>';
-    const fill = { red: '#a3201a', blue: '#2f5f9e', grey: '#9aa3ad', black: '#17191b' }[cap] || '#17191b';
+    const fill = { red: '#a3201a', blue: '#2f5f9e', grey: '#9aa3ad', black: '#17191b', cream: '#e6dcc0' }[cap] || '#17191b';
     return `<g class="gp-knob"><circle cx="${cx}" cy="${cy + 1.4}" r="${r}" fill="#000" opacity=".45"/>
   <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#gp-knob)"/><circle cx="${cx}" cy="${cy}" r="${r * .72}" fill="${fill}"/>
   <circle cx="${cx}" cy="${cy}" r="${r * .72}" fill="url(#gp-sheen)" opacity=".5"/>
-  <path d="M${cx} ${cy}L${px.toFixed(2)} ${py.toFixed(2)}" stroke="${cap === 'grey' ? '#15181b' : '#f2f4f6'}" stroke-width="${r > 16 ? 2.2 : 1.5}" stroke-linecap="round"/>${lbl}</g>`;
+  <path d="M${cx} ${cy}L${px.toFixed(2)} ${py.toFixed(2)}" stroke="${cap === 'grey' || cap === 'cream' ? '#15181b' : '#f2f4f6'}" stroke-width="${r > 16 ? 2.2 : 1.5}" stroke-linecap="round"/>${lbl}</g>`;
   }
 
   function rackControl(c, cx, cy, h, set, L, on, cw) {
@@ -1452,25 +1489,117 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
   <text x="${cx}" y="${cy + 3.6}" text-anchor="middle" font-family="${FONT.nam}" font-size="13" font-weight="800" fill="#eef0f2">${esc(v)}</text>
   <text x="${cx}" y="${cy + 19}" text-anchor="middle" font-family="${FONT.nam}" font-size="7" font-weight="700" letter-spacing=".9" fill="${L.ink}">${esc(c.label.toUpperCase())}</text></g>`;
       }
+      case 'program': {
+        // an IR's program: a lit LCD, an LED readout, or a stepped selector (opts.program, or the label's)
+        const prog = String((v != null ? v : set.program != null ? set.program : c.default) || '--');
+        const lbl = (t, y) => `<text x="${cx}" y="${y.toFixed(1)}" text-anchor="middle" font-family="${FONT.nam}" font-size="7.4" font-weight="700" letter-spacing=".9" fill="${L.ink}">${esc(t)}</text>`;
+        if (c.style === 'selector') {
+          const n = Math.max(2, Math.min(12, c.count || 6)), num = programNum(prog), k = Math.max(0, Math.min(n - 1, (num || 1) - 1));
+          const r = Math.min(15, h * .22), step = 1 / (n - 1), sweep = 120;
+          const marks = Array.from({ length: n }, (_, i) => {
+            const a = -sweep + 2 * sweep * i * step, [tx, ty] = polar(cx, cy, r + (n <= 6 ? 9 : 6), a), sel = i === k;
+            if (n <= 6 || sel) return `<text x="${tx.toFixed(1)}" y="${(ty + 2.6).toFixed(1)}" text-anchor="middle" font-family="${FONT.gfx}" font-size="${r > 12 ? 7.6 : 6.4}" font-weight="700" fill="${sel ? L.ink : L.scale}" opacity="${sel ? 1 : .7}">${i + 1}</text>`;
+            const [a1, b1] = polar(cx, cy, r + 3, a), [a2, b2] = polar(cx, cy, r + 7, a);
+            return `<path d="M${a1.toFixed(1)} ${b1.toFixed(1)}L${a2.toFixed(1)} ${b2.toFixed(1)}" stroke="${L.scale}" stroke-opacity=".7" stroke-width="1.1"/>`;
+          }).join('');
+          const [lx, ly] = polar(cx, cy, r + (n <= 6 ? 16 : 13), -sweep + 2 * sweep * k * step);
+          const led = `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="1.9" fill="${on ? L.lamp : mix(L.lamp, '#000', .7)}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>`;
+          return `<g class="gp-rack-program" data-program="${esc(prog)}">${marks}${led}${rackKnob(cx, cy, r, k * step, c.cap || 'black', '', L, sweep)}${lbl(prog.toUpperCase().slice(0, 12), cy + r + 15)}</g>`;
+        }
+        const led = c.style === 'led', w = Math.min(led ? 92 : 100, (cw || 110) - 8), dh = Math.min(22, h * .4), x = cx - w / 2, y = cy - dh / 2 - 3;
+        const txt = prog.toUpperCase().slice(0, 12), fs = Math.min(dh * .68, (w - 10) / (Math.max(4, txt.length) * .62));
+        const tint = c.tint || L.lcd || '#b4d86a';
+        const screen = led ? '#1c0705' : on ? tint : mix(tint, '#111', .82);
+        const ink = led ? (on ? '#ff4b33' : '#4a1a14') : on ? '#11180d' : mix(tint, '#111', .62);
+        const ty = (y + dh / 2 + fs * .36).toFixed(1);
+        return `<g class="gp-rack-program" data-program="${esc(prog)}"><rect x="${x - 3}" y="${y - 3}" width="${w + 6}" height="${dh + 6}" rx="3" fill="#0b0c0e"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${dh}" rx="1.6" fill="${screen}"/>${!led && on ? `<rect x="${x}" y="${y}" width="${w}" height="${dh}" rx="1.6" fill="#fff" opacity=".12"/>` : ''}
+  <text x="${cx}" y="${ty}" text-anchor="middle" font-family="${FONT.lcd}" font-size="${fs.toFixed(1)}" font-weight="700" letter-spacing=".5" fill="${ink}"${led && on ? ' filter="url(#gp-glow-soft)"' : ''}>${esc(txt)}</text>${led && on ? `<text x="${cx}" y="${ty}" text-anchor="middle" font-family="${FONT.lcd}" font-size="${fs.toFixed(1)}" font-weight="700" letter-spacing=".5" fill="#ffb3a6">${esc(txt)}</text>` : ''}
+  <rect x="${x}" y="${y}" width="${w}" height="${dh}" rx="1.6" fill="url(#gp-glass-glare)"/>${lbl(String(c.label || 'program').toUpperCase(), y + dh + 12)}</g>`;
+      }
+      case 'spring': {
+        // the tank seen through a window: transducers at both ends, the coiled springs between
+        const w = Math.min(150, (cw || 150) - 8), wh = Math.min(46, h - 26), x = cx - w / 2, y = cy - wh / 2 - 3;
+        const n = wh > 30 ? 3 : 2, col = on ? '#d4dbe1' : '#70767d';
+        const springs = Array.from({ length: n }, (_, i) => { const yy = (y + wh * (i + 1) / (n + 1)).toFixed(1);
+          return `<path d="M${x + 13} ${yy}H${x + w - 13}" stroke="#000" stroke-opacity=".5" stroke-width="5.4"/>
+  <path d="M${x + 13} ${yy}H${x + w - 13}" stroke="${col}" stroke-width="4.6" stroke-dasharray="1 1.3"/>
+  <path d="M${x + 13} ${yy}H${x + w - 13}" stroke="${on ? '#ffffff' : '#9aa3ad'}" stroke-opacity=".35" stroke-width=".6"/>`; }).join('');
+        const tr = xx => `<rect x="${xx}" y="${y + 3}" width="9" height="${wh - 6}" rx="1.5" fill="#2e3236" stroke="#000" stroke-opacity=".5"/><rect x="${xx + 2}" y="${y + wh / 2 - 3}" width="5" height="6" rx="1" fill="${on ? '#b87333' : '#5a3b22'}"/>`;
+        return `<g class="gp-rack-spring"><rect x="${x - 3}" y="${y - 3}" width="${w + 6}" height="${wh + 6}" rx="4" fill="#0b0c0e"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="#181a1d"/>${on ? `<rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="${L.lamp}" opacity=".07"/>` : ''}
+  ${springs}${tr(x + 2)}${tr(x + w - 11)}
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="url(#gp-glass-glare)"/>
+  <text x="${cx}" y="${y + wh + 12}" text-anchor="middle" font-family="${FONT.nam}" font-size="7.4" font-weight="700" letter-spacing=".9" fill="${L.ink}">${esc(String(c.label || 'tank').toUpperCase())}</text></g>`;
+      }
+      case 'tape': {
+        // the tape window: two reels, the loop running past the heads
+        const w = Math.min(150, (cw || 150) - 8), wh = Math.min(70, h - 26), x = cx - w / 2, y = cy - wh / 2 - 3;
+        const r = Math.min(wh * .36, w * .17), ry = y + r + 4, hy = y + wh - 7;
+        const reel = (rx, rot) => `<g transform="rotate(${rot} ${rx.toFixed(1)} ${ry.toFixed(1)})"><circle cx="${rx.toFixed(1)}" cy="${ry.toFixed(1)}" r="${(r * .82).toFixed(1)}" fill="#3a281a"/>
+  <circle cx="${rx.toFixed(1)}" cy="${ry.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="#9aa3ad" stroke-width="1.2"/>
+  ${[0, 120, 240].map(a => { const [px, py] = polar(rx, ry, r * .52, a); return `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${(r * .2).toFixed(1)}" fill="#0f0d0b"/>`; }).join('')}
+  <circle cx="${rx.toFixed(1)}" cy="${ry.toFixed(1)}" r="${(r * .22).toFixed(1)}" fill="#c9d3dc"/></g>`;
+        const lx = x + r + 6, rx2 = x + w - r - 6, hx0 = cx - w * .2, hx1 = cx + w * .2;
+        const heads = [0, 1, 2, 3].map(i => `<rect x="${(hx0 + (hx1 - hx0) * i / 3 - 3).toFixed(1)}" y="${hy - 1}" width="6" height="6" rx="1" fill="${i ? '#aab3bd' : '#6f767c'}"/>`).join('');
+        return `<g class="gp-rack-tape"><rect x="${x - 3}" y="${y - 3}" width="${w + 6}" height="${wh + 6}" rx="4" fill="#0b0c0e"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="#1a1714"/>
+  <path d="M${lx.toFixed(1)} ${(ry + r * .82).toFixed(1)}L${hx0 - 6} ${hy - 1}H${hx1 + 6}L${rx2.toFixed(1)} ${(ry + r * .82).toFixed(1)}" fill="none" stroke="#5a3b22" stroke-width="1.6"/>
+  ${reel(lx, on ? 25 : 0)}${reel(rx2, on ? 70 : 0)}${heads}<circle cx="${hx1 + 9}" cy="${hy + 2}" r="2.4" fill="#26282b" stroke="#6f767c" stroke-width=".6"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="url(#gp-glass-glare)"/>
+  <text x="${cx}" y="${y + wh + 12}" text-anchor="middle" font-family="${FONT.nam}" font-size="7.4" font-weight="700" letter-spacing=".9" fill="${L.ink}">${esc(String(c.label || 'tape').toUpperCase())}</text></g>`;
+      }
+      case 'bbd': {
+        // the bucket brigade: a chain of cells, each passing a fainter copy on, under the clock
+        const w = Math.min(112, (cw || 120) - 8), wh = Math.min(28, h - 28), x = cx - w / 2, y = cy - wh / 2 - 3, n = 10;
+        const cw2 = (w - 12) / n, col = on ? '#ffb03a' : '#5a4a3a';
+        const cells = Array.from({ length: n }, (_, i) => `<rect x="${(x + 6 + i * cw2 + 1).toFixed(1)}" y="${(y + wh * .45).toFixed(1)}" width="${(cw2 - 2).toFixed(1)}" height="${(wh * .4).toFixed(1)}" rx="1" fill="${col}" opacity="${(1 - i * .075).toFixed(2)}"${on && i < 3 ? ' filter="url(#gp-glow-soft)"' : ''}/>`).join('');
+        let clk = `M${x + 6} ${(y + wh * .32).toFixed(1)}`;
+        for (let i = 0; i < n; i++) clk += `h${(cw2 / 2).toFixed(1)}v${(-wh * .18).toFixed(1)}h${(cw2 / 2).toFixed(1)}v${(wh * .18).toFixed(1)}`;
+        return `<g class="gp-rack-bbd"><rect x="${x - 3}" y="${y - 3}" width="${w + 6}" height="${wh + 6}" rx="4" fill="#0b0c0e"/>
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="#15171a"/>
+  <path d="${clk}" fill="none" stroke="#7fa6d6" stroke-opacity="${on ? .8 : .35}" stroke-width=".9"/>${cells}
+  <rect x="${x}" y="${y}" width="${w}" height="${wh}" rx="2.5" fill="url(#gp-glass-glare)"/>
+  <text x="${cx}" y="${y + wh + 12}" text-anchor="middle" font-family="${FONT.nam}" font-size="7.4" font-weight="700" letter-spacing=".9" fill="${L.ink}">${esc(String(c.label || 'bbd').toUpperCase())}</text></g>`;
+      }
       default: return '';
     }
   }
-  const RACK_W = { stepped: 78, knob: 52, toggle: 40, buttons: 44, vu: 150, leds: 34, badge: 38 };
+  // IR format: the controls an IR cannot turn are drawn fixed (greyed); the capture's own setting stays
+  const FIXABLE = new Set(['knob', 'stepped', 'toggle', 'buttons']);
+  const rackFixed = (c, svg, ir) => ir && !c.bind && FIXABLE.has(c.type) ? `<g class="gp-rack-fixed" opacity=".42">${svg}</g>` : svg;
+  // an IR's program display, when the unit has none of its own: an LED readout
+  const irControls = (arch, ir) => {
+    const list = (arch.controls || []).slice();
+    if (ir && !list.some(c => c.type === 'program')) list.unshift({ type: 'program', style: 'led', label: 'program' });
+    return list;
+  };
+  // the engraved IR mark: a recessed plate, the letters cut through to the panel's own light
+  const irBadge = (x, y, L) => { const light = luma(L.panel) > .45;
+    return `<g class="gp-ir-badge"><rect x="${x - 11}" y="${y - 6}" width="22" height="12" rx="2.5" fill="${mix(L.panel, '#000', light ? .74 : .45)}" stroke="#fff" stroke-opacity=".16"/>
+  <rect x="${x - 11.5}" y="${y - 6.5}" width="22" height="12" rx="2.5" fill="none" stroke="#000" stroke-opacity=".55"/>
+  <text x="${x}" y="${y + 3.4}" text-anchor="middle" font-family="${FONT.nam}" font-size="9.4" font-weight="800" letter-spacing="1.4" fill="${light ? mix(L.panel, '#fff', .3) : mix(L.ink, L.panel, .1)}">IR</text></g>`; };
+  const RACK_W = { stepped: 78, knob: 52, toggle: 40, buttons: 44, vu: 150, leds: 34, badge: 38, program: 108, spring: 156, tape: 156, bbd: 120 };
   // ratio buttons: a column when it fits the unit's height, else a row
   const buttonsRow = (c, h) => !!c.row || (c.values || []).length * 14 > h - 26;
   const rackWidth = (c, small, h) => c.type === 'buttons' && buttonsRow(c, h) ? (c.values || []).length * 21 + 6
+    : c.type === 'program' && c.style === 'selector' ? 76
     : (c.size === 'big' ? 1.35 : 1) * (RACK_W[c.type] || 50) * (small && c.type === 'vu' ? .55 : 1);
 
   // a NAM capture of outboard gear, as a 19" rack unit. opts: archetype (an outboard archetype, or found
-  // from opts.label / opts.title), kind ('preamp' | 'comp' | 'eq', for the generic unit), title, u,
-  // on, setting (or read from opts.label: gain, hard, channel, ratio), width
+  // from opts.label / opts.title), kind ('preamp' | 'comp' | 'eq' | 'reverb' | 'echo', for the generic
+  // unit; else guessed from the label), title, u, on, setting (or read from opts.label: gain, hard,
+  // channel, ratio, program), width. format: 'ir' draws the unit as an IR (golem's ir-fx: a captured
+  // impulse response, played whole): an engraved IR mark, the controls it cannot turn greyed, and its
+  // program (opts.program, or the label's "Spring 3" / "Delay 7") on the unit's program display, an
+  // LED readout added when the unit has none
   function namRack(opts) {
     opts = opts || {};
     const on = opts.on !== false;
-    const arch = opts.archetype || archetypeFor('outboard', opts.label || opts.title) || RACK_GENERIC[opts.kind] || RACK_GENERIC.preamp;
+    const arch = rackArch(opts), ir = opts.format === 'ir';
     const L = RACK_LOOK[arch.look] || RACK_LOOK['console-60s'];
-    const voice = NAM_VOICE[arch.kind] || NAM_VOICE.preamp;
-    const set = Object.assign({}, outboardSetting(opts.label), opts.setting || {});
+    const voice = NAM_VOICE[arch.kind] || (arch.kind ? { label: arch.kind } : NAM_VOICE.preamp);
+    const set = Object.assign({}, outboardSetting(opts.label), opts.setting || {}, opts.program != null ? { program: opts.program } : {});
     const u = Math.max(1, Math.min(4, opts.u || arch.u || 1));
     const W = 600, H = u * RACK_U - 2, EAR = 26, title = opts.title || arch.short || arch.name || 'outboard';
     const holes = (u === 1 ? [H / 2] : [RACK_U * .27, H - RACK_U * .27]).flatMap(y => [[EAR / 2, y], [W - EAR / 2, y]])
@@ -1480,20 +1609,23 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
     const tsize = small ? 17 : Math.min(26, 13 + u * 4);
     const name = `<text x="${tx}" y="${small ? H / 2 + 2 : H * .4}" font-family="${FONT.nam}" font-size="${tsize}" font-weight="800" letter-spacing="1.6" fill="${L.ink}">${esc(String(title).toUpperCase().slice(0, 12))}</text>
   <text x="${tx}" y="${small ? H / 2 + 14 : H * .4 + 15}" font-family="${FONT.gfx}" font-size="8" font-weight="600" letter-spacing="1.6" fill="${L.sub}">${esc(String(arch.sub || voice.label).toUpperCase())}</text>
-  ${small ? '' : `<text x="${tx}" y="${H * .4 + 28}" font-family="${FONT.nam}" font-size="7" font-weight="700" letter-spacing="1.4" fill="${L.sub}" opacity=".8">NAM · ${esc(voice.label)}</text>`}`;
+  ${small ? '' : `<text x="${tx}" y="${H * .4 + 28}" font-family="${FONT.nam}" font-size="7" font-weight="700" letter-spacing="1.4" fill="${L.sub}" opacity=".8">${ir ? 'IMPULSE RESPONSE' : `NAM · ${esc(voice.label)}`}</text>`}`;
     // the controls, spread between the name block and the lamp
     const x0 = EAR + (small ? 128 : 150), x1 = W - EAR - 40;
-    const ctls = (arch.controls || []).filter(c => c.type !== 'badge' || (c.bind && set[c.bind] != null));
+    const ctls = irControls(arch, ir).filter(c => c.type !== 'badge' || (c.bind && set[c.bind] != null));
+    // an IR makes room for its program by dropping the fixed knobs from the right
+    for (let i = ctls.length - 1; ir && i >= 0 && ctls.reduce((a, c) => a + rackWidth(c, small, H), 0) > x1 - x0; i--)
+      if (!ctls[i].bind && FIXABLE.has(ctls[i].type)) ctls.splice(i, 1);
     const widths = ctls.map(c => rackWidth(c, small, H));
     const total = widths.reduce((a, b) => a + b, 0), gap = Math.max(0, (x1 - x0 - total) / Math.max(1, ctls.length));
     const scale = total > x1 - x0 ? (x1 - x0) / total : 1;
     let cx = x0 + gap / 2;
     const cy = small ? H / 2 - 3 : H / 2 - 4;
-    const body = ctls.map((c, i) => { const w = widths[i] * scale, x = cx + w / 2; cx += w + gap; return rackControl(c, x, cy, H, set, L, on, w + gap); }).join('');
+    const body = ctls.map((c, i) => { const w = widths[i] * scale, x = cx + w / 2; cx += w + gap; return rackFixed(c, rackControl(c, x, cy, H, set, L, on, w + gap), ir); }).join('');
     const lamp = `<circle cx="${W - EAR - 18}" cy="${H / 2}" r="6.4" fill="#26282b"/>
   <circle cx="${W - EAR - 18}" cy="${H / 2}" r="4.6" fill="${on ? L.lamp : mix(L.lamp, '#000', .7)}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
   <circle cx="${W - EAR - 18}" cy="${H / 2}" r="4.6" fill="url(#gp-jewel)"/>`;
-    return `<svg class="gp-rack gp-nam-rack${on ? ' is-on' : ''}" viewBox="-4 -4 ${W + 8} ${H + 10}" width="${opts.width || W + 8}" role="img" aria-label="NAM outboard — ${esc(title)}" data-archetype="${esc(arch.id || '')}" data-u="${u}">
+    return `<svg class="gp-rack gp-nam-rack${on ? ' is-on' : ''}" viewBox="-4 -4 ${W + 8} ${H + 10}" width="${opts.width || W + 8}" role="img" aria-label="${ir ? 'IR' : 'NAM'} outboard — ${esc(title)}" data-archetype="${esc(arch.id || '')}" data-u="${u}"${ir ? ' data-format="ir"' : ''}>
 <g filter="url(#gp-shadow-small)">
   <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="${L.panel}"/>
   <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="url(#${L.tex})" opacity="${L.tex === 'gp-brush-lines' ? .55 : .35}"/>
@@ -1501,26 +1633,29 @@ ${knobAlu(32, 140, 9, { min: 0, max: 1, default: .5 }, 'input')}${knobAlu(W - 32
   <path d="M${EAR} 2V${H - 2}M${W - EAR} 2V${H - 2}" stroke="#000" stroke-opacity=".35"/>
 </g>
 ${holes}${name}${body}${lamp}
-${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'preamp-nam', W - EAR - 18, small ? H / 2 - 16 : H / 2 - 20, 11, L.sub, 2)}
+${glyphAt(rackGlyph(arch.kind, ir), W - EAR - 18, small ? H / 2 - 16 : H / 2 - 20, 11, L.sub, 2)}${ir ? irBadge(W - EAR - 18, small ? H / 2 + 16 : H / 2 + 20, L) : ''}
 </svg>`;
   }
 
   // the same outboard unit at the pedal footprint (Designer, pedal mode): a 500-series-style vertical
-  // module, its controls in a narrow column. Same opts as namRack; the rack stays in the Library.
+  // module, its controls in a narrow column. Same opts as namRack (format 'ir' too: the program display
+  // comes first); the rack stays in the Library.
   function namModule(opts) {
     opts = opts || {};
     const on = opts.on !== false;
-    const arch = opts.archetype || archetypeFor('outboard', opts.label || opts.title) || RACK_GENERIC[opts.kind] || RACK_GENERIC.preamp;
+    const arch = rackArch(opts), ir = opts.format === 'ir';
     const L = RACK_LOOK[arch.look] || RACK_LOOK['console-60s'];
-    const voice = NAM_VOICE[arch.kind] || NAM_VOICE.preamp;
-    const set = Object.assign({}, outboardSetting(opts.label), opts.setting || {});
+    const voice = NAM_VOICE[arch.kind] || (arch.kind ? { label: arch.kind } : NAM_VOICE.preamp);
+    const set = Object.assign({}, outboardSetting(opts.label), opts.setting || {}, opts.program != null ? { program: opts.program } : {});
     const W = 112, H = 200, title = opts.title || arch.short || arch.name || 'outboard';
     const top = 42, bottom = H - 34;
     // rows: a wide control alone, small ones in pairs; bound controls first in priority
-    const ctls = (arch.controls || []).filter(c => c.type !== 'leds' && (c.type !== 'badge' || (c.bind && set[c.bind] != null)))
+    const ctls = irControls(arch, ir).filter(c => c.type !== 'leds' && (c.type !== 'badge' || (c.bind && set[c.bind] != null)))
       .map(c => c.type === 'buttons' && (c.values || []).length * 21 > W - 16 ? Object.assign({}, c, { type: 'stepped' }) : c);
-    const wide = c => c.type === 'stepped' || c.type === 'vu' || c.type === 'buttons' || c.size === 'big';
-    const rowH = r => r.wide ? (r.items[0].type === 'buttons' ? 34 : r.items[0].type === 'vu' ? 40 : 54) : 44;
+    const MOTIF = new Set(['spring', 'tape', 'bbd']);
+    const wide = c => c.type === 'stepped' || c.type === 'vu' || c.type === 'buttons' || c.type === 'program' || MOTIF.has(c.type) || c.size === 'big';
+    const rowH = r => { const t = r.items[0].type, sel = r.items[0].style === 'selector';
+      return !r.wide ? 44 : t === 'buttons' ? 34 : t === 'vu' || t === 'bbd' ? 40 : t === 'program' && !sel ? 36 : t === 'spring' ? 46 : t === 'tape' ? 58 : 54; };
     const layout = list => {
       const rows = [];
       list.forEach(c => {
@@ -1531,10 +1666,12 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
       return rows;
     };
     const height = rows => rows.reduce((a, r) => a + rowH(r), 0);
-    // the capture's own setting first, then the meter, then the rest, while the column has room;
-    // drawn in the unit's own order
+    // the program first, then the capture's own setting, then the meter or the unit's window, then the
+    // rest, while the column has room; drawn in the unit's own order
     const flat = ctls.map((c, i) => Object.assign({}, c, { size: undefined, _i: i }));
-    const prio = flat.filter(c => c.bind).concat(flat.filter(c => !c.bind && c.type === 'vu'), flat.filter(c => !c.bind && c.type !== 'vu'));
+    const show = c => c.type === 'vu' || MOTIF.has(c.type);
+    const prio = flat.filter(c => c.type === 'program').concat(flat.filter(c => c.bind && c.type !== 'program'),
+      flat.filter(c => !c.bind && show(c)), flat.filter(c => !c.bind && !show(c) && c.type !== 'program'));
     let chosen = [];
     prio.forEach(c => {
       const next = chosen.concat(c).sort((a, b) => a._i - b._i);
@@ -1547,13 +1684,13 @@ ${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'pream
     const body = rows.map(r => {
       const h = rowH(r), cy = y + h / 2 - 5;
       y += h + spare;
-      if (r.wide) return rackControl(r.items[0], W / 2, cy, h + 6, set, L, on, W - 12);
-      if (r.items.length === 1) return rackControl(r.items[0], W / 2, cy, h, set, L, on, W - 12);
-      return r.items.map((c, i) => rackControl(c, W * (i ? .73 : .27), cy, h, set, L, on, W / 2)).join('');
+      if (r.wide) return rackFixed(r.items[0], rackControl(r.items[0], W / 2, cy, h + 6, set, L, on, W - 12), ir);
+      if (r.items.length === 1) return rackFixed(r.items[0], rackControl(r.items[0], W / 2, cy, h, set, L, on, W - 12), ir);
+      return r.items.map((c, i) => rackFixed(c, rackControl(c, W * (i ? .73 : .27), cy, h, set, L, on, W / 2), ir)).join('');
     }).join('');
     const screws = [[W / 2, 7], [W / 2, H - 7]].map(([x, yy]) => `<rect x="${x - 7}" y="${yy - 3.4}" width="14" height="6.8" rx="3.4" fill="#0b0c0e"/><circle cx="${x}" cy="${yy}" r="2.5" fill="#9aa3ad"/><circle cx="${x - .5}" cy="${yy - .5}" r=".9" fill="#eef1f4"/>`).join('');
     const tsize = String(title).length > 7 ? 11 : 15;
-    return `<svg class="gp-pedal gp-nam-module${on ? ' is-on' : ''}" viewBox="-6 -4 ${W + 12} ${H + 16}" width="${opts.width || W + 12}" role="img" aria-label="NAM outboard — ${esc(title)}" data-archetype="${esc(arch.id || '')}">
+    return `<svg class="gp-pedal gp-nam-module${on ? ' is-on' : ''}" viewBox="-6 -4 ${W + 12} ${H + 16}" width="${opts.width || W + 12}" role="img" aria-label="${ir ? 'IR' : 'NAM'} outboard — ${esc(title)}" data-archetype="${esc(arch.id || '')}"${ir ? ' data-format="ir"' : ''}>
 <g filter="url(#gp-shadow)">
   <rect x="0" y="5" width="${W}" height="${H}" rx="3" fill="#0b0c0e"/>
   <rect x="0" y="0" width="${W}" height="${H}" rx="3" fill="${L.panel}"/>
@@ -1567,8 +1704,8 @@ ${body}
 <circle cx="${W / 2 - 18}" cy="${H - 18}" r="5" fill="#26282b"/>
 <circle cx="${W / 2 - 18}" cy="${H - 18}" r="3.6" fill="${on ? L.lamp : mix(L.lamp, '#000', .7)}"${on ? ' filter="url(#gp-glow-soft)"' : ''}/>
 <circle cx="${W / 2 - 18}" cy="${H - 18}" r="3.6" fill="url(#gp-jewel)"/>
-<text x="${W / 2 - 8}" y="${H - 15.5}" font-family="${FONT.nam}" font-size="6.4" font-weight="700" letter-spacing="1.2" fill="${L.sub}">NAM</text>
-${glyphAt(arch.kind === 'comp' ? 'comp-nam' : arch.kind === 'eq' ? 'eq' : 'preamp-nam', W / 2 + 26, H - 18, 10, L.sub, 2)}
+${ir ? irBadge(W / 2 + 3, H - 18, L) : `<text x="${W / 2 - 8}" y="${H - 15.5}" font-family="${FONT.nam}" font-size="6.4" font-weight="700" letter-spacing="1.2" fill="${L.sub}">NAM</text>`}
+${glyphAt(rackGlyph(arch.kind, ir), W / 2 + 26, H - 18, 10, L.sub, 2)}
 </svg>`;
   }
 

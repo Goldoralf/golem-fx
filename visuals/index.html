@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>golem pedals</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&family=Pirata+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&family=Pirata+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/visuals.css">
 <script src="data/visuals-data.js"></script>
 <script src="js/golem-pedals.js"></script>
@@ -64,6 +64,10 @@
     <h3>Outboard in the Designer (pedal footprint)</h3>
     <p class="note">The same units as 500-series-style modules (<code>namModule</code>), at a pedal's size, for the Designer's pedal mode: the capture's own setting first, then the meter and the other controls while the column has room.</p>
     <div class="grid" id="nam-modules"></div>
+    <h3>Outboard IR (ir-fx)</h3>
+    <p class="note">golem's IR Effect plays a captured unit's impulse response whole: spring tanks, tape and analog echoes, studio boxes. <code>format: 'ir'</code> draws the same units with an engraved IR mark, the knobs an IR cannot turn greyed, and the program the capture was taken on (<code>program</code>, or read from the label: "Spring Reverb 3", "delay 7") on the unit's display: a stepped selector, an LED readout or a lit LCD. Units without a display get an LED readout; unknown gear gets a generic digital reverb or echo. The last rack unit is off: its display goes dark. Click a module to switch it off.</p>
+    <div class="rack" id="ir-rack"></div>
+    <div class="grid" id="ir-modules"></div>
   </section>
 
   <section id="keys">
@@ -280,6 +284,19 @@
       const d = document.createElement('div'); d.className = 'rack-unit'; d.innerHTML = P.namRack(o); $('nam-rack').appendChild(d);
       const t = (o.archetype && o.archetype.name) || `generic ${o.kind}`;
       $('nam-modules').appendChild(card(on => P.namModule(Object.assign({}, o, { on })), P.blockByType(o.archetype && o.archetype.kind === 'comp' || o.kind === 'comp' ? 'comp-nam' : 'preamp-nam'), t, `outboard · ${(o.archetype && o.archetype.kind) || o.kind}`));
+    });
+
+  // outboard IR (ir-fx): the IR archetypes and generics, plus a studio preamp drawn as an IR
+  const outArch = id => (D.archetypes.outboard || []).find(a => a.id === id);
+  [{ label: 'Amp tank - Spring Reverb 3' }, { label: 'Tape Echo - delay 7' }, { label: 'Analog Echo - Echo 4' },
+    { kind: 'reverb', label: 'Digital rack Hall 3' }, { kind: 'echo', label: 'Studio unit', program: 'Delay 10' },
+    { archetype: outArch('1073'), label: '1073 tube pre - 2' }, { kind: 'reverb', label: 'Digital rack Plate 2', on: false }]
+    .forEach(o => {
+      o = Object.assign({ format: 'ir' }, o);
+      const d = document.createElement('div'); d.className = 'rack-unit'; d.innerHTML = P.namRack(o); $('ir-rack').appendChild(d);
+      if (o.on === false) return;
+      const a = P.namRack(o).match(/data-archetype="([^"]*)"/)[1];
+      $('ir-modules').appendChild(card(on => P.namModule(Object.assign({}, o, { on })), P.blockByType('ir-fx'), o.label, `ir-fx · ${a}`));
     });
 
   // keys: the built-in instruments, then one synth per style

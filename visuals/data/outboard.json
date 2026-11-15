@@ -1,5 +1,5 @@
 {
-  "_comment": "Outboard archetypes (19-inch rack units) for NAM captures of preamps, compressors and EQs. golem matches a capture's label to one by `match` and `aliases` (the longest keyword wins, as for amps and pedals); `kind` voices the unit (preamp, comp, eq); `look` is a period and a material, never a maker's livery; `u` is the height in rack units; `controls` are drawn left to right. A control with `bind` shows the capture's own setting, read from its label by GolemPedals.outboardSetting (gain in dB, hard, channel, ratio). Hand-written: tools/build-data.py copies it into visuals-data.js as archetypes.outboard.",
+  "_comment": "Outboard archetypes (19-inch rack units) for NAM captures of preamps, compressors and EQs. golem matches a capture's label to one by `match` and `aliases` (the longest keyword wins, as for amps and pedals); `kind` voices the unit (preamp, comp, eq); `look` is a period and a material, never a maker's livery; `u` is the height in rack units; `controls` are drawn left to right. A control with `bind` shows the capture's own setting, read from its label by GolemPedals.outboardSetting (gain in dB, hard, channel, ratio, program). The spring tank, the tape echo and the bucket-brigade echo are for golem's IR captures (ir-fx, drawn with format 'ir'): `program` is the unit's program display (style lcd, led or a stepped selector of `count` positions) showing the capture's program, `spring`, `tape` and `bbd` are the unit's window. Hand-written: tools/build-data.py copies it into visuals-data.js as archetypes.outboard.",
   "outboard": [
     {"id": "1073", "name": "1073 mic preamp / EQ", "short": "1073", "kind": "preamp", "sub": "mic pre · eq", "look": "console-60s", "u": 2,
      "match": "1073", "aliases": ["neve 1073", "bae 1073", "1073mp", "1073 mp", "1073dpa", "1084"],
@@ -91,6 +91,33 @@
        {"type": "vu", "label": "gr"},
        {"type": "knob", "label": "threshold", "size": "big", "cap": "black"},
        {"type": "badge", "bind": "channel", "label": "ch"}
+     ]},
+    {"id": "spring-tank", "name": "Spring reverb tank", "short": "SPRING", "kind": "reverb", "sub": "spring reverb", "look": "tolex-60s", "u": 2,
+     "match": "spring reverb", "aliases": ["spring tank", "reverb tank", "spring verb", "springverb", "springs", "6g15", "reverb unit", "accutronics", "4ab3c1b", "amp tank", "tank reverb"],
+     "controls": [
+       {"type": "knob", "label": "dwell", "cap": "cream"},
+       {"type": "spring", "label": "tank"},
+       {"type": "knob", "label": "tone", "cap": "cream"},
+       {"type": "knob", "label": "mix", "cap": "cream"},
+       {"type": "program", "style": "selector", "label": "spring", "count": 4, "default": "Spring 1"}
+     ]},
+    {"id": "tape-echo", "name": "70s tape echo", "short": "TAPE ECHO", "kind": "echo", "sub": "multi-head tape echo", "look": "cream-70s", "u": 3,
+     "match": "tape echo", "aliases": ["tape delay", "space echo", "re-201", "re201", "re-101", "re-150", "re-301", "echoplex", "ep-3", "ep3", "multi-head", "multihead", "tape loop"],
+     "controls": [
+       {"type": "tape", "label": "tape"},
+       {"type": "program", "style": "selector", "label": "mode", "count": 12, "default": "Mode 1"},
+       {"type": "knob", "label": "rate", "cap": "black"},
+       {"type": "knob", "label": "intensity", "cap": "black"},
+       {"type": "knob", "label": "volume", "cap": "black"}
+     ]},
+    {"id": "bbd-echo", "name": "Bucket-brigade analog echo", "short": "BBD ECHO", "kind": "echo", "sub": "analog echo", "look": "steel-70s", "u": 1,
+     "match": "analog echo", "aliases": ["analogue echo", "analog delay", "analogue delay", "bbd", "bucket brigade", "bucket-brigade", "memory man", "dm-2", "dm2", "mn3005", "mn3205", "mn3008"],
+     "controls": [
+       {"type": "bbd", "label": "bbd line"},
+       {"type": "knob", "label": "delay", "cap": "black"},
+       {"type": "knob", "label": "repeat", "cap": "black"},
+       {"type": "knob", "label": "blend", "cap": "black"},
+       {"type": "program", "style": "led", "label": "program", "default": "Echo 1"}
      ]}
   ]
 }
