@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -75,6 +75,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-stretch" | "stretch" => Some(Box::new(gfx_stretch::Stretch::new())),
         "gfx-grains" | "grains" => Some(Box::new(gfx_grains::Grains::new())),
         "gfx-sustainer" | "sustainer" => Some(Box::new(gfx_sustainer::Sustainer::new())),
+        "gfx-polysynth" | "polysynth" => Some(Box::new(gfx_polysynth::Polysynth::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -342,6 +343,24 @@ pub fn options(name: &str) -> checks::Options {
     if matches!(name, "gfx-sustainer" | "sustainer") {
         // README §5: defaults. `feed`, `trigger` and `carry` are gestures and rules, not levels
         o.skip_steps = vec!["feed", "trigger", "carry"];
+    }
+    if matches!(name, "gfx-polysynth" | "polysynth") {
+        // README §5: default step-click bound; silence floor −90 dBFS (the release tails of up to 4 s
+        // at `release` maximum are the effect itself, as gfx-delay's)
+        o.silence_floor_db = -90.0;
+        // the wet is the pedal's own waveforms (one per partial, or the voice's oscillators) and the
+        // dry is off at the defaults: nothing correlates with the input at a lag. README §5's latency
+        // row (0 reported, the dry's impulse at sample 0 at every `dry`) is the crate's own test; IIR
+        // banks and half-bands, no delay line
+        o.skip_latency = true;
+        // Steps that are the effect, not clicks (README As coded): `drive` 0 ↔ 100 % lifts the resonant
+        // synth over −6 dBFS on the way (the tanh's small-signal gain k_d / √k_d, gfx-autowah's law,
+        // README §2.5) and the ceiling (§2.1) soft-clips it, −34 dB re peak (−63 dB at `reso` 0);
+        // `cutoff` 40 Hz ↔ 12 kHz at 48 kHz sweeps the resonance across the synth's own top harmonics
+        // (9 – 10 kHz, under fcap 10.08 kHz, at the check's 10 kHz corner: −23 dB re peak when steady),
+        // −36 dB (−141 dB at `reso` 0, −90 dB at 44.1 kHz, ≤ −54 dB at 96 – 192 kHz). Every other step
+        // ≤ −50 dB
+        o.step_exempt = vec![("drive", 0.0), ("drive", 100.0), ("cutoff", 12000.0), ("cutoff", 40.0)];
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

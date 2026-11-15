@@ -1,0 +1,494 @@
+{
+ "crate": "gfx-polysynth",
+ "presets": [
+  {
+   "id": "chord-stab",
+   "type": "polysynth",
+   "name": "Synth chord stabs",
+   "desc": "Every string of a chord becomes a square wave through a plucky low-pass sweep; short, polyphonic, instant",
+   "inst": "guitar",
+   "genres": [
+    "rnb",
+    "pop"
+   ],
+   "subgenres": [
+    "synth-funk",
+    "synth-pop"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight",
+    "bright"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Pulse",
+    "pw": 50,
+    "amp_mode": "Gate",
+    "attack": 2,
+    "decay": 180,
+    "sustain": 0,
+    "release": 120,
+    "cutoff": 600,
+    "filt_env": 30,
+    "fenv_dec": 200,
+    "reso": 40
+   },
+   "notes": "Gate with sustain 0 makes each strum a stab; fast strumming stays on the fast bank (tight, a little gritty)"
+  },
+  {
+   "id": "square-pad",
+   "type": "polysynth",
+   "name": "Square pad",
+   "desc": "Held chords turned into soft square waves that swell in slowly and hold their level: a pad behind the band",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Pulse",
+    "pw": 50,
+    "bank": "Clean",
+    "attack": 600,
+    "release": 1500,
+    "compress": 80,
+    "cutoff": 1500,
+    "filt_env": 0,
+    "dry": -12
+   },
+   "notes": "Clean bank: the cleanest chords, its slow attack hidden by the 600 ms swell"
+  },
+  {
+   "id": "wide-saw-pad",
+   "type": "polysynth",
+   "name": "Wide saw pad",
+   "desc": "Chords as detuned saw waves spread left and right, swelling in and held: the classic string-machine pad",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "electronic"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "synthwave"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "wide",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Saw",
+    "bank": "Clean",
+    "detune": 12,
+    "spread": 100,
+    "attack": 600,
+    "release": 1500,
+    "compress": 80,
+    "cutoff": 1500,
+    "filt_env": 0,
+    "dry": -12
+   },
+   "notes": "Detune 12 cents makes the unison pair; spread places it left and right on a stereo lane"
+  },
+  {
+   "id": "brass-section",
+   "type": "polysynth",
+   "name": "Synth brass",
+   "desc": "Saw waves with a slow filter swell on every pick: a paraphonic synth-brass section from chords",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rnb"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Saw",
+    "attack": 30,
+    "filt_env": 36,
+    "fenv_att": 40,
+    "fenv_dec": 350,
+    "cutoff": 1200
+   },
+   "notes": "One filter envelope per pick (paraphonic): the 40 ms filter attack is the brass 'blat'"
+  },
+  {
+   "id": "organ-hold",
+   "type": "polysynth",
+   "name": "Organ chords",
+   "desc": "Square waves with a sub-octave on the low strings, every partial held at its body level: organ-like chords",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "progressive-rock",
+    "classic-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Pulse",
+    "pw": 50,
+    "compress": 100,
+    "amp_mode": "Gate",
+    "attack": 5,
+    "sustain": 100,
+    "release": 150,
+    "sub": 30,
+    "cutoff": 5000,
+    "reso": 0,
+    "filt_env": 0
+   },
+   "notes": "Hold 100 % keeps every partial at its body until the noise floor stops it: no decay, no hiss"
+  },
+  {
+   "id": "guitar-bass-synth",
+   "type": "polysynth",
+   "name": "Synth bass from guitar",
+   "desc": "One saw voice an octave below the note, a plucky filter and a short glide: a synth bass line from a guitar",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rnb"
+   ],
+   "subgenres": [
+    "synthwave",
+    "synth-funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Mono",
+    "wave": "Saw",
+    "octave": -1,
+    "cutoff": 400,
+    "filt_env": 24,
+    "fenv_dec": 250,
+    "glide": 30,
+    "reso": 30
+   },
+   "notes": "Mono: exact pitch with the octave guard; play single notes, a chord gives its lowest note"
+  },
+  {
+   "id": "bass-square-sub",
+   "type": "polysynth",
+   "name": "Bass square and sub",
+   "desc": "A bass guitar's notes as a square wave over a sub-octave square, low-passed: a fat synth bass",
+   "inst": "bass",
+   "genres": [
+    "electronic",
+    "rnb"
+   ],
+   "subgenres": [
+    "synthwave",
+    "funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "engine": "Mono",
+    "wave": "Pulse",
+    "pw": 50,
+    "lowest": 35,
+    "sub": 50,
+    "cutoff": 800,
+    "filt_env": 12
+   },
+   "notes": "Lowest 35 Hz opens the detector and the bank floor to a five-string's low B"
+  },
+  {
+   "id": "squelch-lead",
+   "type": "polysynth",
+   "name": "Squelchy lead",
+   "desc": "A resonant pulse lead whose filter jumps with the pick strength, gliding between notes and bending exactly",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "synthwave",
+    "progressive-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Mono",
+    "wave": "Pulse",
+    "pw": 50,
+    "reso": 70,
+    "filt_env": 30,
+    "fenv_vel": 80,
+    "glide": 60,
+    "quantize": "Off",
+    "residue": 0,
+    "cutoff": 900
+   },
+   "notes": "Residue 0: only the voice, a classic mono synth (the attack is silent until the note is read, 12 – 29 ms)"
+  },
+  {
+   "id": "robot-lead",
+   "type": "polysynth",
+   "name": "Stepped robot lead",
+   "desc": "A thin pulse lead locked to the nearest semitone: bends and vibrato step like a sequencer",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "pop"
+   ],
+   "subgenres": [
+    "electro",
+    "synth-pop"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Mono",
+    "wave": "Pulse",
+    "pw": 25,
+    "quantize": "Chromatic",
+    "cutoff": 2500,
+    "filt_env": 18
+   },
+   "notes": "Chromatic holds a note with hysteresis: a vibrato across a boundary does not trill"
+  },
+  {
+   "id": "bending-pad",
+   "type": "polysynth",
+   "name": "Bending chord pad",
+   "desc": "Detuned saw waves on every string that follow each string's bend: a pad that bends, chords included",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "post-rock",
+    "ambient-pop"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "wide"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "bank": "Dual",
+    "wave": "Saw",
+    "detune": 8,
+    "compress": 60,
+    "attack": 80,
+    "cutoff": 2500,
+    "filt_env": 6
+   },
+   "notes": "Dual sends a bending band back to the fast bank, so the bend is followed within 16 ms"
+  },
+  {
+   "id": "eight-bit",
+   "type": "polysynth",
+   "name": "8-bit fuzz synth",
+   "desc": "Square waves per partial on the fast bank, held flat and wide open: a chiptune fuzz-synth",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "chiptune",
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "bank": "Fast",
+    "wave": "Pulse",
+    "pw": 50,
+    "compress": 100,
+    "cutoff": 12000,
+    "reso": 0,
+    "filt_env": 0
+   },
+   "notes": "Fast bank: the tightest attack; chords turn gritty, which is the sound here"
+  },
+  {
+   "id": "layer-saw",
+   "type": "polysynth",
+   "name": "Guitar plus synth layer",
+   "desc": "The guitar untouched with a saw synth under it, 6 dB down: a doubled part from one take",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "subgenres": [
+    "synth-pop",
+    "new-wave"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Saw",
+    "dry": 0,
+    "synth": -6,
+    "cutoff": 3000
+   },
+   "notes": "The dry is sample-aligned and untouched: the synth sits under the guitar in time"
+  },
+  {
+   "id": "swell-strings",
+   "type": "polysynth",
+   "name": "Swelled strings",
+   "desc": "Saw waves that rise slowly under every note and follow the string's level: a bowed, violin-like swell",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "classical"
+   ],
+   "subgenres": [
+    "post-rock"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Saw",
+    "amp_mode": "Follow",
+    "attack": 300,
+    "cutoff": 2500,
+    "detune": 6,
+    "filt_env": 0
+   },
+   "notes": "Attack is the minimum rise in Follow: the pick disappears, the note swells in"
+  },
+  {
+   "id": "sweep-exp",
+   "type": "polysynth",
+   "name": "Expression filter sweep",
+   "desc": "A resonant synth whose cut-off is swept from the expression pedal, heel dark to toe bright",
+   "inst": "guitar",
+   "genres": [
+    "electronic",
+    "experimental"
+   ],
+   "subgenres": [
+    "space-music"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "engine": "Spectral",
+    "wave": "Saw",
+    "reso": 60,
+    "cutoff": 800,
+    "filt_env": 0
+   },
+   "notes": "Put the expression pedal on cutoff; the 7-bit steps are smoothed (golem contract)"
+  }
+ ]
+}

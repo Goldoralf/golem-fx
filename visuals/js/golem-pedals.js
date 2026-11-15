@@ -371,10 +371,14 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // rosewood: a dark, saturated wood (gfx-acoustic's review: ΔE 36 to the copper)
     'gfx-acoustic': '#552210',
     'gfx-radio': '#4b5320',
-    'gfx-stretch': '#a0a8ff' };
+    'gfx-stretch': '#a0a8ff',
+    // neon rose: the pink of an 80s synth's lettering, a light tint of the pitch family's magenta
+    // (gfx-polysynth's review: the draft's mint was ΔE*ab 27 from gfx-cab's teal; this rose is 42 – 44 from
+    // raspberry, periwinkle and the pitch magenta)
+    'gfx-polysynth': '#ff9ecf' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a', 'gfx-stretch': '#3040c8' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a', 'gfx-stretch': '#3040c8', 'gfx-polysynth': '#8a1060' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -405,14 +409,15 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-radio': 'grille',
     'gfx-stretch': 'chirp',
     'gfx-grains': 'grains',
-    'gfx-sustainer': 'modes' };
+    'gfx-sustainer': 'modes',
+    'gfx-polysynth': 'saws' };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash', 'gfx-polysynth': 'anodized' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -703,6 +708,31 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         lens(r0, r1, a, .3);
         lens(r0, rm, a, 1);
         lens(rm, r1, a, 1);
+        break;
+      }
+      case 'saws': {
+        // a chord turned into oscillators (gfx-polysynth). Either side of the cartouche, within the
+        // rune band, three sawtooth rows at cy − ch / 2, cy, cy + ch / 2 (amplitude ch / 6), periods
+        // 6 : 5 : 4 from bottom to top (a major triad: the higher note, the shorter period), each tooth a
+        // ramp then a vertical drop; opacity .45, .7, 1 from bottom to top. The left rows start with one
+        // sine cycle (the string) before the teeth; the right rows are teeth only
+        const l0 = 6, l1 = cx - cw / 2 - 6, r0 = cx + cw / 2 + 6, r1 = W - 6, a = ch / 6;
+        const rows = [[cy + ch / 2, 6, .45], [cy, 5, .7], [cy - ch / 2, 4, 1]];
+        const unit = Math.max(2, (l1 - l0) / 22);
+        rows.forEach(([y, k, op]) => {
+          const per = k * unit;
+          const teeth = (x0, x1, start) => {
+            let d = start;
+            for (let x = x0; x + per <= x1 + .01; x += per) d += `L${f1(x + per)} ${f1(y - a)}V${f1(y + a)}`;
+            return d;
+          };
+          // left: one sine cycle, then teeth from its end
+          let d = `M${f1(l0)} ${f1(y)}`;
+          for (let x = 0; x <= per + .01; x += 1) d += `L${f1(l0 + x)} ${f1(y - a * Math.sin(x / per * 2 * Math.PI))}`;
+          d += `L${f1(l0 + per)} ${f1(y + a)}`;
+          line(teeth(l0 + per, l1, d), op);
+          line(teeth(r0, r1, `M${f1(r0)} ${f1(y + a)}`), op);
+        });
         break;
       }
       case 'bins': {

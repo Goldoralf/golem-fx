@@ -2382,6 +2382,77 @@
           "trails"
         ]
       }
+    ],
+    "gfx-polysynth": [
+      {
+        "id": "oscillator",
+        "name": "Oscillator",
+        "custom": null,
+        "params": [
+          "pw",
+          "octave",
+          "sub",
+          "detune",
+          "noise"
+        ]
+      },
+      {
+        "id": "amp",
+        "name": "Amp",
+        "custom": null,
+        "params": [
+          "amp_mode",
+          "attack",
+          "decay",
+          "sustain",
+          "release",
+          "compress"
+        ]
+      },
+      {
+        "id": "filter",
+        "name": "Filter",
+        "custom": null,
+        "params": [
+          "type",
+          "poles",
+          "drive",
+          "key_track",
+          "fenv_att",
+          "fenv_dec",
+          "fenv_vel"
+        ]
+      },
+      {
+        "id": "engine",
+        "name": "Engine",
+        "custom": null,
+        "params": [
+          "bank",
+          "residue",
+          "glide",
+          "quantize"
+        ]
+      },
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "lowest",
+          "thresh"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "spread",
+          "bypass",
+          "trails"
+        ]
+      }
     ]
   },
   "help": {
@@ -2762,6 +2833,13 @@
     },
     "gfx-sustainer": {
       "mode": "Feedback: one harmonic blooms out of the note · Sustain: every partial held at its level · Both: the note held, its harmonic blooming on it"
+    },
+    "gfx-polysynth": {
+      "engine": "Spectral: every partial of the guitar turned into a waveform, polyphonic, instant, no tracking · Mono: one synth voice on the note, glide and exact bends, the attack bridged by Spectral",
+      "wave": "Saw · Pulse (50 % = square) · Triangle · Sine: the oscillators (Mono) and the waveform of every band (Spectral)",
+      "amp_mode": "Follow: the string's own level, flattened by Hold · Gate: an ADSR from every pick",
+      "bank": "Dual: fast bank on attacks, legato and bends, clean bank on held notes · Fast: tightest, chords gritty · Clean: cleanest chords, slow attack (pads)",
+      "quantize": "Off: bends and vibrato pass · Chromatic: the nearest semitone, held with hysteresis (Mono)"
     }
   },
   "depends": {
@@ -3137,6 +3215,36 @@
       "feed": {
         "param": "trigger",
         "equals": "Switch"
+      }
+    },
+    "gfx-polysynth": {
+      "pw": {
+        "param": "wave",
+        "equals": "Pulse"
+      },
+      "decay": {
+        "param": "amp_mode",
+        "equals": "Gate"
+      },
+      "sustain": {
+        "param": "amp_mode",
+        "equals": "Gate"
+      },
+      "residue": {
+        "param": "engine",
+        "equals": "Mono"
+      },
+      "glide": {
+        "param": "engine",
+        "equals": "Mono"
+      },
+      "quantize": {
+        "param": "engine",
+        "equals": "Mono"
+      },
+      "key_track": {
+        "param": "engine",
+        "equals": "Mono"
       }
     }
   }

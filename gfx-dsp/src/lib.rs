@@ -64,6 +64,7 @@ pub mod tape;
 pub mod transient;
 pub mod transport;
 pub mod util;
+pub mod vcf;
 pub mod vibe;
 pub mod wah;
 pub mod zoom;

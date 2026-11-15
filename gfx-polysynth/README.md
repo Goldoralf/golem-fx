@@ -1,11 +1,21 @@
 # gfx-polysynth
 
-> **Status: DESIGNED** (2026-11-14). Design only, no code. Design by Claude Opus 5.5, reviewed by Claude
-> Fable 5.2 on 2026-11-14 (see the Review at the end): **v1 is Spectral + Mono; Poly is held back** as a
-> research engine until it passes its bench. It brings one new gfx-dsp module (`vcf`, the synth filter,
-> extracted from gfx-autowah under a null test), extends the planned `filterbank` with a **harmonic
-> shaper** per band, and is the third user of `track` and `multipitch` (gfx-sustainer's design) and the
-> second of `osc` (gfx-vocoder's design).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed by Claude Opus 5.5, reviewed by Claude Fable 5.2 on
+> 2026-11-14 (Review section), coded as reviewed with the deviations listed in "As coded". **v1 = Spectral +
+> Mono** (`engine` declares those two only; Poly is held back). The Spectral core runs two explicit
+> gfx-dsp `filterbank` lists (61 clean bands, order 4, ⅓ ERB; 41 fast bands, order 2, ½ ERB; 2 kHz down to
+> 24 Hz) at 22.05 – 24 kHz at every host rate, one band per partial (level selection, design rotations,
+> skirt gain), a harmonic shaper with complex waveform coefficients, a purity gate, the per-band hold and
+> floor, and the event-driven fast → clean handover; Mono adds one tracked voice (gfx-dsp `osc`, `track`,
+> `detect`, `onset`, `multipitch` with 6 notes) bridged by the core on the attack. New in gfx-dsp: `vcf`
+> (gfx-autowah's filter path, bit-identical to it), `osc::pulse_width` / `triangle`, `filterbank::band_gain`
+> / `crossover` / `design_rotation`. Zero latency. Measured on synthetic strings: harmonics within 0.04 dB
+> (clean) and 0.8 dB (fast) of the waveform as a sine crosses the bands (the drafted shaper: 5 – 26 dB);
+> chords −33 … −46 dB of off-harmonic energy on the clean bank and in Dual's body (a full-band fuzz: −17 …
+> −24 dB); Dual follows a vibrato with 14 – 16 ms of lag at 91 – 97 % depth and a hammer-on in 14 ms; Mono's
+> voice within 2.8 – 4.0 ¢ RMS of bends and vibrato, no gap over 2.7 dB at the take-over; bench 28 / 28 at
+> 44.1 – 192 kHz; CPU 1.49 – 1.62 µs per sample on the bench's pink noise (7.1 – 7.8 % of a core, budget
+> 8 %; a shared machine), 4.9 – 6.7 % on strums. The DI rows of §5 wait for Raph's recordings.
 
 golem's **polyphonic guitar synthesizer**, from a normal guitar or bass DI (no hex pickup, no MIDI).
 Each note of a chord becomes a synth tone: a band-limited waveform, a resonant filter with its own
@@ -821,3 +831,130 @@ modulation pedals after it do that job; a `cutoff` LFO is the first thing to add
 | gfx-autowah on `vcf`: only if bit-identical; otherwise it keeps its code | golem-fx |
 | Defaults by ear (question 7); `residue` default 100 % in Mono (a chord's other notes stay on the core) or 0 % (a classic mono synth) | Raph's ear |
 | Catalogue entry `polysynth` (category `pitch`), block presets, `faces.json`, glyph, motif `saws`, hue `#ff9ecf` on the family sheet next to raspberry and the pitch magenta; note output to `vital` (question 4) | golem-rack |
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `vcf.rs` (new): `Vcf` (drive → SVF × 1 / × 2, Low-pass · Band-pass · High-pass, gfx-autowah's
+  operation order and types), `VcfType`, `q_of`. 2 unit tests, one of them the null against a copy of
+  gfx-autowah's inline path (every type × poles, drive 0 / 9 / 24 dB, swept and held cut-off, 44.1 and
+  96 kHz: bit-identical). gfx-autowah itself is untouched (its move onto `vcf` stays its own null-guarded
+  change).
+- gfx-dsp `osc.rs` (added only): `pulse_width` (any width, mean removed), `poly_blamp`, `triangle`. gfx-dsp
+  `filterbank.rs` (added only): `band_gain`, `crossover`, `design_rotation`. One unit test each file.
+- `src/spectral.rs`: the core (banks, analysis tick, selection, skirt, shaper, purity, octave / sub / detune
+  / noise, hold and floor, handover with its events and snap, ownership mask, the bridge's measures).
+  `src/lib.rs`: the processor (`Polysynth`, `PARAMS`, labels), detection, Mono's voices and bridge,
+  envelopes, the drive stage, `vcf` with structural crossfades, the ceiling, bypass. `src/plugin.rs`: the
+  VST3, class id `GoleMFxPolysyn01`, "GoleM FX Polysynth", mono 1 / 1 first then 2 / 2, latency 0, `bypass`
+  = `make_bypass`, read-only meters `state` and `note`. `src/tests.rs`: 17 behaviour tests (§5) + the fast
+  math's test in spectral.rs + `cpu_report` (ignored).
+- gfx-bench: `EFFECTS`, `make()`, `options()`: silence floor −90 dBFS (§5); latency check skipped (the wet is
+  the pedal's own waveforms, uncorrelated with the input; the dry-impulse row is the crate's test); `drive`
+  and `cutoff` steps exempt from the step check (below).
+- `presets/gfx-polysynth.json`: the 14 preset ideas of §4 (defaults: `chord-stab` guitar, `bass-square-sub`
+  bass). Visuals: face "Synth" (cutoff, reso, filt_env, synth, dry; engine, wave), groups, help, depends,
+  glyph `polysynth`, motif `saws`, crate hue `#ff9ecf`, rune light `#8a1060`, anodized.
+
+**Null proof.** gfx-dsp's existing code is unchanged (additions only). gfx-vocoder (default, Drone saw,
+supersaw stereo), gfx-sustainer (default, Sustain + All), gfx-ringmod (default, Track) and gfx-autowah
+(default, band-pass + drive + 4 poles) rendered on a synthetic guitar file with the base and the new
+gfx-bench: byte-identical WAVs; their tests stay green (16 / 23 / 23).
+
+**Measured** (48 kHz, synthetic strings as §1.3; `plain` = the filter open and still, Follow without rise,
+`compress` 0, unless stated).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Latency | 0; the dry's impulse at sample 0 | 0 reported; the dry at sample 0 at `dry` 0 / −12 / −40 dB, both engines |
+| Band design | lag within 5 % of N / (π B) and of §2.2 | clean 63.6 ms (81, 321 Hz), 29.1 ms (1 kHz), 15.8 ms (2 kHz); fast 15.9 / 9.5 / 5.3 ms; the same bands (bank rate 22.05 / 24 kHz) at 44.1 – 192 kHz; 61 clean bands (60 from 40 Hz) and 41 fast (40) |
+| Timbre against pitch | every harmonic within ±1 dB of c_n (drafted: 5 – 26 dB) | Saw, a sine stepped over an octave from 82, 220, 660 Hz: clean ≤ 0.04 dB, fast ≤ 0.76 dB (swing ≤ 0.89 dB, at 82 Hz); `wave` Sine flat −0.04 … 0 dB from 82 Hz to 1.3 kHz |
+| Chord cleanliness (Pulse 50 %) | Clean and Dual: E5 / open E / open C / Am barre ≤ −30, E4 + G♯4 ≤ −40, E2 + G♯2 ≤ −20 dB; ≥ 8 dB under the fuzz | clean / Dual (two seeds): E5 −45.5 … −46.4; open E −32.9 … −33.6; open C −34.9 … −36.3; Am −42.2 … −45.1; E4 + G♯4 −46.0 … −46.4; E2 + G♯2 −20.0 … −20.4 (at the bound). Fuzz −17.0 … −23.6. Fast −19.6 … −28.1 (not worse than the fuzz) |
+| Attack | ≥ −3 dB of the body at 20 ms, no swell over +3 dB | A2 … E5: −2.6 … +0.6 dB (Dual and Fast), swells ≤ +2.2 dB. **E2: −3.7 dB (Fast), −4.1 dB (Dual)** (10 ms RMS centred at 20 ms; an order-2 band 40 Hz wide is at −2.9 dB 20 ms after a step) |
+| Handover (Dual) | no dip over 1.5 dB in 0 – 200 ms | E2 1.32, A2 0.05, E4 0.33, E5 0.76 dB; E3 / B3 none |
+| Legato (Dual) | new note within 3 dB ≤ 30 ms | E4 → A4 without a pick: 13.9 ms (Fast 11.5, Clean 69.3) |
+| Vibrato (Dual) | ≤ 20 ms lag, ≥ 85 % depth; others stay clean | E4 13.9 ms / 97 %, A2 15.7 ms / 91 % (Clean 47 – 56 ms); A2 + E3 + C4 with C4 in vibrato: the other strings' bands at x = 1 throughout |
+| Purity | shaped ≤ unshaped + 3 dB | two partials 60 Hz apart in one fast band (1.85 / 1.91 kHz): Saw −23.1, Pulse −23.3, unshaped −23.4 dB. Reported: the same pair at 1 kHz falls in two fast bands (each holds the other 13 dB down, purity ≈ 0.55): Saw −15.6, Pulse −19.5, unshaped −33.0 dB |
+| Aliasing | nothing above −70 dBc folds under 8 kHz | Saw, `octave` 0 and +2, notes at 1.0 / 1.5 / 1.9 kHz and a pair 40 Hz apart at 1.9 kHz: worst −74.2 dBc (window skirts; no fold found) |
+| Hold | `compress` 100 %: partials within 1.5 dB while 10 dB over `thresh` | E2 T60 3 s, partials 1 – 4: within 0.15 dB until the +30 dB cap or the floor; −80 dBFS noise under `thresh`: synth silent (−240 dBFS) |
+| Level bound | never over 0 dBFS; the ceiling transparent under −6 dBFS | −6 dBFS chord, `compress` 100, `reso` 100 swept, `detune` 20, `drive` 50, `synth` +12: peak 0.00 dBFS; bit-transparent under 0.5 |
+| No octave errors (Mono) | never the octave or the 12th | E2 / A2 / D3 / E4: voice after 25 / 22 / 22 / 11 ms, within 13.5 / 8.7 / 7.0 / 1.7 ¢ of the note from its first sample |
+| Bridge (Mono) | no gap > 3 dB, no step > 1.5 dB; owned bands ≤ −30 dB; `residue` 0 silent until the reading | E4: gap 0.12, step 0.60 dB; A2: gap 2.65, step 1.09 dB; owned core bands at −240 dB; `residue` 0: exactly 0 before the voice |
+| Bends (Mono) | ≤ 10 ¢ RMS; ≤ 3 ¢ 50 ms after | 200 ¢ in 150 ms: 2.8 ¢ RMS, ≤ 0.77 ¢ after; ±30 ¢ 6 Hz: 3.9 – 4.0 ¢ RMS (E4, G3) |
+| Note end (Mono) | release ≤ 60 ms after a mute, no chirp | 49 ms; frequency held within 0.000 ¢ |
+| Chords (Mono) | the lowest note, ≤ 400 ms | E5 power chord: E2 (+0 ¢) after 171 ms |
+| Engine switch, structural changes | no click | engine, wave, octave, bank, type, poles, amp_mode under a held note: worst −59 dB (step measure) |
+| Determinism | strict null; L = R at `spread` 0 | bit-identical renders, both engines; L = R = mono at `spread` 0, L ≠ R at 100 % |
+| CPU | ≤ 8 % of a core worst case | bench line (pink noise: every band busy, Dual, defaults) 1,487 – 1,621 ns per sample mono (7.1 – 7.8 %), 1,528 – 1,673 ns stereo; strummed open E: Spectral 1,016 – 1,076 ns (4.9 – 5.2 %), with detune / sub / noise 1,133 – 1,201 ns (5.4 – 5.8 %), Mono 1,142 – 1,209 ns (5.5 – 5.8 %), Mono + detune 1,286 – 1,394 ns (6.2 – 6.7 %); the bank rate is fixed, so 96 / 192 kHz cost the same core plus the half-band cascade. Measured on a shared machine (load average 4 – 6): ±10 % |
+
+Not run: the DI rows (lead-clean.wav, funk.wav, strums, a bass DI), the EXP sideband row (the EXP
+parameters run on `exp_smooth`, tested there), the listening row, Poly's rows.
+
+**Deviations from the design, and why.**
+- **Skirt clamp ±1.2 half-spacings**, the review prototype's own (`lib.py`: ±0.6 of the spacing); §2.2's "±0.6
+  of the half-spacing (at most +5 dB)" leaves a 7 dB dip at each clean crossover. At most +13.8 dB (clean).
+- **Handover events**: new energy at **6 dB** (not 3) and only while the clean band rises (1 dB over its
+  own 5 ms mean); pitch motion asks a pure fast band (w > 0.9) on a clean local maximum, reads the fast
+  band's frequency through a further 15 ms, and once started is **held while the banks stay 6 ¢ apart**
+  (40 ms of agreement ends it). As specified, the open E's 40 Hz-wide fast bands (a neighbour partial
+  13 dB down wobbles their frequency ±10 – 20 ¢) put chord bands on the fast bank for good (Dual −17.6 dB on
+  the E5 against −46.3 clean), and the A2 vibrato let the clean bank back between crossings (91 % / 15.7 ms
+  now, 84 % / 23 ms before, with chirps at each crossfade).
+- **The crossfade snap** (§2.2's fallback) is used: at the start of a band's fade-in its phasor is turned
+  onto the fast band's (only from a pure one), and **held** instead of relaxed at 5 ¢: the relaxation
+  shifted each band by up to 5 ¢ for seconds, independently, and cost 1 – 12 dB of chord cleanliness. Without
+  the snap, E2's crossfade dipped 1.8 dB (bound 1.5).
+- **Hold**: P_b is the peak since the last pick, held, and a pick lets it go to the band's level (§2.2's
+  "release 3 s" lost 6.7 dB in 2 s of a T60 3 s E2, the Hold row allows 1.5).
+- **Grid**: both grids hang from 2 kHz downwards to 24 Hz; a band under 0.8 × `lowest` is faded out (20 ms):
+  `lowest` never redesigns a bank, so no bank crossfade is needed. The lowest band is the first grid centre
+  at or above 0.8 × `lowest` (within ⅓ ERB of it).
+- **Control rate** 16 bank samples (0.67 ms) with deterministic fast log₂ / 2^x / atan2 (≤ 2e-6, 1e-7,
+  1.2e-5 rad): CPU. The frequency estimate is the rotation over the tick, demodulated by the centre (§2.6).
+- **Detune**: the copy's rotor advances by δ × the band's smoothed frequency, not by arg(u_t ū_(t−1)) per
+  sample (no atan2 per band per sample); the copy fades in over the first 2 ¢.
+- **`octave` −1 / −2** take the branch-tracked √u (⁴√u) on **every** band, not only under 400 Hz (a note
+  above 400 Hz would be silent). `sub` stays under 400 Hz.
+- **`noise`**: each sounding band's phasor times a complex one-pole band of noise (corner max(B, f / 4)), not
+  a separate noise bank.
+- **Mono's voice**: the tracker engages with **Snap** (the voice runs its own oscillator at the tracker's
+  frequency, smoothed by two 3 ms one-poles: the loop's increment jitters ±10 – 80 ¢ sample to sample on a
+  D3); Keep left the voice 5 ¢ off for half a second after each note (bend row: 5 ¢ against 3). The
+  oscillator starts on the core band's phase but is not relaxed onto the string's (inaudible, the frequency
+  is locked).
+- **Bridge level**: the core bands' power from their envelopes (½ amp², attack 2 / release 20 ms); the voice
+  follows that level for max(20 ms, 3 periods), then k is frozen and Follow tracks the string (a 10 ms mean
+  of y² lagged the attack by 3 dB; a peak follower on y² overshot by 2 dB).
+- **Mono's start**: two clear YIN readings within 50 ¢ (the octave guard extended to the first reading); a
+  chord: `multipitch`'s lowest confirmed note, YIN's reading after 400 ms. A pick releases the voice
+  (frequency held) and the core plays the new attack. One YIN detector, 30 – 1,500 Hz (`set_range` to
+  `lowest`), not gfx-tuner's long window under 60 Hz; the 40 ms octave guard is in the crate.
+  `multipitch` is prepared for 6 notes; only the lowest is used.
+- **Note end**: under `thresh`, or 24 dB under the last 60 ms maximum (after the pick's first 80 ms), or the
+  tracker's level under `thresh` − 6 dB.
+- **`drive`** runs in the crate ahead of `vcf` (called with 0 dB) so that it can fade in over its first
+  3 dB, the input moved to the ADAA's half-sample timing as it does: gfx-autowah's switch at 0 dB stepped by
+  8 %.
+- **gfx-bench step exemptions** (the effect, not clicks): `drive` 0 ↔ 100 % (on the way the tanh's
+  small-signal gain k_d / √k_d lifts the resonant synth over −6 dBFS and the ceiling soft-clips it: −34 dB of
+  HF re peak, −63 dB at `reso` 0) and `cutoff` 40 Hz ↔ 12 kHz at 48 kHz (the resonance sweeps across the
+  synth's own 9 – 10 kHz harmonics, which sit at the check's 10 kHz corner: −36 dB; −90 dB at 44.1 kHz,
+  ≤ −54 dB at 96 – 192 kHz, −141 dB at `reso` 0). Every other step ≤ −50 dB.
+- **`fenv_att`** is taken when the envelope is triggered (a change mid-attack jumped the cut-off: −23 dB of
+  HF at the step check).
+- **Spectral, `amp_mode` Follow**: `release` has no effect (the core holds no tail of its own); it acts in
+  Gate (both engines) and on Mono's voice. Gate in Spectral is held while the input is over `thresh` and
+  not muted; a note that rises without a pick (a swell) triggers it.
+- **Attack row, E2**: −3.7 dB (Fast) / −4.1 dB (Dual) at 20 ms against the bound's −3 (an order-2, 40 Hz band
+  is itself at −2.9 dB 20 ms after a step); A2 and above pass.
+- **Purity row**: held in one band; two partials in neighbouring fast bands are shaped almost fully
+  (w ≈ 0.55 at 0.25 B). A gate at 0.1 B passes that case (−26.7 dB) but costs 2.6 dB of timbre swing on
+  low single notes in Fast; the constant is one of question 7's "defaults by ear".
+- **Ceiling**: the ADAA quotient is clamped to ±1 (rounding reached 1 + 5e-14).
+
+**Left for the owner.** The DI rows (neck and bridge pickups, a real pick, a bass DI) before any threshold
+is frozen; by ear (question 7): `compress` 40 %, `cutoff` 3 kHz, `filt_env` +24 st, the purity gate's
+0.25 B, the handover's 3.5 τ → 7.5 τ and its event thresholds (6 dB, 15 / 6 ¢), the selection's 6 dB and
+3 / 50 ms, f̂'s 10 ms; `residue` 100 % or 0 % in Mono; the CPU (the dearest non-circuit pedal of the suite);
+gfx-autowah's move onto `vcf` (its null); golem-rack's catalogue entry `polysynth` (category `pitch`), the
+glyph and the hue on the family sheet.
