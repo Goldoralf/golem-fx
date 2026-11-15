@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-transient"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -59,6 +59,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-bassdi" | "bassdi" => Some(Box::new(gfx_bassdi::BassDi::new())),
         "gfx-tape" | "tape" => Some(Box::new(gfx_tape::Tape::new())),
         "gfx-grit" | "grit" => Some(Box::new(gfx_grit::Grit::new())),
+        "gfx-transient" | "transient" => Some(Box::new(gfx_transient::Transient::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -136,6 +137,10 @@ pub fn options(name: &str) -> checks::Options {
         // `lookahead` changes the reported latency (setup only, README §2.6); `fire` is a trigger, not a
         // level change (README §5)
         o.skip_steps = vec!["lookahead", "fire"];
+    }
+    if matches!(name, "gfx-transient" | "transient") {
+        // `lookahead` changes the reported latency (setup only, README §2.6 and §5)
+        o.skip_steps = vec!["lookahead"];
     }
     if matches!(name, "gfx-ringmod" | "ringmod") {
         // a ring modulator's wet does not correlate with its input; the minimum-phase oversamplers add a

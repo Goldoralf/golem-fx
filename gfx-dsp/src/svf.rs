@@ -234,6 +234,44 @@ pub fn measure_gain_db(mut f: impl FnMut(f32) -> f32, freq: f32, sample_rate: f3
     (10.0 * (e_out.max(1e-30) / e_in.max(1e-30)).log10()) as f32
 }
 
+/// tan(x) for 0 ≤ x ≤ 0.45 π (a cut-off up to 0.45 fs), as the [7/6] continued fraction (Lentz):
+/// relative error < 1e-5 over that range, no libm call. For cut-offs that move every sample.
+#[inline]
+pub fn tan_fast(x: f64) -> f64 {
+    let x2 = x * x;
+    x * (135135.0 + x2 * (-17325.0 + x2 * (378.0 - x2))) / (135135.0 + x2 * (-62370.0 + x2 * (3150.0 - 28.0 * x2)))
+}
+
+/// TPT (trapezoidal) one-pole whose cut-off may change every sample (Zavalishin ch. 3): stable under
+/// audio-rate modulation. One state, f64. Gives the low-pass; the high-pass is x − low-pass.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct OnePoleTpt {
+    s: f64,
+}
+
+impl OnePoleTpt {
+    /// The per-sample coefficient G = g / (1 + g), g = tan(π f / fs), f clamped to 0.45 fs.
+    #[inline]
+    pub fn coef(freq: f64, sample_rate: f64) -> f64 {
+        let f = freq.clamp(0.0, 0.45 * sample_rate);
+        let g = tan_fast(std::f64::consts::PI * f / sample_rate);
+        g / (1.0 + g)
+    }
+
+    pub fn reset(&mut self) {
+        self.s = 0.0;
+    }
+
+    /// One sample with coefficient `big_g` (from [`OnePoleTpt::coef`]); returns the low-pass.
+    #[inline]
+    pub fn low(&mut self, x: f64, big_g: f64) -> f64 {
+        let v = (x - self.s) * big_g;
+        let lp = v + self.s;
+        self.s = lp + v;
+        lp
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -289,5 +327,40 @@ mod tests {
     #[test]
     fn bandpass_unity_at_centre() {
         assert!(gain(SvfMode::BandPass, 800.0, 4.0, 0.0, 800.0).abs() < 0.05);
+    }
+
+    #[test]
+    fn tan_fast_matches_tan() {
+        let mut worst = 0.0f64;
+        for i in 1..=1000 {
+            let x = 0.45 * PI * i as f64 / 1000.0;
+            worst = worst.max((tan_fast(x) / x.tan() - 1.0).abs());
+        }
+        assert!(worst < 1e-5, "{worst}");
+    }
+
+    #[test]
+    fn one_pole_tpt_is_prewarped_and_survives_modulation() {
+        // −3 dB at the cut-off, both outputs
+        let g = OnePoleTpt::coef(1000.0, SR as f64);
+        let mut f = OnePoleTpt::default();
+        let lp = measure_gain_db(|x| f.low(x as f64, g) as f32, 1000.0, SR);
+        let mut f = OnePoleTpt::default();
+        let hp = measure_gain_db(|x| (x as f64 - f.low(x as f64, g)) as f32, 1000.0, SR);
+        assert!((lp + 3.01).abs() < 0.05 && (hp + 3.01).abs() < 0.05, "{lp} {hp}");
+        // random per-sample cut-offs from 10 Hz to 0.45 fs: bounded
+        let mut f = OnePoleTpt::default();
+        let mut r = 12345u64;
+        let mut m = 0.0f64;
+        for _ in 0..200_000 {
+            r = r.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            let u = (r >> 11) as f64 / (1u64 << 53) as f64;
+            let x = if (r >> 7) & 1 == 0 { 1.0 } else { -1.0 };
+            let y = f.low(x, OnePoleTpt::coef(10.0 * 2160f64.powf(u), SR as f64));
+            m = m.max(y.abs());
+        }
+        // (the low-pass is a convex mix of the input and the state; the state stays within
+        // tan(0.45 π) = 6.3 of a unit input)
+        assert!(m <= 6.32, "{m}");
     }
 }

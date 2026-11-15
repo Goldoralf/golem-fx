@@ -278,6 +278,7 @@ dependencies = [
  "gfx-shimmer",
  "gfx-swell",
  "gfx-tape",
+ "gfx-transient",
  "gfx-tremolo",
  "gfx-vibrato",
  "gfx-wah",
@@ -550,6 +551,15 @@ dependencies = [
  "gfx-dsp",
  "nih_plug",
  "realfft",
+]
+
+[[package]]
+name = "gfx-transient"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "gfx-limiter",
+ "nih_plug",
 ]
 
 [[package]]

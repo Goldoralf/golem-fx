@@ -796,6 +796,29 @@
       {"id": "hi_bypass", "name": "High Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "slope", "name": "Crossover Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-transient": [
+      {"id": "attack", "name": "Attack", "kind": "float", "min": -24, "max": 24, "default": 0, "exp": true},
+      {"id": "sustain", "name": "Sustain", "kind": "float", "min": -24, "max": 24, "default": 0, "exp": true},
+      {"id": "att_time", "name": "Attack Length", "kind": "float", "min": 1, "max": 100, "default": 15},
+      {"id": "sus_time", "name": "Sustain Length", "kind": "float", "min": 20, "max": 3000, "default": 300},
+      {"id": "att_band", "name": "Attack Band", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "ceil_mode", "name": "Ceiling", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "sens", "name": "Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "smooth", "name": "Smooth", "kind": "float", "min": 0.05, "max": 5, "default": 0.5},
+      {"id": "att_freq", "name": "Attack Band Freq", "kind": "float", "min": 200, "max": 8000, "default": 1500},
+      {"id": "sc_hpf", "name": "Sidechain Low Cut", "kind": "float", "min": 0, "max": 2000, "default": 0},
+      {"id": "sc_lpf", "name": "Sidechain High Cut", "kind": "float", "min": 500, "max": 22000, "default": 22000},
+      {"id": "thresh", "name": "Noise Floor", "kind": "float", "min": -96, "max": -30, "default": -66},
+      {"id": "source", "name": "Detector Source", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "link", "name": "Stereo Link", "kind": "float", "min": 0, "max": 100, "default": 100},
+      {"id": "lookahead", "name": "Lookahead", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "ceiling", "name": "Ceiling Level", "kind": "float", "min": -24, "max": 0, "default": 0},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "level", "name": "Level", "kind": "float", "min": -24, "max": 12, "default": 0, "exp": true},
+      {"id": "listen", "name": "Listen", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "delta", "name": "Delta", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }
