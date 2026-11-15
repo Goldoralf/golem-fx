@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 44,
+ "catalog_version": 46,
  "effects": [
   {
    "type": "gate",
@@ -2908,6 +2908,80 @@
      "max": 16000,
      "default": 6000,
      "unit": "Hz"
+    }
+   ]
+  },
+  {
+   "type": "glitch",
+   "name": "Glitch",
+   "short": "Glitch",
+   "category": "modulation",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Glitch (GoleM)",
+   "color": "#72c000",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "fx_a",
+     "name": "Effect",
+     "min": null,
+     "max": null,
+     "default": "Ring Hold",
+     "unit": null
+    },
+    {
+     "id": "amt_a",
+     "name": "Amount",
+     "min": 0,
+     "max": 100,
+     "default": 40,
+     "unit": "%"
+    },
+    {
+     "id": "sustain",
+     "name": "Sustain",
+     "min": 0,
+     "max": 10000,
+     "default": 0,
+     "unit": "ms"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 35,
+     "unit": "%"
+    }
+   ]
+  },
+  {
+   "type": "ir-fx",
+   "name": "IR Effect",
+   "short": "IR FX",
+   "category": "reverb",
+   "engine": "plugin",
+   "plugin": "x42 - IR Convolver Stereo",
+   "color": "#3d9be9",
+   "glyph": "◨",
+   "icon": "◰",
+   "params": [
+    {
+     "id": "wet",
+     "name": "Wet Signal Level",
+     "min": -30,
+     "max": 6,
+     "default": -6,
+     "unit": "dB"
+    },
+    {
+     "id": "dry",
+     "name": "Dry Signal Level",
+     "min": -60,
+     "max": 6,
+     "default": 0,
+     "unit": "dB"
     }
    ]
   },
