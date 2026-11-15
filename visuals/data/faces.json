@@ -635,6 +635,23 @@
     "ceil_mode"
    ],
    "category": "dynamics"
+  },
+  "gfx-mbcomp": {
+   "name": "Bands",
+   "blocks": [
+    "mb-comp"
+   ],
+   "knobs": [
+    "amount",
+    "tilt",
+    "time",
+    "mix",
+    "level"
+   ],
+   "selectors": [
+    "character"
+   ],
+   "category": "dynamics"
   }
  }
 }

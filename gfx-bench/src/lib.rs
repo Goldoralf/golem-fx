@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -61,6 +61,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-grit" | "grit" => Some(Box::new(gfx_grit::Grit::new())),
         "gfx-dist" | "dist" => Some(Box::new(gfx_dist::Dist::new())),
         "gfx-transient" | "transient" => Some(Box::new(gfx_transient::Transient::new())),
+        "gfx-mbcomp" | "mbcomp" => Some(Box::new(gfx_mbcomp::MbComp::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -229,6 +230,14 @@ pub fn options(name: &str) -> checks::Options {
         // between the glide and the steady state (−59 dB for 1000 → 100 Hz): the effect, not a click
         // (gfx-dist README, As coded). Every other step stays below −36 dB.
         o.click_bound_db = -30.0;
+    }
+    if matches!(name, "gfx-mbcomp" | "mbcomp") {
+        // Minimum phase: the crossovers' all-pass dispersion (4.0 ms at 20 Hz, LR4 3-band defaults),
+        // no delay line, reported 0 (README §5, gfx-grit's precedent); Linear is checked by its own
+        // test (latency L per rate family, impulse peak at L)
+        o.skip_latency = true;
+        // `phase` changes the reported latency: a set-up switch (fade out, switch, fade in; README §2.3)
+        o.skip_steps = vec!["phase"];
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)
