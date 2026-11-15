@@ -397,6 +397,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-irfx': 'impulse',
     'gfx-correct': 'staff',
     'gfx-vocoder': 'bank',
+    'gfx-sustainer': 'modes',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -639,6 +640,25 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
           line(`M${f1(x - w)} ${f1(y0)}C${f1(x - w / 3)} ${f1(y0)} ${f1(x - w / 3)} ${f1(y0 - h)} ${f1(x)} ${f1(y0 - h)}` +
             `S${f1(x + w / 3)} ${f1(y0)} ${f1(x + w)} ${f1(y0)}`, .45 + .5 * e[i]);
         }
+        break;
+      }
+      case 'modes': {
+        // a string's standing waves, the note blooming into its harmonic (gfx-sustainer). Left of the
+        // cartouche the fundamental: one loop between two nodes, three nested lenses (a = .35, .65, 1 ×
+        // .55 ch; opacity .35, .65, 1: the bloom). Right of it the octave: two loops (one lens each,
+        // a = .55 ch) over a faint one-loop lens (.3: the harmonic taking over). The string through both
+        // regions at the rune's centre line (.4)
+        const lens = (xa, xb, a, op) => {
+          const xm = (xa + xb) / 2;
+          line(`M${f1(xa)} ${f1(cy)}Q${f1(xm)} ${f1(cy - 2 * a)} ${f1(xb)} ${f1(cy)}Q${f1(xm)} ${f1(cy + 2 * a)} ${f1(xa)} ${f1(cy)}`, op);
+        };
+        const l0 = 6, l1 = cx - cw / 2 - 6, r0 = cx + cw / 2 + 6, r1 = W - 6, a = .55 * ch, rm = (r0 + r1) / 2;
+        line(`M${f1(l0)} ${f1(cy)}H${f1(l1)}`, .4);
+        line(`M${f1(r0)} ${f1(cy)}H${f1(r1)}`, .4);
+        [.35, .65, 1].forEach(k => lens(l0, l1, k * a, k));
+        lens(r0, r1, a, .3);
+        lens(r0, rm, a, 1);
+        lens(rm, r1, a, 1);
         break;
       }
       case 'bins': {

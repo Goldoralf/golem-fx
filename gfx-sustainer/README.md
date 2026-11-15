@@ -1,10 +1,27 @@
 # gfx-sustainer
 
-> **Status: DESIGNED** (2026-11-14). Design only, no code. Design by Claude Opus 5.5, **reviewed by
-> Claude Fable 5.2 on 2026-11-14** (verdict and changes at the end).
-> It brings two new gfx-dsp modules, `track` (the phase-locked partial tracker, shared with gfx-ringmod)
-> and `multipitch` (chord analysis on the side chain), and reuses `detect` with the extensions gfx-tuner
-> asks for.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed by Fable 5.2 on 2026-11-14 (Review
+> section), then coded on the shared gfx-dsp `track` (gfx-ringmod's, extended with opt-in modes only:
+> gfx-ringmod's and gfx-swell's renders byte-identical) and the new gfx-dsp `multipitch` (the API agreed
+> with gfx-polysynth: `prepare(sample_rate, f_min, max_notes)`, this pedal passes 4).
+>
+> - **Feedback**: the string's own partial, phase-locked, adds only what the string has lost: the output
+>   partial follows its command within 0.06 – 0.21 dB at E4 and 0.07 – 0.45 dB at E2 through a decaying
+>   handover (B 0 – 3·10⁻⁴); every fixed `harmonic` (Sub … Two Octaves + Third) sits within 2 ¢ of the
+>   string's own (inharmonic) partial at E2, E4, E6. The competition model measures c = 1.202, a 2×
+>   challenger takes over in 0.49 s (dip 2.9 dB), `rise` lands within 1 ms (50 ms – 6 s).
+> - **Sustain**: a 16-partial bank holds each partial within 0.7 dB of its target for 30 s, no AM, the
+>   generated part's noise 51 dB under a −60 dBFS hiss; with B = 3·10⁻⁴ every held partial up to k = 16 is
+>   within 1.7 ¢ of the string's own (the tracker now fits the string's inharmonicity).
+> - **Chords**: `multipitch` names the lowest note of 200 random voicings 200 / 200 and the highest
+>   183 / 200; a power chord never blooms on the sub-octave, with `delay` 0 it blooms 231 – 315 ms after
+>   the strum.
+> - **Bench**: 28 / 28 common checks; 23 behaviour tests. **CPU over budget** for Sustain (2.2 – 2.5 % of a
+>   core against 1.5 %) and `chord` All (4.0 % against 3 %); Feedback 1.0 – 1.1 %, idle 0.9 %. See "As
+>   coded" for every measurement and deviation.
+> - Design by Claude Opus 5.5, reviewed by Claude Fable 5.2 on 2026-11-14. It brings two new gfx-dsp
+>   modules, `track` (the phase-locked partial tracker, shared with gfx-ringmod) and `multipitch` (chord
+>   analysis on the side chain), and reuses `detect` with the extensions gfx-tuner asks for.
 
 golem's **sustainer and feedback generator**. Hold a note and it **blooms into "feedback"**: after a
 delay its fundamental, or a chosen harmonic (octave, octave + fifth, two octaves), grows until it sings,
@@ -706,3 +723,120 @@ automatic vibrato (the DF-2's fault), an amp saturation inside the pedal (questi
 review fixed its API (gfx-polysynth/README.md §2.3): `prepare(sample_rate, f_min, max_notes)` — this pedal
 passes `max_notes` 4 and its results are unchanged; `notes()` returns confirmed readings only; `early()` is
 reserved for research and never starts a sound. `track` is unchanged.
+
+## As coded (v0.1.0, 2026-11-15)
+
+Files: `src/lib.rs` (the processor, `PARAMS`, the competition `compete()`, `natural_gains()`,
+`chord_comb()`), `src/plugin.rs` (VST3 `GoleMFxSustain01`, "GoleM FX Sustainer", mono 1 / 1 first then
+2 / 2, each with a one- or two-channel key bus, latency 0, read-only meters `state`, `note`, `harm`,
+`lock`), `src/tests.rs` (23 behaviour tests on synthetic strings: inharmonic partials with known phases,
+T60 shortening with k, pitch motion, white hiss; 2 ignored CPU reports). Shared: gfx-dsp `multipitch.rs`
+(new), `track.rs` (opt-in additions), `onset.rs` (`PitchJump::feed`, additive).
+
+### Shared code and the null proof
+
+- **`multipitch`** as agreed: `prepare(sample_rate, f_min, max_notes)`, `reset`, `push`, `notes()`
+  (confirmed readings only, sorted by pitch, ≤ `max_notes`), `age_ms()`, `early()` (empty unless
+  `set_early(true)`; never used here). Added: `onset()` (the windows restart at a pick), `set_active()`
+  (analyses only while YIN is unclear; the history always fills), `set_f_min()` (`lowest`, no
+  allocation), `analyses()`. Decimation to ~6 kHz (4th-order Butterworth at 0.35 × the rate), Hann 512 /
+  1,024 / 2,048 points, one analysis every 256 samples on the longest window after the onset;
+  harmonic summation on 1/8-semitone cells (Klapuri's weights, m ≤ 10, bands widened upwards for
+  B = 3·10⁻⁴), f0 refined from partials 1 – 3 (parabolic, log magnitude), cancellation by the geometric
+  mean of the neighbours **in the original spectrum** (the fundamental whole). Measured (unit tests):
+  single notes E2 – E5 confirmed by 128 – 171 ms at 44.1 / 48 / 96 kHz; E2-B2-E3, A2-E3-A3-C#4 (A3, an
+  exact octave, is not named: its partials are A2's, owned by A2 anyway), a D triad, E2-B2-E3-G3; 200
+  random voicings (E2 – A3 roots, power chords ± third, triads, ±10 ¢ strings): lowest 200 / 200,
+  highest 183 / 200, none later than 0.4 s. A 4-note build's notes are always within a 6-note build's.
+- **`track`**, every addition opt-in (gfx-ringmod's default path unchanged):
+  - `set_partial_rate(n)`: the partials' loops every n ≤ 16 samples (fs / n ≥ 4 f0): mixer and the first
+    two one-poles at fs, the last two, the level / error, the variance averages and the PI at the update.
+    The mixer's phasor runs on a rotator re-anchored on φ at each update (`partial_cos(k)` gives it to the
+    synth). This pedal uses 8 (16 broke the 2 ¢ tuning row).
+  - Frequency-aided acquisition: before engaging, the error's rotation per update gives the partial's
+    offset; the trim starts there, and the engage test also accepts a steady rotation (a 4 Hz loop alone
+    never caught partial 5 of a wound E4, 6 Hz away).
+  - The decimated Snap turns the demodulator's states with the phase jump. (The per-sample path's
+    partial Snap clears them and reads as lost on the next sample: unused by gfx-ringmod, left as is.)
+  - An **inharmonicity fit**: B from the locked partials' whole ratios (weights k² − 1), every partial's
+    trim (±15 ¢) centred on √((1 + B k²) / (1 + B)). Partial 8 of a wound E2 is 16 ¢ sharp, partial 16
+    64 ¢: beyond the specified ±15 ¢ trim alone.
+  - `set_hold_margin(Some(dB))`: the 150 ms history and the trims learn only that far above the hold
+    level. `set_narrow(n)` / `prepare_narrow(max_n, f_min)`: a comb of n periods, bandwidths ÷ n, variance
+    windows × n (chord voices). Diagnostics: `partial_trim`, `stretch_b`.
+- **`onset::PitchJump::feed(hz, clarity, elapsed, clarity_min)`**: the jump rules on the caller's YIN
+  readings (this pedal's detector reaches `lowest`; the detector's own stops at 75 Hz, and costs 33 ns).
+- **Null proof**: gfx-ringmod (Track + lock; Track + lock + snap + `pitch` 0.6) and gfx-swell (`legato`
+  100 %; 40 % in blocks of 64) rendered on a synthetic E2 bend / A3 vibrato / E4 file with the original
+  and the new gfx-dsp: byte-identical WAVs. gfx-ringmod 23 / 23 and gfx-swell 18 / 18 tests, both
+  benches 28 / 28.
+
+### Deviations from the spec
+
+| Spec | Coded | Why (numbers) |
+|---|---|---|
+| Partials' loops at fs, "fs / 8 if the bench asks" | Decimated (8 samples), the mixer by rotator | CPU: 65 → ≈ 20 ns per partial (Sustain at E4 1,371 → 467 ns) |
+| Trim ±15 ¢ (§2.2) | ±15 ¢ around the fitted stretch | B = 3·10⁻⁴: partial 8 of E2 held 16 ¢ off before (5 dB of beating in the handover), now 0.55 ¢; partial 16 1.64 ¢ |
+| The voice follows the string down to `thresh` − 6 dB | The tracker locks down to `thresh` − 6 dB, but the **voice holds its pitch 12 dB above** (`thresh` + 6 dB), at the 150 ms mean learned there | The 44 Hz reference loop wanders ±0.3 Hz (±5 ¢) at 110 Hz once the SNR in its band falls to 20 – 30 dB (−60 dBFS white hiss); the plain mean then held a fading note 10 – 16 ¢ off. Now: the vibrato's centre ±2.6 ¢ (−70 dBFS hiss) and ±4.0 ¢ (−60 dBFS), no glide |
+| g_k = max(0, a_k − γ d_k) | d_k faded out of the subtraction near the hold level h: d · clamp((d − h) / h, 0, 1), h gliding 30 ms | Under h the level is noise; the generated part's noise is now −51 dB re a −60 dBFS hiss (−19.5 dB with the plain law). Soft, so a `thresh` step makes no click (−45 dB HF burst with a hard gate) |
+| Seed a_k(0) = max(d_k, A · 10^−2) | max(γ d_k, A · 10^−2), ≤ A | With `dry` −60 the bloom starts from what is heard: the bowed swell rises from silence |
+| One-period comb for every voice | A note named by `multipitch` gets a comb of n ≤ 6 periods whose zeros fall on the other notes' first three partials (`chord_comb`) | A fifth's partials leak −13 dB, a major third's ≈ 0 dB through one period: chord voices never locked |
+| A reading = two agreeing analyses | Same, and a note needs its own fundamental (an interior peak ≥ −20 dB re its strongest of partials 1 – 4); notes within 70 ¢ merge | The 85 ms window named a 92 Hz "missing fundamental" (C#4's 3rd and 6th) in an A chord |
+| Wait extended until named | Same, and a waiting chord voice follows later readings (non-All: retargets; All: a note no longer named gives way) | The first reading may be revised. A2-E3-A3-C#4's top note blooms 520 ms after the strum with `delay` 0 (the power chord row, ≤ 400 ms, holds: 231 – 315 ms) |
+| Past 400 ms, YIN's candidate | Only after a detected onset; a voice not locked within max(`delay`, 0.4 s) + 1 s gives up until the next onset | Pink noise kept a never-locking voice waiting (CPU); nothing bloomed either way |
+| YIN feeds the tracker | Only clear readings, the input above `thresh`, within 45 ¢ of what the tracker follows | A fading string's readings walked the feed-forward away (each > 50 ¢ step re-armed the loop) |
+| Legato: gfx-swell's `PitchJump` on its own YIN | `PitchJump::feed` on this pedal's YIN | 33 ns, and bass legato under 75 Hz |
+| Mute (D in 60 ms) | Not in the first 80 ms after an onset | The pick's own decay |
+| — (unspecified) | `duck`'s progress p = max u of the Feedback modes (0 in Sustain); body b at 80 ms after the onset or at lock, whichever later; bypass without trails: 10 ms fade, dry to unity in 10 ms; the colour on each partial's Feedback share (no switch when a mode leaves the set) | — |
+
+### Bench rows (§5) as measured (synthetic strings, 48 kHz)
+
+| Row | Result |
+|---|---|
+| Latency | 0, measured 0 at 44.1 – 192 kHz |
+| Tuning | every fixed `harmonic` at E2 / E4 / E6, B 10⁻⁴ and 3·10⁻⁴: within 2 ¢ of the string's partial (6.5 ¢ from k f0 for k = 5, B = 3·10⁻⁴) |
+| Seamless start | no step at the start of growth; the other partials do not move (≤ 0.5 dB) |
+| Seamless handover | output partial vs a_k: E4 k = 1: 0.06 dB, k = 2: 0.13 – 0.21 dB; E2 k = 1: 0.07 – 0.14 dB, k = 2: 0.20 – 0.45 dB (bounds 0.5 / 1) |
+| Rise | A − 1 dB at 49 ms (`rise` 50), 1,199 ms (1,200), 6,000 ms (6,000); Rise starts at `delay` |
+| Bends | E4 k = 1 / 2 / 4: ±30 ¢ 2.0 – 2.2 ¢ RMS, ±50 ¢ 3.4 – 3.6 ¢, bend 1.0 – 1.1 ¢; ripple 0.39 – 0.63 dB, **bend at k = 1 0.73 dB** (bound 0.5; 0.30 – 0.49 for k = 2 – 4). E2: ±30 ¢ 3.5 – 5.2 ¢ RMS, **±50 ¢ 5.7 – 8.6 ¢** (bound 5: the tracker as coded, gfx-ringmod measured 7.8 ¢), ripple ≤ 0.73 dB (bound 1.5) |
+| Lock hold | lost at 0.78 – 0.80 s on a fading E4 with vibrato; held at the centre +2.6 ¢ (−70 dBFS hiss), +4.0 ¢ (−60 dBFS), no glide (0.0000 ¢), `lock` 0 |
+| No chirp | release frequency constant (< 1 ¢) |
+| Natural | from equal seeds winner = argmax G (20 notes × 5 distances); hysteresis threshold 1.202; jump 0.494 s at 2× (dip 2.9 dB), 0.296 s at 4×, 2.07 s at 1.3×; a 0.5 → 3 m sweep on E4 sounds harmonics 1, 5, 2, 4, 3; deterministic; Natural Low never above k = 4; a ±30 ¢ vibrato never changes the winner |
+| Chords | Lowest / Highest on E2-B2-E3 and A2-E3-A3-C#4, `delay` 0 and 300; never the sub-octave; a single E4 with `delay` 0 blooms before 150 ms; All: B2's partial 2 (= E2 × 3) held by E2 only |
+| Gating | hand mute (−40 dB in 40 ms): Release 24 ms after it starts; natural decays (T60 3, 12 s): none; a string 8 dB above `thresh` muted: Release (second rule); touch after the floor: Release; `max_time` 2 s: Release at 2.00 s; re-pick: Release and a new Rise; hammer-on E4 → G4: carried in 19 ms, no Release, no gap |
+| Sustain | T60 3 s, `max_time` 60: partials 1 – 8 within 0.7 dB of A_k for 30 s; AM ≤ 0.000 dB p-p; generated noise −51 dB re a −60 dBFS hiss (≪ 0.1 dB on the output) |
+| Sustain, inharmonic | E2, B 10⁻⁴ / 3·10⁻⁴, partials 1 – 16: held within 1.64 ¢ of the string's own; handover ripple ≤ 0.98 dB |
+| Bank stability | 60 s holds of E1 (`lowest` 35, −31.9 dBFS RMS at 60 s) and 1.2 kHz: level drift ≤ 0.1 dB, pitch drift 0, finite |
+| No clicks | `harmonic` / `mode` changes while sounding: HF bursts ≤ −87 dB re peak; bench parameter steps ≤ −62 dB (bound −50) |
+| Silence, noise | silent after a burst (−240 dBFS); pink noise and −50 dBFS hum never bloom |
+| Common checks | 28 / 28 (44.1 – 192 kHz) |
+
+**CPU** (48 kHz, mono, a sounding note, `cpu_report`; the bench's line, pink noise, defaults: 188 – 196 ns):
+
+| Case | ns / sample | % of a core | Budget |
+|---|---|---|---|
+| No note (pink noise) | 194 | 0.93 | — |
+| E4 / E2, Octave (Feedback) | 211 – 214 | 1.0 | ≤ 1 % |
+| E2, Natural High | 289 | 1.4 | ≤ 1.5 % |
+| E4 / E2, Sustain (K 15 / 16) | 467 – 512 | **2.2 – 2.5** | ≤ 1.5 % |
+| E2, Both | 521 | **2.5** | ≤ 1.5 % |
+| E2-B2-E3-G3, Sustain, `chord` All | 836 | **4.0** | ≤ 3 % |
+
+What costs: detection ≈ 100 ns on a note (YIN 35, the pick detector 32, the side chain's decimators),
+one reference loop per voice ≈ 85 ns (gfx-dsp `track`'s per-sample path, kept bit-exact for gfx-ringmod),
+≈ 20 ns per partial. The ways down: an opt-in decimated reference loop in `track` (4 references in
+`chord` All), Sustain's K to 8 under 110 Hz (an open question already).
+
+Not run (need recordings or golem's rig): the DI rows (clean.wav, lead-clean.wav, crunch.wav), Raph's
+real-feedback recordings, the open-chord renders (six strings: `notes()` keeps the four most salient), the
+touch-noise level on quiet DIs, the listening A / B.
+
+### Left for the owner
+
+- By ear, against the reference recordings: Natural weights w_k, c and β_j; `color`'s −30 dBc; `tone`'s
+  default; `max_time` 15 s.
+- Whether the voice's follow margin (12 dB above `thresh` − 6 dB) should be a parameter or follow
+  `thresh` differently on real DIs; the weak-fundamental rule and the mute / touch levels on the DIs.
+- CPU: accept 2.5 % for Sustain / 4 % for All, or ask for the decimated reference loop.
+- golem-rack: the catalogue entry (block `sustainer`, category `pitch`, `exp` on `rise`, `bloom`, `dry`,
+  `distance`, `duck`), the footswitch rule (question 8), the new glyph and motif `modes`.

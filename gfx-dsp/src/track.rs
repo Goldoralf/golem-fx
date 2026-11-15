@@ -34,6 +34,17 @@
 //!   the reference carries every partial with it; the trim only absorbs the string's inharmonicity.
 //! - **Weak fundamental**: [`Tracker::set_reference`] runs the reference loop on partial k_r (its error
 //!   divided by k_r), ψ still the fundamental's phase.
+//! - **Decimated partial loops** (opt-in, [`Tracker::set_partial_rate`], added for gfx-sustainer's bank
+//!   of 16 partials; the default is the per-sample path above, unchanged): per sample, each partial's
+//!   mixing (a polynomial sine / cosine) and the first **two** of its four one-poles; every n samples
+//!   (n ≤ the cap, and fs / n ≥ 4 f0) the last two one-poles, the level and error, the variance
+//!   averages and the trim's PI, scaled to the n-sample step. The sum-frequency image is 40 dB down
+//!   before the decimation (k = 2, its worst case); the neighbours, f0 away, stay under fs / 2n.
+//! - **Hold margin** (opt-in, [`Tracker::set_hold_margin`], gfx-sustainer): the 150 ms history of the
+//!   reference's frequency, and the decimated partials' trim integrators, learn only while their level
+//!   is that margin above the hold level. A partial fading into hiss keeps following it down to the
+//!   hold level, but the frequency it is held at is the one measured with a good signal-to-noise
+//!   ratio (under −60 dBFS of hiss the plain 150 ms mean held a fading E4 10 ¢ flat).
 //!
 //! Real-time safe (memory sized in `prepare`), deterministic, phases and states in f64.
 
@@ -84,6 +95,10 @@ const VAR_MS: f64 = 50.0;
 const ENG_MS: f64 = 10.0;
 const VAR_ENGAGE: f64 = 0.02;
 const VAR_LOSE: f64 = 0.125;
+/// Decimated partial loops: the smoothing of the frequency-offset estimate (per update), and of the
+/// fitted inharmonicity.
+const ACQ_A: f64 = 0.05;
+const STRETCH_A: f64 = 0.01;
 /// Periods after a feed-forward (re)start before the loop may engage.
 const SETTLE_PERIODS: f64 = 5.0;
 /// Hold: the mean of the last 150 ms of the increment, kept in chunks of 32 samples.
@@ -101,6 +116,33 @@ fn sin_cos_turns(t: f64) -> (f64, f64) {
     let w = (t - t.floor()) as f32 * std::f32::consts::TAU;
     let (s, c) = w.sin_cos();
     (s as f64, c as f64)
+}
+
+/// sin and cos of a phase in turns (0 ≤ t < 1 or a little outside), polynomial: wrapped to a quarter
+/// turn, degree 9 / 10 (error < 5e−7). The decimated partial loops' mixer.
+#[inline]
+fn poly_sin_cos(t: f64) -> (f64, f64) {
+    #[inline]
+    fn cos_q(t: f32) -> f32 {
+        // cos(2π t), |t| ≤ ½
+        let mut y = t.abs();
+        let neg = y > 0.25;
+        if neg {
+            y = 0.5 - y;
+        }
+        let w = y * std::f32::consts::TAU;
+        let z = w * w;
+        let c = 1.0 + z * (-0.5 + z * (1.0 / 24.0 + z * (-1.0 / 720.0 + z * (1.0 / 40320.0 - z * (1.0 / 3_628_800.0)))));
+        if neg {
+            -c
+        } else {
+            c
+        }
+    }
+    let x = (t - t.round()) as f32;
+    let xs = x - 0.25;
+    let xs = if xs < -0.5 { xs + 1.0 } else { xs };
+    (cos_q(xs) as f64, cos_q(x) as f64)
 }
 
 #[inline]
@@ -182,6 +224,17 @@ impl Demod {
         self.ui = 0.0;
         self.vr = r;
         self.vi = 0.0;
+    }
+
+    /// Turns the filter states by `turns` and re-reads the error (the decimated partial loops' Snap).
+    fn rotate(&mut self, turns: f64) {
+        let (s, c) = (2.0 * PI * turns).sin_cos();
+        for q in 0..4 {
+            let (a, b) = (self.re[q], self.im[q]);
+            self.re[q] = a * c - b * s;
+            self.im[q] = a * s + b * c;
+        }
+        self.set(self.re[3], self.im[3]);
     }
 
     /// Level and error from an already filtered baseband value.
@@ -317,6 +370,22 @@ struct Partial {
     engaged: bool,
     locked: bool,
     dm: Demod,
+    /// decimated path: the error at the last update, and the frequency offset it shows (turns per
+    /// sample) before the loop engages (the trim starts there)
+    e_prev: f64,
+    f_est: f64,
+    /// the error's increment per update as a unit phasor, averaged like the 10 ms engage average: its
+    /// spread does not grow with a steady rotation (a partial a few hertz off its k · ψ)
+    wr: f64,
+    wi: f64,
+    /// decimated path: the string's stretch predicted for this partial, √((1 + B k²) / (1 + B)) − 1;
+    /// the trim (±15 ¢) runs around it
+    pr: f64,
+    /// decimated path: e^(j2π φ) carried by a rotator between updates (re-anchored on φ at each)
+    zr: f64,
+    zi: f64,
+    rr: f64,
+    ri: f64,
 }
 
 /// One harmonic series: a reference partial and K trims.
@@ -365,6 +434,20 @@ pub struct Tracker {
     // partials
     parts: Vec<Partial>,
     n_parts: usize,
+    // decimated partial loops (opt-in): the cap, the step now, its counter and coefficients
+    p_rate: usize,
+    p_n: usize,
+    p_ctr: usize,
+    lp_part_n: f64,
+    a_var_n: f64,
+    a_eng_n: f64,
+    // hold margin (opt-in): the level the history and the trims learn above (0 = off)
+    learn_min: f64,
+    margin: f64,
+    // narrow mode (opt-in): periods spanned by the comb; bandwidths divided by it
+    narrow: f64,
+    // decimated path: the string's inharmonicity B, fitted from the locked partials
+    b_hat: f64,
 }
 
 impl Default for Tracker {
@@ -413,6 +496,16 @@ impl Tracker {
             chunk_sum: 0.0,
             parts: Vec::new(),
             n_parts: 0,
+            p_rate: 1,
+            p_n: 1,
+            p_ctr: 0,
+            lp_part_n: 0.0,
+            a_var_n: 0.0,
+            a_eng_n: 0.0,
+            learn_min: 0.0,
+            margin: 0.0,
+            narrow: 1.0,
+            b_hat: 0.0,
         }
     }
 
@@ -464,6 +557,16 @@ impl Tracker {
         self.ff_a = 1.0 - (-1.0 / ((ms as f64).max(0.1) * 1e-3 * self.sr)).exp();
     }
 
+    /// Opt-in: the partials' loops run every n samples at most (1 = every sample, the default path;
+    /// capped at 16). The step adapts to the note: fs / step ≥ 4 f0.
+    pub fn set_partial_rate(&mut self, n: usize) {
+        self.p_rate = n.clamp(1, 16);
+        self.p_ctr = 0;
+        if self.ff > 0.0 {
+            self.retune(true);
+        }
+    }
+
     /// How many trims run (≤ `max_partials`): partials 2 … n + 1.
     pub fn set_partials(&mut self, n: usize) {
         let n = n.min(self.parts.len());
@@ -489,6 +592,48 @@ impl Tracker {
     /// The hold level (dBFS of the partial's amplitude): under it a partial is not tracked.
     pub fn set_floor(&mut self, dbfs: f32) {
         self.floor = 10f64.powf(dbfs as f64 / 20.0);
+        if self.margin > 0.0 {
+            self.learn_min = self.floor * self.margin;
+        }
+    }
+
+    /// Opt-in, for a note inside a chord: the reference's comb spans `n` periods (zeros every f0 / n:
+    /// a fifth's partials leak 13 dB through the one-period comb, none through two; a major third's
+    /// through four), and the loop bandwidth, the partials' corners and their loops are divided by `n`
+    /// (1 = the default), and the error's variance windows multiplied by it. Takes effect at the next
+    /// note fed forward. The comb holds n periods of
+    /// `f_min` only after [`Self::prepare_narrow`].
+    pub fn set_narrow(&mut self, n: usize) {
+        self.narrow = n.clamp(1, 8) as f64;
+        // the error's variance windows (engage, loss) lengthen with the comb: a noise band n times
+        // narrower wanders n times slower
+        self.a_var = 1.0 - (-1.0 / (VAR_MS * self.narrow * 1e-3 * self.sr)).exp();
+        self.a_eng = 1.0 - (-1.0 / (ENG_MS * self.narrow * 1e-3 * self.sr)).exp();
+        if self.ff > 0.0 {
+            self.retune(true);
+        }
+    }
+
+    /// Sizes the comb for `max_n` periods of `f_min` (allocates: call after `prepare`).
+    pub fn prepare_narrow(&mut self, max_n: usize, f_min: f32) {
+        let need = (max_n.max(1) as f64 * self.sr / (f_min as f64).max(1.0)).ceil() as usize + 4;
+        let have = (self.sr / F_LOWEST).ceil() as usize + 4;
+        self.comb.prepare(need.max(have));
+    }
+
+    /// Opt-in: the 150 ms frequency history and the decimated partials' trim integrators learn only
+    /// while the level is `db` above the hold level (`None` = always, the default).
+    pub fn set_hold_margin(&mut self, db: Option<f32>) {
+        match db {
+            Some(d) => {
+                self.margin = 10f64.powf(d.max(0.0) as f64 / 20.0);
+                self.learn_min = self.floor * self.margin;
+            }
+            None => {
+                self.margin = 0.0;
+                self.learn_min = 0.0;
+            }
+        }
     }
 
     /// The rule for the next engagements.
@@ -520,9 +665,15 @@ impl Tracker {
             self.since = 0.0;
             self.dm.reset();
             self.comb.reset();
-            self.comb.set_len(self.sr / hz);
+            self.comb.set_len(self.narrow * self.sr / hz);
+            self.b_hat = 0.0;
             for p in self.parts.iter_mut() {
                 p.dm.reset();
+                p.e_prev = 0.0;
+                p.f_est = 0.0;
+                p.wr = 0.0;
+                p.wi = 0.0;
+                p.pr = 0.0;
                 p.integ = 0.0;
                 p.trim = 0.0;
                 p.engaged = false;
@@ -592,15 +743,23 @@ impl Tracker {
         }
         self.tuned = f0;
         let sr = self.sr;
-        self.lp_part = 1.0 - (-2.0 * PI * (f0 * PART_LP).min(0.2 * sr) / sr).exp();
-        let bw = (f0 / BW_DIV).clamp(BW_MIN, BW_MAX);
+        self.lp_part = 1.0 - (-2.0 * PI * (f0 * PART_LP / self.narrow).min(0.2 * sr) / sr).exp();
+        let bw = (f0 / BW_DIV).clamp(BW_MIN, BW_MAX) / self.narrow;
         let wn = 2.0 * PI * bw / 2.06;
         self.kp = 2.0 * ZETA * wn / sr;
         self.ki = wn * wn / (sr * sr);
-        let wp = 2.0 * PI * PART_BW / 2.06;
+        let wp = 2.0 * PI * PART_BW / self.narrow / 2.06;
         self.kp_p = 2.0 * ZETA * wp / sr;
         self.ki_p = wp * wp / (sr * sr);
         self.pull = f0 * (2f64.powf(PULL_CENTS / 1200.0) - 1.0) / sr;
+        if self.p_rate > 1 {
+            let n = ((sr / (4.0 * f0)).floor() as usize).clamp(1, self.p_rate);
+            self.p_n = n;
+            let nf = n as i32;
+            self.lp_part_n = 1.0 - (1.0 - self.lp_part).powi(nf);
+            self.a_var_n = 1.0 - (1.0 - self.a_var).powi(nf);
+            self.a_eng_n = 1.0 - (1.0 - self.a_eng).powi(nf);
+        }
     }
 
     /// One input sample: the reference partial's state.
@@ -617,7 +776,7 @@ impl Tracker {
             self.retune(false);
             // the comb spans one period of the NCO (the fundamental): zeros on every harmonic
             let inc = if self.inc > 0.0 { self.inc } else { self.ff / self.sr };
-            self.comb.set_len(1.0 / inc);
+            self.comb.set_len(self.narrow / inc);
         }
         let ff_inc = self.ff / self.sr;
         // the reference demodulator at k_ref · ψ
@@ -655,7 +814,7 @@ impl Tracker {
             }
         } else {
             self.inc = if self.held { self.hold_inc } else { ff_inc };
-            let settled = self.since >= SETTLE_PERIODS * self.sr / self.ff && var_eng < VAR_ENGAGE;
+            let settled = self.since >= (SETTLE_PERIODS + self.narrow - 1.0) * self.sr / self.ff && var_eng < VAR_ENGAGE;
             if !self.latched && loud && settled {
                 match self.mode {
                     Engage::Snap => {
@@ -679,8 +838,9 @@ impl Tracker {
         }
         self.psi = (self.psi + self.inc).rem_euclid(1.0);
 
-        // 150 ms history of the increment (only while not holding)
-        if !self.held {
+        // 150 ms history of the increment (only while not holding; with a hold margin, only while the
+        // reference is well above the hold level)
+        if !self.held && (self.learn_min <= 0.0 || self.dm.d >= self.learn_min) {
             self.chunk_acc += self.inc;
             self.chunk_n += 1;
             if self.chunk_n == CHUNK {
@@ -695,8 +855,12 @@ impl Tracker {
         }
 
         // partials
-        for i in 0..self.n_parts {
-            self.step_partial(i, x);
+        if self.p_rate > 1 {
+            self.step_partials_decimated(x);
+        } else {
+            for i in 0..self.n_parts {
+                self.step_partial(i, x);
+            }
         }
         Lock { psi: self.psi, inc: self.inc, level: self.dm.d as f32, locked: self.locked }
     }
@@ -753,6 +917,196 @@ impl Tracker {
         p.phi = (p.phi + p.inc).rem_euclid(1.0);
     }
 
+    /// Decimated path: fits B from the locked partials (B_k = ((1 + t_k)² − 1) / (k² − 1), t_k the
+    /// partial's whole ratio − 1, weighted by k² − 1), smoothed, and moves every partial's predicted
+    /// stretch to it (an engaged partial keeps its frequency: its trim takes the difference). A wound
+    /// string's partial 8 is 16 ¢ sharp at B = 3·10⁻⁴, partial 16 64 ¢: beyond a ±15 ¢ trim alone.
+    fn fit_stretch(&mut self, learn_min: f64) {
+        let (mut num, mut den) = (0.0f64, 0.0f64);
+        for p in self.parts[..self.n_parts].iter() {
+            if !p.locked || (learn_min > 0.0 && p.dm.d < learn_min) {
+                continue;
+            }
+            let t = 1.0 + p.pr + p.integ;
+            let w = p.k * p.k - 1.0;
+            num += t * t - 1.0;
+            den += w;
+        }
+        if den <= 0.0 {
+            return;
+        }
+        let b = (self.b_hat + STRETCH_A * (num / den - self.b_hat)).clamp(0.0, 1e-3);
+        if b == self.b_hat {
+            return;
+        }
+        self.b_hat = b;
+        let tb = 2f64.powf(TRIM_CENTS / 1200.0) - 1.0;
+        for p in self.parts.iter_mut() {
+            let pr = ((1.0 + b * p.k * p.k) / (1.0 + b)).sqrt() - 1.0;
+            if p.engaged {
+                let d = pr - p.pr;
+                p.integ = (p.integ - d).clamp(-tb, tb);
+                p.trim = (p.trim - d).clamp(-tb, tb);
+            }
+            p.pr = pr;
+        }
+    }
+
+    /// Partial k's cos(2π φ_k) after the last sample, from the decimated path's phasor (k ≥ 2 with
+    /// [`Self::set_partial_rate`] > 1; within 10⁻⁵ of the exact value). None otherwise.
+    #[inline]
+    pub fn partial_cos(&self, k: usize) -> Option<f64> {
+        if self.p_rate <= 1 || k < 2 || k - 2 >= self.n_parts {
+            return None;
+        }
+        Some(self.parts[k - 2].zr)
+    }
+
+    /// The string's inharmonicity as fitted by the decimated partial loops (0 otherwise).
+    pub fn stretch_b(&self) -> f64 {
+        self.b_hat
+    }
+
+    /// The opt-in decimated partial loops ([`Self::set_partial_rate`]).
+    #[inline]
+    fn step_partials_decimated(&mut self, x: f64) {
+        let n = self.p_n.max(1);
+        self.p_ctr += 1;
+        let upd = self.p_ctr >= n;
+        if upd {
+            self.p_ctr = 0;
+        }
+        let (inc_ref, ff, sr, floor) = (self.inc, self.ff, self.sr, self.floor);
+        let (lp, lpn, a_var, a_eng) = (self.lp_part, self.lp_part_n, self.a_var_n, self.a_eng_n);
+        let (kp, ki, mode, latched, held, pull) = (self.kp_p, self.ki_p * n as f64, self.mode, self.latched, self.held, self.pull * n as f64);
+        let ref_on = self.engaged || self.held;
+        let tb = 2f64.powf(TRIM_CENTS / 1200.0) - 1.0;
+        let learn_min = self.learn_min;
+        if upd && !held {
+            self.fit_stretch(learn_min);
+        }
+        for p in self.parts[..self.n_parts].iter_mut() {
+            if p.k * ff >= 0.45 * sr {
+                p.locked = false;
+                p.inc = 0.0;
+                continue;
+            }
+            // the mixer's phasor: exact at each update, rotated by the update's increment in between (the
+            // increment moves by the reference's correction only: a drift under 10⁻⁵ turn)
+            if upd || p.rr == 0.0 {
+                let (s0, c0) = poly_sin_cos(p.phi);
+                p.zr = c0;
+                p.zi = s0;
+                let (s1, c1) = poly_sin_cos(p.k * inc_ref * (1.0 + p.pr + p.trim));
+                p.rr = c1;
+                p.ri = s1;
+            }
+            let (s, c) = (p.zi, p.zr);
+            let (r, i) = (x * c, -x * s);
+            let d = &mut p.dm;
+            d.re[0] += lp * (r - d.re[0]);
+            d.im[0] += lp * (i - d.im[0]);
+            d.re[1] += lp * (d.re[0] - d.re[1]);
+            d.im[1] += lp * (d.im[0] - d.im[1]);
+            if upd {
+                let (mut r, mut i) = (d.re[1], d.im[1]);
+                for q in 2..4 {
+                    d.re[q] += lpn * (r - d.re[q]);
+                    d.im[q] += lpn * (i - d.im[q]);
+                    r = d.re[q];
+                    i = d.im[q];
+                }
+                d.set(r, i);
+                let el = wrap_half(d.e - p.offset);
+                // the variance averages (as `track_var`, with the polynomial turn and plain roots: this
+                // runs for every partial at every update)
+                let (mut uc, mut us) = (d.pr, d.pi);
+                if p.offset != 0.0 {
+                    let (so, co) = poly_sin_cos(-p.offset);
+                    (uc, us) = (uc * co - us * so, uc * so + us * co);
+                }
+                d.ur += a_var * (uc - d.ur);
+                d.ui += a_var * (us - d.ui);
+                d.vr += a_eng * (uc - d.vr);
+                d.vi += a_eng * (us - d.vi);
+                let var = 1.0 - (d.ur * d.ur + d.ui * d.ui).sqrt();
+                let var_eng = 1.0 - (d.vr * d.vr + d.vi * d.vi).sqrt();
+                let loud = d.d >= floor;
+                let base = p.k * ff / sr;
+                // the error's rotation before the loop engages: the partial's frequency offset
+                let step = wrap_half(d.e - p.e_prev);
+                let de = step / n as f64;
+                p.e_prev = d.e;
+                p.f_est += ACQ_A * (de - p.f_est);
+                let (ss, sc) = poly_sin_cos(step);
+                p.wr += a_eng * (sc - p.wr);
+                p.wi += a_eng * (ss - p.wi);
+                let var_inc = 1.0 - (p.wr * p.wr + p.wi * p.wi).sqrt();
+                if p.engaged && !held {
+                    if p.offset != 0.0 {
+                        let step = (pull * p.k).min(p.offset.abs());
+                        p.offset -= step.copysign(p.offset);
+                    }
+                    if learn_min <= 0.0 || d.d >= learn_min {
+                        p.integ = (p.integ + ki * el / base).clamp(-tb, tb);
+                    }
+                    p.trim = (p.integ + kp * el / base).clamp(-tb, tb);
+                    if !loud || var > VAR_LOSE {
+                        p.engaged = false;
+                        p.locked = false;
+                        p.offset = 0.0;
+                        p.trim = p.integ;
+                    } else {
+                        p.locked = true;
+                    }
+                } else if ref_on && !latched && !held && loud && var_eng.min(var_inc) < VAR_ENGAGE {
+                    match mode {
+                        Engage::Snap => {
+                            // the phase jumps onto the input; the demodulator's states (made at the old
+                            // phase) turn with it, so the error reads 0 at once and the variance
+                            // averages keep their spread (clearing them read as a lost lock)
+                            let e = p.dm.e;
+                            p.phi = (p.phi + e).rem_euclid(1.0);
+                            p.offset = 0.0;
+                            p.dm.rotate(-e);
+                            p.e_prev = 0.0;
+                            // the phasor follows the jump
+                            let (s0, c0) = poly_sin_cos(p.phi);
+                            p.zr = c0;
+                            p.zi = s0;
+                        }
+                        Engage::Keep => p.offset = p.dm.e,
+                    }
+                    p.dm.restart_var();
+                    // frequency-aided acquisition: the trim starts at the offset the error showed (a
+                    // 4 Hz loop alone loses a partial 6 Hz away, k = 5 of a wound E4)
+                    // (only with a good signal: under the hold margin the trim stays what it learned)
+                    if learn_min <= 0.0 || p.dm.d >= learn_min {
+                        p.integ = (p.integ + p.f_est / base).clamp(-tb, tb);
+                    }
+                    p.trim = p.integ;
+                    if mode == Engage::Keep {
+                        p.e_prev = p.dm.e;
+                    }
+                    p.engaged = true;
+                    p.locked = true;
+                }
+            }
+            if held && p.trim != p.integ {
+                // held (Release, lock lost): the trim's proportional part goes, its integral stays
+                p.trim = p.integ;
+            }
+            p.inc = p.k * inc_ref * (1.0 + p.pr + p.trim);
+            p.phi += p.inc;
+            if p.phi >= 1.0 {
+                p.phi -= 1.0;
+            }
+            let (zr, zi) = (p.zr * p.rr - p.zi * p.ri, p.zr * p.ri + p.zi * p.rr);
+            p.zr = zr;
+            p.zi = zi;
+        }
+    }
+
     /// Partial k (2 … K + 1) after the last sample: its phase k · ψ + φ_k, increment, level, lock.
     pub fn partial(&self, k: usize) -> Lock {
         if k < 2 || k - 2 >= self.n_parts {
@@ -760,6 +1114,15 @@ impl Tracker {
         }
         let p = &self.parts[k - 2];
         Lock { psi: p.phi, inc: p.inc, level: p.dm.d as f32, locked: p.locked }
+    }
+
+    /// Partial k's trim: (integral part, whole trim), ratios − 1 (diagnostics).
+    pub fn partial_trim(&self, k: usize) -> (f64, f64) {
+        if k < 2 || k - 2 >= self.n_parts {
+            return (0.0, 0.0);
+        }
+        let p = &self.parts[k - 2];
+        (p.pr + p.integ, p.pr + p.trim)
     }
 
     /// The reference's state after the last sample.
@@ -960,6 +1323,65 @@ mod tests {
             let c = cents(sum[k - 2] / (n - from) as f64 * SR as f64, fk);
             assert!(l.locked && c.abs() < 0.2, "partial {k}: {c:.3} ¢, locked {}", l.locked);
         }
+    }
+
+    #[test]
+    fn decimated_partials_follow_inharmonic_string() {
+        // the opt-in decimated loops: same string as above, same bound
+        for &sr in &[44100.0f32, 48000.0, 96000.0] {
+            let f = 110.0;
+            let b = 3e-4f64;
+            let n = (sr * 3.0) as usize;
+            let mut x = vec![0.0f32; n];
+            for k in 1..=6usize {
+                let fk = k as f64 * f * (1.0 + b * (k * k) as f64).sqrt();
+                for (i, v) in x.iter_mut().enumerate() {
+                    *v += (0.4 / k as f64 * (2.0 * PI * fk * i as f64 / sr as f64).cos()) as f32;
+                }
+            }
+            let f1 = f * (1.0 + b).sqrt();
+            let mut t = fresh(sr, 4);
+            t.set_partial_rate(8);
+            if sr == 48000.0 {
+                // Snap: the phase jumps onto each partial (a silent generator)
+                t.engage(Engage::Snap);
+            }
+            let hop = (0.0027 * sr) as usize;
+            let mut sum = [0.0f64; 4];
+            let from = n - (sr * 0.5) as usize;
+            for i in 0..n {
+                if i % hop == 0 {
+                    t.set_f0(f1 as f32, true);
+                }
+                t.process(x[i]);
+                if i >= from {
+                    for (k, s) in sum.iter_mut().enumerate() {
+                        *s += t.partial(k + 2).inc;
+                    }
+                }
+            }
+            for k in 2..=5usize {
+                let l = t.partial(k);
+                let fk = k as f64 * f * (1.0 + b * (k * k) as f64).sqrt();
+                let c = cents(sum[k - 2] / (n - from) as f64 * sr as f64, fk);
+                let lv = 0.4 / k as f64;
+                assert!(l.locked && c.abs() < 0.2, "{sr}: partial {k}: {c:.3} ¢, locked {}", l.locked);
+                // the neighbours, f0 away, are 34 dB down: a 2 % ripple on the level
+                assert!((l.level as f64 / lv - 1.0).abs() < 0.05, "{sr}: partial {k} level {:.4} vs {lv:.4}", l.level);
+            }
+        }
+    }
+
+    #[test]
+    fn poly_sin_cos_accuracy() {
+        let mut worst = 0.0f64;
+        for i in -1000..=21000 {
+            let t = i as f64 / 20000.0;
+            let (s, c) = poly_sin_cos(t);
+            let w = 2.0 * PI * t;
+            worst = worst.max((s - w.sin()).abs()).max((c - w.cos()).abs());
+        }
+        assert!(worst < 1e-6, "{worst:e}");
     }
 
     #[test]

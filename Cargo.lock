@@ -331,6 +331,7 @@ dependencies = [
  "gfx-rotary",
  "gfx-shem",
  "gfx-shimmer",
+ "gfx-sustainer",
  "gfx-swell",
  "gfx-tape",
  "gfx-transient",
@@ -654,6 +655,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-shimmer"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-sustainer"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

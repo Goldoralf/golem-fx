@@ -132,3 +132,5 @@ name = "GoleM FX IR FX"
 name = "GoleM FX Correct"
 [gfx-vocoder]
 name = "GoleM FX Vocoder"
+[gfx-sustainer]
+name = "GoleM FX Sustainer"

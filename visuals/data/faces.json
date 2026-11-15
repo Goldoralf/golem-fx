@@ -799,6 +799,23 @@
     "freeze"
    ],
    "category": "modulation"
+  },
+  "gfx-sustainer": {
+   "name": "Feedback",
+   "blocks": [
+    "sustainer"
+   ],
+   "knobs": [
+    "delay",
+    "rise",
+    "bloom",
+    "dry"
+   ],
+   "selectors": [
+    "harmonic",
+    "mode"
+   ],
+   "category": "pitch"
   }
  }
 }
