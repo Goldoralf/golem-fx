@@ -79,3 +79,36 @@ describe the sound ("Dotted-eighth arena"), the artist stays in `refs`.
 
 About fifteen per pedal (the maintainer, 2026-11-13): deeper banks for the big pedals (delay, reverb, drive,
 chorus, shimmer, pitch…), a handful for utilities (boost, limiter, gapmeter).
+
+## Presets in a DAW
+
+`tools/export-vstpresets.py` turns these files into standard VST3 presets (`.vstpreset`, Steinberg's
+format), one per preset, so the factory presets show in a DAW's preset browser next to the plugin:
+
+```sh
+python3 tools/export-vstpresets.py                    # all pedals -> dist/vstpresets/GoleM/<Plugin>/
+python3 tools/export-vstpresets.py --crate gfx-delay  # one pedal (repeatable)
+python3 tools/export-vstpresets.py --install          # also copy into this OS's user preset folder
+```
+
+Each file is named after the preset's display name and carries the whole sound: every parameter, the
+preset's value or the plugin's default (loading one resets the pedal, as in golem), and the `desc` as the
+preset's comment. The build fails, writing nothing, on an unknown parameter id, an enum label that is not an
+option or a value out of range. Releases ship them as `golem-fx-vstpresets.zip`: unzip it into the folder
+below (it holds the `GoleM` folder).
+
+| OS | User preset folder (the VST3 SDK's "Preset Locations") |
+|---|---|
+| Linux | `~/.vst3/presets/GoleM/<Plugin>/` |
+| Windows | `%USERPROFILE%\Documents\VST3 Presets\GoleM\<Plugin>\` |
+| macOS | `~/Library/Audio/Presets/GoleM/<Plugin>/` |
+
+`<Plugin>` is the plugin's name (`GoleM FX Delay`). Hosts that list `.vstpreset` files from these folders:
+Cubase / Nuendo, Studio One, Bitwig Studio and REAPER (the FX window's preset menu). **Ableton Live does
+not**: its manual documents loading only VST2 presets and banks (`.fxp` / `.fxb`, "VST Presets and Banks")
+and Ableton's help notes that VST3 plug-ins show no preset list in Live. In Live, load a `.vstpreset` in
+another host or in golem, or save the sound as a Live device preset (plugin in a Rack).
+
+`tools/vstpreset-check` verifies the files against the real plugins without a GUI: it loads the built
+VST3 binaries as a host does (GetPluginFactory, IComponent::setState with the `Comp` chunk) and checks that
+every parameter reads back at the preset's value (its `src/main.rs` says how to run it).

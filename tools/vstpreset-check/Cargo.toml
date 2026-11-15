@@ -1,0 +1,15 @@
+# Checks the exported .vstpreset files against the real plugins, loaded as a VST3 host does. Not a
+# workspace member (it links nih-plug's VST3 wrapper and dlopens the built plugins); see src/main.rs.
+[package]
+name = "vstpreset-check"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+
+[workspace]
+
+[dependencies]
+nih_plug = { git = "https://github.com/Goldoralf/nih-plug.git", rev = "572f787d9ce7d5daf39642fea2f12f1aedffbcf8" }
+serde_json = "1"
+libloading = "0.8"
