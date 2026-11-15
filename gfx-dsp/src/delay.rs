@@ -49,6 +49,15 @@ impl DelayLine {
         self.write = 0;
     }
 
+    /// Copies another line's contents and position without allocating (same prepared size); a line
+    /// of another size is left as it is.
+    pub fn copy_from(&mut self, other: &DelayLine) {
+        if self.buf.len() == other.buf.len() {
+            self.buf.copy_from_slice(&other.buf);
+            self.write = other.write;
+        }
+    }
+
     /// Largest delay that can be read.
     pub fn max_delay(&self) -> usize {
         self.buf.len().saturating_sub(8)

@@ -31342,6 +31342,1272 @@
      "notes": "The envelope pulls the wet down by up to 70 % while you pick; the 600 ms release lets the pad return smoothly"
     }
    ]
+  },
+  "gfx-freqshift": {
+   "name": "GoleM FX Freqshift",
+   "class_id": "GoleMFxFreqSh001",
+   "blocks": [
+    "surge-freqshift"
+   ],
+   "front": [
+    "shift",
+    "fbk",
+    "time",
+    "mix",
+    "loop"
+   ],
+   "groups": [
+    {
+     "id": "shifter",
+     "name": "Shifter",
+     "custom": null,
+     "params": [
+      "shift_r",
+      "sideband",
+      "zero_cut",
+      "dry_match"
+     ]
+    },
+    {
+     "id": "loop",
+     "name": "Loop",
+     "custom": null,
+     "params": [
+      "time_sync",
+      "low_cut",
+      "high_cut"
+     ]
+    },
+    {
+     "id": "lfo",
+     "name": "LFO",
+     "custom": null,
+     "params": [
+      "lfo_depth",
+      "rate",
+      "sync",
+      "lfo_shape",
+      "stereo_phase"
+     ]
+    },
+    {
+     "id": "envelope",
+     "name": "Envelope",
+     "custom": null,
+     "params": [
+      "env_depth",
+      "env_sens",
+      "env_att",
+      "env_rel"
+     ]
+    },
+    {
+     "id": "output",
+     "name": "Output",
+     "custom": null,
+     "params": [
+      "trails",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "shift": {
+     "name": "Shift L",
+     "kind": "float",
+     "min": -2000,
+     "max": 2000,
+     "default": 2,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 2,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Moves every partial by this many Hz (left, and the base of the right)"
+    },
+    "fbk": {
+     "name": "Feedback",
+     "kind": "float",
+     "min": 0,
+     "max": 110,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The shifted wet fed back: each pass is shifted again"
+    },
+    "time": {
+     "name": "Time",
+     "kind": "float",
+     "min": 0,
+     "max": 2000,
+     "default": 0,
+     "unit": "ms",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Delay before the shifter, inside the loop"
+    },
+    "mix": {
+     "name": "Mix",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Linear dry / wet crossfade (the catalogue's law)"
+    },
+    "shift_r": {
+     "name": "Shift R",
+     "kind": "float",
+     "min": -100,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Right shift as a ratio of the left: +100 % = same (phase-locked), 0 = right unshifted, −100 % = opposite (stereo spread)"
+    },
+    "loop": {
+     "name": "Loop",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Delay",
+      "Phaser"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Phaser adds a dispersive 12-stage all-pass chain in the loop: a denser barber-pole phaser at time 0 (Delay alone already phases, through the Hilbert pair)"
+    },
+    "sideband": {
+     "name": "Sideband",
+     "kind": "float",
+     "min": -100,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "+100 = the signed shift only; 0 = both sidebands (carrier-free ring mod); −100 = the mirror (Bode's Up / Down mix)"
+    },
+    "zero_cut": {
+     "name": "Zero Cut",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 1,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Removes the partials shifted below 0 Hz (no mud) or past Nyquist, by a second pass through the Hilbert pair"
+    },
+    "dry_match": {
+     "name": "Dry Match",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Dry through the wet's own all-pass path: small shifts swell like a tremolo instead of phasing; shift 0 nulls to −83 dB"
+    },
+    "time_sync": {
+     "name": "Time Sync",
+     "kind": "enum",
+     "min": 0,
+     "max": 16,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "4/1",
+      "2/1",
+      "1/1",
+      "1/2",
+      "1/2•",
+      "1/2T",
+      "1/4",
+      "1/4•",
+      "1/4T",
+      "1/8",
+      "1/8•",
+      "1/8T",
+      "1/16",
+      "1/16•",
+      "1/16T",
+      "1/32"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "time from the host tempo (a duration)"
+    },
+    "low_cut": {
+     "name": "Loop Low Cut",
+     "kind": "float",
+     "min": 20,
+     "max": 1000,
+     "default": 20,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "In the feedback return: each pass thinner"
+    },
+    "high_cut": {
+     "name": "Loop High Cut",
+     "kind": "float",
+     "min": 1000,
+     "max": 20000,
+     "default": 20000,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "In the feedback return: each pass darker; tames upward spirals"
+    },
+    "lfo_depth": {
+     "name": "LFO Depth",
+     "kind": "float",
+     "min": 0,
+     "max": 500,
+     "default": 0,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "± Hz added to the shift by the LFO; may cross zero"
+    },
+    "rate": {
+     "name": "LFO Rate",
+     "kind": "float",
+     "min": 0.01,
+     "max": 20,
+     "default": 0.5,
+     "unit": "Hz",
+     "display": "log",
+     "step": null,
+     "decimals": 2,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": {
+      "param": "sync",
+      "equals": "Off"
+     },
+     "help": "When sync = Off"
+    },
+    "sync": {
+     "name": "LFO Sync",
+     "kind": "enum",
+     "min": 0,
+     "max": 16,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Off",
+      "4/1",
+      "2/1",
+      "1/1",
+      "1/2",
+      "1/2•",
+      "1/2T",
+      "1/4",
+      "1/4•",
+      "1/4T",
+      "1/8",
+      "1/8•",
+      "1/8T",
+      "1/16",
+      "1/16•",
+      "1/16T",
+      "1/32"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "LFO period and phase from the host position (shared id)"
+    },
+    "lfo_shape": {
+     "name": "LFO Shape",
+     "kind": "enum",
+     "min": 0,
+     "max": 6,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Sine",
+      "Triangle",
+      "Saw Up",
+      "Saw Down",
+      "Square",
+      "Random Steps",
+      "Random Smooth"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "gfx-glitch's order"
+    },
+    "stereo_phase": {
+     "name": "Stereo Phase",
+     "kind": "float",
+     "min": 0,
+     "max": 180,
+     "default": 0,
+     "unit": "°",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Right LFO offset (shared id)"
+    },
+    "env_depth": {
+     "name": "Envelope Depth",
+     "kind": "float",
+     "min": -1000,
+     "max": 1000,
+     "default": 0,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Hz added by the input envelope: the pick pushes the shift"
+    },
+    "env_sens": {
+     "name": "Env Sensitivity",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared id"
+    },
+    "env_att": {
+     "name": "Env Attack",
+     "kind": "float",
+     "min": 1,
+     "max": 100,
+     "default": 5,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared id"
+    },
+    "env_rel": {
+     "name": "Env Release",
+     "kind": "float",
+     "min": 20,
+     "max": 2000,
+     "default": 250,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared id"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Bypass with tail (nih-plug make_bypass)"
+    },
+    "trails": {
+     "name": "Trails",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 1,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Loop rings out after off"
+    }
+   },
+   "presets": [
+    {
+     "id": "endless-phase",
+     "type": "surge-freqshift",
+     "name": "Endless phase",
+     "desc": "Every partial moved up 0.3 Hz against the dry: notches that climb for ever and never turn round",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "shoegaze"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": true,
+     "params": {
+      "shift": 0.3,
+      "fbk": 0,
+      "time": 0,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The barber-pole phaser with no feedback: the dry beats against the shifted wet; 50 % mix gives the deepest notches"
+    },
+    {
+     "id": "spiral-phaser",
+     "type": "surge-freqshift",
+     "name": "Spiral phaser",
+     "desc": "A dense barber-pole phaser: the shifted wet fed back through a twelve-stage all-pass chain",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "space-rock"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0.5,
+      "fbk": 70,
+      "time": 0,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Phaser",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Costello's recipe: a dispersive loop around the shifter; more feedback, sharper notches"
+    },
+    {
+     "id": "spiral-flanger-down",
+     "type": "surge-freqshift",
+     "name": "Falling flanger",
+     "desc": "Comb teeth that glide down for ever: a 3 ms loop shifted −0.4 Hz on every pass",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "shoegaze"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "extreme"
+     ],
+     "default": false,
+     "params": {
+      "shift": -0.4,
+      "fbk": 75,
+      "time": 3,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 8000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "A short delay in the loop turns the barber-pole phaser into a flanger; the loop high cut keeps the teeth smooth"
+    },
+    {
+     "id": "metal-detune-wide",
+     "type": "surge-freqshift",
+     "name": "Wide metallic detune",
+     "desc": "Left shifted up 1.5 Hz, right down 1.5 Hz, 12 ms late: a sweet metallic chorus that spreads wide",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "indie-rock",
+      "dream-pop"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "shift": 1.5,
+      "fbk": 0,
+      "time": 12,
+      "mix": 40,
+      "shift_r": -100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Opposite stereo shifts; summed to mono they are both sidebands, a slow ring-mod shimmer"
+    },
+    {
+     "id": "swell-beat",
+     "type": "surge-freqshift",
+     "name": "Whole-band swell",
+     "desc": "The whole chord swells and fades four times a second: the dry matched to the wet's phase",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "indie-rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "shift": 4,
+      "fbk": 0,
+      "time": 0,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": true,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Dry Match puts every partial's beat in phase: a tremolo made of beating, not a phaser"
+    },
+    {
+     "id": "bell-lead",
+     "type": "surge-freqshift",
+     "name": "Bell lead",
+     "desc": "Every partial moved up 180 Hz: harmonics turn inharmonic, single notes ring like bells",
+     "inst": "guitar",
+     "genres": [
+      "experimental",
+      "rock"
+     ],
+     "subgenres": [
+      "noise-rock",
+      "art-rock"
+     ],
+     "gain": "any",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "bright"
+     ],
+     "default": false,
+     "params": {
+      "shift": 180,
+      "fbk": 0,
+      "time": 0,
+      "mix": 60,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 6000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Inharmonic partials over a dry core; play single notes, chords turn to clang"
+    },
+    {
+     "id": "ring-carrierless",
+     "type": "surge-freqshift",
+     "name": "Carrier-free ring mod",
+     "desc": "Both sidebands at ±400 Hz, no carrier and no dry: a clean ring modulator",
+     "inst": "guitar",
+     "genres": [
+      "experimental",
+      "electronic"
+     ],
+     "subgenres": [
+      "noise",
+      "industrial-electronic"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "shift": 400,
+      "fbk": 0,
+      "time": 0,
+      "mix": 100,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 0,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Sideband 0 mixes the shift and its mirror at −6 dB each: a sine ring modulator without carrier bleed"
+    },
+    {
+     "id": "zero-swirl",
+     "type": "surge-freqshift",
+     "name": "Through-zero swirl",
+     "desc": "The shift swings ±3 Hz around zero: the phasing slows, stops and reverses on a slow cycle",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "ambient"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "fbk": 0,
+      "time": 0,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 3,
+      "rate": 0.15,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The oscillator's phase is continuous, so crossing 0 Hz never steps"
+    },
+    {
+     "id": "pick-zap",
+     "type": "surge-freqshift",
+     "name": "Pick zap",
+     "desc": "Each pick attack pushes the shift up to 600 Hz and lets it fall back: a zap on every note",
+     "inst": "guitar",
+     "genres": [
+      "electronic",
+      "rnb"
+     ],
+     "subgenres": [
+      "funk"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "fbk": 0,
+      "time": 0,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 600,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 150,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The envelope drives the shift in Hz; play staccato for separate zaps"
+    },
+    {
+     "id": "ghost-echo-fall",
+     "type": "surge-freqshift",
+     "name": "Falling ghost echoes",
+     "desc": "Echoes 350 ms apart, each one 30 Hz lower and thinner than the last",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "post-rock",
+      "space-rock"
+     ],
+     "gain": "any",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dark"
+     ],
+     "default": false,
+     "params": {
+      "shift": -30,
+      "fbk": 70,
+      "time": 350,
+      "mix": 35,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 150,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Zero Cut keeps the falling repeats from folding back into mud below 0 Hz"
+    },
+    {
+     "id": "spiral-echo-rise",
+     "type": "surge-freqshift",
+     "name": "Rising spiral echoes",
+     "desc": "Quarter-second echoes that climb 12 Hz per repeat and darken as they go",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic"
+     ],
+     "subgenres": [
+      "post-rock",
+      "ambient"
+     ],
+     "gain": "any",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "shift": 12,
+      "fbk": 85,
+      "time": 250,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 5000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "A shifter in a delay loop; Zero Cut also removes what climbs past Nyquist"
+    },
+    {
+     "id": "runaway-wall",
+     "type": "surge-freqshift",
+     "name": "Runaway wall",
+     "desc": "Feedback past 100 %: the loop builds into a bounded, ever-rising wall; lower it to recover",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "experimental"
+     ],
+     "subgenres": [
+      "noise-rock",
+      "drone"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": -3,
+     "tags": [
+      "extreme"
+     ],
+     "default": false,
+     "params": {
+      "shift": 7,
+      "fbk": 105,
+      "time": 80,
+      "mix": 50,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 4000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "Meant for an EXP pedal on Feedback; the soft clip on the return keeps it bounded"
+    },
+    {
+     "id": "bass-growl",
+     "type": "surge-freqshift",
+     "name": "Bass growl",
+     "desc": "Bass shifted 60 Hz down with the zero cut off: low notes fold back through 0 Hz and growl",
+     "inst": "bass",
+     "genres": [
+      "metal",
+      "rock"
+     ],
+     "subgenres": [
+      "sludge-metal",
+      "stoner-rock"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "shift": -60,
+      "fbk": 0,
+      "time": 0,
+      "mix": 35,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": false,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The through-zero reflection on purpose; mixed low so the fundamental stays"
+    },
+    {
+     "id": "radio-ghost",
+     "type": "surge-freqshift",
+     "name": "Radio ghost",
+     "desc": "A 24 Hz shift with a short, faint loop and a nearly dry right side: a voice between stations",
+     "inst": "guitar",
+     "genres": [
+      "experimental",
+      "rock"
+     ],
+     "subgenres": [
+      "art-rock"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "lo-fi"
+     ],
+     "default": false,
+     "params": {
+      "shift": 24,
+      "fbk": 2.7,
+      "time": 23.7,
+      "mix": 50,
+      "shift_r": 16,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The catalogue's radio-ghost converted to real units (README §3.4)"
+    },
+    {
+     "id": "metal-smear",
+     "type": "surge-freqshift",
+     "name": "Metal smear",
+     "desc": "Partials moved up 40 Hz on the left, 16 Hz on the right, smeared by a 15 ms loop",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "experimental"
+     ],
+     "subgenres": [
+      "noise-rock"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "shift": 40,
+      "fbk": 12.5,
+      "time": 15.1,
+      "mix": 40,
+      "shift_r": 40,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The catalogue's metal-smear converted to real units (README §3.4)"
+    },
+    {
+     "id": "barberpole",
+     "type": "surge-freqshift",
+     "name": "Barber pole",
+     "desc": "A 4 Hz shift in a 144 ms loop: echoes that each beat faster, a slow spinning pole",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock"
+     ],
+     "gain": "any",
+     "use": "texture",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "shift": 4,
+      "fbk": 27.5,
+      "time": 143.6,
+      "mix": 45,
+      "shift_r": 100,
+      "loop": "Delay",
+      "sideband": 100,
+      "zero_cut": true,
+      "dry_match": false,
+      "time_sync": "Off",
+      "low_cut": 20,
+      "high_cut": 20000,
+      "lfo_depth": 0,
+      "rate": 0.5,
+      "sync": "Off",
+      "lfo_shape": "Sine",
+      "stereo_phase": 0,
+      "env_depth": 0,
+      "env_sens": 50,
+      "env_att": 5,
+      "env_rel": 250,
+      "bypass": false,
+      "trails": true
+     },
+     "notes": "The catalogue's barberpole in real units, with Shift R at +100 % (R = L) as its author meant"
+    }
+   ]
   }
  }
 }

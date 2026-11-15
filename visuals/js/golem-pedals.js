@@ -356,6 +356,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
     'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves', 'gfx-glitch': 'bins',
+    'gfx-freqshift': 'barber',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -469,6 +470,27 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         let d = `M0 ${f1(y0)}`;
         for (let i = 0; i < n; i++) d += `H${f1((i + 1) * sw)}V${f1(y0 - (i + 1) * rise)}`;
         line(d);
+        break;
+      }
+      case 'barber': {
+        // two barber-pole columns at the face's edges, over the rune zone: diagonal stripes at 30°,
+        // rising to the right on the left column and to the left on the right one (two channels
+        // shifted opposite ways), brighter towards the top (the endless climb)
+        const top = cy - ch, bot = cy + ch, cwid = 12, rise = cwid * Math.tan(Math.PI / 6);
+        [[4, 1], [W - 16, -1]].forEach(([x0, dir]) => {
+          const x1 = x0 + cwid;
+          line(`M${f1(x0)} ${f1(top)}V${f1(bot)}`, .5); line(`M${f1(x1)} ${f1(top)}V${f1(bot)}`, .5);
+          for (let y = top + 9; y < bot + rise; y += 9) {
+            // the stripe from (start x, y) up to (end x, y − rise), clipped to the column
+            let t0 = 0, t1 = 1;
+            if (y > bot) t0 = (y - bot) / rise;
+            if (y - rise < top) t1 = (y - top) / rise;
+            if (t1 <= t0) continue;
+            const xa = dir > 0 ? x0 : x1, xs = dir * cwid;
+            const ym = y - rise * (t0 + t1) / 2, op = .35 + .65 * (bot - ym) / (bot - top);
+            line(`M${f1(xa + xs * t0)} ${f1(y - rise * t0)}L${f1(xa + xs * t1)} ${f1(y - rise * t1)}`, op);
+          }
+        });
         break;
       }
       case 'bins': {

@@ -403,6 +403,22 @@
    ],
    "category": "modulation",
    "color": "#72c000"
+  },
+  "gfx-freqshift": {
+   "name": "Shifter",
+   "blocks": [
+    "surge-freqshift"
+   ],
+   "knobs": [
+    "shift",
+    "fbk",
+    "time",
+    "mix"
+   ],
+   "selectors": [
+    "loop"
+   ],
+   "category": "pitch"
   }
  }
 }

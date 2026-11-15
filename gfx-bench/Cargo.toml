@@ -38,3 +38,4 @@ gfx-met = { path = "../gfx-met", default-features = false }
 gfx-emet = { path = "../gfx-emet", default-features = false }
 gfx-shem = { path = "../gfx-shem", default-features = false }
 gfx-golem = { path = "../gfx-golem", default-features = false }
+gfx-freqshift = { path = "../gfx-freqshift", default-features = false }

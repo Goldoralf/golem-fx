@@ -59,6 +59,7 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | `motor` | First-order inertia with separate accelerate / decelerate constants, angle integration | rotary, vibrato rise |
 | `onset` | Zero-latency pick detector (high-passed fast / slow envelope difference) | killswitch, autowah |
 | `divider` | Adaptive Schmitt trigger + flip-flops (analog octave divider) | octaver |
+| `ssb` | Single sideband: the elliptic all-pass Hilbert pair designed per rate (band 15 Hz – fs / 2 − 15 Hz, exact nome; 8 + 8 sections up to 50 kHz, 10 + 10 above; image −87 dB at 48 kHz), signed phasor, complex shifter with sideband balance, the pair's second pass as a negative-frequency filter | freqshift; ringmod (Upper / Lower); delay, octaver, glitch when they leave `pitch::Hilbert` |
 
 Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter
 at 192 kHz loses precision in `f32`). Multi-line structures (FDN, filterbanks, multi-voice) are written for
