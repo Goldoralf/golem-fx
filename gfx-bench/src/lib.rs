@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-vocoder"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -66,6 +66,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-ducker" | "ducker" => Some(Box::new(gfx_ducker::Ducker::new())),
         "gfx-fuzz" | "fuzz" => Some(Box::new(gfx_fuzz::Fuzz::new())),
         "gfx-tuner" | "tuner" => Some(Box::new(gfx_tuner::Tuner::new())),
+        "gfx-vocoder" | "vocoder" => Some(Box::new(gfx_vocoder::Vocoder::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -268,6 +269,12 @@ pub fn options(name: &str) -> checks::Options {
         // (blocking distortion), the circuit's own transient as on the real pedal (gfx-fuzz README,
         // As coded)
         o.click_bound_db = -20.0;
+    }
+    if matches!(name, "gfx-vocoder" | "vocoder") {
+        // the wet is the carrier (the pedal's own oscillators at the defaults) shaped by the input's
+        // envelopes: it does not correlate with the input, and the dry is not delayed. Zero latency by
+        // construction (IIR banks, no lookahead); Self's identity is checked by its own test (README §5)
+        o.skip_latency = true;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

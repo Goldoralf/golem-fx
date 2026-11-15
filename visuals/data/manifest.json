@@ -978,6 +978,38 @@
       {"id": "string_8", "name": "String 8", "kind": "int", "min": 0, "max": 96, "default": 0},
       {"id": "threshold", "name": "Threshold", "kind": "float", "min": -90, "max": -30, "default": -65},
       {"id": "always_on", "name": "Always On", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-vocoder": [
+      {"id": "source", "name": "Carrier", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "chord", "name": "Chord", "kind": "enum", "min": 0, "max": 5, "default": 0, "options": 6},
+      {"id": "formant", "name": "Formant", "kind": "float", "min": -12, "max": 12, "default": 0, "exp": true},
+      {"id": "env_rel", "name": "Release", "kind": "float", "min": 20, "max": 2000, "default": 40, "exp": true},
+      {"id": "sib", "name": "Sibilance", "kind": "float", "min": 0, "max": 100, "default": 50, "exp": true},
+      {"id": "mix", "name": "Mix", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "freeze", "name": "Freeze", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "bands", "name": "Bands", "kind": "int", "min": 8, "max": 40, "default": 24},
+      {"id": "spacing", "name": "Spacing", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "low", "name": "Low", "kind": "float", "min": 50, "max": 500, "default": 100},
+      {"id": "high", "name": "High", "kind": "float", "min": 2000, "max": 12000, "default": 7000},
+      {"id": "width", "name": "Width", "kind": "float", "min": 50, "max": 200, "default": 100},
+      {"id": "env_att", "name": "Attack", "kind": "float", "min": 1, "max": 100, "default": 3},
+      {"id": "thresh", "name": "Gate", "kind": "float", "min": -90, "max": 0, "default": -60},
+      {"id": "flatten", "name": "Flatten", "kind": "float", "min": 0, "max": 100, "default": 100, "exp": true},
+      {"id": "unvoiced", "name": "Unvoiced", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "noise", "name": "Noise", "kind": "float", "min": 0, "max": 100, "default": 0, "exp": true},
+      {"id": "tilt", "name": "Tilt", "kind": "float", "min": -6, "max": 6, "default": 0, "exp": true},
+      {"id": "wave", "name": "Wave", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "detune", "name": "Detune", "kind": "float", "min": 0, "max": 50, "default": 15},
+      {"id": "register", "name": "Register", "kind": "enum", "min": 0, "max": 3, "default": 1, "options": 4},
+      {"id": "quantize", "name": "Quantize", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "glide", "name": "Glide", "kind": "float", "min": 0, "max": 200, "default": 0},
+      {"id": "octave", "name": "Octave", "kind": "int", "min": -2, "max": 2, "default": 0},
+      {"id": "degree", "name": "Degree", "kind": "int", "min": 1, "max": 7, "default": 1},
+      {"id": "key", "name": "Key", "kind": "enum", "min": 0, "max": 11, "default": 0, "options": 12},
+      {"id": "scale", "name": "Scale", "kind": "enum", "min": 0, "max": 9, "default": 0, "options": 10},
+      {"id": "spread", "name": "Spread", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "output", "name": "Output", "kind": "float", "min": -18, "max": 18, "default": 0},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

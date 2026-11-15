@@ -286,6 +286,7 @@ dependencies = [
  "gfx-tremolo",
  "gfx-tuner",
  "gfx-vibrato",
+ "gfx-vocoder",
  "gfx-wah",
  "gfx-widener",
 ]
@@ -620,6 +621,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-vibrato"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-vocoder"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

@@ -53,3 +53,4 @@ gfx-mbcomp = { path = "../gfx-mbcomp", default-features = false }
 gfx-ducker = { path = "../gfx-ducker", default-features = false }
 gfx-fuzz = { path = "../gfx-fuzz", default-features = false }
 gfx-tuner = { path = "../gfx-tuner", default-features = false }
+gfx-vocoder = { path = "../gfx-vocoder", default-features = false }

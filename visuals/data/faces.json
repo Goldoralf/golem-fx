@@ -728,6 +728,26 @@
    ],
    "category": "utility",
    "color": "#126e1c"
+  },
+  "gfx-vocoder": {
+   "name": "Vocoder",
+   "blocks": [
+    "vocoder"
+   ],
+   "knobs": [
+    "formant",
+    "env_rel",
+    "sib",
+    "mix"
+   ],
+   "selectors": [
+    "source",
+    "chord"
+   ],
+   "toggles": [
+    "freeze"
+   ],
+   "category": "modulation"
   }
  }
 }

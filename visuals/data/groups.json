@@ -1925,6 +1925,66 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-vocoder": [
+      {
+        "id": "bank",
+        "name": "Bank",
+        "custom": null,
+        "params": [
+          "bands",
+          "spacing",
+          "low",
+          "high",
+          "width"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_att",
+          "thresh"
+        ]
+      },
+      {
+        "id": "clarity",
+        "name": "Intelligibility",
+        "custom": null,
+        "params": [
+          "flatten",
+          "unvoiced",
+          "noise",
+          "tilt"
+        ]
+      },
+      {
+        "id": "carrier",
+        "name": "Carrier",
+        "custom": null,
+        "params": [
+          "wave",
+          "detune",
+          "octave",
+          "register",
+          "quantize",
+          "glide",
+          "degree",
+          "key",
+          "scale"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "spread",
+          "output",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2604,6 +2664,24 @@
       "leakage": {
         "param": "model",
         "equals": "Ge Pair"
+      }
+    },
+    "gfx-vocoder": {
+      "register": {
+        "param": "source",
+        "equals": "Tracked"
+      },
+      "quantize": {
+        "param": "source",
+        "equals": "Tracked"
+      },
+      "glide": {
+        "param": "source",
+        "equals": "Tracked"
+      },
+      "degree": {
+        "param": "source",
+        "equals": "Drone"
       }
     }
   }
