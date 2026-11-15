@@ -43650,6 +43650,924 @@
      "notes": "Drive adds up to +24 dB on each saturator, each along its own law; the make-up keeps the level near"
     }
    ]
+  },
+  "gfx-widener": {
+   "name": "GoleM FX Widener",
+   "class_id": "GoleMFxWidener01",
+   "blocks": [
+    "widener"
+   ],
+   "front": [
+    "mode",
+    "amount",
+    "width",
+    "time",
+    "bass_keep",
+    "mono_law"
+   ],
+   "groups": [
+    {
+     "id": "generator",
+     "name": "Generator",
+     "custom": null,
+     "params": [
+      "variant",
+      "cents",
+      "high_cut",
+      "transient"
+     ]
+    },
+    {
+     "id": "image",
+     "name": "Image",
+     "custom": null,
+     "params": [
+      "balance",
+      "rotate",
+      "level"
+     ]
+    },
+    {
+     "id": "check",
+     "name": "Check",
+     "custom": null,
+     "params": [
+      "listen",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "mode": {
+     "name": "Mode",
+     "kind": "enum",
+     "min": 0,
+     "max": 4,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Velvet",
+      "Allpass",
+      "Comb",
+      "Double",
+      "M/S"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "The side generator: Velvet (fine, irregular width), Allpass (no smear, broad colour), Comb (pseudo-stereo), Double (micro-shift), M/S (a stereo source's own width only)"
+    },
+    "amount": {
+     "name": "Amount",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 60,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Level of the generated side re the mid; 100 % = correlation 0 on a mono source"
+    },
+    "width": {
+     "name": "Width",
+     "kind": "float",
+     "min": 0,
+     "max": 200,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Master side gain (source side and generated); 0 % = mono, 100 % = neutral for a stereo source"
+    },
+    "time": {
+     "name": "Time",
+     "kind": "float",
+     "min": 1,
+     "max": 40,
+     "default": 20,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Velvet length (10 - 40 ms), Comb delay, Double delay; inert in Allpass and M/S"
+    },
+    "bass_keep": {
+     "name": "Bass Keep",
+     "kind": "float",
+     "min": 0,
+     "max": 500,
+     "default": 120,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Below it the output is mono and dry (a high-pass on the side only); 0 = off"
+    },
+    "mono_law": {
+     "name": "Mono Law",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Exact",
+      "Classic"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Exact: the mono fold is the dry. Classic: true Haas (Comb) and L / R voices (Double); inert elsewhere"
+    },
+    "variant": {
+     "name": "Variant",
+     "kind": "float",
+     "min": 1,
+     "max": 8,
+     "default": 1,
+     "unit": null,
+     "display": "lin",
+     "step": 1,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Which velvet sequence or all-pass set: two lanes on two variants stay distinct"
+    },
+    "cents": {
+     "name": "Detune",
+     "kind": "float",
+     "min": 0,
+     "max": 25,
+     "default": 9,
+     "unit": "ct",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Double: each voice is shifted up and down by this much"
+    },
+    "high_cut": {
+     "name": "Side High Cut",
+     "kind": "float",
+     "min": 2000,
+     "max": 20000,
+     "default": 20000,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Low-pass on the generated side only: keeps sibilants and pick noise centred"
+    },
+    "transient": {
+     "name": "Transient Focus",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Ducks the generated side on attacks: the pick stays centred, the sustain blooms wide"
+    },
+    "balance": {
+     "name": "Balance",
+     "kind": "float",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Places the image (positive = right) without touching the mono fold"
+    },
+    "rotate": {
+     "name": "Rotation",
+     "kind": "float",
+     "min": -45,
+     "max": 45,
+     "default": 0,
+     "unit": "°",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Rotates a stereo image (positive = right); moves the mono fold"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Output trim"
+    },
+    "listen": {
+     "name": "Listen",
+     "kind": "enum",
+     "min": 0,
+     "max": 2,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Stereo",
+      "Mono",
+      "Side"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Audition the mono fold or the side alone (not stored by golem)"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "VST3 bypass (as the coded effects)"
+    }
+   },
+   "presets": [
+    {
+     "id": "wide-clean",
+     "type": "widener",
+     "name": "Wide clean",
+     "desc": "A mono guitar spread into a fine-grained stereo image; the mono fold is the dry, exactly",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "folk"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "subtle"
+     ],
+     "default": true,
+     "params": {
+      "mode": "Velvet",
+      "amount": 60,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -1.3,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "The default: correlation about 0.47, each side within ±2 dB in bands; level -1.3 dB matches the bypass in stereo"
+    },
+    {
+     "id": "live-safe",
+     "type": "widener",
+     "name": "Live safe",
+     "desc": "Moderate width that survives any PA: exact mono fold at the bypassed level, lows mono, attacks centred",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "metal"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Velvet",
+      "amount": 45,
+      "width": 100,
+      "time": 25,
+      "bass_keep": 200,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 40,
+      "balance": 0,
+      "rotate": 0,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Level stays 0 dB so a mono PA hears the bypass level exactly; one side alone stays within ±2 dB in bands"
+    },
+    {
+     "id": "tight-funk",
+     "type": "widener",
+     "name": "Tight funk",
+     "desc": "Rhythm parts with the pick centred and punchy and the ring blooming wide behind it",
+     "inst": "guitar",
+     "genres": [
+      "rnb",
+      "pop",
+      "rock"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight",
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Allpass",
+      "amount": 70,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 150,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 80,
+      "balance": 0,
+      "rotate": 0,
+      "level": -1.7,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Allpass smears nothing; transient focus ducks the side on each stroke"
+    },
+    {
+     "id": "wall-rhythm",
+     "type": "widener",
+     "name": "Wall rhythm",
+     "desc": "Detuned width around a dry centre for high-gain rhythm after the cab; the fold cannot comb",
+     "inst": "guitar",
+     "genres": [
+      "metal",
+      "rock"
+     ],
+     "gain": "high",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Double",
+      "amount": 50,
+      "width": 100,
+      "time": 18,
+      "bass_keep": 180,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 7,
+      "high_cut": 8000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -1.0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Exact Double: the voices live in the side only, so a mono PA hears the dry riff; high cut keeps the fizz centred"
+    },
+    {
+     "id": "studio-double",
+     "type": "widener",
+     "name": "Studio double",
+     "desc": "The classic micro-shift double: two detuned, slightly late voices left and right, heard in mono too",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "gain": "any",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Double",
+      "amount": 50,
+      "width": 100,
+      "time": 12,
+      "bass_keep": 120,
+      "mono_law": "Classic",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -1.0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Classic law: the fold carries the double as a chorus; Mono Error shows it"
+    },
+    {
+     "id": "vocal-spread",
+     "type": "widener",
+     "name": "Vocal spread",
+     "desc": "A lead or backing voice widened by detuned voices in the side; sibilants stay centred",
+     "inst": "voice",
+     "genres": [
+      "pop",
+      "rnb",
+      "rock"
+     ],
+     "gain": "any",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "subtle"
+     ],
+     "default": true,
+     "params": {
+      "mode": "Double",
+      "amount": 40,
+      "width": 100,
+      "time": 15,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 6,
+      "high_cut": 6000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -0.6,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "High cut 6 kHz keeps esses and breaths in the middle; the fold is the dry voice"
+    },
+    {
+     "id": "air-pad",
+     "type": "widener",
+     "name": "Air pad",
+     "desc": "Keys or ambient guitar opened past the speakers: correlation below zero, mono fold still exact",
+     "inst": "keys",
+     "genres": [
+      "electronic",
+      "pop",
+      "experimental"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Velvet",
+      "amount": 100,
+      "width": 130,
+      "time": 35,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -4.3,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "For headphones and recordings rather than a PA: a side louder than the mid reads as outside the speakers"
+    },
+    {
+     "id": "bass-sheen",
+     "type": "widener",
+     "name": "Bass sheen",
+     "desc": "Bass with its lows mono and dry and only the top spread wide",
+     "inst": "bass",
+     "genres": [
+      "rock",
+      "pop",
+      "electronic"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "tight"
+     ],
+     "default": true,
+     "params": {
+      "mode": "Allpass",
+      "amount": 50,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 300,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -1.0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Side-only crossover at 300 Hz: the fundamental never moves; Allpass keeps the attack unsmeared"
+    },
+    {
+     "id": "old-pseudo-stereo",
+     "type": "widener",
+     "name": "Old pseudo-stereo",
+     "desc": "The complementary-comb pseudo-stereo of the fifties, exact in mono",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "blues"
+     ],
+     "gain": "clean",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage",
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Comb",
+      "amount": 80,
+      "width": 100,
+      "time": 12,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": -2.1,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Lauridsen's comb: flat in bands but periodic, the classic phasey stereo of reissues"
+    },
+    {
+     "id": "haas-pan",
+     "type": "widener",
+     "name": "Haas pan",
+     "desc": "A true precedence shift: the right side a few ms late, the image pulled left; combs in mono",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Comb",
+      "amount": 100,
+      "width": 100,
+      "time": 15,
+      "bass_keep": 120,
+      "mono_law": "Classic",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Studio, stereo playback only: Mono Error shows the comb the fold takes (notches at 33, 100, 167 Hz)"
+    },
+    {
+     "id": "narrow-the-keys",
+     "type": "widener",
+     "name": "Narrow the keys",
+     "desc": "A stereo keyboard brought in from the edges, its lows made mono",
+     "inst": "keys",
+     "genres": [
+      "pop",
+      "rock",
+      "electronic"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "mode": "M/S",
+      "amount": 60,
+      "width": 60,
+      "time": 20,
+      "bass_keep": 150,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "M/S width only; the mid is untouched"
+    },
+    {
+     "id": "mono-the-lows",
+     "type": "widener",
+     "name": "Mono the lows",
+     "desc": "A stereo synth or backing with everything below 180 Hz made mono, the rest untouched",
+     "inst": "keys",
+     "genres": [
+      "electronic",
+      "pop",
+      "hip-hop"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight"
+     ],
+     "default": true,
+     "params": {
+      "mode": "M/S",
+      "amount": 60,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 180,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "The vinyl and live rule, on the side only: the dry mid never sees a filter"
+    },
+    {
+     "id": "place-left",
+     "type": "widener",
+     "name": "Place left",
+     "desc": "A guitar lane widened and placed left of centre without touching its mono fold",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "metal"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Velvet",
+      "amount": 50,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 2,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": -35,
+      "rotate": 0,
+      "level": -1.0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Pair with Place right on the other guitarist: different variants keep the two images distinct"
+    },
+    {
+     "id": "place-right",
+     "type": "widener",
+     "name": "Place right",
+     "desc": "A guitar lane widened and placed right of centre without touching its mono fold",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop",
+      "metal"
+     ],
+     "gain": "any",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Velvet",
+      "amount": 50,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 3,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 35,
+      "rotate": 0,
+      "level": -1.0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "The partner of Place left: variant 3 against its 2"
+    },
+    {
+     "id": "turn-the-keys",
+     "type": "widener",
+     "name": "Turn the keys",
+     "desc": "A stereo keyboard image rotated off-centre to the right, its spread kept",
+     "inst": "keys",
+     "genres": [
+      "pop",
+      "rock"
+     ],
+     "gain": "any",
+     "use": "utility",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "subtle"
+     ],
+     "default": false,
+     "params": {
+      "mode": "M/S",
+      "amount": 60,
+      "width": 100,
+      "time": 20,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 15,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "A true rotation of a stereo source; it moves the fold (stated), use Balance for a mono lane"
+    },
+    {
+     "id": "width-swell",
+     "type": "widener",
+     "name": "Width swell",
+     "desc": "Stereo opening with the expression pedal, from mono to fully decorrelated",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "electronic",
+      "experimental"
+     ],
+     "gain": "clean",
+     "use": "ambient",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "wide",
+      "dreamy"
+     ],
+     "default": false,
+     "params": {
+      "mode": "Velvet",
+      "amount": 0,
+      "width": 100,
+      "time": 25,
+      "bass_keep": 120,
+      "mono_law": "Exact",
+      "variant": 1,
+      "cents": 9,
+      "high_cut": 20000,
+      "transient": 0,
+      "balance": 0,
+      "rotate": 0,
+      "level": 0,
+      "listen": "Stereo",
+      "bypass": false
+     },
+     "notes": "Map EXP to Amount 0 - 100 %: the fold stays the dry at every position, no zipper"
+    }
+   ]
   }
  }
 }

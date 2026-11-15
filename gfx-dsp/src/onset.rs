@@ -16,6 +16,8 @@
 //!   reference, integer-ratio jumps ignored), with an adaptive window.
 //! - [`Strum`]: the arming logic: one onset per strum window, a same-note hold-off for the late
 //!   detectors, slides merged.
+//! - [`Strength`]: a continuous onset strength 0 – 1 (no event): a fast envelope in dB against a
+//!   slow one that follows the fast *envelope* (gfx-widener's transient focus).
 //!
 //! Every level is relative to the playing's own level, so the same phrase 24 dB quieter fires the
 //! same onsets. Allocation in `prepare` only; deterministic.
@@ -801,6 +803,65 @@ impl Strum {
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// Strength: a continuous onset strength
+
+/// A continuous onset strength o in 0 – 1, no event (design: gfx-widener/README.md §2.4):
+/// - e_f = peak follower of |x| (attack 0.5 ms, release 100 ms), in dB;
+/// - e_s = e_f smoothed by a 20 ms one-pole while it rises, equal to e_f while it falls, and never
+///   more than `DEAD_DB` + `RANGE_DB` under it;
+/// - o = clamp((e_f − e_s − `DEAD_DB`) / `RANGE_DB`, 0, 1).
+///
+/// The slow envelope follows the fast *envelope*, not the signal: two followers of |x| with different
+/// times never agree on a sustained low note (a permanent partial strength, rippling at the note's
+/// rate); this cascade reads ≈ 0 on a sustain and 1 on a pick after silence.
+#[derive(Clone, Debug)]
+pub struct Strength {
+    fast: PeakFollower,
+    slow_db: f32,
+    coef: f32,
+    o: f32,
+}
+
+impl Default for Strength {
+    fn default() -> Self {
+        Self { fast: PeakFollower::new(0.5, 100.0), slow_db: DB_FLOOR, coef: 0.0, o: 0.0 }
+    }
+}
+
+impl Strength {
+    pub const DEAD_DB: f32 = 1.5;
+    pub const RANGE_DB: f32 = 9.0;
+    pub const SLOW_MS: f32 = 20.0;
+
+    pub fn prepare(&mut self, sample_rate: f32) {
+        self.fast.prepare(sample_rate);
+        self.coef = one_pole_coef((Self::SLOW_MS * 0.001 * sample_rate) as f64) as f32;
+    }
+
+    pub fn reset(&mut self) {
+        self.fast.reset();
+        self.slow_db = DB_FLOOR;
+        self.o = 0.0;
+    }
+
+    /// The last strength.
+    #[inline]
+    pub fn value(&self) -> f32 {
+        self.o
+    }
+
+    /// One sample; returns the strength.
+    #[inline]
+    pub fn next(&mut self, x: f32) -> f32 {
+        let f = to_db(self.fast.next(x) as f64);
+        self.slow_db = if f < self.slow_db { f } else { f + (self.slow_db - f) * self.coef };
+        self.slow_db = self.slow_db.max(f - (Self::DEAD_DB + Self::RANGE_DB));
+        self.o = ((f - self.slow_db - Self::DEAD_DB) / Self::RANGE_DB).clamp(0.0, 1.0);
+        self.o
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1007,5 +1068,25 @@ mod tests {
         }
         // a jump down after the slide is a new note
         assert!(at(&mut s, 520.0, Source::Pitch, false));
+    }
+
+    #[test]
+    fn strength_fires_on_picks_and_rests_on_a_low_sustain() {
+        for sr in [44100.0f32, 48000.0, 96000.0, 192000.0] {
+            let mut o = Strength::default();
+            o.prepare(sr);
+            o.reset();
+            // an 82 Hz note (7 harmonics, slow decay) picked after silence
+            let n = (1.5 * sr) as usize;
+            let at = (0.2 * sr) as usize;
+            let x = pluck(n, 82.4, sr, at, 0.5);
+            let y: Vec<f32> = x.iter().map(|&v| o.next(v)).collect();
+            let attack = y[at..at + (0.01 * sr) as usize].iter().fold(0.0f32, |m, &v| m.max(v));
+            let worst = y[at + (0.25 * sr) as usize..].iter().fold(0.0f32, |m, &v| m.max(v));
+            eprintln!("{sr}: attack strength {attack:.3}, sustain ≤ {worst:.4}");
+            assert!(attack > 0.95, "{sr}: attack strength {attack}");
+            assert!(worst < 0.05, "{sr}: sustain strength up to {worst}");
+            assert!(y[..at].iter().all(|&v| v == 0.0));
+        }
     }
 }

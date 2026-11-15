@@ -28,6 +28,7 @@ gfx-delay = { path = "../gfx-delay", default-features = false }
 gfx-reverb = { path = "../gfx-reverb", default-features = false }
 gfx-shimmer = { path = "../gfx-shimmer", default-features = false }
 gfx-glitch = { path = "../gfx-glitch", default-features = false }
+gfx-widener = { path = "../gfx-widener", default-features = false }
 gfx-geq = { path = "../gfx-geq", default-features = false }
 gfx-swell = { path = "../gfx-swell", default-features = false }
 gfx-killswitch = { path = "../gfx-killswitch", default-features = false }

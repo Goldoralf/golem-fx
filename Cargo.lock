@@ -281,6 +281,7 @@ dependencies = [
  "gfx-tremolo",
  "gfx-vibrato",
  "gfx-wah",
+ "gfx-widener",
 ]
 
 [[package]]
@@ -574,6 +575,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-widener"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

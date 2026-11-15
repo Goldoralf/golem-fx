@@ -796,6 +796,23 @@
       {"id": "hi_bypass", "name": "High Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "slope", "name": "Crossover Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-widener": [
+      {"id": "mode", "name": "Mode", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "amount", "name": "Amount", "kind": "float", "min": 0, "max": 100, "default": 60, "exp": true},
+      {"id": "width", "name": "Width", "kind": "float", "min": 0, "max": 200, "default": 100, "exp": true},
+      {"id": "time", "name": "Time", "kind": "float", "min": 1, "max": 40, "default": 20},
+      {"id": "bass_keep", "name": "Bass Keep", "kind": "float", "min": 0, "max": 500, "default": 120},
+      {"id": "mono_law", "name": "Mono Law", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
+      {"id": "variant", "name": "Variant", "kind": "int", "min": 1, "max": 8, "default": 1},
+      {"id": "cents", "name": "Detune", "kind": "float", "min": 0, "max": 25, "default": 9, "exp": true},
+      {"id": "high_cut", "name": "Side High Cut", "kind": "float", "min": 2000, "max": 20000, "default": 20000},
+      {"id": "transient", "name": "Transient Focus", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "balance", "name": "Balance", "kind": "float", "min": -100, "max": 100, "default": 0, "exp": true},
+      {"id": "rotate", "name": "Rotation", "kind": "float", "min": -45, "max": 45, "default": 0, "exp": true},
+      {"id": "level", "name": "Level", "kind": "float", "min": -12, "max": 12, "default": 0},
+      {"id": "listen", "name": "Listen", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

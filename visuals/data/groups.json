@@ -1593,6 +1593,38 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-widener": [
+      {
+        "id": "generator",
+        "name": "Generator",
+        "custom": null,
+        "params": [
+          "variant",
+          "cents",
+          "high_cut",
+          "transient"
+        ]
+      },
+      {
+        "id": "image",
+        "name": "Image",
+        "custom": null,
+        "params": [
+          "balance",
+          "rotate",
+          "level"
+        ]
+      },
+      {
+        "id": "check",
+        "name": "Check",
+        "custom": null,
+        "params": [
+          "listen",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1873,6 +1905,22 @@
       "hi_mix": "The high band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
       "hi_solo": "Hear the high band alone (several soloed: their sum); a set-up switch",
       "hi_bypass": "The high band passes clean at 0 dB: its modules, mix and gain are ignored"
+    },
+    "gfx-widener": {
+      "mode": "The side generator: Velvet (fine, irregular width), Allpass (no smear, broad colour), Comb (pseudo-stereo), Double (micro-shift), M/S (a stereo source's own width only)",
+      "amount": "Level of the generated side re the mid; 100 % = correlation 0 on a mono source",
+      "width": "Master side gain (source side and generated); 0 % = mono, 100 % = neutral for a stereo source",
+      "time": "Velvet length (10 - 40 ms), Comb delay, Double delay; inert in Allpass and M/S",
+      "bass_keep": "Below it the output is mono and dry (a high-pass on the side only); 0 = off",
+      "mono_law": "Exact: the mono fold is the dry. Classic: true Haas (Comb) and L / R voices (Double); inert elsewhere",
+      "variant": "Which velvet sequence or all-pass set: two lanes on two variants stay distinct",
+      "cents": "Double: each voice is shifted up and down by this much",
+      "high_cut": "Low-pass on the generated side only: keeps sibilants and pick noise centred",
+      "transient": "Ducks the generated side on attacks: the pick stays centred, the sustain blooms wide",
+      "balance": "Places the image (positive = right) without touching the mono fold",
+      "rotate": "Rotates a stereo image (positive = right); moves the mono fold",
+      "level": "Output trim",
+      "listen": "Audition the mono fold or the side alone (not stored by golem)"
     }
   },
   "depends": {
