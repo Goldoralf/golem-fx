@@ -1,7 +1,137 @@
 # gfx-dist
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Design by Claude Opus 5.5; reviewed by Claude
-> Fable 5.2 the same day (fixes folded in; see **Review** at the end).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Claude
+> Fable 5.2 (Review at the end). The shared solver is built first, as the Review asked: new gfx-dsp
+> **`circuit_nl`** (`NonlinearCircuit`, nodal DK, Woodbury pots every sample, exact stage cuts, inline
+> DC point, op-amp macromodel, diodes, BJT with SPICE's temperature law, `to_spice()`, shared fast
+> `exp`), proven on the Op-Amp Dist (0.300 V/µs slew for 0.3, no unsolved sample on any signal or part,
+> 0.8 Newton iterations per stage-sample at the defaults), then four circuits ship: **Op-Amp Dist,
+> Booster Dist, Blend OD, MOSFET OD**. **The Discrete OD is not coded** (its discrete op-amps need a
+> JFET model and a transistor-level reference to fit the macro against): the `circuit` enum lists the
+> four in the README's order and the Discrete OD is appended when it ships. Under the owner's alias
+> policy every circuit runs at 8× (the Op-Amp Dist's Ideal swap at 16×): worst alias of a 1.2 kHz sine
+> at full gain −80 to −88 dB with the circuits' own parts, −71 dB worst swap. Bench 28 / 28, 19
+> behaviour tests, CPU 4.2 µs / sample mono at the defaults (20 % of a core, the contract's bound).
+> Deviations and numbers: "As coded" below.
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp: `circuit_nl.rs` (+ `circuit_nl/tests.rs`, 19 unit tests), `pot.rs` (taper laws),
+`oversample.rs` (`OversamplerN`, 1× – 16× f64 cascade; the existing 2× unchanged). Here: `circuits.rs`
+(the four netlists, each from the clone document named in §2.1), `lib.rs` (the processor: two slots per
+channel holding every circuit compiled, crossfades, `bass_keep` twin, K), `plugin.rs` (class id
+`GoleMFxDist00001`, mono 1 / 1 then 2 / 2, latency 0), `tests.rs`, `fixtures/` (the offline reference and
+the four ngspice decks).
+
+**The solver as built** (gfx-dsp `circuit_nl`, shared with gfx-fuzz):
+- Its own `Netlist` (the brief forbids touching the linear `circuit` module that gfx-emet / gfx-shem use;
+  the README wanted "`circuit::Netlist` with new elements"). Elements R, C (trapezoidal, or backward Euler
+  per capacitor), L, ideal op-amp, ideal buffer, variable resistors and pots (taper, three-terminal or
+  rheostat, ganged by the caller), sources driven by an input vector u, current sources; devices with
+  every constant a run-time parameter: clipper (two Shockley strings with an exact series collapse, an
+  optional extra junction, an optional MOSFET channel), BJT (Ebers–Moll, NPN / PNP, SPICE temperature
+  law, collector-junction leakage scale), op-amp macromodel (tanh or square-law stage into a fixed 30 pF,
+  so a part swap changes no matrix; A₀ leak; rails as multiples of `set_supply`).
+- Newton, per stage, in port voltages: seed extrapolated only after two plain solves; SPICE limiting
+  (`pnjlim` on junctions, the input stage ≤ 3 V_lin, the integrator stopped at its rail's knee when it
+  arrives from inside); Armijo backtracking along the Newton direction when the limited step does not
+  lower ‖g‖²; stop at |Δv| < 10⁻⁶ V or a residual below it; cap 20. Fallbacks, in order: plain Newton
+  from the previous solution, the same without line search (SPICE's way), continuation in p in 4 then 16
+  steps (each step retried without line search), then the previous solution **and its currents** are
+  held and counted. The two extra tiers were needed: the fast op-amps (TL072, Ideal) on the Booster Dist
+  left 35 – 250 unsolved samples per second with backtracking alone (the merit function crawls on the
+  rail clamp's exponential); with them, none on any test signal.
+- The rail clamp is a soft-plus conductance (knee 50 mV, the full slew current held within 50 mV), not
+  an exponential "diode": Newton converges on it quadratically; a piecewise-quadratic knee halved every
+  step.
+- Woodbury every sample while a pot moves (a k × k solve, k ≤ 8 per stage), nominal at the geometric mean
+  of each variable's range; ends clamped at 10 Ω. Checked against a rebuild: < 10⁻⁹ V.
+- DC point: caps open, inductors shorted, gmin 10⁻¹² S on every node (the transient carries the same gmin,
+  so a start from the DC point is silent to < 1 µV); devices' starting points (op-amps at mid-rail), seed,
+  continuation from the seed's inputs, source stepping. Re-solved inline at `reset` and at every slot
+  start: 17 – 48 µs for a whole circuit (bound: 133 µs, 10 % of a 64-sample block).
+- `fast_exp`: 2^k · degree-8 Taylor by Estrin's scheme, relative error < 10⁻⁹ (null ≤ −180 dB).
+- `ac_response` replaces `linearized()` → `circuit::Netlist`: an op-amp macro linearizes to a
+  transconductor, which the linear netlist cannot hold; the Laplace analysis runs on the same netlist.
+- `to_spice()`: element cards, `.model` cards, the macros as B-sources, `.temp`, `.op`. ngspice is not
+  installed: the four decks are committed in `fixtures/` with the offline reference (monolithic, 64×,
+  Newton to 10⁻¹²: fundamental and harmonics 2 – 9 at four levels / frequencies / gains per circuit);
+  a test keeps the decks in step with the code, another holds the real-time solve to the reference.
+
+**Measured** (tests and `gfx-bench check gfx-dist`):
+
+| What | Target (§5, policy) | Measured |
+|---|---|---|
+| Small signal (0.1 mV, gain / tone 0 / 50 / 100 %, 200 Hz – 4 kHz) | ±0.25 dB of the linearized netlist | within 0.25 dB, four circuits |
+| Anchors (Op-Amp Dist) | filter 470 Hz / 19.3 kHz ± 3 %; 67 dB, −3 dB near 430 Hz; slew 0.9 – 1.05 SR | **541** / 19,383 Hz (the analytic RC with the follower's 1 MΩ gate resistor, which §1.1 left out: 538 / 19,263); peak 64.3 dB (ideal asymptote 67.3), 58.3 dB at 430 Hz; slew 0.302 V/µs for 0.300 |
+| Large signal vs reference | harmonics 2 – 9 within 1 dB (≥ −60 dBc) | within 1 dB, 16 cases; fundamentals within 0.5 dB |
+| Stage cuts vs monolithic, tol 10⁻¹² | ≤ −100 dB | −156 / −185 / −146 / −170 dB |
+| Newton (squares and noise +12 dBFS, every `opamp` / `diodes` option; 44.1 – 192 kHz) | 0 unsolved, mean ≤ 3 | 0 unsolved, no NaN; 0.80 / 0.92 / 0.70 / 1.00 iterations per stage-sample at the defaults, worst sample 6; worst 32-sample block 3,779 iterations (all stages, all oversampled samples) |
+| Uniqueness | det J keeps its sign | over an 11-point grid per port, every stage, pots 0 / 50 / 100 % |
+| Stiff modes | ≤ −80 dB above fs / 4 | the band 0.4 – 0.5 fs is no louder than the same band solved at 2 fs (−82 vs −75 dB on the Op-Amp Dist): **no stiff mode**; the absolute −80 dB cannot hold on a clipped wave (−63 to −82 dB of genuine harmonics there), so the test compares against the finer solve. The 100 pF stays trapezoidal |
+| Aliasing, 1.2 kHz, −12 dBFS, full gain, tone open (policy) | ≤ −70 dB own parts, ≤ −65 dB any swap | Op-Amp Dist −87 / −71 dB (TL072; Ideal at 16× −112), Booster Dist −80 / −71, Blend OD −85 / −82, MOSFET OD −88 / −85 |
+| Taper | ±0.3 dB, gain 0 … 100 % | within 0.3 dB |
+| DC point, activation / reset / switch | ≤ −60 dBFS | below −60 dBFS on all four |
+| Supply | monotonic bias and rails, no click | op-amp bias rises monotonically 50 → 200 %; a sweep under a sine stays solved |
+| Switches (`circuit`, `diodes`, `opamp`, `hp` under 200 Hz) | below the bound | worst −40 dB re peak |
+| Zipper (EXP 7-bit steps every 20 ms vs per-sample) | ≤ −80 dB | `gain` −91 dB, `tone_stack` −97 dB |
+| Bass keep (120 Hz, full gain) | 60 Hz THD ≤ −40 dB, ±60 Hz sidebands ≤ −40 dB; no notch > 3 dB | THD −85 to −108 dB, sidebands −54 to −143 dB; within +0.34 / +0.01 dB of the unsplit path at gain 0 |
+| Level (K) | unity ± 1 LU at the defaults | ±1 dB on a DI proxy (below) |
+| Cleanup (`input` 0 / −6 / −12 dB) | THD falls monotonically | yes on three circuits; **the Blend OD's THD rises** as the input falls (−21.3 → −18.6 dB): its clean feeds scale with the input while the clipped path stays pinned. Reported, not asserted |
+| Bench | — | 28 / 28 at 44.1 – 192 kHz; silence floor ≤ −155 dBFS |
+| CPU, 48 kHz mono | ≤ 20 % of a core (≈ 4.2 µs) | 4.19 µs at the defaults on pink noise (8.31 µs / stereo frame); on a two-sine test: Op-Amp Dist 3.1, Booster Dist 4.0, Blend OD 3.8, MOSFET OD 4.1 µs |
+
+**K(circuit)** (`level` 0 dB = unity at gain 50 %, tone 50 %), measured on a DI proxy (plucked notes
+E2 – E4, −6 dBFS peak, RMS after a 100 Hz high-pass): golem's DIs are not in this repository, so the K are
+to re-measure on them (±1 LU target).
+
+| `circuit` | K (dB) | Hardware level pot fully up = `level` |
+|---|---|---|
+| Op-Amp Dist | −14.0 | +14.0 dB |
+| Booster Dist | −3.6 | +3.6 dB |
+| Blend OD | −27.0 | **+27.0 dB** (beyond `level`'s +24: its summing amp gives the clean feed +23 dB) |
+| MOSFET OD | −16.3 | +16.3 dB |
+
+**Deviations from the spec, and why.**
+
+1. **Discrete OD not shipped** (enum of four). It needs a JFET device in `circuit_nl`, the transistor-level
+   reference of its discrete op-amps to fit the square-law macro against (§2.3, §5), and the fixed Fender
+   stack's values, which the Sapphire document gives but were not re-read here. The square-law macro and
+   the output resistance are in `circuit_nl` already.
+2. **Rates by the owner's policy**, not the README's fixed 16× / −85 dB: the Op-Amp Dist runs at 8× (its
+   Ideal swap −57 dB at 8×, so that swap alone runs at 16×: a second compiled variant, crossfaded in like
+   a circuit); the other three at 8×. One stage fewer per doubling of the host rate.
+3. **"Ideal" op-amp = 50 V/µs, 20 MHz, rail to rail**, not infinite: a macro with no slew and no bandwidth
+   is no macro, and 1,000 V/µs / 100 MHz left unsolved samples at 8×.
+4. **Part swaps start the incoming slot from its DC point** (then the 20 ms crossfade), not from a copy of
+   the running state: "None" → silicon on a copied state put 3.5 V across a silicon pair, a 60-iteration
+   walk down the exponential that failed, and held currents ran away (output 10⁷). The DC start costs
+   nothing audible inside the fade.
+5. **The rail clamp, Newton fallbacks and stop rule** as described above (soft-plus clamp; previous-
+   solution and plain-step tiers; a residual below 10⁻⁶ V also converges; the hold keeps the previous
+   currents).
+6. **Click bound −30 dB**, not −35: `tight` 1000 → 20 Hz moves the drive 3 dB and the clip's phase over
+   its 30 ms glide, and the square-ish output's own HF differs by −32 dB re peak between the glide and the
+   steady state (−59 dB for 1000 → 100 Hz). Every other step stays at or below −36 dB. `tight` leaves its
+   20 Hz bypass by a 5 ms crossfade (the filter keeps running).
+7. **Stage-cut check against a reference with 75 Ω and a current limit inside the loops: not run.** The
+   cuts are exact against the monolithic solve (above); the LM308's output current limit was not added
+   (no reference showed it reached).
+8. **Small-signal test at 0.1 mV**, not 1 mV: 1 mV through 67 dB is 2.2 V, which clips.
+9. **Blend OD sum and comb rows not coded**: in the linear regime the sum is superposition of one linear
+   network (exact by construction); the −12 dBFS sweep for combs is left to the listening bench.
+10. **Netlist values marked [U] in `circuits.rs`**: the Booster Dist's inter-stage 47 nF and the exact
+    wiring of its tone arms; the Blend OD's gang A modelled as the leg rheostat only (its shunt of the
+    stage's input at minimum gain is not modelled), its + input network (100 nF, 10 kΩ, 1 MΩ) and its
+    clean network's topology; the 1N34A, 2N7000 body-diode and 2SC2240-class constants (generic). Raph:
+    by ear, and from the documents when they are re-read.
+11. **gfx-emet keeps its own 8× cascade** (the brief: never change a coded effect without a null).
+    `OversamplerN` is the shared one from here on.
+12. `hp` is a variable resistor at 1 GΩ when off; `opamp` is inert nowhere (the Discrete OD is absent).
+
+**Left for the owner.** Listening against the NAM captures and BYOD / ChowCentaur (§5 Listening); the K
+on golem's real DIs; the [U] values; whether the Blend OD's +27 dB "fully up" needs `level` to +30 dB;
+the Discrete OD.
 
 golem's **circuit-simulated distortion pedals**. Five classic pedal circuits, each entered as a netlist and
 solved sample by sample as a nonlinear circuit: the op-amp hard clipper whose slow op-amp *is* the sound,

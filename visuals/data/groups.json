@@ -1324,6 +1324,29 @@
           "env_rel"
         ]
       }
+    ],
+    "gfx-dist": [
+      {
+        "id": "circuit",
+        "name": "Circuit",
+        "custom": null,
+        "params": [
+          "diodes",
+          "opamp",
+          "supply",
+          "hp"
+        ]
+      },
+      {
+        "id": "input",
+        "name": "Input",
+        "custom": null,
+        "params": [
+          "input",
+          "tight",
+          "bass_keep"
+        ]
+      }
     ]
   },
   "help": {
@@ -1733,6 +1756,12 @@
       "env_rel": {
         "param": "mod",
         "equals": "Envelope"
+      }
+    },
+    "gfx-dist": {
+      "hp": {
+        "param": "circuit",
+        "equals": "MOSFET OD"
       }
     }
   }

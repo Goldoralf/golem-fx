@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-dist"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -55,6 +55,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-freqshift" | "freqshift" => Some(Box::new(gfx_freqshift::FreqShift::new())),
         "gfx-swell" | "swell" => Some(Box::new(gfx_swell::Swell::new())),
         "gfx-crusher" | "crusher" => Some(Box::new(gfx_crusher::Crusher::new())),
+        "gfx-dist" | "dist" => Some(Box::new(gfx_dist::Dist::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -176,6 +177,17 @@ pub fn options(name: &str) -> checks::Options {
         // 10 kHz (96 kHz), `quant` 16 → 1 −11 dB, `input` ±24 dB −26 dB; the README's −30 dB cannot
         // hold. Every other parameter stays below −35 dB (gfx-crusher's own parameter-step test).
         o.click_bound_db = -3.0;
+    }
+    if matches!(name, "gfx-dist" | "dist") {
+        // 8× / 16× minimum-phase oversampling: a few samples of group delay, no delay line, not
+        // reported (README §2.9, the gfx-drive / gfx-emet precedent)
+        o.skip_latency = true;
+        // a high-gain clipper puts real energy above 10 kHz on any step (README §5: −35 dB, the
+        // gfx-drive precedent). Measured: `tight` 1000 → 20 Hz glides the drive up 3 dB and moves
+        // the clip's phase over 30 ms; the square-ish output's own HF changes by −32 dB re peak
+        // between the glide and the steady state (−59 dB for 1000 → 100 Hz): the effect, not a click
+        // (gfx-dist README, As coded). Every other step stays below −36 dB.
+        o.click_bound_db = -30.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

@@ -241,6 +241,7 @@ dependencies = [
  "gfx-deesser",
  "gfx-delay",
  "gfx-detune",
+ "gfx-dist",
  "gfx-drive",
  "gfx-dsp",
  "gfx-emet",
@@ -321,6 +322,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-detune"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-dist"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

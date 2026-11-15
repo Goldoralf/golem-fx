@@ -527,6 +527,22 @@
    ],
    "category": "lofi",
    "color": "#e8336f"
+  },
+  "gfx-dist": {
+   "name": "Dist",
+   "blocks": [
+    "dist"
+   ],
+   "knobs": [
+    "gain",
+    "tone_stack",
+    "level"
+   ],
+   "selectors": [
+    "circuit"
+   ],
+   "category": "drive",
+   "color": "#c8160e"
   }
  }
 }
