@@ -1324,6 +1324,79 @@
           "env_rel"
         ]
       }
+    ],
+    "gfx-ringmod": [
+      {
+        "id": "carrier",
+        "name": "Carrier",
+        "custom": null,
+        "params": [
+          "fine",
+          "wave",
+          "tuning"
+        ]
+      },
+      {
+        "id": "track",
+        "name": "Tracking",
+        "custom": null,
+        "params": [
+          "thr",
+          "speed",
+          "lowcut",
+          "highcut",
+          "lock",
+          "snap",
+          "phase"
+        ]
+      },
+      {
+        "id": "modulator",
+        "name": "Modulator",
+        "custom": null,
+        "params": [
+          "mode",
+          "model",
+          "feedback",
+          "drive",
+          "carrier_level",
+          "balance"
+        ]
+      },
+      {
+        "id": "lfo",
+        "name": "LFO",
+        "custom": null,
+        "params": [
+          "lfo_depth",
+          "rate",
+          "sync",
+          "shape",
+          "stereo_phase"
+        ]
+      },
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "env_amount",
+          "env_sens",
+          "env_att",
+          "env_rel"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "hpf",
+          "lpf",
+          "bass_keep",
+          "level"
+        ]
+      }
     ]
   },
   "help": {
@@ -1528,6 +1601,15 @@
       "env_sens": "How strongly the playing level drives the rate modulation",
       "env_att": "How fast the envelope follows a rising level",
       "env_rel": "How fast the envelope falls back after a note"
+    },
+    "gfx-ringmod": {
+      "pitch": "Carrier = base × this interval (−60 … +60 st), Free and Track: the musical carrier sweep",
+      "feedback": "mda's recursive ring: the output fed back into the multiplier, cascaded sidebands",
+      "thr": "Under this level the tracker holds its note and the wet is squelched (0 = never)",
+      "speed": "Carrier glide between notes (Surge's law, 208 → 24 ms)",
+      "env_sens": "How loud the playing must be to move the envelope",
+      "env_att": "How fast the envelope rises",
+      "env_rel": "How fast the envelope falls back"
     }
   },
   "depends": {
@@ -1733,6 +1815,48 @@
       "env_rel": {
         "param": "mod",
         "equals": "Envelope"
+      }
+    },
+    "gfx-ringmod": {
+      "rate": {
+        "param": "sync",
+        "equals": "Off"
+      },
+      "fine": {
+        "param": "carrier",
+        "equals": "Free"
+      },
+      "speed": {
+        "param": "carrier",
+        "equals": "Track"
+      },
+      "lowcut": {
+        "param": "carrier",
+        "equals": "Track"
+      },
+      "highcut": {
+        "param": "carrier",
+        "equals": "Track"
+      },
+      "lock": {
+        "param": "carrier",
+        "equals": "Track"
+      },
+      "snap": {
+        "param": "carrier",
+        "equals": "Track"
+      },
+      "phase": {
+        "param": "lock",
+        "equals": true
+      },
+      "carrier_level": {
+        "param": "model",
+        "equals": "Diode"
+      },
+      "balance": {
+        "param": "model",
+        "equals": "Diode"
       }
     }
   }

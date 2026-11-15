@@ -1,7 +1,23 @@
 # gfx-ringmod
 
-> **Status: DESIGNED** (2026-11-14). Not coded. Reviewed by Fable 5.2 on 2026-11-14: the fixes are folded
-> in, §7 holds the decisions, the last section lists the changes and what stays open.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14, reviewed by Fable 5.2 (§7 holds the
+> decisions, the Review section the changes), then coded with the new gfx-dsp module `track` (the
+> phase-locked partial tracker of gfx-sustainer §2.7, shared with gfx-sustainer and gfx-polysynth) and
+> Parker's diode law plus a generic ADAA1 in gfx-dsp `adaa`; Upper / Lower use gfx-dsp `ssb`.
+>
+> - **The phase lock was prototyped first and kept**: it passes the "Bends" and "Lock engage" rows
+>   (±50 ¢ 6 Hz vibrato: 7.8 ¢ at E2, 4.3 ¢ at A2, 1.1 ¢ at A3, 0.8 ¢ at E4; without the lock the glide
+>   trails by 52 – 53 ¢), so `lock`, `phase` and `state` ship. Locked carriers are exact to < 0.1 ¢ and a
+>   harmonic A3 × 2 or × 3/2 leaves −98 to −104 dB of non-harmonic energy (−23 dB without the lock);
+>   `phase` lands within 5° from E2 to E5.
+> - **The free carrier is mda's**: products within 0.1 dB of −6 dB and every spur ≤ −90 dB at 44.1 / 48 /
+>   96 kHz; the feedback matches mda's recursion within 0.5 dB at 48 kHz (1 dB at 44.1 / 96 kHz); a
+>   15 kHz × 16 kHz ring leaves aliases ≤ −100 dB; SSB rejects the other sideband by more than 40 dB;
+>   Diode is within 0.5 dB of Parker's equations at 64× and its aliases are ≤ −88.6 dB.
+> - **Tests**: 23 behaviour tests (gfx-ringmod), 9 `track` and 2 new `adaa` unit tests (gfx-dsp). Bench
+>   28 / 28 (latency exempt, click bound −40 dB, both documented in §8). CPU: 121 ns / sample mono at the
+>   default, 263 ns with Track, **422 ns in the worst case (budget 300)**: see §8.
+> - Deviations and what is left are listed in §8.
 
 golem's **ring modulator**. It multiplies the guitar by a carrier. The carrier is either a free
 oscillator (bells, sci-fi, robot voice, tremolo turning into clangour) or a carrier that **follows the
@@ -654,6 +670,95 @@ gfx-bench additions:
     and replaces `ringmod.svg` for the block, since the pedal's rune is its first block's glyph;
     `surge-treemonster` keeps its glyph. To announce to golem-rack with the face.
 
+## 8. As coded (v0.1.0, 2026-11-15)
+
+Files: `src/lib.rs` (the processor and `PARAMS`), `src/osc.rs` (the wavetables), `src/plugin.rs` (VST3
+`GoleMFxRingmod01`, "GoleM FX Ringmod", mono 1 / 1 first then 2 / 2, latency 0, read-only meters
+`carrier_hz` and `state`), `src/tests.rs`. Shared: gfx-dsp `track.rs` (new), `adaa.rs` (`Antiderivative`,
+`Adaa1Fn`, `TanhResidual`, `ParkerDiode`, `DiodePair`: added, nothing existing changed).
+
+### The tracker (gfx-dsp `track`, gfx-sustainer §2.7's API)
+
+`prepare(sample_rate, max_partials)`, `reset`, `set_f0(hz, confident)`, `set_floor(dbfs)`,
+`engage(Snap | Keep)`, `process(x) → Lock { psi, inc, level, locked }`, `partial(k)`, `hold()`, plus
+`set_ff_time`, `set_partials`, `set_reference` (the weak-fundamental rule), `resume` (lifts `hold`'s
+latch) and `reference()`. Partials k ≥ 2 run at k · ψ + φ_k with a ±15 ¢ trim ratio on a 4 Hz loop
+(four one-poles at 0.4 f0), as specified; they are unit-tested on an inharmonic string (B = 3·10⁻⁴,
+within 0.2 ¢) but unused here (K = 0).
+
+Two deviations from §2.7, both measured on synthetic harmonic tones at 48 kHz (feed-forward 25 ms late,
+3 ¢ off):
+
+| Specified | Coded | Why (numbers) |
+|---|---|---|
+| Phase detector low-passed by two one-poles at f0 / 3, loop bandwidth clamp(f0 / 5, 14, 50) Hz | A **one-period moving average** of the demodulated signal (a comb with a zero on every harmonic, half a period of delay), bandwidth **clamp(f0 / 2.5, 14, 100) Hz** | With the one-poles a ±50 ¢ 6 Hz vibrato left 38 ¢ of error at E2 and 22 ¢ at A2 (bench asks 10 / 5); with the comb 8.0 / 4.3 ¢, 1.1 ¢ at A3. Bends of 200 ¢ in 150 ms: 9.5 ¢ (E2), 7 ¢ (A2), 1.8 ¢ (E4) |
+| Feed-forward + loop correction (±1 st) | Once engaged the integrator holds the **whole** frequency; the feed-forward only bounds it (±1 st) and runs the NCO before the loop engages | YIN's f0 trails a vibrato by its window: added inside the loop it is a disturbance as large as the vibrato (lock was lost on every cycle at ±50 ¢) |
+
+Also: the engage test uses the error's circular variance over **10 ms** (< 0.02): over 50 ms a
+feed-forward 6 ¢ off rotates the error enough to never engage; the 50 ms variance still decides the loss
+(> 0.125). A new note is a jump of more than 50 ¢ **between successive readings** (a vibrato moves a few
+cents per reading).
+
+### Deviations in gfx-ringmod
+
+| Spec | Coded | Why |
+|---|---|---|
+| Phase lock by the band-pass pair and its own PLL (§2) | gfx-dsp `track` (the README's closing note) | The pair lagged a vibrato by 2.5 periods |
+| "gfx-ringmod always uses Keep" (gfx-sustainer §2.2) | **Snap** | ψ is a reference here, never heard: the carrier accumulates r · `inc` and is pulled onto its `phase` target by itself. Keep biases `inc` by up to 5 ¢ for seconds on low notes while it pulls the offset in (4 s at E1): an audible beat, the warble the lock removes |
+| `phase`: the carrier slewed onto its target in 50 ms | 50 ms time constant, **at most 8 ¢** of carrier frequency | A 50 ms slew of half a turn is a 10 Hz chirp (200 ¢ at E2); 8 ¢ keeps the "Lock engage" bound (≤ 10 ¢) |
+| At an onset the tracker keeps its loop | The pick detector calls `track::hold()` until the new note is named | The loop otherwise follows the attack (it dragged the carrier 110 ¢ the wrong way at E2 → A2) |
+| Pick detector: fast / slow envelope difference | Same, on the **unfiltered** input, the slow follower a peak follower (10 ms up, 200 ms down) | Through `lowcut`'s skirt a low note's vibrato read as picks; a mean follower reads a steady note's crest factor as one |
+| Onset pre-estimate: two agreeing zero-crossing periods | Same, crossings through a **Schmitt trigger** (armed under −30 % of the level) | Plain crossings read the harmonics' wiggles (E2 read as 544 Hz) |
+| `snap`: "jumps (10 ms)" | A straight line in log frequency, 10 ms long | A 10 ms one-pole took 60 ms to come within 10 ¢ from far away |
+| Gate: peak follower | Sliding maximum over 35 ms (one period of 30 Hz) | Ripple-free on low notes, and silence is seen 35 ms after the input stops |
+| Squelch: open 5 ms / close 100 ms | Linear ramps of 5 / 100 ms, to exactly 0 | A one-pole never reaches 0: the leak was still −62 dB at 200 ms (bench row: ≤ −100 dBFS) |
+| `drive` 0 – 100 % into tanh(k x) / k | The residual is faded in over the first 5 % | tanh(x) at 0 dB already saturates: a step at 0 → 0.1 % |
+| Diode `drive` "scales the input into the ring" | Input × k, output ÷ k | Small-signal sidebands stay at Clean's −6 dB whatever the drive |
+| SSB level (unspecified) | One sideband at 1 / √2 | The power of the ring's two sidebands |
+| SSB `zero_cut` (unspecified) | Off | A Lower shift past 0 Hz folds back, as on the hardware |
+| Mix's dry: always through the oversampler | Computed only while heard (`mix` < 1 or `bass_keep`); it shares the wet's up-samplers | CPU (−32 ns); the up-samplers are the same filters on the same input |
+| Bass keep's low band "mono" | The mean of the channels' dry taps | — |
+| `carrier_level`, `balance`, `phase`, etc. smoothed 20 ms | As specified; `freq` / `fine` in log(f + 1), `pitch` in cents (20 ms after the EXP smoother) | log(f + 1) lands exactly on 0 Hz |
+
+### Bench rows (§5) as measured
+
+| Row | Result |
+|---|---|
+| mda law | products −6.02 ± 0.1 dB, spurs ≤ −90 dB, 44.1 / 48 / 96 kHz (three carriers) |
+| mda feedback | within 0.5 dB at 48 kHz, 1 dB at 44.1 / 96 kHz (third-octave bands 50 Hz – 8 kHz, noise under 4 kHz so mda's own aliasing does not enter) |
+| Feedback bounded | `feedback` 1, 0.1 Hz carrier, 0 dBFS: peak ≤ +6 dBFS, Clean and Diode |
+| Surge laws | `pitch`, `thr`, cut-offs, `speed` (208 / 140 / 104 / 24 ms) exact (unit tests) |
+| Alias, Clean | 15 × 16 kHz: ≤ −100 dB; square at 3 kHz × 10 kHz: ≤ −90 dB; 44.1 and 48 kHz |
+| SSB | other sideband ≤ −40 dB (carriers 50 Hz – 5 kHz, inputs 60 Hz – 15 kHz) |
+| Alias, Diode | ≤ −88.6 dB re the strongest product (5 kHz, 2 kHz, +6 dB). ADAA1 at 4× suffices: ADAA2 / 8× not needed |
+| Diode model | first 8 products within 0.5 dB of Parker's equations at 64× |
+| Balance / squelch | matched: ≤ −100 dBFS; 50 %: leak at f_c −38 dBFS (2 f_c −80); `thr` 0.3: ≤ −100 dBFS 200 ms after the input stops |
+| Tracking accuracy | 41 Hz (`lowcut` 0.2) – 1.5 kHz sines: within 2 ¢ without the lock, 0.1 ¢ with it |
+| Phase lock | A3 × 2: −103.8 dB non-harmonic, × 3/2 (Just): −97.7 dB, carrier exact (0.000 ¢); lock off −24 dB |
+| Lock phase | carrier within +0.9° (E2) … +5.0° (E5) of `phase` |
+| Lock engage / Response | E2 → A2 → E4 with `snap`: E2 within 10 ¢ after 28 ms, A2 (after a ringing E2) 35 ms, E4 within 20 ¢ after 22 ms; then never more than 8.5 / 9.6 / 17.6 ¢ off during the note. **Misses** the row's 30 ms (A2) and 3 periods + 2 ms (E4: the pre-estimate answers in 3 periods, then `snap`'s 10 ms ramp) |
+| Bends | ±50 ¢ 6 Hz: lock 7.8 ¢ (E2), 4.3 (A2), 1.1 (A3), 0.8 (E4); no lock 52 – 53 ¢ |
+| DC | unity, `phase` 0°: wet under 10 Hz ≤ −60 dB re its RMS |
+| Mix law, dry | 0.5 = the linear crossfade (< −100 dB); the dry nulls against the oversampler's identity (< −60 dB) |
+| Bass keep | flat within 0.1 dB, 40 Hz – 5 kHz around 120 Hz |
+| Stereo phase | the right products offset by `stereo_phase` (±1°) |
+| Common checks | 28 / 28. Latency exempt (the wet does not correlate with the input; the minimum-phase oversamplers are not reported, the gfx-drive precedent); click bound −40 dB: `freq` or `pitch` end to end sweeps the carrier 10 octaves in 20 ms, a chirp of −45 dB above 10 kHz, not a click |
+| CPU (mono, 48 kHz) | Free / Clean 121 ns, Upper 185 ns, Track + lock 263 ns, Track + Diode + LFO + `bass_keep` at mix 0.6 **422 ns** (budget 300). One pass of gfx-dsp's f64 half-band costs 16 ns and Diode needs eight (wet 4× and its dry); the tracker costs 85 ns, YIN 28 ns (`lowcut` 0.3) and 118 ns at a 30 Hz floor (`lowcut` 0.2). An f32 / SIMD oversampler and a decimated YIN for bass (gfx-tuner's) are the ways down |
+
+Not run (need recordings or golem's rig): the DI rows (decays and chords on crunch.wav, the held A3
+from a DI, octave errors on decays, "no provisional pitch more than 1 st wrong on the DIs"), the
+`--trace` and `alias-grid` bench additions, the EXP control-sideband row, and the listening A / B against
+mda RingMod and Surge Treemonster.
+
+### Left for the owner
+
+- **By ear**: `snap` default (off), `phase` default 90°, the Just table (7/5, 9/5), the re-authored
+  `standard` / `robot-voice` / `bell-tone` and the 18 presets (`presets/gfx-ringmod.json`).
+- **On DIs**: the tracker on real strings (lead-clean bends and vibrato, a bass DI), chords and decays.
+- **CPU** over budget in the worst case (above).
+- golem-side items of the Review's "Still open" table are unchanged (engine table `init` `carrier` =
+  Track for `surge-treemonster`, the join on `label`, the `ringmod.freq` catalogue default, the glyph).
+
 ## Review (Fable 5.2, 2026-11-14)
 
 **Verdict: Good.** Strong on the free carrier, the Diode model and the parameter contract; **at risk on
@@ -719,4 +824,5 @@ ahead of the PLL) delays the string's pitch modulation by about 2.5 periods; on 
 locked carrier sat 0.9–1.8 rad off the string, and lock was lost at ±50 ¢ on the 3rd harmonic. The shared
 gfx-dsp `track` module is respecified in `gfx-sustainer/README.md` §2.7 (complex demodulation at the NCO's
 phase, the filter inside the loop, bandwidth f0/5, partials at k·ψ with a ratio trim). gfx-ringmod's Track
-carrier uses that module; align this section when `track` is coded.
+carrier uses that module; align this section when `track` is coded. **Done (2026-11-15)**: §8 records
+the tracker as coded and where it departs from both texts.

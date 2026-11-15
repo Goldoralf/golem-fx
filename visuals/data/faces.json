@@ -527,6 +527,24 @@
    ],
    "category": "lofi",
    "color": "#e8336f"
+  },
+  "gfx-ringmod": {
+   "name": "Ring",
+   "blocks": [
+    "ringmod",
+    "surge-treemonster"
+   ],
+   "knobs": [
+    "freq",
+    "pitch",
+    "ring",
+    "mix"
+   ],
+   "selectors": [
+    "carrier"
+   ],
+   "category": "modulation",
+   "color": "#c9b000"
   }
  }
 }

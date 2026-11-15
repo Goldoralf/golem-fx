@@ -95,3 +95,6 @@ name = "GoleM FX Freqshift"
 name = "GoleM FX Swell"
 [gfx-crusher]
 name = "GoleM FX Crusher"
+
+[gfx-ringmod]
+name = "GoleM FX Ringmod"

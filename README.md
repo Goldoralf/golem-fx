@@ -67,7 +67,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 25 | [gfx-shem](gfx-shem/) | new block (clean shaped tight boost) | — (Fortin Grind's role) | **coded**, bench green, to test in golem |
 | 26 | [gfx-golem](gfx-golem/) | new block (live vocal octave doubler) | — (the Sleep Token *Emergence* vocal) | **coded**, bench green, prototype approved by ear, to test in golem |
 | 27 | [gfx-glitch](gfx-glitch/) | new block (spectral freeze / glitch) | — | **coded**, bench green, to test in golem |
-| 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **designed**, reviewed by Fable 5.2 |
+| 28 | [gfx-ringmod](gfx-ringmod/) | `ringmod`, `surge-treemonster` | mda RingMod, Surge Treemonster | **coded**, bench green, to test in golem |
 | 29 | [gfx-freqshift](gfx-freqshift/) | `surge-freqshift` | Surge Frequency Shifter | **coded**, bench green, to test in golem |
 | 30 | [gfx-crusher](gfx-crusher/) | `bitcrusher` | mda Degrade | **coded** (Linear, µ-law, Float; ADPCM and Delta later), bench green, to test in golem |
 | 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **coded** (Accurate mode; Pedal mode waits for its voicing), bench green, to test in golem |

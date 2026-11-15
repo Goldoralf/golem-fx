@@ -47,7 +47,7 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | Module | Content | Users |
 |---|---|---|
 | `svf` | Trapezoidal (TPT) state-variable filter and first-order allpass; matched coefficient designs (Vicanek, Orfanidis); coefficient interpolation | eq, wah, autowah, phaser, deesser, every tone filter |
-| `adaa` | First-order antiderivative antialiasing for memoryless shapers, incl. "residual" form (exact below the knee) | drive, limiter, comp, tremolo, rotary |
+| `adaa` | First-order antiderivative antialiasing for memoryless shapers, incl. "residual" form (exact below the knee); `Adaa1Fn` for any `Antiderivative` (parameters may move), `TanhResidual`, Parker's diode law (`ParkerDiode`, `DiodePair`) | drive, limiter, comp, tremolo, rotary |
 | `oversample` | 2× / 4× polyphase IIR half-band (minimum phase); a matching "identity" path so a dry signal stays phase-coherent with the processed one | drive, comp, octaver |
 | `envelope` | Peak, RMS, dB-domain followers; sliding maximum (O(1)); relative (band vs full-band) detector | gate, comp, deesser, eq, autowah, duckers |
 | `exp_smooth` | The EXP-pedal smoother of the golem contract (interval-adaptive ramp + critically damped smoother + slew limit) | every EXP-capable parameter |
@@ -64,6 +64,7 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | `ssb` | Single sideband: the elliptic all-pass Hilbert pair designed per rate (band 15 Hz – fs / 2 − 15 Hz, exact nome; 8 + 8 sections up to 50 kHz, 10 + 10 above; image −87 dB at 48 kHz), signed phasor, complex shifter with sideband balance, the pair's second pass as a negative-frequency filter | freqshift; ringmod (Upper / Lower); delay, octaver, glitch when they leave `pitch::Hilbert` |
 | `blep` | One minimum-phase band-limited kernel (Kaiser prototype, cepstral minimum phase; 32 taps × 64 phases, pass band ±0.5 dB to 0.35 fs, stop band −102 dB from 0.6 fs, 2.6 samples of group delay): a `Reader` (the input at a fractional instant, and its running integral), a `Renderer` (minBLEP steps of a held signal), the FIR that matches a read + render pair for a parallel dry | crusher (later: delay's Lo-Fi) |
 | `converter` | A virtual ADC → DAC pair, halves callable apart: the `Clock` (f64 phase accumulator, seeded jitter), the `Adc` (clip, TPDF dither, Linear / µ-law / Float words, Tread / Riser / Truncate), the `Dac` (R-2R ladder errors, power-law curve), integrate-and-dump sampling, the tails window | crusher, radio (its codec between the halves) |
+| `track` | The phase-locked partial tracker (gfx-sustainer §2.7's API): complex demodulation at the NCO's phase averaged over one period (a comb on every harmonic), PI loop of bandwidth clamp(f0 / 2.5, 14, 100) Hz whose integrator holds the frequency within ±1 st of the feed-forward, Snap / Keep engage, hold at the 150 ms mean, partials at k · ψ with a ±15 ¢ trim on a 4 Hz loop, weak-fundamental reference | ringmod (Track); sustainer, polysynth |
 
 Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter
 at 192 kHz loses precision in `f32`). Multi-line structures (FDN, filterbanks, multi-voice) are written for
