@@ -15,6 +15,9 @@
 //!   the summed response) and the sum gain G_Σ (1 / RMS of the summed response over the centres and
 //!   mid-points). It states half-widths b (the design's convention) and gives the banks full widths
 //!   B = 2 b. Bounded and allocation-free once sized: one bisection, then 2N − 1 points × 13 bands.
+//! - [`band_gain`], [`crossover`], [`design_rotation`]: an explicit design's skirt gain, the
+//!   frequency where two neighbours read the same level, and the fixed rotation that makes their phases
+//!   equal there (gfx-polysynth's one band per partial; added, nothing above changed).
 //! - [`BankFade`]: the 40 ms crossfade between an old and a new bank when a setup value changes.
 
 use std::f64::consts::PI;
@@ -123,6 +126,46 @@ pub fn noise_power(spec: &BandSpec, sample_rate: f64) -> f64 {
         binom = binom * (n - 1 - j) as f64 / (j + 1) as f64;
     }
     (1.0 - r).powi(2 * n as i32) * num / (1.0 - x).powi(2 * n as i32 - 1)
+}
+
+/// |H| of a band at `offset` Hz from its centre (closed form, the image left out):
+/// ((1 − r)² / (1 − 2 r cos θ + r²))^(N / 2), θ = 2π · offset / fs. (gfx-polysynth's skirt gain: a
+/// partial `offset` Hz off the centre reads |H| of its level.)
+#[inline]
+pub fn band_gain(spec: &BandSpec, offset: f64, sample_rate: f64) -> f64 {
+    let r = pole_radius(spec.width, sample_rate);
+    let th = 2.0 * PI * offset / sample_rate;
+    let g2 = (1.0 - r) * (1.0 - r) / (1.0 - 2.0 * r * th.cos() + r * r);
+    g2.powf(0.5 * spec.order.clamp(1, MAX_ORDER) as f64)
+}
+
+/// The crossover of two neighbouring bands (`a` below `b`): the frequency between their centres where
+/// their analytic magnitudes are equal (bisection, 60 steps).
+pub fn crossover(a: &BandSpec, b: &BandSpec, sample_rate: f64) -> f64 {
+    let mag = |s: &BandSpec, f: f64| {
+        let (re, im) = band_response(s, f, sample_rate);
+        (re * re + im * im).sqrt()
+    };
+    let (mut lo, mut hi) = (a.centre.min(b.centre), a.centre.max(b.centre));
+    for _ in 0..60 {
+        let mid = 0.5 * (lo + hi);
+        if mag(a, mid) > mag(b, mid) {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    0.5 * (lo + hi)
+}
+
+/// The design rotation from band `a` to its upper neighbour `b` (gfx-polysynth §2.2):
+/// ρ_b − ρ_a = φ_a(f×) − φ_b(f×), φ the bands' phase responses at their crossover f×. Turned by it, the
+/// two bands read the same phase where they read the same level, for every power uⁿ of the phasor.
+pub fn design_rotation(a: &BandSpec, b: &BandSpec, sample_rate: f64) -> f64 {
+    let fx = crossover(a, b, sample_rate);
+    let (ar, ai) = band_response(a, fx, sample_rate);
+    let (br, bi) = band_response(b, fx, sample_rate);
+    ai.atan2(ar) - bi.atan2(br)
 }
 
 /// A bank of complex one-pole cascades (structure of arrays, f64).
@@ -838,5 +881,30 @@ mod tests {
         assert!(!f.start());
         let v: Vec<f32> = (0..40).map(|_| f.next()).collect();
         assert!((v[0] - 1.0 / 40.0).abs() < 1e-6 && v[39] == 1.0 && !f.is_running());
+    }
+
+    #[test]
+    fn skirt_gain_crossover_and_rotation() {
+        let fs = 24000.0;
+        let a = BandSpec { centre: 500.0, width: 25.0, order: 4 };
+        let b = BandSpec { centre: 525.0, width: 26.0, order: 4 };
+        // band_gain against the full response
+        for off in [0.0, 5.0, 12.5, 30.0] {
+            let (re, im) = band_response(&a, a.centre + off, fs);
+            assert!((band_gain(&a, off, fs) - (re * re + im * im).sqrt()).abs() < 1e-9);
+        }
+        // the crossover reads the same level in both bands, and the rotation makes their phases equal
+        let fx = crossover(&a, &b, fs);
+        assert!(fx > 500.0 && fx < 525.0);
+        let (ar, ai) = band_response(&a, fx, fs);
+        let (br, bi) = band_response(&b, fx, fs);
+        assert!(((ar * ar + ai * ai).sqrt() - (br * br + bi * bi).sqrt()).abs() < 1e-9);
+        let rho = design_rotation(&a, &b, fs);
+        let d = (ai.atan2(ar) - (bi.atan2(br) + rho)).rem_euclid(2.0 * PI);
+        assert!(d < 1e-9 || 2.0 * PI - d < 1e-9, "{d}");
+        // order 2 neighbours one width apart sit half a turn apart at their crossover
+        let c = BandSpec { centre: 1000.0, width: 80.0, order: 2 };
+        let e = BandSpec { centre: 1080.0, width: 80.0, order: 2 };
+        assert!((design_rotation(&c, &e, fs).rem_euclid(2.0 * PI) - PI).abs() < 0.05);
     }
 }

@@ -343,6 +343,7 @@ dependencies = [
  "gfx-phaser",
  "gfx-pitch",
  "gfx-pitch-classic",
+ "gfx-polysynth",
  "gfx-radio",
  "gfx-reverb",
  "gfx-ringmod",
@@ -646,6 +647,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-polysynth"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

@@ -896,6 +896,24 @@
     "mode"
    ],
    "category": "pitch"
+  },
+  "gfx-polysynth": {
+   "name": "Synth",
+   "blocks": [
+    "polysynth"
+   ],
+   "knobs": [
+    "cutoff",
+    "reso",
+    "filt_env",
+    "synth",
+    "dry"
+   ],
+   "selectors": [
+    "engine",
+    "wave"
+   ],
+   "category": "pitch"
   }
  }
 }

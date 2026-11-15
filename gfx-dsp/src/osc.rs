@@ -10,6 +10,8 @@
 //!   summation formula), the last harmonic faded in by its fractional part so harmonics enter and
 //!   leave smoothly as the pitch moves, scaled by 1 / √(n + frac²) (unit power per harmonic set); the
 //!   series limit is taken where the denominator vanishes.
+//! - [`pulse_width`] (any width, mean removed) and [`triangle`] (PolyBLAMP corners): gfx-polysynth's
+//!   voices (added; the functions above are unchanged).
 //! - [`Supersaw`]: 7 PolyBLEP saws detuned symmetrically by up to `detune` cents, start phases from a
 //!   seed (deterministic), a mono sum and an alternated L / R pair.
 
@@ -75,6 +77,47 @@ pub fn pulse(p: &Phasor) -> f64 {
     let t2 = if p.t < 0.5 { p.t + 0.5 } else { p.t - 0.5 };
     let naive = if p.t < 0.5 { 1.0 } else { -1.0 };
     naive + poly_blep(p.t, p.dt) - poly_blep(t2, p.dt)
+}
+
+/// PolyBLEP pulse of width `pw` (0.01 – 0.99) at the phasor's phase: +1 for `t` < `pw`, −1 after, with
+/// its mean (2 `pw` − 1) removed, so every width is centred on 0. Its RMS is 2 √(pw (1 − pw)).
+/// At `pw` 0.5 it is [`pulse`] (gfx-polysynth's voices; added, nothing else changed).
+#[inline]
+pub fn pulse_width(p: &Phasor, pw: f64) -> f64 {
+    let pw = pw.clamp(0.01, 0.99);
+    let naive = if p.t < pw { 1.0 } else { -1.0 };
+    let mut t2 = p.t - pw;
+    if t2 < 0.0 {
+        t2 += 1.0;
+    }
+    naive + poly_blep(p.t, p.dt) - poly_blep(t2, p.dt) - (2.0 * pw - 1.0)
+}
+
+/// The two-point PolyBLAMP residual of a unit slope change at phase 0 (the integral of
+/// [`poly_blep`]), in units of `dt` (multiply by the slope change × `dt`).
+#[inline]
+pub fn poly_blamp(t: f64, dt: f64) -> f64 {
+    if dt <= 0.0 {
+        0.0
+    } else if t < dt {
+        let x = t / dt - 1.0;
+        -x * x * x / 3.0
+    } else if t > 1.0 - dt {
+        let x = (t - 1.0) / dt + 1.0;
+        x * x * x / 3.0
+    } else {
+        0.0
+    }
+}
+
+/// PolyBLAMP triangle at the phasor's phase: −1 at `t` = 0, +1 at `t` = 0.5 (slope ±4 per turn), its
+/// two corners corrected (gfx-polysynth's voices; added).
+#[inline]
+pub fn triangle(p: &Phasor) -> f64 {
+    let naive = 1.0 - 4.0 * (p.t - 0.5).abs();
+    let t2 = if p.t < 0.5 { p.t + 0.5 } else { p.t - 0.5 };
+    // the slope turns from −4 to +4 at t = 0 and from +4 to −4 at t = 0.5
+    naive + 8.0 * p.dt * (poly_blamp(p.t, p.dt) - poly_blamp(t2, p.dt))
 }
 
 /// Equal-amplitude cosine harmonics up to [`BUZZ_TOP`] · fs (closed form), unit power per harmonic
@@ -233,6 +276,49 @@ mod tests {
                 assert!(a < bound, "{name} {f}: {a}");
             }
         }
+    }
+
+    #[test]
+    fn pulse_width_and_triangle() {
+        let sr = 48000.0;
+        // pulse width: harmonic k = (4 / (π k)) |sin(π k pw)|, no DC; 50 % equals `pulse`
+        for pw in [0.25f64, 0.1] {
+            let mut p = Phasor::new(0.0);
+            p.set_freq(220.0, sr);
+            let x: Vec<f64> = (0..24000)
+                .map(|_| {
+                    let v = pulse_width(&p, pw);
+                    p.advance();
+                    v
+                })
+                .collect();
+            let dc = x.iter().sum::<f64>() / x.len() as f64;
+            assert!(dc.abs() < 1e-3, "pw {pw}: dc {dc}");
+            for k in 1..5 {
+                let want = 4.0 / (std::f64::consts::PI * k as f64) * (std::f64::consts::PI * k as f64 * pw).sin().abs();
+                let a = amp(&x, 220.0 * k as f64, sr);
+                assert!((a - want).abs() < 0.02, "pw {pw} h{k}: {a} vs {want}");
+            }
+        }
+        let mut p = Phasor::new(0.3);
+        p.set_freq(1234.5, sr);
+        for _ in 0..1000 {
+            assert!((pulse_width(&p, 0.5) - pulse(&p)).abs() < 1e-12);
+            p.advance();
+        }
+        // triangle: 8 / (π² k²) on odd harmonics; the corners' aliases under the naive triangle's
+        let x = render(220.0, sr, 24000, triangle);
+        for k in [1usize, 3, 5] {
+            let want = 8.0 / (std::f64::consts::PI.powi(2) * (k * k) as f64);
+            let a = amp(&x, 220.0 * k as f64, sr);
+            assert!((a / want - 1.0).abs() < 0.02, "tri h{k}: {a} vs {want}");
+        }
+        let naive = |p: &Phasor| 1.0 - 4.0 * (p.t - 0.5).abs();
+        let f = 4321.0;
+        let a_blamp = worst_alias(&render(f, sr, 16384, triangle), f, sr);
+        let a_naive = worst_alias(&render(f, sr, 16384, naive), f, sr);
+        println!("triangle {f} Hz: worst alias {a_blamp:.1} dB (naive {a_naive:.1} dB)");
+        assert!(a_blamp < a_naive - 3.0 && a_blamp < -42.0, "{a_blamp} vs {a_naive}");
     }
 
     #[test]
