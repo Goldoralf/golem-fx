@@ -1593,6 +1593,98 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-mbcomp": [
+      {
+        "id": "low",
+        "name": "Low",
+        "custom": null,
+        "params": [
+          "lo_thresh",
+          "lo_ratio",
+          "lo_lift_thresh",
+          "lo_lift",
+          "lo_attack",
+          "lo_release",
+          "lo_gain",
+          "lo_sc"
+        ]
+      },
+      {
+        "id": "low-mid",
+        "name": "Low Mid",
+        "custom": null,
+        "params": [
+          "lm_thresh",
+          "lm_ratio",
+          "lm_lift_thresh",
+          "lm_lift",
+          "lm_attack",
+          "lm_release",
+          "lm_gain",
+          "lm_sc"
+        ]
+      },
+      {
+        "id": "high-mid",
+        "name": "High Mid",
+        "custom": null,
+        "params": [
+          "hm_thresh",
+          "hm_ratio",
+          "hm_lift_thresh",
+          "hm_lift",
+          "hm_attack",
+          "hm_release",
+          "hm_gain",
+          "hm_sc"
+        ]
+      },
+      {
+        "id": "high",
+        "name": "High",
+        "custom": null,
+        "params": [
+          "hi_thresh",
+          "hi_ratio",
+          "hi_lift_thresh",
+          "hi_lift",
+          "hi_attack",
+          "hi_release",
+          "hi_gain",
+          "hi_sc"
+        ]
+      },
+      {
+        "id": "crossovers",
+        "name": "Crossovers",
+        "custom": null,
+        "params": [
+          "bands",
+          "x_lo",
+          "x_mid",
+          "x_hi",
+          "slope",
+          "phase"
+        ]
+      },
+      {
+        "id": "dynamics",
+        "name": "Dynamics",
+        "custom": null,
+        "params": [
+          "auto_gain",
+          "auto_release",
+          "knee",
+          "range",
+          "lift_range",
+          "guard",
+          "link",
+          "solo",
+          "delta",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1873,6 +1965,42 @@
       "hi_mix": "The high band's own dry / wet, multiplied by Wet: parallel dirt on one band, no comb",
       "hi_solo": "Hear the high band alone (several soloed: their sum); a set-up switch",
       "hi_bypass": "The high band passes clean at 0 dB: its modules, mix and gain are ignored"
+    },
+    "gfx-mbcomp": {
+      "lo_thresh": "Downward threshold of the low band, RMS-calibrated; Tilt moves it",
+      "lo_ratio": "Downward ratio of the low band (gfx-comp's meaning); Amount scales its slope",
+      "lo_lift_thresh": "Below this level Lift works on the low band; held at or under the threshold",
+      "lo_lift": "Slope below the Lift threshold: + lifts quiet parts (+75 % = 4:1 upward), − expands (−100 % = 1:2)",
+      "lo_attack": "How fast the gain of the low band moves down; scaled by Time",
+      "lo_release": "How fast the gain of the low band moves back up; scaled by Time",
+      "lo_gain": "Static level of the low band on top of the make-up: phase-free band EQ",
+      "lo_sc": "What the detector of the low band hears: its own band, or the whole input (Wide)",
+      "lm_thresh": "Downward threshold of the low-mid band (Mid), RMS-calibrated; Tilt moves it",
+      "lm_ratio": "Downward ratio of the low-mid band (Mid) (gfx-comp's meaning); Amount scales its slope",
+      "lm_lift_thresh": "Below this level Lift works on the low-mid band (Mid); held at or under the threshold",
+      "lm_lift": "Slope below the Lift threshold: + lifts quiet parts (+75 % = 4:1 upward), − expands (−100 % = 1:2)",
+      "lm_attack": "How fast the gain of the low-mid band (Mid) moves down; scaled by Time",
+      "lm_release": "How fast the gain of the low-mid band (Mid) moves back up; scaled by Time",
+      "lm_gain": "Static level of the low-mid band (Mid) on top of the make-up: phase-free band EQ",
+      "lm_sc": "What the detector of the low-mid band (Mid) hears: its own band, or the whole input (Wide)",
+      "hm_thresh": "Downward threshold of the high-mid band, RMS-calibrated; Tilt moves it",
+      "hm_ratio": "Downward ratio of the high-mid band (gfx-comp's meaning); Amount scales its slope",
+      "hm_lift_thresh": "Below this level Lift works on the high-mid band; held at or under the threshold",
+      "hm_lift": "Slope below the Lift threshold: + lifts quiet parts (+75 % = 4:1 upward), − expands (−100 % = 1:2)",
+      "hm_attack": "How fast the gain of the high-mid band moves down; scaled by Time",
+      "hm_release": "How fast the gain of the high-mid band moves back up; scaled by Time",
+      "hm_gain": "Static level of the high-mid band on top of the make-up: phase-free band EQ",
+      "hm_sc": "What the detector of the high-mid band hears: its own band, or the whole input (Wide)",
+      "hi_thresh": "Downward threshold of the high band, RMS-calibrated; Tilt moves it",
+      "hi_ratio": "Downward ratio of the high band (gfx-comp's meaning); Amount scales its slope",
+      "hi_lift_thresh": "Below this level Lift works on the high band; held at or under the threshold",
+      "hi_lift": "Slope below the Lift threshold: + lifts quiet parts (+75 % = 4:1 upward), − expands (−100 % = 1:2)",
+      "hi_attack": "How fast the gain of the high band moves down; scaled by Time",
+      "hi_release": "How fast the gain of the high band moves back up; scaled by Time",
+      "hi_gain": "Static level of the high band on top of the make-up: phase-free band EQ",
+      "hi_sc": "What the detector of the high band hears: its own band, or the whole input (Wide)",
+      "bypass": "True bypass to the input (delayed by the latency in Linear), 10 ms crossfade",
+      "bands": "3 or 4 bands: 4 adds the High Mid band and the Mid crossover (a set-up switch, crossfaded in 40 ms)"
     }
   },
   "depends": {
@@ -2126,6 +2254,44 @@
       "stop_time": {
         "param": "stop",
         "equals": true
+      }
+    },
+    "gfx-mbcomp": {
+      "x_mid": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_thresh": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_ratio": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_lift_thresh": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_lift": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_attack": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_release": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_gain": {
+        "param": "bands",
+        "equals": "4"
+      },
+      "hm_sc": {
+        "param": "bands",
+        "equals": "4"
       }
     }
   }

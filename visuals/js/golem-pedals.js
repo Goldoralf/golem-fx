@@ -374,6 +374,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-bassdi': 'parallel',
     'gfx-tape': 'ribbon',
     'gfx-grit': 'prism',
+    'gfx-mbcomp': 'tiers',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -431,6 +432,25 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         P.push({ band: [cy - ch / 2 - 4, ch + 8] });
         shape(`M2 ${f1(cy - 7)}L11 ${f1(cy)}L2 ${f1(cy + 7)}Z`); shape(`M${W - 2} ${f1(cy - 7)}L${W - 11} ${f1(cy)}L${W - 2} ${f1(cy + 7)}Z`);
         break;
+      case 'tiers': {
+        // gfx-comp's clamp split into bands: four short meter bars each side of the rune, inside the
+        // cartouche's height, each pressed at its inner end by its own small clamp (gfx-comp's
+        // triangle at 0.45, 2 px clear); the two sides run to different depths, fainter downwards
+        const s = (W - cw) / 2 - 4, room = s - 8, ops = [1, .85, .7, .55];
+        const lens = [[.7, .4, .55, .3], [.35, .65, .3, .5]];
+        [-.375, -.125, .125, .375].forEach((k, i) => {
+          const y = cy + k * ch;
+          [0, 1].forEach(side => {
+            const len = Math.max(3, lens[side][i] * room), x0 = side ? W - 4 - len : 4;
+            shape(pill(x0, y - 1.5, len, 3), ops[i]);
+            if (s >= 16) {
+              const tip = side ? x0 - 2 : x0 + len + 2, dir = side ? -1 : 1;
+              shape(`M${f1(tip)} ${f1(y)}L${f1(tip + dir * 4.05)} ${f1(y - 3.15)}L${f1(tip + dir * 4.05)} ${f1(y + 3.15)}Z`, ops[i]);
+            }
+          });
+        });
+        break;
+      }
       case 'crescent':
         line(arcPath(cx, cy, W * .44, 200, 340)); line(arcPath(cx, cy, W * .53, 205, 335), .6);
         line(arcPath(cx, cy, W * .44, 20, 160), .45);

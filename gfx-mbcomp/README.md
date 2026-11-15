@@ -1,7 +1,19 @@
 # gfx-mbcomp
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Reviewed 2026-11-14 (Fable 5.2): see the
-> Review section at the end; its changes are applied below.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, last section).
+> Built as designed: the gfx-dsp `crossover::Tree` (LR4 / LR8, compensation twins) for the audio, a new
+> power-complementary `crossover::BwTree` for detection, gfx-comp's engine per band through its new gain
+> API (`next_gain_db`, no audio through it) with the bass-safe detector (`set_detector_low_hz`: sliding
+> maximum over 1.2 periods on both readings), Lift with the noise guard, Amount / Tilt / Time / static
+> auto gain, solo / delta / mix against the aligned dry, signed `<b>_dyn` meters, and the Linear mode on
+> the new `crossover::Linearizer` (one FIR for the whole tree, the fit rule, 2,048 / 4,096 / 8,192
+> samples per rate family, reported). Measured: the flat sum nulls the f64 all-pass at ≤ −145 dB and 50
+> random band-gain sets null Σ g_b band_b at ≤ −145 dB; the downward curve within 0.05 dB in every
+> character; no harmonic added by a 31 / 41 Hz note (gain ripple side-bands ≤ −151 dBc) with 90 % of the
+> reduction in ≤ 19 ms; the linearizer's residual equals the review's table (LR4 3-band −168.7 dB … LR8
+> 40 Hz −65.2 dB) and Linear is flat within ±0.03 dB at every corner; gfx-comp's renders null bit for
+> bit before / after. Bench 28 / 28; CPU ≈ 0.48 µs mono at the 4-band LR4 default (budget 0.6). One
+> bench row cannot hold as written (Lift and pick transients, below).
 
 golem's **multiband compressor**: 3 or 4 bands, each with downward compression and either upward
 compression or expansion below it. It is for guitar, bass, voice and a bus. It is a **new golem block**
@@ -33,6 +45,81 @@ What it does that the field does not do together:
    attack stays fast. That ripple is distortion, the "mud" that players blame on multiband compression.
 
 Mono 1 / 1 first, 2 / 2 second. Reported latency 0 in Minimum mode.
+
+## As coded (v0.1.0)
+
+**Files.** `src/lib.rs` (the processor: `PARAMS`, the effective values of Amount / Tilt / Time and auto
+gain as pure functions, Lift's static law, the two audio engines and their switch, detection, meters),
+`src/plugin.rs` (class id `GoleMFxMbComp001`, mono 1 / 1 then 2 / 2, latency 0 or L reported per
+`phase`, read-only `gr` and `<b>_dyn`), `src/tests.rs` (the §5 rows on synthetic signals).
+**Shared code**: gfx-dsp `crossover` gains its fourth layer, `BwTree` and `Linearizer`, with unit tests
+(layers 1 – 3 untouched: gfx-bassdi's and gfx-grit's tests pass unchanged). **gfx-comp** gains
+`next_gain_db(&[sc]) -> [g; 2]` (the clock, the smoothers and the detector for one sample, `link`
+applied; `process_block` is rebuilt on it), `set_detector_low_hz(Option<f32>)` (`None` = today's
+detector) and `level_db(ch)` (the detector's reading, which Lift uses). Null against the build before:
+102 renders bit-identical (gfx-comp: 12 settings covering every character, colour, `drive`, `sc_hpf`,
+`sc_listen`, `mix`, `link`, `range`, × 4 inputs mono / stereo at 44.1 – 96 kHz × blocks 512 and 37;
+gfx-bassdi: 3 compressor settings × 2 inputs), and gfx-comp's tests pass unchanged (2 added).
+
+**Measured** (tests at 48 kHz unless stated, and `gfx-bench check gfx-mbcomp`):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| Flat sum (Amount 0, and all ratios 1; LR4 / LR8, 3 / 4 bands, defaults, minimum spacing, both ends) | null ≤ −90 dB vs the f64 all-pass; flat ±0.001 dB | null −145.5 to −151.2 dB (32 cases); flat within 0.001 dB |
+| Phase independent of gain (50 random `<b>_gain` sets) | null ≤ −90 dB vs Σ g_b band_b; magnitude in [min g, max g] | null ≤ −145.4 dB; inside the bounds within 0.001 dB |
+| Static curve, High Mid band, 1 kHz | downward ±0.1 dB every character; Lift +75 % / −100 % ±0.1; caps exact; guard ±0.2; monotone | downward within 0.051 dB (all five); Lift slopes and caps within 0.1 dB; guard law within 0.2 dB; output monotone |
+| Threshold sag at a crossover (+6 dB over threshold, 4:1) | (6 − 3) · 0.75 = 2.25 dB ±0.3 | 2.45 dB at 120 Hz, 2.25 dB at 2.5 kHz (both bands) |
+| Neighbour leakage (41 Hz at −10 dBFS) | `lm` ≤ 0.1 dB | 0.00 dB |
+| Bass ripple (41.2 / 30.9 Hz sines and the asymmetric note; 4:1, attack 1 ms, release 20 / 250 ms; Clean, Bus, FET) | added harmonics ≤ −90 dBc; 90 % in 20 ms; reading ≤ +1 dB (+1.5 Bus) | gain-ripple side-bands ≤ −151 dBc, output harmonics of the sines ≤ −90 dBc; 90 % after 19.0 / 17.4 / 5.5 ms; reading +0.75 / +1.34 / 0.00 dB |
+| Noise guard (−80 dBFS noise, Hyper, guard −72) | every `<b>_dyn` 0 dB; output = input + make-up ±1 dB | `<b>_dyn` 0.00 dB; output +11.2 dB (make-ups 9.7 / 5.8 / 11.6 dB); with guard −96: +29.0 dB. Decaying note: boost ≤ level − guard + 1 dB at every block |
+| Amount / Tilt / auto gain (a sine at R in each band) | net gain at R ±0.5 dB; Amount 100 % / Tilt 0 = the bands; ratio ≤ 30:1; monotone | worst 0.42 dB (Amount 0 – 200 %, Tilt ±100 %); identical values; 2.5:1 at 161 % → 30:1; monotone in all five characters at 200 % |
+| Linear mode | L = 2,048 / 4,096 / 8,192; impulse peak at L; flat ±0.01 dB (4-band defaults), ±0.05 dB (corners); residual ≤ table + 6 dB; gains = Minimum's, L later | as specified at 44.1 / 48 / 96 / 192 kHz; peak at L; ±0.0006 dB at the defaults (LR8), ±0.029 dB worst corner; residual (gfx-dsp test): LR4 −168.7 / −165.5 / −138.3 / −108.0 / −80.3 / −52.9 / −49.2 dB, LR8 −82.3 / −80.1 / −67.3 / −47.4 dB, LR8 under 80 Hz (rest) −101.4 / −65.2 / −59.6 dB: the review's table; per-sample `<b>_dyn` in Linear = Minimum's L samples later, bit for bit |
+| Mix / delta | `delta` at Amount 0 ≤ −120 dBFS; `mix` 50 % no notch > 0.2 dB | exactly 0; never under the blend's own gain − 0.2 dB, both phases |
+| Clicks under a held 82 Hz note (HF above 10 kHz, re peak) | below the default bound (−50 dB) | `bands` 3 → 4 −77, 4 → 3 −72, `slope` −72, `phase` → Linear −116, → Minimum −111, `x_lo` across 80 Hz in Linear LR8 −128, `character` −127, `solo` −120, `bypass` −114, Amount 0 → 200 −82 dB |
+| Attack splatter (82 Hz bursts, about 6 dB in the low band; HF above 1 kHz added by the dynamics, re output) | reported | attack 30 ms −70 dB, 1 ms −70 dB, 0.1 ms −67 dB |
+| Bypass null | bit-exact (Minimum), delayed by L (Linear) | both exact |
+| Stereo | L = R bit-exact; `link` 0 leaves R alone | both exact (R equals its mono render) |
+| Meters | `<b>_dyn` signed = applied gain ±0.1; `gr` ≥ 0 | output gain within 0.15 dB of the meter (the neighbours' 0.13 % at unity: +0.09 dB at 18 dB down); signs and `gr` as specified |
+| gfx-bench check | all pass | 28 / 28 at 44.1 – 192 kHz (latency skipped in Minimum, `phase` out of the step check as a set-up switch); worst parameter step −66 dB (`lm_gain` ±24 dB) |
+| CPU, mono, 48 kHz (machine under load from other builds, ±20 %) | ≤ 0.6 µs 4-band LR4 Minimum; ≤ 0.8 µs Linear | 3-band LR4 0.37 – 0.48 µs (bench line 0.48 – 0.51); 4-band LR4 0.48 – 0.50; LR8 0.50 – 0.52; Linear LR4 0.52 – 0.69, LR8 0.54 µs |
+
+**Deviations and choices where the spec was silent.**
+
+- **Lift and pick transients: the §5 row "with attack ≤ 2 ms the peak rises ≤ 1 dB" does not hold**
+  with the specified ballistics (the boost leaves through the attack's one-pole). Lift +75 % with
+  15.8 dB of boost before the pick, peak rise: instant onset 3.4 / 11.7 / 12.9 / 14.0 dB at attack
+  0.1 / 1 / 2 / 8 ms; a 2 ms onset 0.0 / 2.5 / 6.3 / 12.2 dB. The law is kept as written (it is the
+  snap of the OTT sound); the review's open item "a fixed fast fall for boosts" is the fix if the
+  pick-attack DI asks for it. The test asserts the ordering and 0.1 ms on a 2 ms onset.
+- **`phase` switch**: the output fades out (10 ms), the path changes at silence (trees and linearizer
+  from rest, latency switched), then the path's **input** fades in (10 ms). Fading the output in
+  instead let the Linear FIR play the abrupt onset of its history L samples later (−9 dB click).
+  Switching to Linear leaves about L of silence.
+- **The dry of `mix` and `delta` is the tree's unity sum in both modes** (in Linear it equals the input
+  delayed by L within the §2.3 residual). It stays coherent with the wet when LR8's Q 1.307 section is
+  left minimum-phase under 80 Hz. `bypass` goes to the input (delayed by L in Linear), as specified.
+- **`bands` switch**: detection and the band engines follow the new layout at once; a slot the new
+  layout drops keeps its last gain while the old engine fades out, and High Mid's engine restarts from
+  rest when 4 bands come back (without the hold, 4 → 3 clicked at −21 dB).
+- **Kernel renders**: the impulse response B samples per block, then 4 partitions per block, then the
+  20 ms crossfade; one render at a time, the latest request queued (≈ 70 ms per change at 48 kHz, which
+  also keeps renders under one per 20 ms).
+- **Smoothing**: Amount, Tilt and Time reach the band engines as effective values when a parameter
+  changes; gfx-comp's own smoothers glide them (threshold on its EXP smoother, ratio 20 ms, times 50 ms
+  in log). Lift's slope and threshold glide 20 ms, the make-up 50 ms, `<b>_gain` 20 ms.
+- **Lift**: the global `knee` applies to the Lift threshold too (quadratic, as the downward one); `link`
+  applies to Lift as to the downward gain (toward the channel with less boost / more cut).
+- **Crossover ordering**: in 3 bands `x_hi` ≥ 1.5 × `x_lo` (`x_mid` is not used); in 4 bands `x_mid` ≥
+  1.5 × `x_lo` and `x_hi` ≥ 1.5 × `x_mid`.
+- **Auto gain on program**: on pink noise at −18 dBFS RMS the factory presets come out 0 to −5 dB from
+  bypass (the detectors read the peak-held levels, above the static reference R). Their `level_db`
+  says so; R stays the bench constant to set from the DIs.
+- Plugin name `GoleM FX MB Comp`; face word "Bands".
+
+**Left for the owner.** R, the per-band default times, Tilt's ±12 dB and the 80 Hz fit limit by ear on
+the DIs; the Lift-transient law on the pick-attack DI; the Listening row; dispersion and pre-ringing
+audibility (Minimum vs Linear); golem-rack's `mb-comp` catalogue entry, the "set before playing" note
+for `phase`, and the signed `<b>_dyn` meters in the UI.
 
 ## 1. State of the art
 

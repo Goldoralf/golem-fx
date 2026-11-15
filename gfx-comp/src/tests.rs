@@ -238,3 +238,72 @@ fn colour_off_keeps_the_dynamics_only() {
         assert!(g > 5.0 && (y[i] - want).abs() < 2e-3, "{ch:?}: gr {g}, {} vs {want}", y[i]);
     }
 }
+
+/// The gain API is the engine of `process_block` (gfx-mbcomp §2.5): on the colourless path (Clean,
+/// makeup 0 dB, mix 100 %) the output is the input times the gain `next_gain_db` returns, every
+/// sample, both channels, unlinked and linked.
+#[test]
+fn gain_api_drives_process_block() {
+    for link in [0.0f32, 100.0] {
+        let set = |s: &mut Settings| {
+            s.thresh = -30.0;
+            s.attack = 2.0;
+            s.release = 80.0;
+            s.link = link;
+        };
+        let mut a = comp(set);
+        let mut b = comp(set);
+        let l = sine(ms(500.0), 220.0, 0.5);
+        let r: Vec<f32> = sine(ms(500.0), 330.0, 0.1).iter().enumerate().map(|(i, v)| if i > ms(250.0) { 4.0 * v } else { *v }).collect();
+        let (mut yl, mut yr) = (l.clone(), r.clone());
+        a.process_block(&mut [&mut yl[..], &mut yr[..]]);
+        for i in 0..l.len() {
+            let g = b.next_gain_db(&[l[i], r[i]]);
+            assert_eq!(yl[i], l[i] * gain(g[0]), "link {link} L at {i}");
+            assert_eq!(yr[i], r[i] * gain(g[1]), "link {link} R at {i}");
+        }
+    }
+}
+
+/// `detector_low_hz`: a 41 Hz note no longer ripples the gain (gfx-mbcomp §2.4), and the attack keeps
+/// its speed (90 % of a +12 dB step's reduction within 20 ms).
+#[test]
+fn low_detector_removes_bass_ripple() {
+    let f0 = 41.2;
+    let tone = |i: usize, a: f32| a * (2.0 * std::f32::consts::PI * f0 * i as f32 / SR).sin();
+    let ripple = |low: Option<f32>, ch: Character| {
+        let mut c = comp(|s| {
+            s.character = ch;
+            s.thresh = -20.0;
+            s.ratio = 4.0;
+            s.attack = 1.0;
+            s.release = 20.0;
+            s.auto_release = false;
+        });
+        c.set_detector_low_hz(low);
+        let a = 10f32.powf(-9.0 / 20.0);
+        let g: Vec<f32> = (0..ms(3000.0)).map(|i| c.next_gain_db(&[tone(i, a)])[0]).collect();
+        let tail = &g[ms(2000.0)..];
+        tail.iter().cloned().fold(f32::MIN, f32::max) - tail.iter().cloned().fold(f32::MAX, f32::min)
+    };
+    for ch in [Character::Clean, Character::Bus, Character::Fet] {
+        let today = ripple(None, ch);
+        let low = ripple(Some(30.0), ch);
+        assert!(today > 0.1, "{ch:?}: today's detector ripples ({today:.3} dB)");
+        assert!(low < 1e-3, "{ch:?}: {low:.4} dB of ripple with the low detector");
+    }
+    // speed: a +12 dB step at 1 s
+    let mut c = comp(|s| {
+        s.thresh = -20.0;
+        s.ratio = 4.0;
+        s.attack = 1.0;
+        s.release = 250.0;
+    });
+    c.set_detector_low_hz(Some(30.0));
+    let n = ms(2500.0);
+    let a = |i: usize| if i < ms(1000.0) { 10f32.powf(-21.0 / 20.0) } else { 10f32.powf(-9.0 / 20.0) };
+    let g: Vec<f32> = (0..n).map(|i| c.next_gain_db(&[tone(i, a(i))])[0]).collect();
+    let fin = g[n - 1];
+    let t90 = g[ms(1000.0)..].iter().position(|&v| v <= 0.9 * fin).unwrap();
+    assert!(t90 < ms(20.0), "90 % after {:.1} ms", t90 as f32 / SR * 1000.0);
+}

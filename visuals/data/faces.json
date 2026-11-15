@@ -602,6 +602,23 @@
     "quality"
    ],
    "category": "lofi"
+  },
+  "gfx-mbcomp": {
+   "name": "Bands",
+   "blocks": [
+    "mb-comp"
+   ],
+   "knobs": [
+    "amount",
+    "tilt",
+    "time",
+    "mix",
+    "level"
+   ],
+   "selectors": [
+    "character"
+   ],
+   "category": "dynamics"
   }
  }
 }

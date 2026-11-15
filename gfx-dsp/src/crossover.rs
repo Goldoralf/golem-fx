@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-//! Linkwitz-Riley crossovers in three layers, one set of names for the suite (gfx-bassdi §2.9,
+//! Linkwitz-Riley crossovers in four layers, one set of names for the suite (gfx-bassdi §2.9,
 //! gfx-grit §2.2, gfx-mbcomp §2.1):
 //!
 //! 1. [`Split`]: a two-way Linkwitz-Riley split of order 2, 4 or 8 at one frequency. One tick gives
@@ -15,6 +15,11 @@
 //!    not pass (Prisma's topology): band 0 = LP(x1) · A(x2) · A(x3), band 1 = HP(x1) · LP(x2) · A(x3),
 //!    band 2 = HP(x1) · HP(x2) · LP(x3), band 3 = HP(x1) · HP(x2) · HP(x3). Every band carries the
 //!    same all-pass A(x1) · A(x2) · A(x3) times a real gain, and the bands sum to that all-pass.
+//! 4. Two companions of a tree (gfx-mbcomp §2.3, §2.4): [`BwTree`], a power-complementary
+//!    Butterworth-4 tree for detection (band powers sum to the input's), and [`Linearizer`], the
+//!    tree's linear-phase option: one FIR, the time-reversed impulse response of A, ahead of the
+//!    tree makes every band zero-phase at a reported latency (2,048 / 4,096 / 8,192 samples per rate
+//!    family), LR8's Q 1.307 section left minimum-phase under 80 Hz (the fit rule).
 //!
 //! Sections are TPT (bilinear, prewarped at the crossover): one-poles for LR2, state-variable
 //! sections for LR4 (one Butterworth pair, Q 1/√2) and LR8 (Q 0.541 and 1.307). The bilinear map
@@ -465,6 +470,524 @@ impl Tree {
     }
 }
 
+// ---------------------------------------------------------------------------------------------------
+// Layer 4 (gfx-mbcomp §2.4, §2.3): a detection tree and the linear-phase option of a tree.
+
+/// One Butterworth-4 split (sections Q 0.541 and 1.307, LR8's): |LP|² + |HP|² = 1. The first section
+/// gives both the low-pass and the high-pass, so a split costs 3 SVF ticks.
+#[derive(Clone, Debug)]
+struct BwSplit {
+    glide: Glide,
+    s: [[f64; 2]; 3],
+}
+
+impl BwSplit {
+    fn new() -> Self {
+        // LR8's coefficient set is the Butterworth-4 pair
+        Self { glide: Glide::new(Order::Lr8), s: [[0.0; 2]; 3] }
+    }
+
+    #[inline]
+    fn process(&mut self, x: f64) -> (f64, f64) {
+        self.glide.step();
+        let c = &self.glide.c;
+        let s = &mut self.s;
+        let (bp, lp) = c.svf[0].tick(&mut s[0], x);
+        let hp = x - K_LR8[0] * bp - lp;
+        let (_, low) = c.svf[1].tick(&mut s[1], lp);
+        let (bp2, lp2) = c.svf[1].tick(&mut s[2], hp);
+        (low, hp - K_LR8[1] * bp2 - lp2)
+    }
+}
+
+/// Layer 4a: an N-band **power-complementary** Butterworth-4 tree, for detection (gfx-mbcomp §2.4).
+/// Band b = HP(x1) · … · HP(x_b) · LP(x_{b+1}), no compensation all-passes (a detector needs none):
+/// band powers sum to the input's power (|LP|² + |HP|² = 1 at every split, exactly under the bilinear
+/// map), a partial at a crossover reads −3 dB in each band (an LR band reads −6 dB), and a band is
+/// −24 dB an octave past its edge, as LR4. Same glide and API as [`Tree`].
+#[derive(Clone, Debug)]
+pub struct BwTree {
+    bands: usize,
+    splits: [BwSplit; MAX_BANDS - 1],
+}
+
+impl BwTree {
+    /// `bands`: 2 – [`MAX_BANDS`].
+    pub fn new(bands: usize) -> Self {
+        Self { bands: bands.clamp(2, MAX_BANDS), splits: std::array::from_fn(|_| BwSplit::new()) }
+    }
+
+    pub fn bands(&self) -> usize {
+        self.bands
+    }
+
+    pub fn prepare(&mut self, sample_rate: f32, glide_ms: f32) {
+        for s in self.splits.iter_mut() {
+            s.glide.prepare(sample_rate as f64, glide_ms as f64);
+        }
+    }
+
+    pub fn set_freq(&mut self, k: usize, freq: f32) {
+        self.splits[k].glide.set(freq as f64);
+    }
+
+    pub fn set_freq_now(&mut self, k: usize, freq: f32) {
+        self.splits[k].glide.set_now(freq as f64);
+    }
+
+    pub fn freq(&self, k: usize) -> f32 {
+        self.splits[k].glide.ln_f.exp() as f32
+    }
+
+    pub fn reset(&mut self) {
+        for s in self.splits.iter_mut() {
+            s.s = [[0.0; 2]; 3];
+            s.glide.settle();
+        }
+    }
+
+    /// Splits `x` into `out[0 .. bands]`, low to high.
+    #[inline]
+    pub fn process(&mut self, x: f64, out: &mut [f64]) {
+        let n = self.bands;
+        let mut h = x;
+        for k in 0..n - 1 {
+            let (lo, hi) = self.splits[k].process(h);
+            out[k] = lo;
+            h = hi;
+        }
+        out[n - 1] = h;
+    }
+}
+
+/// The fit rule of the [`Linearizer`] (gfx-mbcomp §2.3): LR8's Q 1.307 section of a crossover below
+/// this frequency rings too long for the kernel and stays a minimum-phase all-pass.
+pub const FIT_HZ: f32 = 80.0;
+/// Partitions of the linearizer's convolution (the kernel is K + 1 = 32 (B − 2) + … taps: see
+/// [`linear_latency`]).
+const LIN_PARTS: usize = 32;
+/// Half-Hann fade on the kernel's far tail (fraction of its length).
+const LIN_TAIL_FADE: f64 = 0.1;
+/// Kernel partitions transformed per audio block while a new kernel is rendered.
+const LIN_TRANSFORMS_PER_BLOCK: usize = 4;
+/// Crossfade from the old kernel to the new one (ms).
+const LIN_FADE_MS: f64 = 20.0;
+
+/// The latency L of a [`Linearizer`] at a sample rate, one size per rate family: 2,048 samples at
+/// 44.1 / 48 kHz, 4,096 at 88.2 / 96 kHz, 8,192 at 176.4 / 192 kHz. L = K + B: the kernel's length
+/// (K = L − B) plus the convolution block (B = L / 32).
+pub fn linear_latency(sample_rate: f32) -> usize {
+    if sample_rate < 80000.0 {
+        2048
+    } else if sample_rate < 160000.0 {
+        4096
+    } else {
+        8192
+    }
+}
+
+/// The all-pass sections a kernel undoes.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct LinSpec {
+    order: Order,
+    n: usize,
+    freqs: [f64; MAX_BANDS - 1],
+}
+
+impl LinSpec {
+    fn new(order: Order, freqs: &[f32]) -> Self {
+        let n = freqs.len().min(MAX_BANDS - 1);
+        let mut f = [0.0; MAX_BANDS - 1];
+        for k in 0..n {
+            f[k] = freqs[k] as f64;
+        }
+        Self { order, n, freqs: f }
+    }
+}
+
+/// One all-pass section of the kernel: a TPT one-pole (LR2's twin) or an SVF all-pass (x − 2k·bp).
+#[derive(Clone, Copy, Debug)]
+enum ApSection {
+    OnePole(Coefs),
+    Svf(SvfC, f64),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum LinState {
+    Idle,
+    /// Rendering the impulse response: samples done.
+    Render(usize),
+    /// Transforming the partitions: partitions done.
+    Transform(usize),
+    /// Crossfading to the new kernel: samples done.
+    Fade(usize),
+}
+
+/// Layer 4b: the linear-phase option of a tree (gfx-mbcomp §2.3). Every band of a [`Tree`] carries the
+/// same all-pass A, so filtering the input once by z^−K · A⁻¹ makes every band zero-phase: the tree
+/// after it gives z^−L · Σ g_b M_b x at any band gains. A⁻¹ is anti-causal; its truncation is the
+/// time-reversed impulse response of A cut at K + 1 taps, with a 10 % half-Hann fade on the far tail
+/// (Powell–Chau's idea, done once for all bands), run as a uniformly partitioned FFT convolution
+/// (block B, 32 partitions). Latency L = K + B ([`linear_latency`]).
+///
+/// The fit rule: LR8's Q 1.307 section of a crossover below [`FIT_HZ`] is left out of the kernel (its
+/// truncation would ripple the magnitude) and stays minimum-phase. A new set of crossovers renders a
+/// new kernel across the following blocks (impulse response B samples per block, then 4 partitions
+/// per block), then crossfades to it over 20 ms; one render at a time, the latest request queued.
+/// Memory is sized in `prepare`; processing is per sample (block-size independent). f64 in and out.
+pub struct Linearizer {
+    sr: f64,
+    lat: usize,
+    b: usize,
+    k: usize,
+    fwd: std::sync::Arc<dyn realfft::RealToComplex<f64>>,
+    inv: std::sync::Arc<dyn realfft::ComplexToReal<f64>>,
+    scratch: Vec<realfft::num_complex::Complex<f64>>,
+    time: Vec<f64>,
+    spec: Vec<realfft::num_complex::Complex<f64>>,
+    acc: Vec<realfft::num_complex::Complex<f64>>,
+    /// Frequency-domain delay line: LIN_PARTS input spectra of B + 1 bins.
+    fdl: Vec<realfft::num_complex::Complex<f64>>,
+    fdl_pos: usize,
+    /// The previous block and the block being filled (2 B).
+    inbuf: Vec<f64>,
+    pos: usize,
+    /// Output of the playing kernel, and of the new one while fading (B each).
+    out: [Vec<f64>; 2],
+    /// Kernel spectra (LIN_PARTS × (B + 1), scaled by 1 / 2B): the playing one is `kern[cur]`.
+    kern: [Vec<realfft::num_complex::Complex<f64>>; 2],
+    cur: usize,
+    state: LinState,
+    fade_len: usize,
+    playing: LinSpec,
+    building: LinSpec,
+    pending: Option<LinSpec>,
+    /// The impulse response being rendered (K + 1) and its sections' state.
+    ir: Vec<f64>,
+    secs: [ApSection; 2 * (MAX_BANDS - 1)],
+    nsec: usize,
+    sec_s: [[f64; 2]; 2 * (MAX_BANDS - 1)],
+}
+
+impl Linearizer {
+    /// An unprepared linearizer (call `prepare` before use).
+    pub fn new() -> Self {
+        let mut l = Self {
+            sr: 0.0,
+            lat: 0,
+            b: 0,
+            k: 0,
+            fwd: realfft::RealFftPlanner::<f64>::new().plan_fft_forward(2),
+            inv: realfft::RealFftPlanner::<f64>::new().plan_fft_inverse(2),
+            scratch: Vec::new(),
+            time: Vec::new(),
+            spec: Vec::new(),
+            acc: Vec::new(),
+            fdl: Vec::new(),
+            fdl_pos: 0,
+            inbuf: Vec::new(),
+            pos: 0,
+            out: [Vec::new(), Vec::new()],
+            kern: [Vec::new(), Vec::new()],
+            cur: 0,
+            state: LinState::Idle,
+            fade_len: 1,
+            playing: LinSpec::new(Order::Lr4, &[]),
+            building: LinSpec::new(Order::Lr4, &[]),
+            pending: None,
+            ir: Vec::new(),
+            secs: [ApSection::OnePole(Coefs::default()); 2 * (MAX_BANDS - 1)],
+            nsec: 0,
+            sec_s: [[0.0; 2]; 2 * (MAX_BANDS - 1)],
+        };
+        l.prepare(48000.0);
+        l
+    }
+
+    /// Sizes everything for this rate (allocates) and renders the current kernel; history cleared.
+    pub fn prepare(&mut self, sample_rate: f32) {
+        self.sr = sample_rate as f64;
+        self.lat = linear_latency(sample_rate);
+        self.b = self.lat / LIN_PARTS;
+        self.k = self.lat - self.b;
+        let n = 2 * self.b;
+        let mut planner = realfft::RealFftPlanner::<f64>::new();
+        self.fwd = planner.plan_fft_forward(n);
+        self.inv = planner.plan_fft_inverse(n);
+        let sl = self.fwd.get_scratch_len().max(self.inv.get_scratch_len());
+        let zero = realfft::num_complex::Complex::new(0.0, 0.0);
+        self.scratch = vec![zero; sl];
+        self.time = vec![0.0; n];
+        self.spec = vec![zero; self.b + 1];
+        self.acc = vec![zero; self.b + 1];
+        self.fdl = vec![zero; LIN_PARTS * (self.b + 1)];
+        self.inbuf = vec![0.0; n];
+        self.out = [vec![0.0; self.b], vec![0.0; self.b]];
+        self.kern = [vec![zero; LIN_PARTS * (self.b + 1)], vec![zero; LIN_PARTS * (self.b + 1)]];
+        self.ir = vec![0.0; self.k + 1];
+        let blocks = (LIN_FADE_MS * 0.001 * self.sr / self.b as f64).round().max(1.0) as usize;
+        self.fade_len = blocks * self.b;
+        let spec = self.pending.unwrap_or(self.playing);
+        self.render_now(spec);
+        self.reset();
+    }
+
+    /// The reported latency L (samples).
+    pub fn latency(&self) -> usize {
+        self.lat
+    }
+
+    /// Silence in the history; a kernel being rendered is finished at once.
+    pub fn reset(&mut self) {
+        if self.state != LinState::Idle {
+            let spec = self.pending.unwrap_or(self.building);
+            self.render_now(spec);
+        }
+        let zero = realfft::num_complex::Complex::new(0.0, 0.0);
+        self.fdl.iter_mut().for_each(|c| *c = zero);
+        self.inbuf.iter_mut().for_each(|v| *v = 0.0);
+        for o in self.out.iter_mut() {
+            o.iter_mut().for_each(|v| *v = 0.0);
+        }
+        self.fdl_pos = 0;
+        self.pos = 0;
+    }
+
+    /// The tree's all-pass sections to undo: its order and its crossovers (ascending, Hz). A change
+    /// renders a new kernel across the following blocks and crossfades to it.
+    pub fn set_sections(&mut self, order: Order, freqs: &[f32]) {
+        let spec = LinSpec::new(order, freqs);
+        let target = match self.state {
+            LinState::Idle => self.playing,
+            _ => self.pending.unwrap_or(self.building),
+        };
+        if spec == target {
+            return;
+        }
+        if self.state == LinState::Idle {
+            self.start(spec);
+        } else {
+            self.pending = Some(spec);
+        }
+    }
+
+    /// The same, at once (setup, reset): no crossfade.
+    pub fn set_sections_now(&mut self, order: Order, freqs: &[f32]) {
+        self.render_now(LinSpec::new(order, freqs));
+    }
+
+    /// Takes over another linearizer's input history (same rate): a second engine pre-rolling beside
+    /// a playing one starts with L samples of the past instead of silence.
+    pub fn copy_history_from(&mut self, other: &Linearizer) {
+        if other.b == self.b {
+            self.fdl.copy_from_slice(&other.fdl);
+            self.inbuf.copy_from_slice(&other.inbuf);
+            self.fdl_pos = other.fdl_pos;
+            self.pos = other.pos;
+        }
+    }
+
+    /// Whether a new kernel is being rendered or faded in.
+    pub fn is_busy(&self) -> bool {
+        self.state != LinState::Idle
+    }
+
+    fn sections(&mut self, spec: LinSpec) {
+        self.nsec = 0;
+        for k in 0..spec.n {
+            let f = spec.freqs[k].clamp(1.0, 0.45 * self.sr);
+            let c = Coefs::new(spec.order, f, self.sr);
+            let list: [Option<ApSection>; 2] = match spec.order {
+                Order::Lr2 => [Some(ApSection::OnePole(c)), None],
+                Order::Lr4 => [Some(ApSection::Svf(c.svf[0], K_LR4)), None],
+                Order::Lr8 => [
+                    Some(ApSection::Svf(c.svf[0], K_LR8[0])),
+                    // the fit rule
+                    if f < FIT_HZ as f64 { None } else { Some(ApSection::Svf(c.svf[1], K_LR8[1])) },
+                ],
+            };
+            for s in list.into_iter().flatten() {
+                self.secs[self.nsec] = s;
+                self.nsec += 1;
+            }
+        }
+        self.sec_s = [[0.0; 2]; 2 * (MAX_BANDS - 1)];
+    }
+
+    fn start(&mut self, spec: LinSpec) {
+        self.building = spec;
+        self.pending = None;
+        self.sections(spec);
+        self.state = LinState::Render(0);
+    }
+
+    /// Renders impulse-response samples [from, to).
+    fn render_ir(&mut self, from: usize, to: usize) {
+        for n in from..to {
+            let mut v = if n == 0 { 1.0 } else { 0.0 };
+            for j in 0..self.nsec {
+                let s = &mut self.sec_s[j];
+                v = match self.secs[j] {
+                    ApSection::OnePole(c) => 2.0 * c.one_pole(&mut s[0], v) - v,
+                    ApSection::Svf(c, k) => {
+                        let (bp, _) = c.tick(s, v);
+                        v - 2.0 * k * bp
+                    }
+                };
+            }
+            self.ir[n] = v;
+        }
+    }
+
+    /// Partition `p` of the new kernel: g[m] = ir[K − m], faded on its far tail, into `kern[1 − cur]`.
+    fn transform(&mut self, p: usize) {
+        let (b, k) = (self.b, self.k);
+        let taps = k + 1;
+        let nf = ((taps as f64 * LIN_TAIL_FADE) as usize).max(8);
+        for i in 0..b {
+            let m = p * b + i;
+            self.time[i] = if m <= k {
+                let w = if m < nf {
+                    let a = 0.5 * PI * m as f64 / (nf - 1) as f64;
+                    a.sin() * a.sin()
+                } else {
+                    1.0
+                };
+                self.ir[k - m] * w
+            } else {
+                0.0
+            };
+        }
+        self.time[b..].iter_mut().for_each(|v| *v = 0.0);
+        let _ = self.fwd.process_with_scratch(&mut self.time, &mut self.spec, &mut self.scratch);
+        let scale = 1.0 / (2 * b) as f64;
+        let dst = &mut self.kern[1 - self.cur][p * (b + 1)..(p + 1) * (b + 1)];
+        for (d, s) in dst.iter_mut().zip(self.spec.iter()) {
+            *d = *s * scale;
+        }
+    }
+
+    fn render_now(&mut self, spec: LinSpec) {
+        self.start(spec);
+        self.render_ir(0, self.k + 1);
+        for p in 0..LIN_PARTS {
+            self.transform(p);
+        }
+        self.cur = 1 - self.cur;
+        self.playing = spec;
+        self.state = LinState::Idle;
+        self.pending = None;
+    }
+
+    /// One block of the convolution with kernel `kern[which]` into `out[slot]`.
+    fn convolve(&mut self, which: usize, slot: usize) {
+        let b = self.b;
+        let zero = realfft::num_complex::Complex::new(0.0, 0.0);
+        self.acc.iter_mut().for_each(|c| *c = zero);
+        for p in 0..LIN_PARTS {
+            let j = (self.fdl_pos + LIN_PARTS - p) % LIN_PARTS;
+            let x = &self.fdl[j * (b + 1)..(j + 1) * (b + 1)];
+            let h = &self.kern[which][p * (b + 1)..(p + 1) * (b + 1)];
+            for ((a, xv), hv) in self.acc.iter_mut().zip(x).zip(h) {
+                *a += xv * hv;
+            }
+        }
+        self.acc[0].im = 0.0;
+        self.acc[b].im = 0.0;
+        let _ = self.inv.process_with_scratch(&mut self.acc, &mut self.time, &mut self.scratch);
+        self.out[slot].copy_from_slice(&self.time[b..]);
+    }
+
+    /// A full input block: advance the kernel render, transform the block, convolve.
+    fn block(&mut self) {
+        let b = self.b;
+        // the kernel render, spread over blocks
+        match self.state {
+            LinState::Idle => {}
+            LinState::Render(n) => {
+                let to = (n + b).min(self.k + 1);
+                self.render_ir(n, to);
+                self.state = if to > self.k { LinState::Transform(0) } else { LinState::Render(to) };
+            }
+            LinState::Transform(p) => {
+                let to = (p + LIN_TRANSFORMS_PER_BLOCK).min(LIN_PARTS);
+                for q in p..to {
+                    self.transform(q);
+                }
+                self.state = if to == LIN_PARTS { LinState::Fade(0) } else { LinState::Transform(to) };
+            }
+            LinState::Fade(n) => {
+                if n >= self.fade_len {
+                    self.cur = 1 - self.cur;
+                    self.playing = self.building;
+                    self.state = LinState::Idle;
+                    if let Some(s) = self.pending.take() {
+                        self.start(s);
+                    }
+                }
+            }
+        }
+        // the input spectrum into the delay line
+        self.fdl_pos = (self.fdl_pos + 1) % LIN_PARTS;
+        self.time.copy_from_slice(&self.inbuf);
+        let _ = self.fwd.process_with_scratch(&mut self.time, &mut self.spec, &mut self.scratch);
+        let j = self.fdl_pos;
+        self.fdl[j * (b + 1)..(j + 1) * (b + 1)].copy_from_slice(&self.spec);
+        self.inbuf.copy_within(b.., 0);
+        self.convolve(self.cur, 0);
+        if matches!(self.state, LinState::Fade(_)) {
+            self.convolve(1 - self.cur, 1);
+        }
+    }
+
+    /// One sample in, one sample out (delayed by L, the tree's all-pass undone ahead of it).
+    #[inline]
+    pub fn process(&mut self, x: f64) -> f64 {
+        let i = self.pos;
+        let y = match self.state {
+            LinState::Fade(n) => {
+                let w = (n + 1) as f64 / self.fade_len as f64;
+                let w = 0.5 - 0.5 * (PI * w).cos();
+                self.state = LinState::Fade(n + 1);
+                self.out[0][i] + (self.out[1][i] - self.out[0][i]) * w
+            }
+            _ => self.out[0][i],
+        };
+        self.inbuf[self.b + i] = x;
+        self.pos += 1;
+        if self.pos == self.b {
+            self.pos = 0;
+            self.block();
+        }
+        y
+    }
+}
+
+impl Default for Linearizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for Linearizer {
+    fn clone(&self) -> Self {
+        Self {
+            fwd: self.fwd.clone(),
+            inv: self.inv.clone(),
+            scratch: self.scratch.clone(),
+            time: self.time.clone(),
+            spec: self.spec.clone(),
+            acc: self.acc.clone(),
+            fdl: self.fdl.clone(),
+            inbuf: self.inbuf.clone(),
+            out: self.out.clone(),
+            kern: self.kern.clone(),
+            ir: self.ir.clone(),
+            ..*self
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -729,5 +1252,193 @@ mod tests {
             }
             assert!(out.iter().all(|v| v.abs() < 1e-30), "{order:?} {out:?}");
         }
+    }
+
+    fn db_of(c: (f64, f64)) -> f64 {
+        10.0 * (c.0 * c.0 + c.1 * c.1).max(1e-300).log10()
+    }
+
+    /// gfx-mbcomp §2.4: band powers sum to the input's power; −3 dB per band at a crossover, −24 dB an
+    /// octave past the edge (LR4: −24.6).
+    #[test]
+    fn bw_tree_is_power_complementary() {
+        for sr in RATES {
+            let srd = sr as f64;
+            for xs in [vec![120.0f32, 2500.0], vec![120.0, 600.0, 2500.0], vec![40.0, 150.0, 800.0]] {
+                let bands = xs.len() + 1;
+                let mut t = BwTree::new(bands);
+                t.prepare(sr, 0.0);
+                for (k, &f) in xs.iter().enumerate() {
+                    t.set_freq_now(k, f);
+                }
+                let n = 65536;
+                let mut hb = vec![vec![0.0; n]; bands];
+                let mut out = [0.0; MAX_BANDS];
+                for i in 0..n {
+                    t.process(if i == 0 { 1.0 } else { 0.0 }, &mut out);
+                    for b in 0..bands {
+                        hb[b][i] = out[b];
+                    }
+                }
+                let freqs = log_freqs(20.0, 0.45 * srd, 40);
+                let resp: Vec<Vec<(f64, f64)>> = hb.iter().map(|h| dtft(h, &freqs, srd)).collect();
+                for k in 0..freqs.len() {
+                    let p: f64 = resp.iter().map(|r| r[k].0 * r[k].0 + r[k].1 * r[k].1).sum();
+                    assert!((p - 1.0).abs() < 1e-9, "{xs:?} {sr} at {:.0} Hz: power sum {p}", freqs[k]);
+                }
+                if sr == 48000.0 && xs[0] == 120.0 {
+                    for (k, &x) in xs.iter().enumerate() {
+                        let x = x as f64;
+                        let at = |b: usize, f: f64| db_of(dtft(&hb[b], &[f], srd)[0]);
+                        assert!((at(k, x) + 3.01).abs() < 0.15 && (at(k + 1, x) + 3.01).abs() < 0.15, "{xs:?} at {x}: {} {}", at(k, x), at(k + 1, x));
+                        if k == 0 {
+                            // one octave above the low band's edge (no other split near, no warping)
+                            assert!((at(0, 2.0 * x) + 24.1).abs() < 0.1, "{xs:?} band 0 an octave up: {}", at(0, 2.0 * x));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// The included sections of a linearizer, run on `x` (the chain's remaining all-pass).
+    fn run_sections(l: &Linearizer, x: &[f64]) -> Vec<f64> {
+        let mut st = [[0.0f64; 2]; 2 * (MAX_BANDS - 1)];
+        x.iter()
+            .map(|&v0| {
+                let mut v = v0;
+                for j in 0..l.nsec {
+                    let s = &mut st[j];
+                    v = match l.secs[j] {
+                        ApSection::OnePole(c) => 2.0 * c.one_pole(&mut s[0], v) - v,
+                        ApSection::Svf(c, k) => v - 2.0 * k * c.tick(s, v).0,
+                    };
+                }
+                v
+            })
+            .collect()
+    }
+
+    /// Impulse through the linearizer, then through `tail` (the tree's all-pass, or part of it).
+    fn lin_impulse(l: &mut Linearizer, n: usize) -> Vec<f64> {
+        (0..n).map(|i| l.process(if i == 0 { 1.0 } else { 0.0 })).collect()
+    }
+
+    /// gfx-mbcomp §2.3's residual table: max |FIR · A − z^−L| from 20 Hz to 20 kHz at 48 kHz (bounds:
+    /// the review's figures + 6 dB), and the fit rule: with LR8's Q 1.307 section left out under 80 Hz,
+    /// the whole chain (the tree's full all-pass after the FIR) is flat within ±0.05 dB.
+    #[test]
+    fn linearizer_undoes_the_tree_all_pass() {
+        let sr = 48000.0f32;
+        let srd = sr as f64;
+        let cases: [(Order, &[f32], f64); 14] = [
+            (Order::Lr4, &[120.0, 2500.0], -163.0),
+            (Order::Lr4, &[120.0, 600.0, 2500.0], -159.0),
+            (Order::Lr4, &[100.0, 1500.0], -132.0),
+            (Order::Lr4, &[80.0, 600.0, 2500.0], -102.0),
+            (Order::Lr4, &[60.0, 2500.0], -74.0),
+            (Order::Lr4, &[40.0, 2500.0], -47.0),
+            (Order::Lr4, &[40.0, 150.0, 800.0], -43.0),
+            (Order::Lr8, &[120.0, 2500.0], -76.0),
+            (Order::Lr8, &[120.0, 600.0, 2500.0], -74.0),
+            (Order::Lr8, &[100.0, 1500.0], -61.0),
+            (Order::Lr8, &[80.0, 600.0, 2500.0], -41.0),
+            // the fit rule: the residual of the sections in the kernel
+            (Order::Lr8, &[60.0, 2500.0], -95.0),
+            (Order::Lr8, &[40.0, 2500.0], -59.0),
+            (Order::Lr8, &[40.0, 150.0, 800.0], -54.0),
+        ];
+        let freqs = log_freqs(20.0, 20000.0, 160);
+        for (order, xs, bound) in cases {
+            let mut l = Linearizer::new();
+            l.prepare(sr);
+            l.set_sections_now(order, xs);
+            l.reset();
+            let lat = l.latency();
+            assert_eq!(lat, 2048);
+            let n = lat + 65536;
+            let h = lin_impulse(&mut l, n);
+            // residual: the kernel's own sections after it
+            let y = run_sections(&l, &h);
+            let r = dtft(&y, &freqs, srd);
+            let mut worst = f64::MIN;
+            for (k, &f) in freqs.iter().enumerate() {
+                let w = -2.0 * PI * f / srd * lat as f64;
+                let e = (r[k].0 - w.cos(), r[k].1 - w.sin());
+                worst = worst.max(db_of(e));
+            }
+            assert!(worst <= bound, "{order:?} {xs:?}: residual {worst:.1} dB (bound {bound})");
+            // magnitude of the whole chain (every twin of the tree after the FIR)
+            let mut twins: Vec<Twin> = xs.iter().map(|_| Twin::new(order)).collect();
+            for (t, &f) in twins.iter_mut().zip(xs.iter()) {
+                t.prepare(sr, 0.0);
+                t.set_freq_now(f);
+            }
+            let z: Vec<f64> = h.iter().map(|&v| twins.iter_mut().fold(v, |a, t| t.process(a))).collect();
+            let m = dtft(&z, &freqs, srd);
+            let (lo, hi) = m.iter().fold((f64::MAX, f64::MIN), |(a, b), c| (a.min(db_of(*c)), b.max(db_of(*c))));
+            assert!(lo > -0.05 && hi < 0.05, "{order:?} {xs:?}: magnitude {lo:.3} / {hi:.3} dB");
+            eprintln!("{order:?} {xs:?}: residual {worst:.1} dB, magnitude {lo:+.4} / {hi:+.4} dB");
+        }
+    }
+
+    /// One size per rate family; the impulse through the FIR and the tree's all-pass peaks at L.
+    #[test]
+    fn linearizer_latency_per_rate_family() {
+        for (sr, want) in [(44100.0f32, 2048usize), (48000.0, 2048), (88200.0, 4096), (96000.0, 4096), (176400.0, 8192), (192000.0, 8192)] {
+            let mut l = Linearizer::new();
+            l.prepare(sr);
+            let xs = [120.0f32, 600.0, 2500.0];
+            l.set_sections_now(Order::Lr4, &xs);
+            l.reset();
+            assert_eq!(l.latency(), want);
+            let mut tree = Tree::new(Order::Lr4, 4);
+            tree.prepare(sr, 0.0);
+            for (k, &f) in xs.iter().enumerate() {
+                tree.set_freq_now(k, f);
+            }
+            let mut out = [0.0; MAX_BANDS];
+            let y: Vec<f64> = lin_impulse(&mut l, 2 * want)
+                .into_iter()
+                .map(|v| {
+                    tree.process(v, &mut out);
+                    out[..4].iter().sum()
+                })
+                .collect();
+            let peak = (0..y.len()).max_by(|&a, &b| y[a].abs().total_cmp(&y[b].abs())).unwrap();
+            assert_eq!(peak, want, "{sr}");
+            assert!((y[want] - 1.0).abs() < 1e-6, "{sr}: {}", y[want]);
+        }
+    }
+
+    /// A new set of sections renders across blocks and crossfades; once done, the output is the same
+    /// as a linearizer that had those sections from the start (same history, same kernel).
+    #[test]
+    fn linearizer_kernel_change_lands_on_the_new_kernel() {
+        let sr = 48000.0;
+        let mut a = Linearizer::new();
+        let mut b = Linearizer::new();
+        a.prepare(sr);
+        b.prepare(sr);
+        a.set_sections_now(Order::Lr8, &[60.0, 2500.0]);
+        b.set_sections_now(Order::Lr8, &[100.0, 2500.0]);
+        a.reset();
+        b.reset();
+        let x = noise(48000, 21);
+        let mut worst_late = 0.0f64;
+        for (i, &v) in x.iter().enumerate() {
+            if i == 4000 {
+                a.set_sections(Order::Lr8, &[100.0, 2500.0]);
+                assert!(a.is_busy());
+            }
+            let ya = a.process(v);
+            let yb = b.process(v);
+            assert!(ya.is_finite() && ya.abs() < 10.0);
+            if i > 24000 {
+                worst_late = worst_late.max((ya - yb).abs());
+            }
+        }
+        assert!(!a.is_busy());
+        assert!(worst_late < 1e-12, "{worst_late:e}");
     }
 }

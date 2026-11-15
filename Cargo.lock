@@ -266,6 +266,7 @@ dependencies = [
  "gfx-grit",
  "gfx-killswitch",
  "gfx-limiter",
+ "gfx-mbcomp",
  "gfx-met",
  "gfx-octaver",
  "gfx-phaser",
@@ -453,6 +454,16 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-mbcomp"
+version = "0.1.0"
+dependencies = [
+ "gfx-comp",
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

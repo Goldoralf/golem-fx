@@ -36,6 +36,9 @@ const MAX_CH: usize = 2;
 const CTL: u64 = 32;
 /// Peak − RMS of a sine (dB): peak detectors are calibrated to read a sine's RMS.
 const SINE_CREST_DB: f32 = 3.010_3;
+/// Longest detector window of [`Comp::set_detector_low_hz`] (s), and the shortest (gfx-comp's own).
+const LOW_WINDOW_MAX: f32 = 0.040;
+const LOW_WINDOW_MIN: f32 = 0.005;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Character {
@@ -180,6 +183,10 @@ struct Channel {
     sc_hp: Svf,
     /// Peak detector: maximum over 5 ms (ripple-free above 200 Hz, like a rectifier and its cap).
     pk: SlidingMax,
+    /// The RMS reading's sliding maximum (only with `detector_low_hz`).
+    rms_max: SlidingMax,
+    /// The larger of the two readings of the last sample (peak − 3 dB, RMS), dB.
+    level: f32,
     /// Compensates the half-sample low-pass of ADAA at 2× (fitted: within 0.04 dB to 20 kHz).
     hf_comp: Svf,
     ms: f64,
@@ -231,6 +238,23 @@ pub struct Comp {
     /// their colour stage (shaper, 2× oversampler, Pedal's hiss). The engine is then a pure gain with
     /// zero latency, coherent with any path that does not run through it (gfx-bassdi's dirt path).
     colour: bool,
+    /// Library-only setting: the lowest frequency the detector must read without ripple (gfx-mbcomp
+    /// §2.4). `None` = the plugin's detector, bit for bit.
+    low_hz: Option<f32>,
+}
+
+/// One sample of the engine's clock: the linked gains and the smoothed values the audio path uses.
+#[derive(Clone, Copy, Debug)]
+struct Tick {
+    /// Per channel, after `link` (dB, ≤ 0).
+    g: [f32; MAX_CH],
+    /// The most reduction over the channels (dB, ≤ 0).
+    gmin: f32,
+    makeup: f32,
+    mix: f32,
+    cm: f32,
+    fade: f32,
+    lm: f32,
 }
 
 impl Comp {
@@ -265,7 +289,35 @@ impl Comp {
             clock: 0,
             gr_meter: 0.0,
             colour: true,
+            low_hz: None,
         }
+    }
+
+    /// Sizes the detector for content down to `f` Hz (gfx-mbcomp §2.4): both readings, the peak and
+    /// the one-pole RMS, take their maximum over W = clamp(1.2 / f, 5 ms, 40 ms), gfx-gate's rule, so
+    /// a low note's period no longer ripples the gain. `None` = the plugin's detector, bit for bit
+    /// (5 ms peak window, the RMS as it is). A library setting, not a plugin parameter.
+    pub fn set_detector_low_hz(&mut self, f: Option<f32>) {
+        self.low_hz = f.map(|f| f.max(1.0));
+        self.apply_windows();
+    }
+
+    fn apply_windows(&mut self) {
+        let sr = self.sr;
+        let w = match self.low_hz {
+            None => (0.005 * sr) as usize,
+            Some(f) => ((1.2 / f).clamp(LOW_WINDOW_MIN, LOW_WINDOW_MAX) * sr).round() as usize,
+        };
+        for c in self.ch.iter_mut() {
+            c.pk.set_window(w);
+            c.rms_max.set_window(w);
+        }
+    }
+
+    /// The larger of channel `ch`'s two readings at the last sample (peak − 3 dB, RMS; dB): the level
+    /// the detector compared with the threshold.
+    pub fn level_db(&self, ch: usize) -> f32 {
+        self.ch[ch.min(MAX_CH - 1)].level
     }
 
     /// Turns the colour stage on (the default, the plugin's behaviour) or off (dynamics only).
@@ -374,11 +426,13 @@ impl Comp {
         let charge_coef = self.charge_coef;
         let release_ms = self.log_release.value().exp().max(5.0);
         let sr = self.sr as f64;
+        let low = self.low_hz.is_some();
         // program-dependent release coefficients computed here when needed
         let c = &mut self.ch[i];
         c.ms = (sc as f64) * (sc as f64) + (c.ms - (sc as f64) * (sc as f64)) * rms_coef;
         let peak = db(c.pk.next(sc)) - SINE_CREST_DB;
-        let rms = db((c.ms.sqrt()) as f32);
+        let rms = if low { db(c.rms_max.next(c.ms.sqrt() as f32)) } else { db((c.ms.sqrt()) as f32) };
+        c.level = rms.max(peak);
         // how long and how hard it has been compressing: rises in 300 ms, falls in 3 s
         // busy = the input itself asks for reduction (not the release still recovering from it)
         let busy = if static_curve(rms.max(peak), t, r, w) - rms.max(peak) < -1.0 { 1.0 } else { 0.0 };
@@ -450,54 +504,82 @@ impl Comp {
         c.g
     }
 
+    /// Advances the engine's clock and smoothers by one sample and runs the detector on each
+    /// channel's sidechain sample (`sc_hpf` applied): the linked gains and the smoothed values.
+    #[inline]
+    #[allow(clippy::needless_range_loop)]
+    fn tick(&mut self, input: &[f32], sc: &mut [f32; MAX_CH]) -> Tick {
+        let nch = input.len().min(MAX_CH);
+        if self.clock.is_multiple_of(CTL) {
+            for _ in 0..CTL {
+                self.ratio.next();
+                self.knee.next();
+                self.range.next();
+                self.drive.next();
+                self.link.next();
+                self.log_attack.next();
+                self.log_release.next();
+            }
+            self.control();
+        }
+        self.clock += 1;
+        let t = self.thresh.next();
+        let makeup = gain(self.makeup.next());
+        let mix = self.mix.next() * 0.01;
+        let (r, w) = (self.ratio.value(), self.knee.value());
+        let floor = -self.range.value();
+        let link = self.link.value() * 0.01;
+        let cm = self.colour_mix.next();
+        let fade = self.char_fade.next();
+        let lm = self.listen_mix.next();
+
+        // detection
+        let mut g = [0.0f32; MAX_CH];
+        for c in 0..nch {
+            let x = input[c];
+            let s = if self.hp_on { self.ch[c].sc_hp.process(x) } else { x };
+            sc[c] = s;
+            g[c] = self.detect(c, s, t, r, w, floor);
+        }
+        let gmin = g[..nch].iter().cloned().fold(0.0f32, f32::min);
+        for c in 0..nch {
+            g[c] = link * gmin + (1.0 - link) * g[c];
+        }
+        Tick { g, gmin, makeup, mix, cm, fade, lm }
+    }
+
+    /// The gain API (gfx-mbcomp §2.5): one sample of the engine for each channel's sidechain sample
+    /// (`sc.len()` channels, at most 2), returning each channel's gain in dB (≤ 0) after `link`
+    /// (`sc_hpf` applies to the sidechain). It advances the clock and the smoothers exactly as
+    /// [`Comp::process_block`] does, which is built on it. No audio passes through the engine, so
+    /// there is no colour.
+    #[inline]
+    pub fn next_gain_db(&mut self, sc: &[f32]) -> [f32; MAX_CH] {
+        let mut s = [0.0f32; MAX_CH];
+        self.tick(sc, &mut s).g
+    }
+
     #[allow(clippy::needless_range_loop)]
     pub fn process_block(&mut self, buffers: &mut [&mut [f32]]) {
         let nch = buffers.len().min(MAX_CH);
         let n = buffers.first().map_or(0, |b| b.len());
         let mut meter = 0.0f32;
         for i in 0..n {
-            if self.clock.is_multiple_of(CTL) {
-                for _ in 0..CTL {
-                    self.ratio.next();
-                    self.knee.next();
-                    self.range.next();
-                    self.drive.next();
-                    self.link.next();
-                    self.log_attack.next();
-                    self.log_release.next();
-                }
-                self.control();
+            let mut x = [0.0f32; MAX_CH];
+            for c in 0..nch {
+                x[c] = buffers[c][i];
             }
-            self.clock += 1;
-            let t = self.thresh.next();
-            let makeup = gain(self.makeup.next());
-            let mix = self.mix.next() * 0.01;
-            let (r, w) = (self.ratio.value(), self.knee.value());
-            let floor = -self.range.value();
-            let link = self.link.value() * 0.01;
-            let cm = self.colour_mix.next();
-            let fade = self.char_fade.next();
-            let lm = self.listen_mix.next();
+            let mut sc = [0.0f32; MAX_CH];
+            let Tick { g, gmin, makeup, mix, cm, fade, lm } = self.tick(&x[..nch], &mut sc);
             let (base, shaper) = self.s.character.colour();
             let (pbase, pshaper) = self.prev_char.colour();
             let amount = (base + self.drive.value() * 0.01) * fade + (pbase + self.drive.value() * 0.01) * (1.0 - fade);
             let k = 1.0 + 3.0 * amount;
-
-            // detection
-            let mut g = [0.0f32; MAX_CH];
-            let mut sc = [0.0f32; MAX_CH];
-            for c in 0..nch {
-                let x = buffers[c][i];
-                let s = if self.hp_on { self.ch[c].sc_hp.process(x) } else { x };
-                sc[c] = s;
-                g[c] = self.detect(c, s, t, r, w, floor);
-            }
-            let gmin = g[..nch].iter().cloned().fold(0.0f32, f32::min);
             meter = meter.max(-gmin);
 
             for c in 0..nch {
                 let x = buffers[c][i];
-                let gc = link * gmin + (1.0 - link) * g[c];
+                let gc = g[c];
                 let lin = gain(gc);
                 let wet = x * lin;
                 let ch = &mut self.ch[c];
@@ -571,9 +653,10 @@ impl Effect for Comp {
         self.colour_mix.prepare(sample_rate);
         self.listen_mix.prepare(sample_rate);
         for c in self.ch.iter_mut() {
-            c.pk.prepare((0.011 * sample_rate) as usize);
-            c.pk.set_window((0.005 * sample_rate) as usize);
+            c.pk.prepare(((LOW_WINDOW_MAX + 0.001) * sample_rate) as usize);
+            c.rms_max.prepare(((LOW_WINDOW_MAX + 0.001) * sample_rate) as usize);
         }
+        self.apply_windows();
         self.char_fade.prepare(sample_rate);
     }
 
@@ -604,6 +687,8 @@ impl Effect for Comp {
             c.adaa[1].reset(shaper);
             c.half_dry.reset();
             c.pk.reset();
+            c.rms_max.reset();
+            c.level = -200.0;
             c.hf_comp.reset();
         }
         self.rngs.iter_mut().for_each(Rng::reset);

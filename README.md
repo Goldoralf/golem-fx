@@ -78,7 +78,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 36 | [gfx-tape](gfx-tape/) | new block `tape` (tape and media saturation) | — | **coded**, bench green, to test in golem |
 | 37 | [gfx-grit](gfx-grit/) | `grit` | Prisma | **coded** (reference level, Drive weights, cabinet voicings [A] until bench DIs exist), bench green, to test in golem (needs the type-keyed value conversion, README) |
 | 38 | [gfx-transient](gfx-transient/) | new block `transient` (transient shaper) | — | **designed**, reviewed by Fable 5.2 |
-| 39 | [gfx-mbcomp](gfx-mbcomp/) | new block `mb-comp` (multiband compressor) | — | **designed**, reviewed by Fable 5.2 |
+| 39 | [gfx-mbcomp](gfx-mbcomp/) | new block `mb-comp` (multiband compressor) | — | **coded** (R, default times, Tilt and the Lift-transient law [A] until bench DIs exist), bench green, to test in golem (needs the `mb-comp` catalogue entry) |
 | 40 | [gfx-ducker](gfx-ducker/) | new block `ducker` (key / self / pump ducking) | — | **designed**, reviewed by Fable 5.2 |
 | 41 | [gfx-cab](gfx-cab/) | `cab` (+ `ir-fx` as sibling crate gfx-irfx) | x42 IR Convolver Mono / Stereo | **designed**, reviewed by Fable 5.2 |
 | 42 | [gfx-acoustic](gfx-acoustic/) | new block `acoustic-sim` (electric to acoustic) | — | **designed**, reviewed by Fable 5.2 |

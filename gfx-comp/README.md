@@ -1,6 +1,9 @@
 # gfx-comp
 
 > **Status: CODED** (v0.1.0, 2026-11-12) — five characters on one static curve, implicit feedback solve, colour at 2× with ADAA, `gr` meter; 9 behaviour tests, bench green at 44.1 – 192 kHz (~0.1 µs / sample).
+> Library API added 2026-11-15 for gfx-mbcomp: `next_gain_db` (one sample of the engine, gains only;
+> `process_block` is built on it), `set_detector_low_hz` (sliding maximum over 1.2 periods on both
+> readings; `None` = this detector) and `level_db`. The plugin is unchanged: its renders null bit for bit.
 
 golem's compressor. Stands for golem's `comp` block (today ReaComp), keeping its parameter ids and
 units ([golem contract](../docs/golem-contract.md)). The aim is the best compressor for a live

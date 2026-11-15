@@ -1,0 +1,611 @@
+{
+ "crate": "gfx-mbcomp",
+ "presets": [
+  {
+   "id": "even-clean",
+   "type": "mb-comp",
+   "name": "Even clean guitar",
+   "desc": "Three bands at 2.5:1 from −24 dB: strums sit level, the lows never dull the attack of the highs",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "pop-rock",
+    "indie-rock",
+    "neo-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "bands": "3",
+    "character": "Clean",
+    "amount": 100
+   },
+   "notes": "The fresh plugin: a gentle 3-band leveller, auto gain on (README §4 default row)"
+  },
+  {
+   "id": "tight-chug",
+   "type": "mb-comp",
+   "name": "Tight chug",
+   "desc": "Palm-mute boom held under 150 Hz at 4:1, 8 ms attack; the riff's top stays open at 1.5:1",
+   "inst": "guitar",
+   "genres": [
+    "metal",
+    "rock"
+   ],
+   "subgenres": [
+    "groove-metal",
+    "metalcore",
+    "djent"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "x_lo": 150,
+    "lo_thresh": -28,
+    "lo_ratio": 4,
+    "lo_attack": 8,
+    "lo_release": 120,
+    "lm_ratio": 1.5,
+    "hi_ratio": 1.5,
+    "tilt": 20
+   },
+   "notes": "After amp and cab. The low band's detector is ripple-free on a low note: the boom is held without added fuzz"
+  },
+  {
+   "id": "piezo-boom",
+   "type": "mb-comp",
+   "name": "Acoustic piezo boom",
+   "desc": "The 180 – 700 Hz body cut 3:1 only when it blooms, quiet top lifted +50 % below −42 dB",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "pop"
+   ],
+   "subgenres": [
+    "contemporary-folk",
+    "americana",
+    "indie-folk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "bands": "4",
+    "x_lo": 180,
+    "x_mid": 700,
+    "lm_thresh": -30,
+    "lm_ratio": 3,
+    "hi_lift": 50,
+    "hi_lift_thresh": -42
+   },
+   "notes": "Dynamic-EQ use of a band: the piezo's body resonance is only cut when it booms (README §4)"
+  },
+  {
+   "id": "bass-even",
+   "type": "mb-comp",
+   "name": "Even bass strings",
+   "desc": "Lows 4:1 below 100 Hz with slow times, mids 3:1, top 2:1 fast: low peaks no longer squash the mids",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "pop",
+    "rnb"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "pop-rock",
+    "funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "bands": "3",
+    "x_lo": 100,
+    "x_hi": 1500,
+    "character": "FET",
+    "lo_thresh": -26,
+    "lo_ratio": 4,
+    "lo_attack": 30,
+    "lo_release": 250,
+    "lm_thresh": -24,
+    "lm_ratio": 3,
+    "hi_ratio": 2,
+    "hi_attack": 2,
+    "tilt": -15
+   },
+   "notes": "FET dynamics, no colour. Negative Tilt leaves the lows more of their dynamics: the answer to 'tighter but less powerful'"
+  },
+  {
+   "id": "slap-tamer",
+   "type": "mb-comp",
+   "name": "Slap tamer",
+   "desc": "The even-bass split with the top at 6:1 from −30 dB, 0.5 ms attack: pops caught, fingers untouched",
+   "inst": "bass",
+   "genres": [
+    "rnb",
+    "rock",
+    "jazz"
+   ],
+   "subgenres": [
+    "funk",
+    "jazz-fusion"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -5,
+   "tags": [
+    "tight",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "x_lo": 100,
+    "x_hi": 1500,
+    "character": "FET",
+    "lo_thresh": -26,
+    "lo_ratio": 4,
+    "lo_attack": 30,
+    "lo_release": 250,
+    "lm_thresh": -24,
+    "lm_ratio": 3,
+    "hi_ratio": 6,
+    "hi_attack": 0.5,
+    "tilt": -15,
+    "hi_thresh": -30,
+    "hi_release": 80
+   },
+   "notes": "Only the band above 1.5 kHz reacts fast, so the thumb's low end keeps its weight"
+  },
+  {
+   "id": "low-anchor",
+   "type": "mb-comp",
+   "name": "Low anchor, free top",
+   "desc": "Only the band under 120 Hz compressed, 6:1 Opto: a steady bottom, mids and top untouched",
+   "inst": "bass",
+   "genres": [
+    "rock",
+    "metal",
+    "pop"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "hard-rock",
+    "pop-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -4,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "x_lo": 120,
+    "character": "Opto",
+    "lo_ratio": 6,
+    "lm_ratio": 1,
+    "hi_ratio": 1
+   },
+   "notes": "Mid and High at ratio 1 with Lift off pass at unity: a one-band low compressor that never touches the attack"
+  },
+  {
+   "id": "vocal-level",
+   "type": "mb-comp",
+   "name": "Vocal, levelled",
+   "desc": "Mud (150 – 600 Hz) and harshness (above 4.5 kHz) held only when they occur, Opto dynamics",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "pop-rock",
+    "neo-soul"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "bands": "4",
+    "x_lo": 150,
+    "x_mid": 600,
+    "x_hi": 4500,
+    "character": "Opto",
+    "lm_thresh": -26,
+    "lm_ratio": 3,
+    "hm_ratio": 2,
+    "hi_thresh": -30,
+    "hi_ratio": 4,
+    "hi_attack": 1
+   },
+   "notes": "Keep gfx-deesser before it for the 's'; this handles the broad regions"
+  },
+  {
+   "id": "vocal-presence",
+   "type": "mb-comp",
+   "name": "Vocal presence lift",
+   "desc": "The levelled vocal with 600 Hz – 4.5 kHz lifted +67 % below −40 dB; breaths and room stay down",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "folk"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "neo-soul",
+    "indie-folk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "modern",
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "bands": "4",
+    "x_lo": 150,
+    "x_mid": 600,
+    "x_hi": 4500,
+    "character": "Opto",
+    "lm_thresh": -26,
+    "lm_ratio": 3,
+    "hm_ratio": 2,
+    "hi_thresh": -30,
+    "hi_ratio": 4,
+    "hi_attack": 1,
+    "hm_lift": 67,
+    "hm_lift_thresh": -40,
+    "guard": -66
+   },
+   "notes": "Quiet syllables come forward; the guard at −66 dBFS keeps the room tone from being lifted"
+  },
+  {
+   "id": "keys-glue",
+   "type": "mb-comp",
+   "name": "Keys bus glue",
+   "desc": "Three bands at 2:1 from −20 dB, Bus dynamics, slow times, linear phase: no low-end smear",
+   "inst": "keys",
+   "genres": [
+    "pop",
+    "electronic",
+    "rock"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "downtempo",
+    "art-rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "bands": "3",
+    "character": "Bus",
+    "lo_thresh": -20,
+    "lm_thresh": -20,
+    "hi_thresh": -20,
+    "lo_ratio": 2,
+    "lm_ratio": 2,
+    "hi_ratio": 2,
+    "lo_attack": 30,
+    "lm_attack": 30,
+    "hi_attack": 30,
+    "lo_release": 300,
+    "lm_release": 300,
+    "hi_release": 300,
+    "phase": "Linear"
+   },
+   "notes": "Linear adds 42.7 ms of reported latency at 48 kHz: for a lane that is not played live"
+  },
+  {
+   "id": "hyper",
+   "type": "mb-comp",
+   "name": "Hyper",
+   "desc": "Every band 30:1 from above and lifted 4:1 from below: the squeezed, detailed sound-design texture",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "hip-hop",
+    "pop"
+   ],
+   "subgenres": [
+    "dubstep",
+    "trap",
+    "hyperpop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -3,
+   "tags": [
+    "extreme",
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "bands": "3",
+    "x_lo": 90,
+    "x_hi": 2500,
+    "lo_ratio": 30,
+    "lm_ratio": 30,
+    "hi_ratio": 30,
+    "lo_thresh": -34,
+    "lm_thresh": -30,
+    "hi_thresh": -36,
+    "lo_lift": 75,
+    "lm_lift": 75,
+    "hi_lift": 75,
+    "lo_lift_thresh": -42,
+    "lm_lift_thresh": -42,
+    "hi_lift_thresh": -42,
+    "lift_range": 18,
+    "time": 50,
+    "mix": 100
+   },
+   "notes": "The category's signature, level-matched by auto gain; the guard keeps Lift off the hiss (make-up still lifts it ~10 dB)"
+  },
+  {
+   "id": "hyper-tasteful",
+   "type": "mb-comp",
+   "name": "Hyper, tasteful",
+   "desc": "The Hyper settings at Amount 40 %: the detail and density without the squash",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "pop",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "electropop",
+    "dance-pop",
+    "boom-bap"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "x_lo": 90,
+    "x_hi": 2500,
+    "lo_ratio": 30,
+    "lm_ratio": 30,
+    "hi_ratio": 30,
+    "lo_thresh": -34,
+    "lm_thresh": -30,
+    "hi_thresh": -36,
+    "lo_lift": 75,
+    "lm_lift": 75,
+    "hi_lift": 75,
+    "lo_lift_thresh": -42,
+    "lm_lift_thresh": -42,
+    "hi_lift_thresh": -42,
+    "lift_range": 18,
+    "time": 50,
+    "mix": 100,
+    "amount": 40
+   },
+   "notes": "Amount scales every slope (30:1 becomes about 1.6:1 here), the usual 20 – 40 % way of using it"
+  },
+  {
+   "id": "hyper-blend",
+   "type": "mb-comp",
+   "name": "Hyper blend",
+   "desc": "Full Hyper mixed 30 % under the aligned dry: transients from the dry, density from the wet",
+   "inst": "any",
+   "genres": [
+    "electronic",
+    "rock",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "breakbeat",
+    "boom-bap"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "x_lo": 90,
+    "x_hi": 2500,
+    "lo_ratio": 30,
+    "lm_ratio": 30,
+    "hi_ratio": 30,
+    "lo_thresh": -34,
+    "lm_thresh": -30,
+    "hi_thresh": -36,
+    "lo_lift": 75,
+    "lm_lift": 75,
+    "hi_lift": 75,
+    "lo_lift_thresh": -42,
+    "lm_lift_thresh": -42,
+    "hi_lift_thresh": -42,
+    "lift_range": 18,
+    "time": 50,
+    "mix": 30
+   },
+   "notes": "Parallel use; the dry is the tree's unity sum, so the blend never combs"
+  },
+  {
+   "id": "pad-bloom",
+   "type": "mb-comp",
+   "name": "Pad bloom",
+   "desc": "Upward only, every band lifted +67 % below −30 dB, slow times: decays and tails bloom evenly",
+   "inst": "keys",
+   "genres": [
+    "electronic",
+    "experimental",
+    "pop"
+   ],
+   "subgenres": [
+    "ambient",
+    "downtempo"
+   ],
+   "gain": "any",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "bands": "4",
+    "lo_ratio": 1,
+    "lo_lift": 67,
+    "lo_lift_thresh": -30,
+    "lo_attack": 60,
+    "lo_release": 800,
+    "lm_ratio": 1,
+    "lm_lift": 67,
+    "lm_lift_thresh": -30,
+    "lm_attack": 60,
+    "lm_release": 800,
+    "hm_ratio": 1,
+    "hm_lift": 67,
+    "hm_lift_thresh": -30,
+    "hm_attack": 60,
+    "hm_release": 800,
+    "hi_ratio": 1,
+    "hi_lift": 67,
+    "hi_lift_thresh": -30,
+    "hi_attack": 60,
+    "hi_release": 800,
+    "guard": -76
+   },
+   "notes": "No downward stage (ratio 1): only the quiet parts rise, the guard at −76 dBFS keeps the noise floor down"
+  },
+  {
+   "id": "de-bleed",
+   "type": "mb-comp",
+   "name": "Live vocal de-bleed",
+   "desc": "Lows and highs expanded 1:2 below −45 dB, 12 dB at most: rumble and cymbals recede between phrases",
+   "inst": "voice",
+   "genres": [
+    "rock",
+    "pop",
+    "folk"
+   ],
+   "subgenres": [
+    "alternative-rock",
+    "pop-rock",
+    "americana"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": -1,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "bands": "4",
+    "lo_lift": -100,
+    "hi_lift": -100,
+    "lo_lift_thresh": -45,
+    "hi_lift_thresh": -45,
+    "range": 12
+   },
+   "notes": "Downward expansion on the outer bands only: the voice's own region is left alone"
+  },
+  {
+   "id": "guitar-lead-even",
+   "type": "mb-comp",
+   "name": "Lead guitar, even top",
+   "desc": "Highs above 2.5 kHz 4:1 fast, mids 2:1, quiet tails lifted +40 %: a smooth, singing lead",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "metal"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "blues-rock",
+    "heavy-metal"
+   ],
+   "gain": "crunch",
+   "use": "lead",
+   "refs": [],
+   "level_db": -2,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "bands": "3",
+    "hi_thresh": -28,
+    "hi_ratio": 4,
+    "hi_attack": 3,
+    "lm_ratio": 2,
+    "lm_lift": 40,
+    "lm_lift_thresh": -44,
+    "tilt": -20
+   },
+   "notes": "Negative Tilt eases the low band; Lift in the Mid band carries the sustain without a broadband squash"
+  }
+ ]
+}
