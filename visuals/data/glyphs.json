@@ -445,6 +445,11 @@
    "label": "Fuzz (circuit-simulated fuzz, the guitar included)",
    "uni": "⊓",
    "svg": "<path d='M2 17V6h5v11h2.5V8.5H13V17h2.5v-6h2.5v6h2v-3.5h1.5V17H22'/>"
+  },
+  "acoustic-sim": {
+   "label": "Acoustic simulator (gfx)",
+   "uni": "◉",
+   "svg": "<path d='M12 1.5V5'/><path d='M8.86 11.48A4 4 0 1 1 15.14 11.48A5.5 5.5 0 1 1 8.86 11.48Z'/><circle cx='12' cy='9.4' r='1.6'/><path d='M10 17.2h4'/>"
   }
  }
 }

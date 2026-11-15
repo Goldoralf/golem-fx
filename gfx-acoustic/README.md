@@ -1,7 +1,159 @@
 # gfx-acoustic
 
-> **Status: DESIGNED** (2026-11-14). Design only, no code yet. Reviewed 2026-11-14 (Fable 5.2): see
-> [Review](#review-fable-52-2026-11-14). Figures marked **[P]** come from the review's prototype.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, Review at the
+> end; figures marked **[P]** come from its prototype). The whole chain is built: the DI back to the
+> EMF through the shared gfx-dsp **`pickup`** module (extended for this pedal: band limit
+> min(12 kHz, 3 × resonance), the analog prototype, the position shelf; gfx-fuzz's tests and bench stay
+> green), the position / aperture shelves, `top`, the rewritten **decay** stage, the 12-string courses
+> (new gfx-dsp **`filterbank`**, gfx-detune's shifter), the **body** (≤ 48 TPT modes, two gains per mode
+> and mic, one blended 1,024-tap FIR per channel through the new gfx-dsp **`fir`**, AVX2), the piezo
+> voice and quack dip, `low_cut`, the one-knob Opto compressor (gfx-comp, colour off), the room, K,
+> `mix`. **Two bodies are measured**: Classical from the Mores archive (guitar g34, CC BY 4.0) and
+> Concert from the IEM / DEGA recordings (Public Domain Mark), both licences confirmed on the record
+> pages at download; the other four are the parametric voicings. Bench green (28 / 28 at 44.1 – 192
+> kHz); **CPU 255 – 277 ns per sample mono at the defaults** (≈ 1.3 % of a core, budget 300 ns), 310 –
+> 332 ns per stereo frame; worst case (2 / 2, twelve, room, comp, model crossfades with `mic` moving)
+> 1.27 µs per frame. The decay stage runs its **fallback 1** (cap 12 dB, k halved): the soft-note row
+> failed with the rule as written (−8.7 dB, bound 8). Deviations and numbers: "As coded" below.
+
+## As coded (v0.1.0)
+
+**Files.** gfx-dsp: `pickup.rs` extended (additions only: `resonance_hz`, `acoustic_pole_hz`,
+`emf_prototype`, `emf_response`, `position_corner_hz`, `position_shelf`, `STRING_SPEED`; + 3 tests;
+gfx-fuzz's 13 tests and its bench, 28 / 28, unchanged), new `fir.rs` (direct-form FIR on a doubled ring,
+AVX2 + FMA dot product with runtime detection and a portable fallback, kernel blend, windowed-sinc and
+causal kernel resampling; 6 tests), new `filterbank.rs` (gfx-octaver's ERB bank, octave up; 3 tests).
+Here: `lib.rs` (the processor, `PARAMS`, the voicings, source paths, 12-string, room), `body.rs` (the
+body engine), `decay.rs`, `bodies.rs` and `data/bodies.f32` (generated), `plugin.rs` (class id
+`GoleMFxAcoustic1`, mono 1 / 1 then 2 / 2, latency 0, read-only `gr`), `tests.rs` (17 behaviour tests,
+1 timing), `tools/body_fit.py` (the offline fit, §2.6), `NOTICE`.
+
+**Data (§1.4, §2.6).** `tools/body_fit.py --fetch DIR` downloads the archive's
+`qualified_selected_impulses.mat` and the two Phaidra zips by URL, checks their SHA-256 and fits; only
+the derived tables are committed (`src/bodies.rs`, `data/bodies.f32`: 6 models × 3 mics × 1,024 f32 taps
+at 48 kHz, 72 KB). Licences checked on the day: Zenodo's record says `cc-by-4.0` (creator R. Mores);
+Phaidra's records say Public Domain Mark 1.0 and the IEM project page says "All the contents are in the
+public domain". The notice of §1.4 is in `NOTICE`, in `bodies.rs`' header and below; the guitar is
+**g34** (a classical Spanish guitar of 1971, measured in the anechoic room of HAW Hamburg: no reflection
+to window out; not g07, g30 or g62).
+
+> Classical body: fitted from guitar g34 of R. Mores, *Archive for the acoustical documentation of
+> classical Spanish guitars, flamenco guitars and romantic guitars from private and public collections —
+> bridge mobility*, Zenodo, 2021, doi:10.5281/zenodo.4604577, CC BY 4.0
+> (https://creativecommons.org/licenses/by/4.0/). Modified: windowed, converted and reduced to a modal
+> table and a short filter by golem-fx.
+>
+> Concert body: fitted from F. Zotter and D. Rudrich, IEM / DEGA guitar recordings (Phaidra o:68022 and
+> o:69273), Public Domain Mark 1.0. Modified: reduced to a modal table and a short filter by golem-fx.
+
+- **Fit.** Vector fitting (common poles, 60 starting pairs over 45 Hz – 1.5 kHz, relative weights),
+  poles kept at 50 – 1,400 Hz with Q clamped to 2 – 300, the 48 strongest, the mics' residues refitted
+  without a constant term; the residual (measured − modal) LR4-high-passed at 1 kHz, faded 15 → 21 ms,
+  1,024 taps. Mode gains = the residue as (band-pass, low-pass) pair (§2.5).
+- **Classical**: poles from the two bridge accelerometers (hammer → acceleration, the three hits
+  averaged), gains from hammer → mic (Bridge = mean of the treble and bass mics, Neck = upper east,
+  Sound hole = their mean). The near-field tilt toward the IEM classical guitar's C414s (§2.6): one slope,
+  **+0.64 dB / octave** (pivot 1 kHz), applied minimum-phase. 48 modes, 76 – 1,330 Hz. Body vs its data
+  (1/6 octave, 70 Hz – 10 kHz): worst **3.3 dB** (bridge, 1.6 kHz) and 2.0 dB (neck); the ±1.5 dB of §5
+  is not reached at the crossover (1.2 – 1.8 kHz) and below 90 Hz.
+- **Concert**: session 1's six Taylor takes (37 s), piezo DI → C414 bridge / neck. **Deviation**: the
+  coherence of a piezo with a mic over playing is low (median **0.17** at 80 Hz – 8 kHz; ≥ 0.8 on 7 % of
+  the bins): a piezo sums six strings, each through its own saddle path, so one input explains the mic
+  only in part, and H1 is biased low by √coh (the first fit came out 14 dB dark at 4 – 8 kHz on the
+  held-out take). The magnitude is the spectral ratio √(Syy / Sxx) (= |H1| / √coh, 1/12-octave
+  smoothed), its phase the minimum phase (the bulk delay goes with it). Room check, C414 vs NTI at the
+  same spot below 300 Hz, the cardioid's proximity slope removed: no band over 3 dB, so every mode is
+  kept. 48 modes, 52 – 1,242 Hz. Body vs its data: worst 4.2 / 4.7 dB (bridge / neck). **Held out**
+  (session 2, MelancholiA + B, never fitted): piezo through the fit vs the C414s, 1/3 octave 80 Hz –
+  8 kHz, levels aligned: worst **8.2 dB** (bridge; 1 – 3 kHz: 6.2 dB) and 8.3 dB (neck; 1 – 3 kHz:
+  2.9 dB); the ±2.5 / ±1.5 dB of §5 are not met: with one input and six strings the long-term ratio
+  moves with what is played (the two takes are different pieces).
+- **Parametric** (Dreadnought, Jumbo, Parlor, Round-back): §1.3's mode lists ([U] Q and levels), Jumbo
+  and Parlor scaled by body area (f × area^−½), per-mic gains by rule (the bridge mic hears less of the
+  air mode, the neck mic less of the top); the high band synthetic (decaying noise, T60 70 → 20 ms from 1
+  to 16 kHz, seeded), its level re the modes taken from Concert's measured sound hole (−23.5 dB re the
+  modal peak), plus a direct impulse at tap 0 so the high band's largest sample comes first (§5 onset
+  row).
+- `rho` per pair (FIR blend correction): Concert 0.98 / 0.99, Classical 0.66 / 0.90, parametric 0.1 –
+  0.3.
+
+**Source (§2.1 – §2.2).** The inverse is gfx-dsp `pickup`'s analog prototype, **matched** at the host
+rate (gfx-dsp `matched`): within **0.07 dB** of the prototype to 0.45 fs, every pickup, 44.1 – 96 kHz.
+The prototype reproduces §2.1's lift table within 0.3 dB at 4 – 10 kHz (the plateau is 0.8 dB above the
+table's, which rounds it from the prototype's 24 kHz end) and the invariant (prototype × network = the
+Butterworth at f_p within 0.2 dB, 20 Hz – 16 kHz). Position shelf: Bridge − Neck **+11.4 dB at 50 Hz**,
+within 0.3 dB of 0 above 3 kHz. A parallel pair uses the mean of the two positions (the mean velocity),
+**not** the mean of the corners. Piezo: D(s) on the input. The wrong-guess table and its `top` trim
+(§5 row 2) are not benched (they need the bench's noise and guess renders; left for the owner).
+
+**Decay (§2.3).** As written: 4-band LR4 tree, 25 ms sliding maximum, 60 ms release, the rule every 8
+samples, gain ramped, re-open on a 3 dB rise, 2 ms smoothing (a re-open is not smoothed: the pick is
+never attenuated). Measured (synthetic plucks, E2 and A3, partials to 8 kHz, T60 4 → 1 s):
+- with the rule as written (cap 24 dB, the README's k): T60 ÷ 1.39 / 1.78 / 2.17 / 2.63 (targets 1.4 /
+  1.8 / 2.2 / 2.6; measured from 150 ms after the pick, before the cap), attack 0.0 dB, equal note back
+  to 0.0 dB within 20 ms, but **a note 12 dB softer, 0.6 s after a loud one, lost 1.3 / 8.7 / 5.7 /
+  0.2 dB** over its first 20 ms (bound 8 dB; prototype 3 – 7);
+- so **fallback 1 runs** (`decay::CAP_DB` 12 dB, `K_SCALE` 0.5): T60 ÷ **1.20 / 1.40 / 1.59 / 1.76**
+  (targets 1 + k/2: 1.2 / 1.4 / 1.6 / 1.8), attack 0.0 dB in the first 5 ms, gain never above 0 dB, the
+  soft note **0.6 / 4.4 / 2.9 / 0.1 dB**, the equal note 0.0 dB at 20 ms, steady E2 ripple at its period
+  ≤ 0.08 dB, `decay` 0 bit-exact (the tree bypassed after a 20 ms crossfade). Restoring the rule as
+  written is two constants, after the listening row.
+- **Noise (set here, §2.3 left it to the bench)**: r is held below −70 dBFS (−76 to enter) and while the
+  band is stationary (its detector moved < 10 dB over the last 3.2 s, counted from the reset). Pink
+  noise alone at −80 and −60 dBFS: gain change **0.00 dB** over 10 s, measured from 4 s (the window must
+  first forget the noise's own onset; r frozen at what it reached).
+- The bench's T60 rows measure each band's own output (band × its gain): re-splitting the summed output
+  mixes the neighbours' differently shortened skirts into each band (it read 1.80 for 2.2).
+
+**Twelve (§2.4).** gfx-dsp `filterbank` (gfx-octaver's ERB bank, the 13 bands below 400 Hz; octave
+within 1 cent on single notes), the octave voice low-passed at 800 Hz, the unison above 150 Hz, a
+`twelve_delay` line, gfx-detune's `CenteredShifter` (3 ms centre, 1 ms search, 50 ms grains). Measured:
+**+4.00 cents** for 4 asked (1.5 kHz tone), onset **5.52 ms** after the input for 2.5 + 3 ms. On a pure
+steady tone below ≈ 500 Hz the long-term pitch stays (a 1 ms search cannot skip a period longer than
+2 ms; on playing the splices carry it, as in gfx-detune). After a cold enable the voices run 25 ms
+unheard before their 20 ms fade (no onset of a delayed tone mid-fade); they keep running 250 ms after
+"off". gfx-octaver keeps its inline copy of the bank (not touched).
+
+**Body (§2.5).** TPT modes in f64 (a SoA loop), two gains per mode and mic, gains and coefficients
+recomputed every 32 samples and ramped; `size` measured at f · 100 / size within 0.5 %. `mic` 25 / 75 %
+is the 50 / 50 blend of its neighbours' modal outputs to 1e−9 (exact). The FIR is warmed with the
+outgoing body's input history on a model crossfade (a cold kernel rang its high band: −31 dB on the
+step check). **Kernel resampling**: windowed sinc at 44.1 kHz; **zero-stuffing** for 2× / 4× (88.2 /
+176.4 kHz via 44.1): a band-limited interpolation of a kernel whose energy starts at tap 0 loses its
+pre-ringing, and an anti-image filter's phase turns the FIR against the modes (2 dB at 2.5 kHz,
+measured); the images above the old Nyquist only filter what the input holds there. The whole chain at
+44.1 / 88.2 / 96 / 192 kHz vs 48 kHz, every model, 100 Hz – 12 kHz: within **0.39 dB**. Onset: first
+output at sample 0; the response above 1 kHz peaks at **0.021 ms** (Classical 0.125 ms), energy
+centroids 0.06 – 1.07 ms.
+
+**After the body (§2.8).** Piezo voice: F̂ → D⁻¹ → +4 dB bell at 2 kHz (or the input for a piezo
+source, crossfaded with the source paths), added as (mic + p · piezo) / √(1 + p²): `piezo` 0 → 100 %
+moves the loudness by +0.46 dB (the level match constant is 0 dB). Quack dip: gfx-dsp `onset::Pick` on
+the input, a −9 dB × `quack` bell at 2.2 kHz (Q 1.2) decaying over 30 ms. Compressor as §2.8 (gfx-comp's
+engine, colour off, Opto; not run at 0: bit-transparent). Room: 12 taps (3.1 – 24.4 ms) per channel and
+gfx-dsp's 16-line FDN at scale 0.3 (RT 0.35 s), input scaled by `room`, running 1 s after it reaches 0;
+L / R decorrelation follows `width` (full from 40 %), so `width` 0 is L = R = the mono output bit for
+bit (with room and comp on). `width` 80: low-band (< 500 Hz) correlation 0.98.
+
+**Level.** K(model) on golem's DI proxy (gfx-fuzz's plucked notes, loudness after a 100 Hz high-pass):
+Dreadnought −5.0, Jumbo −0.7, Concert −6.4, Parlor −0.7, Classical −5.2, Round-back −6.0 dB: every
+model within 1 dB of the bypass at the defaults. **Deviation**: `body` 0 / 100 % moves the loudness by
+−11.2 – −11.9 / +12.2 – +12.6 dB, not ±4 LU: the modal band carries most of the loudness (the row's
+bound assumed a larger high band).
+
+**Bench.** `skip_latency` (§5) and **`stereo_by_nature`** (2 / 2 is the two-mic pair: L ≠ R at the default
+`width` 40 %; `width` 0 = mono is its own test). Click bound at the default −50 dB: worst −57 dB (`decay`
+0 → 100), K glided over 10 ms on a model change (a 1 dB step of K was the first failure). Silence floor
+−240 dBFS.
+
+**Not done (for the owner).** Listening rows (§5): the decay fallback against the rule as written on
+real arpeggios and melodies; the paired electric / acoustic phrases and the measurement campaign (the
+four steel-string bodies stay parametric); the wrong-guess / `top` trim row; the chord rows of the
+12-string (sum tones) and of the decay; the IEM room question (the C414 / NTI check found no band, but a
+better reference is a dry steel-string measurement); voicings marked [U] (k_b, Q, the piezo bell, the
+room). golem-rack: the `acoustic-sim` catalogue entry (category `amp`), `stacked_cab`, `pickup` /
+`pickup_pos` at insert, `depends` (`quack` on Piezo is written in groups.json), the NOTICE on the about
+page and in the bundle.
 
 golem's **acoustic simulator**. An electric guitar's DI goes in; what comes out sounds like an acoustic
 guitar recorded with a microphone. It also has a second job: an acoustic-electric's **under-saddle piezo**
@@ -150,7 +302,7 @@ are the one open steel-string source: a piezo and two studio mics on the same ta
   notice, kept wherever the table goes: creator, title, DOI, licence and its URI, and that the data were
   modified. GPL-3 §7(b) lets such a notice be required downstream.
 
-  > Classical body: fitted from guitar gNN of R. Mores, *Archive for the acoustical documentation of
+  > Classical body: fitted from guitar g34 of R. Mores, *Archive for the acoustical documentation of
   > classical Spanish guitars, flamenco guitars and romantic guitars from private and public collections —
   > bridge mobility*, Zenodo, 2021, doi:10.5281/zenodo.4604577, CC BY 4.0
   > (https://creativecommons.org/licenses/by/4.0/). Modified: windowed, converted and reduced to a modal

@@ -24,6 +24,8 @@ pub mod pv_shift;
 pub mod effect;
 pub mod envelope;
 pub mod exp_smooth;
+pub mod filterbank;
+pub mod fir;
 pub mod flanger;
 pub mod geq;
 pub mod lfo;

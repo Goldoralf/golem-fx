@@ -1,0 +1,22 @@
+GoleM FX Acoustic (gfx-acoustic) — third-party data notices
+
+The plugin is GPL-3.0-or-later (see LICENSE at the repository root). Two of its body models are
+derived from published measurements; their tables (src/bodies.rs, data/bodies.f32) carry these
+notices, which must be kept wherever the tables go (GPL-3 §7(b)).
+
+Classical body: fitted from guitar g34 of R. Mores, "Archive for the acoustical documentation of
+classical Spanish guitars, flamenco guitars and romantic guitars from private and public collections
+– bridge mobility", Zenodo, 2021, doi:10.5281/zenodo.4604577, licensed CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Modified: windowed, converted and reduced to a modal
+table and a short filter by golem-fx. (Guitar g34: Manuel Contreras, Madrid, 1971.) The author does
+not endorse this software.
+
+Concert body: fitted from F. Zotter and D. Rudrich, IEM / DEGA guitar recordings, "Gemeinfreie
+Gitarrenaufnahmen 1" (https://phaidra.kug.ac.at/o:68022) and "Gemeinfreie Gitarrenaufnahmen 2"
+(https://phaidra.kug.ac.at/o:69273), Institute of Electronic Music and Acoustics, University of Music
+and Performing Arts Graz, marked Public Domain Mark 1.0
+(https://creativecommons.org/publicdomain/mark/1.0/). Modified: reduced to a modal table and a short
+filter by golem-fx. Credited by courtesy; no duty attaches.
+
+No audio from either source is distributed. The raw data are downloaded and checked by SHA-256 by
+tools/body_fit.py, which rebuilds the tables.
