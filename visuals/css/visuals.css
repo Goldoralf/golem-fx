@@ -103,3 +103,6 @@ nav.toc a { font-size: 14px; font-weight: 600; color: var(--text); text-decorati
   border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
 nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
 section, #lanes { scroll-margin-top: 12px; }
+.hw-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.hw-grid .card .pedal-slot { display: grid; place-items: center; height: auto; min-height: 190px; }
+.hw-grid .pedal-slot svg { max-width: 100%; height: auto; }

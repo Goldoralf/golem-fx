@@ -35,6 +35,8 @@ for (const compact of [false, true]) for (const lit of [[], [0], [0, 5, 15]])
   cases.push([`padKit lit=${lit}`, P.padKit({ title: 'House', compact, lit, pads: [{ label: 'kick', hue: '#ff5a3c' }] })]);
 for (const kind of ['piano', 'epiano', 'organ', 'synth']) for (const compact of [false, true]) for (const extra of [{}, { family: 'mallet' }, { family: 'harpsichord' }, { style: 'percussion' }])
   cases.push([`keysUnit ${kind} ${JSON.stringify(extra)}`, P.keysUnit(Object.assign({ kind, title: 'Tine <E.Piano>', compact, macros: [{ name: 'a', value: .5 }] }, extra))]);
+for (const kind of P.HARDWARE_KINDS.concat('unknown')) for (const on of [true, false])
+  cases.push([`hardwareUnit ${kind} on=${on}`, P.hardwareUnit(kind, { on, label: 'Pitch <A&B> "x"' })]);
 for (const type of P.FEATURE_TYPES) for (const on of [true, false]) for (const title of [undefined, 'Rec <A&B> "x"'])
   cases.push([`featureUnit ${type} on=${on} title=${title || '-'}`, P.featureUnit(type, { on, title })]);
 for (const a of (P.RACK_GENERIC ? Object.keys(P.RACK_GENERIC) : [])) {

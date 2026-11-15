@@ -1,6 +1,6 @@
 # golem's legacy blocks: what replaces them
 
-> **Status: DECIDED, hardware images to generate** (opened 2026-11-15 with the maintainer). This file records the decisions as they are
+> **Status: DECIDED** (opened 2026-11-15 with the maintainer). This file records the decisions as they are
 > taken. golem-rack is told once the list is settled.
 
 golem's catalogue (v46 snapshot in `visuals/data/golem-blocks.json`) still holds 14 blocks that no golem-fx pedal
@@ -48,11 +48,12 @@ Constraint: golem's repository is public (GPL). A retailer's or maker's product 
 copyright, and the maker's logo and name are trademarks; neither can be committed (the project's rule: no maker
 livery, logos or trademark names in shipped assets). The options weighed:
 
-**Decided (2026-11-15): B.** One generic photoreal image per *kind* of MIDI hardware, generated for golem
-without logo or lettering, like the drum kits. Kinds and prompts: `visuals/assets/hardware/PROMPTS.md`
-(pitch-treadle, big-box, mid-box, compact, floor-multi, loop-switcher, foot-controller, rack-1u). Each pedal of
-golem's registry (`library/pedals/*.json`) names its kind; the drawing shows that kind's photograph. A user's own
-photo (option A below) stays possible later.
+**Decided (2026-11-15): generic renders, drawn as vectors.** Instead of generated photographs, one realistic
+vector render per *kind* of MIDI hardware, validated by the maintainer: `hardwareUnit(kind)` in
+`visuals/js/golem-pedals.js`, kinds `pitch-treadle`, `big-box`, `mid-box`, `compact`, `floor-multi`,
+`loop-switcher`, `foot-controller`, `rack-1u` (no livery, logo or lettering; LEDs and screens light when on).
+`whammy-dt` draws as `pitch-treadle`; each pedal of golem's registry (`library/pedals/*.json`) names its kind for
+`midi-pedal`. A user's own photo (option A below) stays possible later.
 
 - **A. The user's own photo** of the user's own unit, stored in the user's golem library (not in the repo) and
   shown on that block. Legal, and it is literally the real pedal.
@@ -67,3 +68,4 @@ photo (option A below) stays possible later.
   to be built; hardware photos wished.
 - 2026-11-15: boost, pitch-spectral and rezfilter removed (presets redirected); hardware drawn from one generic
   photograph per kind (prompts written).
+- 2026-11-15: hardware drawn as vector renders (validated) instead of generated photographs; prompts dropped.
