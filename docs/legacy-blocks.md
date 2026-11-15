@@ -69,3 +69,4 @@ vector render per *kind* of MIDI hardware, validated by the maintainer: `hardwar
 - 2026-11-15: boost, pitch-spectral and rezfilter removed (presets redirected); hardware drawn from one generic
   photograph per kind (prompts written).
 - 2026-11-15: hardware drawn as vector renders (validated) instead of generated photographs; prompts dropped.
+- 2026-11-15: applied by golem-rack (catalogue v48): the rack rewrites old documents on load (boost → emet, or shem when drive ≤ 15; rezfilter → autowah Low-pass; freeze → granular, so an old song still loads), so the gfx descriptors' `blocks` need not list the old types.
