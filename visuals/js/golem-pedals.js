@@ -349,10 +349,13 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // raspberry: golem's lofi orange sits too close to drive's; free between pitch's magenta and the thrash red
     lofi: '#e8336f',
   };
-  const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000' };
+  const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000',
+    // deck champagne: the pale gold-anodized faceplate of a reel deck (gfx-tape's review: brown is
+    // gfx-fuzz's copper at tile size)
+    'gfx-tape': '#d8c8a0' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -363,7 +366,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-geq': 'scale',
     'gfx-freqshift': 'barber',
     'gfx-swell': 'swells',
-    'gfx-crusher': 'pixels',
+    'gfx-crusher': 'pixels', 'gfx-tape': 'ribbon',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -371,7 +374,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -499,6 +502,29 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(xa + xs * t0)} ${f1(y - rise * t0)}L${f1(xa + xs * t1)} ${f1(y - rise * t1)}`, op);
           }
         });
+        break;
+      }
+      case 'ribbon': {
+        // a tape ribbon: two lines 2.5 units apart crossing the face through the rune zone, waving with
+        // an irregular wow (sines of 1 and 2.7 cycles across the face, amplitude 3 units), broken by two
+        // short gaps (dropouts: 3 and 5 units), passing behind the rune's disc; three oxide specks
+        // (r 0.6) by the wider gap
+        const yAt = x => cy + 3 * (.62 * Math.sin(2 * Math.PI * x / W) + .38 * Math.sin(2 * Math.PI * 2.7 * x / W + 1.1));
+        const behind = x => Math.abs(x - cx) < cw / 2 + 1.5;
+        const gaps = [[W * .16, 3], [W * .84, 5]];
+        const gapped = x => gaps.some(([g0, w]) => x >= g0 && x <= g0 + w);
+        [-1.25, 1.25].forEach(off => {
+          let d = '', on = false;
+          for (let x = 2; x <= W - 2 + .01; x += 1) {
+            if (behind(x) || gapped(x)) { on = false; continue; }
+            d += (on ? 'L' : 'M') + f1(x) + ' ' + f1(yAt(x) + off);
+            on = true;
+          }
+          if (d) line(d);
+        });
+        const [g1, w1] = gaps[1], r = .6;
+        [[g1 - 2.2, 3.4], [g1 + w1 + 1.8, -3.3], [g1 + w1 / 2, 4.2]].forEach(([x, dy]) =>
+          shape(`M${f1(x - r)} ${f1(yAt(x) + dy)}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`, .8));
         break;
       }
       case 'bins': {

@@ -141,6 +141,16 @@ impl Oversampler2x {
         (0.5 * (a + b)) as f32
     }
 
+    /// Copies another stage's state without allocating (same design).
+    pub fn copy_from(&mut self, other: &Oversampler2x) {
+        for (a, b) in [(&mut self.up, &other.up), (&mut self.down, &other.down)] {
+            if a.x.len() == b.x.len() {
+                a.x.copy_from_slice(&b.x);
+                a.y.copy_from_slice(&b.y);
+            }
+        }
+    }
+
     /// Up then down with nothing in between: the same group delay as a processed path.
     #[inline]
     pub fn identity(&mut self, x: f32) -> f32 {

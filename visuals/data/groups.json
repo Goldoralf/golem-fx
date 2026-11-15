@@ -1324,6 +1324,67 @@
           "env_rel"
         ]
       }
+    ],
+    "gfx-tape": [
+      {
+        "id": "machine",
+        "name": "Machine",
+        "custom": null,
+        "params": [
+          "formula",
+          "bias",
+          "head_bump",
+          "spacing",
+          "azimuth",
+          "alc",
+          "nr"
+        ]
+      },
+      {
+        "id": "transport",
+        "name": "Transport",
+        "custom": null,
+        "params": [
+          "wow_rate",
+          "wow_rand",
+          "snags",
+          "stop",
+          "stop_time",
+          "spread"
+        ]
+      },
+      {
+        "id": "failures",
+        "name": "Failures",
+        "custom": null,
+        "params": [
+          "dropouts",
+          "drop_sync",
+          "crinkle",
+          "crackle"
+        ]
+      },
+      {
+        "id": "noise",
+        "name": "Noise",
+        "custom": null,
+        "params": [
+          "noise_mode",
+          "hiss",
+          "mech"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "low_cut",
+          "high_cut",
+          "level",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -1528,6 +1589,21 @@
       "env_sens": "How strongly the playing level drives the rate modulation",
       "env_att": "How fast the envelope follows a rising level",
       "env_rel": "How fast the envelope falls back after a note"
+    },
+    "gfx-tape": {
+      "input": "How hard the tape is hit: 0 dB puts a -18 dBFS note at the machine's reference; the output stays level",
+      "wow": "Peak slow speed deviation (% of speed); the model sets its spectrum",
+      "flutter": "Peak fast speed deviation (% of speed), 4 - 200 Hz",
+      "wear": "Age and failures in the model's own way: dull heads, dropouts, crinkles, snags or crackle",
+      "bias": "Under 100 %: crossover grit and a brighter top; over: cleaner and darker",
+      "spacing": "Head-to-tape gap: highs vanish first, much more at low speed",
+      "azimuth": "Head tilt in arc-minutes: duller highs; in stereo a delay between the tracks",
+      "wow_rate": "Scales the speed of every slow wobble of the transport",
+      "wow_rand": "Negative: a regular, machine-like wobble; positive: erratic",
+      "drop_sync": "Puts the dropouts on the host grid (Off: random)",
+      "noise_mode": "Follow: noise only under the playing; Constant: always; Duck: in the gaps",
+      "stop": "Tape stop: the motor winds down; off spins it back up",
+      "spread": "Stereo: the random wobble and failures differ left and right"
     }
   },
   "depends": {
@@ -1733,6 +1809,12 @@
       "env_rel": {
         "param": "mod",
         "equals": "Envelope"
+      }
+    },
+    "gfx-tape": {
+      "stop_time": {
+        "param": "stop",
+        "equals": true
       }
     }
   }

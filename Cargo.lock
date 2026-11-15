@@ -264,6 +264,7 @@ dependencies = [
  "gfx-shem",
  "gfx-shimmer",
  "gfx-swell",
+ "gfx-tape",
  "gfx-tremolo",
  "gfx-vibrato",
  "gfx-wah",
@@ -510,6 +511,15 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "nih_plug",
+]
+
+[[package]]
+name = "gfx-tape"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+ "realfft",
 ]
 
 [[package]]

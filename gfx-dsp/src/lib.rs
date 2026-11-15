@@ -33,6 +33,7 @@ pub mod smooth;
 pub mod ssb;
 pub mod svf;
 pub mod swell;
+pub mod tape;
 pub mod transport;
 pub mod util;
 pub mod vibe;

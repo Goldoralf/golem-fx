@@ -36,7 +36,7 @@ its voicing and its nih-plug wrapper.
 | `sat` | Soft saturators (tanh, asymmetric, diode-like), with optional 2×/4× minimum-phase oversampling | gfx-chorus (input stage) |
 | `bbd` | Bucket-brigade model: variable-clock sampling, anti-aliasing and reconstruction filters, clock noise, stage count | gfx-chorus (BBD engine) |
 | `dynamics` | Compander (NE570-style), envelope followers | gfx-chorus (compander) |
-| `tape` | Wow and flutter generators, tape hiss | gfx-chorus (Tape engine) |
+| `tape` | Jiles-Atherton hysteresis integrated along H (RK4, substeps n = min(8, ⌈\|Δh\| / k⌉), soft clip at ±8 a, relaxation toward the anhysteretic, bias → reversible share and relaxation), `TapeSat` (record shelf → J-A → exact inverse shelf → reversible-slope makeup, at the caller's rate), the static makeup table, first-order shelves with exact inverses, the spacing-loss filter (four magnitude-matched one-poles scaled by v / d), seeded band noise and rotating-part wobbles | gfx-tape; gfx-grit's Tape module (`TapeSat`). gfx-delay and gfx-chorus keep their own tape code |
 | `circuit` | Small linear circuits from a netlist (R, C, ideal op-amps): MNA with trapezoidal companion models (exact bilinear), pots changed without touching the state; Laplace-domain analysis for tests | gfx-shem (boost network), gfx-emet (808 tone stage) |
 | `noise` | White, pink, band-limited noise; deterministic seeds for tests | gfx-chorus |
 | `stereo` | Mid/side, width, mono-safety helpers | gfx-chorus |

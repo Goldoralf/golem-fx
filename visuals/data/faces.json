@@ -527,6 +527,28 @@
    ],
    "category": "lofi",
    "color": "#e8336f"
+  },
+  "gfx-tape": {
+   "name": "Tape",
+   "blocks": [
+    "tape"
+   ],
+   "knobs": [
+    "input",
+    "wow",
+    "flutter",
+    "wear",
+    "mix"
+   ],
+   "selectors": [
+    "model",
+    "speed"
+   ],
+   "toggles": [
+    "noise"
+   ],
+   "category": "lofi",
+   "color": "#d8c8a0"
   }
  }
 }
