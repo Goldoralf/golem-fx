@@ -494,10 +494,11 @@
    "purpose": "Instrument pitch shifter: expression-pedal pitch dives, fixed or in-key harmonies, two voices, and polyphonic transposition (virtual capo, 12-string).",
    "roles": [
     "guitar",
-    "bass"
+    "bass",
+    "voice"
    ],
    "position": "pre-amp",
-   "position_note": "before the amp for pitch dives / harmony into drive",
+   "position_note": "before the amp for pitch dives / harmony into drive; for a vocal octave double use gfx-golem",
    "pairs_well_with": [
     {
      "id": "gfx-octaver",
@@ -772,9 +773,9 @@
    "roles": [
     "guitar",
     "bass",
-    "drums",
     "voice",
-    "keys"
+    "keys",
+    "drums"
    ],
    "position": "pre-amp",
    "position_note": "a dirt effect; its Clean tails setting is designed for a gain stage after it",
@@ -1460,8 +1461,8 @@
    "roles": [
     "voice",
     "guitar",
-    "drums",
-    "keys"
+    "keys",
+    "drums"
    ],
    "position": "pre-amp",
    "position_note": "Voice: after gate and pitch/formant blocks, before delay/reverb. Guitar: after drive, before amp, or after cab.",
@@ -1503,8 +1504,7 @@
    "roles": [
     "voice",
     "guitar",
-    "bass",
-    "keys"
+    "bass"
    ],
    "position": "pre-amp",
    "position_note": "on a voice lane: after the de-esser and any gate, before the octave doubler (gfx-golem)",
