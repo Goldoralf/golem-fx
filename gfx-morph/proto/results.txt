@@ -1,0 +1,417 @@
+gfx-morph prototypes, re-run 2026-11-15 (numpy 2.4.2, scipy 1.17.0, 48 kHz, f64)
+Run from proto/: python3 p1_latency.py ... ; Rust timing: cd rs && cargo run --release
+
+##### p1_latency.py
+== half-band design (8 coefs, transition 0.04): [0.040633 0.150505 0.300757 0.460775 0.609524 0.738504 0.849224 0.949743]
+== 2x up+down: first nonzero output sample 0; magnitude dB 100.00000000000001:+0.000 250.0:+0.000 1000.0:+0.000 3000.0:+0.000 10000.000000000002:+0.000 16000.0:-0.000 20000.000000000004:+0.000
+   group delay samples @100 3.07 @1k 3.07 @3k 3.13 @10k 3.91 @16k 6.17  (= 0.064 ms at 1 kHz)
+== 4x up+down: first nonzero output sample 0; magnitude dB 100.00000000000001:-0.000 250.0:-0.000 1000.0:-0.000 3000.0:-0.000 10000.000000000002:-0.000 16000.0:-0.000 20000.000000000004:-0.000
+   group delay samples @100 4.60 @1k 4.61 @3k 4.67 @10k 5.54 @16k 7.96  (= 0.096 ms at 1 kHz)
+== LR4 all-pass sum at 150 Hz: |H| max dev 2.48e-12 dB; group delay ms @60 3.39 @100 3.62 @150 3.00 @1k 0.069 @3k 0.008; analytic DC 2*sqrt2/(2 pi fc) = 3.00 ms
+== LR4 all-pass sum at 250 Hz: |H| max dev 1.60e-13 dB; group delay ms @60 1.90 @100 2.04 @250 1.80 @1k 0.119 @3k 0.013; analytic DC 2*sqrt2/(2 pi fc) = 1.80 ms
+== LR4 all-pass sum at 400 Hz: |H| max dev 2.84e-13 dB; group delay ms @60 1.15 @100 1.19 @400 1.13 @1k 0.204 @3k 0.021; analytic DC 2*sqrt2/(2 pi fc) = 1.13 ms
+== LR4 all-pass at 2000 Hz: group delay ms @200 0.226 @1k 0.264 @2000 0.228
+== LR4 all-pass at 3000 Hz: group delay ms @200 0.149 @1k 0.163 @3000 0.154
+== LR4 all-pass at 5000 Hz: group delay ms @200 0.087 @1k 0.090 @5000 0.097
+== default chain (pre HP 80, LP 12k, 2x pair), linear skeleton: first output sample 0; group delay ms @150 1.03 @300 0.29 @1k 0.097 @3k 0.083 @8k 0.098
+== Three bands 250 / 3000 + HP 80 + 2x: first output sample 0; group delay ms @150 3.33 @300 1.86 @1k 0.365 @3k 0.234 @8k 0.103
+   comb: wet delayed 0.10 ms against bone conduction -> first notch    5000 Hz
+   comb: wet delayed 0.25 ms against bone conduction -> first notch    2000 Hz
+   comb: wet delayed 0.50 ms against bone conduction -> first notch    1000 Hz
+   comb: wet delayed 1.00 ms against bone conduction -> first notch     500 Hz
+   comb: wet delayed 2.00 ms against bone conduction -> first notch     250 Hz
+   comb: wet delayed 5.00 ms against bone conduction -> first notch     100 Hz
+   comb: wet delayed 10.00 ms against bone conduction -> first notch      50 Hz
+== linear-phase crossover at 250 Hz: LR4 impulse energy to -60 dB within 421 samples -> symmetric FIR ~842 taps, latency ~421 samples = 8.8 ms
+== linear-phase half-band FIR (Kaiser estimate, 100 dB, 0.04): ~82 taps per stage; 2x up+down latency ~40 base samples = 0.84 ms
+== linear-phase half-band FIR (Kaiser estimate, 100 dB, 0.04): ~82 taps per stage; 4x up+down latency ~61 base samples = 1.27 ms
+
+##### p2_alias.py
+input itself: inharmonic re harmonic -94.9 dB (metric floor)
+soft     drive 24 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -95.1 | 2x  -95.1 | 2x+ADAA  -95.1 | 4x+ADAA  -95.1 | 32x ref  -95.1 dB
+soft     drive 24 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -44.5 | 2x  -89.8 | 2x+ADAA  -94.6 | 4x+ADAA  -94.9 | 32x ref  -94.9 dB
+soft     drive 48 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -27.4 | 2x  -42.0 | 2x+ADAA  -58.9 | 4x+ADAA  -88.5 | 32x ref  -94.7 dB
+soft     drive 48 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -22.2 | 2x  -31.3 | 2x+ADAA  -49.4 | 4x+ADAA  -65.7 | 32x ref  -94.0 dB
+hard     drive 24 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -49.0 | 2x  -62.9 | 2x+ADAA  -80.3 | 4x+ADAA  -93.7 | 32x ref  -95.0 dB
+hard     drive 24 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -38.1 | 2x  -52.1 | 2x+ADAA  -69.1 | 4x+ADAA  -88.1 | 32x ref  -93.9 dB
+hard     drive 48 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -25.6 | 2x  -37.9 | 2x+ADAA  -55.3 | 4x+ADAA  -78.8 | 32x ref  -88.2 dB
+hard     drive 48 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -21.6 | 2x  -30.0 | 2x+ADAA  -48.3 | 4x+ADAA  -63.5 | 32x ref  -77.0 dB
+tube     drive 24 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -95.0 | 2x  -95.1 | 2x+ADAA  -95.1 | 4x+ADAA  -95.1 | 32x ref  -95.1 dB
+tube     drive 24 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -44.6 | 2x  -89.5 | 2x+ADAA  -94.6 | 4x+ADAA  -94.9 | 32x ref  -94.9 dB
+tube     drive 48 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -27.5 | 2x  -41.9 | 2x+ADAA  -58.6 | 4x+ADAA  -88.5 | 32x ref  -94.7 dB
+tube     drive 48 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -22.2 | 2x  -31.3 | 2x+ADAA  -49.3 | 4x+ADAA  -65.7 | 32x ref  -94.0 dB
+rectify  drive 24 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -48.4 | 2x  -62.4 | 2x+ADAA  -79.6 | 4x+ADAA  -92.3 | 32x ref  -93.2 dB
+rectify  drive 24 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -48.4 | 2x  -62.4 | 2x+ADAA  -79.6 | 4x+ADAA  -92.3 | 32x ref  -93.2 dB
+rectify  drive 48 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -48.4 | 2x  -62.4 | 2x+ADAA  -79.6 | 4x+ADAA  -92.3 | 32x ref  -93.2 dB
+rectify  drive 48 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -48.4 | 2x  -62.4 | 2x+ADAA  -79.6 | 4x+ADAA  -92.3 | 32x ref  -93.2 dB
+fold     drive 24 dB in -18 dBFS RMS: inharmonic re harmonic  1x  -38.1 | 2x  -51.8 | 2x+ADAA  -69.8 | 4x+ADAA  -87.4 | 32x ref  -92.9 dB
+fold     drive 24 dB in -6 dBFS RMS: inharmonic re harmonic  1x  -22.9 | 2x  -34.1 | 2x+ADAA  -52.3 | 4x+ADAA  -70.5 | 32x ref  -81.6 dB
+fold     drive 48 dB in -18 dBFS RMS: inharmonic re harmonic  1x   -0.7 | 2x   -7.1 | 2x+ADAA  -24.2 | 4x+ADAA  -51.3 | 32x ref  -61.0 dB
+fold     drive 48 dB in -6 dBFS RMS: inharmonic re harmonic  1x   11.2 | 2x    7.2 | 2x+ADAA  -12.4 | 4x+ADAA  -25.1 | 32x ref  -34.7 dB
+
+##### p3_level.py
+== 1. output RMS re input (dB) on the sung phrase, drive 0..48 dB, 2x + ADAA, static make-up
+  soft  table grit  input -18 dBFS:  -0.1  -0.4  -1.1  -2.3  -3.1  -3.2  -3.2  -3.1  -3.0   spread  3.1 dB
+  soft  table grit  input -8 dBFS:  -1.1  -3.0  -6.1  -9.5 -11.7 -12.6 -12.8 -12.9 -13.0   spread 11.9 dB
+  soft  table voice input -18 dBFS:  -0.0  -0.0  -0.0  -0.0  -0.0  +0.0  -0.0  -0.0  +0.0   spread  0.0 dB
+  soft  table voice input -8 dBFS:  -1.0  -2.6  -5.0  -7.2  -8.6  -9.3  -9.7  -9.8  -9.9   spread  8.9 dB
+  hard  table grit  input -18 dBFS:  +0.0  +0.0  -0.4  -2.9  -3.3  -3.2  -3.1  -3.1  -3.0   spread  3.3 dB
+  hard  table grit  input -8 dBFS:  -0.0  -1.9  -5.7 -10.9 -12.4 -12.7 -12.9 -13.0 -13.0   spread 12.9 dB
+  hard  table voice input -18 dBFS:  -0.0  -0.0  -0.0  -0.1  +0.0  -0.0  -0.0  +0.0  +0.0   spread  0.1 dB
+  hard  table voice input -8 dBFS:  -0.0  -1.9  -5.3  -8.0  -9.1  -9.5  -9.8  -9.9  -9.9   spread  9.9 dB
+  tube  table grit  input -18 dBFS:  +0.1  -0.0  -0.6  -2.1  -3.2  -3.5  -3.4  -3.3  -3.3   spread  3.6 dB
+  tube  table grit  input -8 dBFS:  -0.5  -2.3  -5.5  -9.2 -11.8 -12.7 -13.0 -13.1 -13.2   spread 12.7 dB
+  tube  table voice input -18 dBFS:  +0.0  +0.0  +0.0  -0.0  -0.0  -0.0  -0.1  -0.1  -0.1   spread  0.1 dB
+  tube  table voice input -8 dBFS:  -0.6  -2.3  -4.8  -7.1  -8.6  -9.3  -9.7  -9.9 -10.0   spread  9.4 dB
+  fold  table grit  input -18 dBFS:  +0.0  +0.0  -0.8  -4.8  -1.7  -2.4  -2.5  -2.8  -0.7   spread  4.8 dB
+  fold  table grit  input -8 dBFS:  -0.1  -3.2  -8.9 -14.8 -12.1 -13.0 -14.2 -17.1 -16.8   spread 17.0 dB
+  fold  table voice input -18 dBFS:  -0.0  -0.0  -0.1  -0.1  +0.2  -0.2  +0.3  +0.3  +0.6   spread  0.8 dB
+  fold  table voice input -8 dBFS:  -0.1  -3.2  -8.1 -10.1 -10.1 -10.8 -11.3 -13.9 -15.6   spread 15.5 dB
+  make-up tables (dB) at drive 0 6 12 18 24 30 36 42 48
+  soft  grit :   +0.0   -5.9  -11.5  -16.2  -19.1  -20.2  -20.6  -20.8  -20.9
+  soft  voice:   +0.1   -5.5  -10.4  -13.9  -16.0  -17.0  -17.5  -17.7  -17.8
+  hard  grit :   +0.0   -6.0  -12.0  -18.0  -19.9  -20.5  -20.8  -20.9  -20.9
+  hard  voice:   +0.0   -6.0  -11.6  -15.1  -16.6  -17.3  -17.7  -17.8  -17.9
+  tube  grit :   +0.8   -5.1  -10.9  -15.9  -19.2  -20.5  -21.0  -21.2  -21.2
+  tube  voice:   +0.7   -5.1  -10.2  -13.9  -16.0  -17.0  -17.6  -17.9  -18.0
+  fold  grit :   +0.0   -6.0  -12.0  -18.0  -15.1  -15.5  -15.6  -15.1  -11.3
+  fold  voice:   +0.0   -6.0  -11.2  -13.3  -13.1  -13.3  -12.8  -12.0  -10.1
+== 2. stage bleed (pink, -50 dBFS RMS): small-signal gain re bypass (voice-table make-up)
+   guard = RMS 5 ms detector, 1:4 below the threshold, range = G_ss(drive) + 6 dB
+  soft  drive 12 dB: G_ss  +1.6 | measured, no guard  +1.5 | guard -60:   +1.5 | guard -45:   -5.0 | guard -40:   -6.1 | CAP law -45:   -1.0 | CAP law -40:   -3.1 dB
+  soft  drive 24 dB: G_ss  +8.0 | measured, no guard  +7.9 | guard -60:   +7.9 | guard -45:   -0.7 | guard -40:   -6.1 | CAP law -45:   +2.1 | CAP law -40:   -3.1 dB
+  soft  drive 36 dB: G_ss +18.5 | measured, no guard +18.0 | guard -60:  +18.0 | guard -45:   +9.2 | guard -40:   -4.1 | CAP law -45:   +7.9 | CAP law -40:   -3.0 dB
+  soft  drive 48 dB: G_ss +30.2 | measured, no guard +27.0 | guard -60:  +27.0 | guard -45:  +20.0 | guard -40:   +6.0 | CAP law -45:  +14.6 | CAP law -40:   -2.9 dB
+  hard  drive 12 dB: G_ss  +0.4 | measured, no guard  +0.3 | guard -60:   +0.3 | guard -45:   -5.4 | guard -40:   -6.1 | CAP law -45:   -1.6 | CAP law -40:   -3.1 dB
+  hard  drive 24 dB: G_ss  +7.4 | measured, no guard  +7.2 | guard -60:   +7.2 | guard -45:   -1.3 | guard -40:   -6.1 | CAP law -45:   +1.8 | CAP law -40:   -3.1 dB
+  hard  drive 36 dB: G_ss +18.3 | measured, no guard +18.2 | guard -60:  +18.2 | guard -45:   +9.2 | guard -40:   -4.1 | CAP law -45:   +7.9 | CAP law -40:   -3.0 dB
+  hard  drive 48 dB: G_ss +30.1 | measured, no guard +28.3 | guard -60:  +28.2 | guard -45:  +20.7 | guard -40:   +6.0 | CAP law -45:  +15.3 | CAP law -40:   -2.9 dB
+== 3. guard at -45 dBFS, drive 36 dB, CAP law (range G_ss + 3 = 21.5 dB): level at a vowel onset over bleed (no lookahead), re no guard
+  first  1 ms:  -6.47 dB  (gain at 1 ms:   -4.6 dB)
+  first  2 ms:  -3.99 dB  (gain at 2 ms:   -1.7 dB)
+  first  5 ms:  -2.81 dB  (gain at 5 ms:   -0.1 dB)
+  first 10 ms:  -0.86 dB  (gain at 10 ms:   -0.0 dB)
+  first 20 ms:  -0.31 dB  (gain at 20 ms:   -0.0 dB)
+  a quiet vowel at -30 dBFS RMS: mean gain over the vowel  -0.0 dB
+  a quiet vowel at -40 dBFS RMS: mean gain over the vowel  -0.0 dB
+
+##### p4_defizz.py
+HF share of the input: vowel 'a' -55.0 dB, 'o' -63.9 dB, 's' -1.7 dB (threshold -14, knee 8)
+A none            : 's' in 1-4 kHz re vowel   -5.0 dB | 's' above 4.5 kHz re vowel  +17.5 dB | vowels: level +0.00 dB, above 4.5 kHz +0.00 dB
+B de-ess after    : 's' in 1-4 kHz re vowel   -7.9 dB | 's' above 4.5 kHz re vowel   +6.6 dB | vowels: level -0.01 dB, above 4.5 kHz -0.32 dB
+C de-fizz before  : 's' in 1-4 kHz re vowel   -4.3 dB | 's' above 4.5 kHz re vowel  +12.3 dB | vowels: level -0.00 dB, above 4.5 kHz +0.01 dB
+D before + after  : 's' in 1-4 kHz re vowel   -7.7 dB | 's' above 4.5 kHz re vowel   +4.7 dB | vowels: level -0.01 dB, above 4.5 kHz -0.29 dB
+bypass (no dirt)  : 's' in 1-4 kHz re vowel  -10.4 dB | 's' above 4.5 kHz re vowel  +47.6 dB
+  defizz   0 %: 's' in 1-4 kHz re vowel   -5.1 dB
+  defizz  25 %: 's' in 1-4 kHz re vowel   -4.9 dB
+  defizz  50 %: 's' in 1-4 kHz re vowel   -4.6 dB
+  defizz  75 %: 's' in 1-4 kHz re vowel   -4.4 dB
+  defizz 100 %: 's' in 1-4 kHz re vowel   -4.3 dB
+== E. drive ducking by the de-fizz cut (gfx-morph's law), then the cut after the dirt
+  defizz   0 %: 's' in 1-4 kHz re vowel   -4.9 dB | above 4.5 kHz  +17.7 dB | vowels level +0.15 dB, above 4.5 kHz +0.15 dB
+  defizz  50 %: 's' in 1-4 kHz re vowel   -9.9 dB | above 4.5 kHz   +9.4 dB | vowels level +0.15 dB, above 4.5 kHz -0.21 dB
+  defizz 100 %: 's' in 1-4 kHz re vowel  -13.8 dB | above 4.5 kHz   +2.9 dB | vowels level +0.15 dB, above 4.5 kHz -0.37 dB
+
+##### p5_box.py
+== 1. objects (position 50 %, size 100 %, decay 100 %)
+  Tin Can      : 28 modes    100 -   7892 Hz | mode T60     6 -   600 ms | IR to -60 dB    264 ms =  12669 taps | norm +12.5 dB | strongest peak    646 Hz +11.9 dB | response p-p (200 Hz - 5 kHz) 31.9 dB
+  Bucket       : 36 modes     89 -   2963 Hz | mode T60     8 -   400 ms | IR to -60 dB    196 ms =   9410 taps | norm  +9.2 dB | strongest peak    245 Hz  +9.1 dB | response p-p (200 Hz - 5 kHz) 22.1 dB
+  Pipe         : 22 modes    272 -   5989 Hz | mode T60     6 -   364 ms | IR to -60 dB    160 ms =   7678 taps | norm  +6.8 dB | strongest peak   5492 Hz  +9.6 dB | response p-p (200 Hz - 5 kHz) 26.3 dB
+  Bottle       : 25 modes    108 -   6677 Hz | mode T60     6 -  1000 ms | IR to -60 dB    546 ms =  26191 taps | norm +11.4 dB | strongest peak    108 Hz +14.7 dB | response p-p (200 Hz - 5 kHz) 24.6 dB
+  Cardboard Box: 48 modes    572 -   2492 Hz | mode T60     6 -    27 ms | IR to -60 dB     19 ms =    896 taps | norm  -0.5 dB | strongest peak   1709 Hz  +9.4 dB | response p-p (200 Hz - 5 kHz) 36.7 dB
+  Oil Drum     : 37 modes     61 -   2339 Hz | mode T60    34 -  1500 ms | IR to -60 dB    918 ms =  44078 taps | norm  +8.2 dB | strongest peak    781 Hz +11.2 dB | response p-p (200 Hz - 5 kHz) 33.6 dB
+  Glass Jar    : 32 modes    484 -   8476 Hz | mode T60     7 -  1200 ms | IR to -60 dB    298 ms =  14283 taps | norm +11.4 dB | strongest peak    484 Hz +10.6 dB | response p-p (200 Hz - 5 kHz) 27.9 dB
+  Cone         : 27 modes    214 -   5788 Hz | mode T60     2 -   144 ms | IR to -60 dB     49 ms =   2334 taps | norm  -3.5 dB | strongest peak   5274 Hz  +5.9 dB | response p-p (200 Hz - 5 kHz) 19.6 dB
+  Hands        :  2 modes    515 -   1338 Hz | mode T60     7 -    13 ms | IR to -60 dB     11 ms =    514 taps | norm  +1.4 dB | strongest peak    507 Hz  +6.0 dB | response p-p (200 Hz - 5 kHz) 14.8 dB
+== 2. normalisation across size (pink-weighted power, dB re bypass, after the 100 % normalisation)
+  Tin Can   : size 25/50/100/200/400 % ->  -3.6  -2.1  +0.0  +0.2  +0.1  (a static per-size table, interpolated, removes it: computed, not measured live)
+  Oil Drum  : size 25/50/100/200/400 % ->  +0.2  +0.5  +0.0  -0.7  -1.6  (a static per-size table, interpolated, removes it: computed, not measured live)
+  Hands     : size 25/50/100/200/400 % ->  -0.6  -0.1  +0.0  -0.2  -1.2  (a static per-size table, interpolated, removes it: computed, not measured live)
+== 3. motion on a sung 'a' (per-sample coefficients); max |dy| re the static render's max |dy|; level re bypass
+  Tin Can size 50 -> 200 %    : finite True, max|dy| 1.36 x static; level during the move -14.5 dB (static ends -16.4 / -14.1 dB, unnormalised)
+  Tin Can position 0 -> 100 % : finite True, max|dy| 1.00 x static; level during the move -15.7 dB (static ends -15.5 / -15.7 dB, unnormalised)
+  morph Tin Can -> Bucket     : finite True, max|dy| 0.87 x static; level during the move  -8.9 dB (static ends  -9.5 /  -3.9 dB, unnormalised)
+== 4. convolution instead: IR lengths above; gfx-cab measures 75.6 ns / sample mono for a 200 ms IR,
+   0.80 % of a core for 2 s at 48 kHz; a kernel change crossfades over 30 ms (convolve)
+== 5. level of the pink-normalised object on the sung phrase ('a' 187 Hz + 'o' 150 Hz), re bypass
+  Tin Can      :  -0.1 dB  -> the voice-referenced table adds the opposite
+  Bucket       :  -0.5 dB  -> the voice-referenced table adds the opposite
+  Pipe         :  -4.4 dB  -> the voice-referenced table adds the opposite
+  Bottle       :  -4.6 dB  -> the voice-referenced table adds the opposite
+  Cardboard Box:  -1.2 dB  -> the voice-referenced table adds the opposite
+  Oil Drum     :  -0.5 dB  -> the voice-referenced table adds the opposite
+  Glass Jar    :  -3.6 dB  -> the voice-referenced table adds the opposite
+  Cone         :  -2.2 dB  -> the voice-referenced table adds the opposite
+  Hands        :  +2.1 dB  -> the voice-referenced table adds the opposite
+
+##### p6_morph.py
+soft  -> hard   : rho +1.00 | linear blend at 25/50/75 %:  -0.0  -0.0  -0.0 dB | with the rho gain: +0.00 -0.00 +0.00 dB
+soft  -> tube   : rho +0.96 | linear blend at 25/50/75 %:  -0.1  -0.1  -0.1 dB | with the rho gain: -0.00 +0.00 -0.00 dB
+hard  -> fold   : rho +0.37 | linear blend at 25/50/75 %:  -1.2  -1.6  -1.2 dB | with the rho gain: +0.00 +0.00 +0.00 dB
+soft  -> fold   : rho +0.31 | linear blend at 25/50/75 %:  -1.3  -1.8  -1.3 dB | with the rho gain: +0.00 +0.00 +0.00 dB
+tube  -> rectify: rho -0.26 | linear blend at 25/50/75 %:  -2.8  -4.3  -2.8 dB | with the rho gain: +0.00 +0.00 +0.00 dB
+soft  -> rectify: rho -0.01 | linear blend at 25/50/75 %:  -2.1  -3.1  -2.1 dB | with the rho gain: +0.00 +0.00 +0.00 dB
+
+##### hue.py
+deep crimson     #9a0d2a: L*   33 nearest lofi 29, gfx-acoustic 34, gfx-correct 35
+bruise violet    #4b2a5e: L*   24 nearest gfx-correct 27, dynamics 32, gfx-gapmeter 40
+electric blue    #0090ff: L*   59 nearest gfx-stretch 25, eq 31, filter 55
+oxblood          #7a0f1f: L*   25 nearest gfx-acoustic 22, gfx-correct 31, gfx-fuzz 36
+acid chartreuse  #b8e000: L*   84 nearest gfx-glitch 22, gfx-ringmod 34, utility 55
+black cherry     #4a0f22: L*   15 nearest gfx-acoustic 21, gfx-correct 25, dynamics 41
+nicotine         #b8962e: L*   64 nearest gfx-ringmod 21, utility 28, gfx-fuzz 32
+toxic teal       #00786e: L*   45 nearest cab 19, filter 27, gfx-gapmeter 31
+gunmetal         #2e3338: L*   21 nearest dynamics 19, gfx-gapmeter 28, gfx-acoustic 36
+rust             #a5381c: L*   39 nearest gfx-fuzz 18, drive 30, gfx-acoustic 33
+sulfur           #e0d000: L*   82 nearest gfx-ringmod 15, utility 31, gfx-glitch 41
+blood orange     #d23a1e: L*   48 nearest drive 14, gfx-fuzz 30, lofi 42
+bone             #e8e0cc: L*   89 nearest gfx-tape 14, gfx-widener 26, gfx-gapmeter 45
+hazard orange    #ff6a00: L*   63 nearest drive 14, utility 37, gfx-fuzz 40
+petrol           #1d4e5f: L*   31 nearest dynamics 12, gfx-gapmeter 21, filter 37
+
+##### rs (cargo run --release; i9-13900H; load average 6.15 at the run: figures are noisy, median of 7; re-run at review with the f64 4-lane bank added)
+dirt only: Single band, 1 shaper, 2x                   250.1 ns / sample (min  243.4, max  381.7)
+Single band, A+B shapers, 2x (dirt only)               239.3 ns / sample (min  237.8, max  244.6)
+DEFAULT-like: Single, A+B, 2x, box, comp, echo         496.3 ns / sample (min  450.8, max  815.3)
+Three bands, A+B, 2x (dirt only)                       434.6 ns / sample (min  390.6, max  468.2)
+Three bands, A+B, 2x, box, comp, echo                  692.6 ns / sample (min  624.4, max  898.0)
+Three bands, A+B, 4x, box, comp, echo                 1068.5 ns / sample (min  957.9, max 1235.8)
+WORST: Three, A+B, 4x, box moving, comp, echo         1323.7 ns / sample (min  933.5, max 1482.0)
+box alone (48 modes + skirt), static                   432.0 ns / sample (min  425.2, max  687.9)
+part: modal bank 48 modes, f64 scalar                  130.4 ns / sample
+part: modal bank 48 modes, f32 8 lanes                  31.4 ns / sample
+part: modal bank 48 modes, f64 4 lanes (review)         74.8 ns / sample
+part: 48 tan() coefficient updates every 32 samples     16.3 ns / sample
+part: 2x pair + 2 ADAA tanh (one shaper)                58.9 ns / sample
+part: one log10 + exp per sample (a detector's dB law)    25.6 ns / sample
+
+
+=========== Review (Fable 5.2, 2026-11-15): scripts in review/, run from proto/ with PYTHONPATH=.:review python3 review/<script>.py
+=========== r1, r2, r3, r8 read a real take from GFX_MORPH_VOICE (the maintainer's sung phrase, 27 s, set to -18 dBFS RMS over its active parts); without it they print their synthetic parts only
+
+##### review/r1_guard.py
+== 1. largest small-signal gain after the dirt, dB re bypass
+  Tin Can      : voice constant +0.1 dB | box  50 %:  +7.9 dB at   647 Hz | box 100 %: +12.0 dB at   647 Hz
+  Bucket       : voice constant +0.5 dB | box  50 %:  +6.0 dB at   246 Hz | box 100 %:  +9.6 dB at   245 Hz
+  Pipe         : voice constant +4.4 dB | box  50 %:  +9.4 dB at  5477 Hz | box 100 %: +13.9 dB at  5487 Hz
+  Bottle       : voice constant +4.6 dB | box  50 %: +14.1 dB at   108 Hz | box 100 %: +19.2 dB at   108 Hz
+  Cardboard Box: voice constant +1.2 dB | box  50 %:  +6.7 dB at  1720 Hz | box 100 %: +10.6 dB at  1710 Hz
+  Oil Drum     : voice constant +0.5 dB | box  50 %:  +7.7 dB at   781 Hz | box 100 %: +11.7 dB at   781 Hz
+  Glass Jar    : voice constant +3.7 dB | box  50 %:  +9.8 dB at   484 Hz | box 100 %: +14.3 dB at   483 Hz
+  Cone         : voice constant +2.2 dB | box  50 %:  +4.6 dB at  5193 Hz | box 100 %:  +8.1 dB at  5267 Hz
+  Hands        : voice constant -2.1 dB | box  50 %:  +2.1 dB at   511 Hz | box 100 %:  +3.9 dB at   507 Hz
+  post low-pass, reso  25 %: Q 2.03, peak  +6.4 dB
+  post low-pass, reso  50 %: Q 3.35, peak +10.6 dB
+  post low-pass, reso 100 %: Q 6.00, peak +15.6 dB
+  comp  40 %: threshold -15.6 dBFS, ratio 3.8, GR at the -18 dBFS reference 0.0 dB -> static make-up +0.0 dB on small signals
+  comp  70 %: threshold -22.8 dBFS, ratio 5.9, GR at the -18 dBFS reference 4.0 dB -> static make-up +2.0 dB on small signals
+  comp 100 %: threshold -30.0 dBFS, ratio 8.0, GR at the -18 dBFS reference 10.5 dB -> static make-up +5.2 dB on small signals
+  echo mix 20 %, feedback 15 %: comb peak  +1.8 dB
+  echo mix 25 %, feedback 40 %: comb peak  +3.0 dB
+  echo mix 50 %, feedback 60 %: comb peak  +7.0 dB
+  echo mix 100 %, feedback 90 %: comb peak +20.8 dB
+== 2. small-signal gain of the pedal against `mix` (Soft, voice table), dB
+  drive 24: mix  20 %:  +2.3 mix  35 %:  +3.7 mix  50 %:  +4.9 mix 100 %:  +8.0 | the README's cut is G_ss + 3 = 11.0 dB at every mix
+  drive 36: mix  20 %:  +7.9 mix  35 %: +11.1 mix  50 %: +13.5 mix 100 %: +18.5 | the README's cut is G_ss + 3 = 21.5 dB at every mix
+  drive 48: mix  20 %: +17.2 mix  35 %: +21.6 mix  50 %: +24.4 mix 100 %: +30.2 | the README's cut is G_ss + 3 = 33.2 dB at every mix
+== 3. bleed under the voice (gate open): incremental gain of the dirt for pink bleed at -50 dBFS riding on a vowel at -18 dBFS RMS
+  drive 24: bleed alone  +7.8 dB | bleed under the vowel  +1.8 dB
+  drive 36: bleed alone +18.0 dB | bleed under the vowel  +6.3 dB
+  drive 48: bleed alone +27.0 dB | bleed under the vowel +10.9 dB
+== 4. the cap law on a real take
+  take at -18 dBFS RMS (active); 20 ms level percentiles 1 / 5 / 10 / 25 %: -38 / -33 / -31 / -26 dBFS
+  T -55, cap 21.5 dB: active time cut by more than 3 dB  0.0 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 6 in 27 s
+  T -55, cap 33.0 dB: active time cut by more than 3 dB  0.0 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 9 in 27 s
+  T -45, cap 21.5 dB: active time cut by more than 3 dB  0.1 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 20 in 27 s
+  T -45, cap 33.0 dB: active time cut by more than 3 dB  0.1 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 21 in 27 s
+  T -40, cap 21.5 dB: active time cut by more than 3 dB  0.4 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 16 in 27 s
+  T -40, cap 33.0 dB: active time cut by more than 3 dB  0.5 % | energy of the active parts kept -0.00 dB | gate closings that re-open within 0.3 s 17 in 27 s
+
+##### review/r2_defizz.py
+== 1. p4's phrase, full band: 's' re vowel (dB)
+  bypass  -6.4
+  Soft 30 dB, de-fizz   0 %: 's' re vowel  -1.5 | 's' in 1-4 kHz re vowel in 1-4 kHz  -4.0
+  Soft 30 dB, de-fizz  25 %: 's' re vowel  -5.5 | 's' in 1-4 kHz re vowel in 1-4 kHz  -6.5
+  Soft 30 dB, de-fizz  50 %: 's' re vowel  -9.2 | 's' in 1-4 kHz re vowel in 1-4 kHz  -8.9
+  Soft 30 dB, de-fizz  75 %: 's' re vowel -12.5 | 's' in 1-4 kHz re vowel in 1-4 kHz -11.1
+  Soft 30 dB, de-fizz 100 %: 's' re vowel -15.0 | 's' in 1-4 kHz re vowel in 1-4 kHz -12.8
+== 2. HF share of vowels (median, dB): threshold -14, full cut at -6
+  'a': plain  -52.8 | tilt +12  -50.6 | breath -20 dB  -23.7 | breath -20 dB + tilt  -19.9 | breath -12 dB  -15.9 | breath -12 dB + tilt  -12.4
+  'e': plain  -42.3 | tilt +12  -36.6 | breath -20 dB  -23.6 | breath -20 dB + tilt  -17.4 | breath -12 dB  -15.8 | breath -12 dB + tilt  -10.2
+  'o': plain  -61.8 | tilt +12  -58.9 | breath -20 dB  -23.7 | breath -20 dB + tilt  -18.8 | breath -12 dB  -15.8 | breath -12 dB + tilt  -11.4
+== 3. non-vocal sources
+  kick + hi-hat loop: share median -0.7, p90 -0.3 dB; drive duck at 50 %: mean -8.2 dB, under -3 dB 94 % of the time
+  white hiss at -70 dBFS (a preamp's floor, no voice): share -1.2 dB -> the duck sits at its maximum in silence
+    de-fizz 50 %: drive duck at the vowel's onset +0 / 10 / 30 / 60 / 100 ms: -9.0 / -6.5 / -3.3 / -1.2 / -0.3 dB
+    de-fizz 100 %: drive duck at the vowel's onset +0 / 10 / 30 / 60 / 100 ms: -18.0 / -13.0 / -6.7 / -2.5 / -0.6 dB
+    with the HF-level floor (-66 .. -60 dBFS): duck at the onset +0 / 10 / 30 ms: 0.0 / 0.0 / 0.0 dB
+== 5. the law away from 30 dB of drive (p4's phrase): 's' in 1-4 kHz re vowel in 1-4 kHz, de-fizz 0 / 50 / 100 %
+  drive 12:   -6.6 /  -10.2 /  -11.6
+  drive 20:   -5.1 /  -10.1 /  -12.1
+  drive 30:   -4.0 /   -8.9 /  -12.8
+  drive 42:   -3.9 /   -6.6 /  -10.2
+== 4. a real take
+  level -70 .. -50 dBFS:  4.9 % of the take | share median  -29.6, 90th  -18.5 | above -14:  5.8 %, above -6:  0.0 %
+  level -50 .. -40 dBFS:  7.2 % of the take | share median  -26.3, 90th   -7.8 | above -14: 40.4 %, above -6:  0.8 %
+  level -40 .. -30 dBFS: 12.0 % of the take | share median  -38.7, 90th  -13.8 | above -14: 10.3 %, above -6:  0.5 %
+  level -30 .. 0 dBFS: 75.9 % of the take | share median  -35.0, 90th  -28.2 | above -14:  1.0 %, above -6:  0.0 %
+  Soft 30 dB, de-fizz   0 %: flagged frames (3.1 % of the take) in 1-4 kHz re the rest   +0.9 dB | unflagged active frames: level +0.00 dB | duck under -3 dB on frames above -30 dBFS: 0.00 %
+  Soft 30 dB, de-fizz  50 %: flagged frames (3.1 % of the take) in 1-4 kHz re the rest   -4.8 dB | unflagged active frames: level -0.02 dB | duck under -3 dB on frames above -30 dBFS: 1.38 %
+  Soft 30 dB, de-fizz 100 %: flagged frames (3.1 % of the take) in 1-4 kHz re the rest   -8.8 dB | unflagged active frames: level -0.03 dB | duck under -3 dB on frames above -30 dBFS: 2.54 %
+
+##### review/r2b_shelf.py
+shelf at 0 dB against the input: -325 dB (identity)
+  de-fizz   0 % LR4 band gain: 's' 1-4 kHz re vowel   -4.0 | 's' above 4.5 kHz re the dirt alone   -0.0 | 's' full band re vowel   -1.5
+  de-fizz   0 % SVF shelf    : 's' 1-4 kHz re vowel   -4.0 | 's' above 4.5 kHz re the dirt alone   +0.0 | 's' full band re vowel   -1.5
+  de-fizz  50 % LR4 band gain: 's' 1-4 kHz re vowel   -8.9 | 's' above 4.5 kHz re the dirt alone   -6.7 | 's' full band re vowel   -9.2
+  de-fizz  50 % SVF shelf    : 's' 1-4 kHz re vowel   -8.3 | 's' above 4.5 kHz re the dirt alone   -5.8 | 's' full band re vowel   -8.4
+  de-fizz 100 % LR4 band gain: 's' 1-4 kHz re vowel  -12.8 | 's' above 4.5 kHz re the dirt alone  -10.7 | 's' full band re vowel  -15.0
+  de-fizz 100 % SVF shelf    : 's' 1-4 kHz re vowel  -11.3 | 's' above 4.5 kHz re the dirt alone   -7.7 | 's' full band re vowel  -12.3
+
+##### review/r3_level_real.py
+real take: active RMS -18.0 dBFS, peak +1.3 dBFS, 20 ms level quartiles -26.3 / -18.7 dBFS
+drive dB:                      0     6    12    18    24    30    36    42    48
+  soft  table grit  all  :  -0.5  -1.3  -2.7  -4.1  -4.5  -4.1  -3.6  -3.3  -3.1   spread  4.0
+  soft  table grit  loud :  -0.6  -1.8  -3.7  -6.0  -7.5  -7.9  -8.0  -8.0  -8.0   spread  7.4
+  soft  table grit  quiet:  +0.0  +0.1  +0.3  +1.2  +3.1  +5.4  +7.1  +8.1  +8.5   spread  8.5
+  soft  table voice all  :  -0.4  -1.0  -1.6  -1.8  -1.4  -0.9  -0.5  -0.2  -0.1   spread  1.7
+  soft  table voice loud :  -0.5  -1.4  -2.6  -3.7  -4.4  -4.7  -4.8  -4.9  -4.9   spread  4.4
+  soft  table voice quiet:  +0.1  +0.4  +1.4  +3.5  +6.2  +8.6 +10.3 +11.1 +11.5   spread 11.4
+  hard  table grit  all  :  -0.0  -0.7  -2.2  -4.8  -4.5  -3.8  -3.4  -3.2  -3.1   spread  4.8
+  hard  table grit  loud :  -0.0  -0.9  -3.1  -7.0  -7.9  -8.0  -8.0  -8.0  -8.0   spread  8.0
+  hard  table grit  quiet:  -0.0  -0.0  -0.0  -0.0  +3.4  +6.2  +7.7  +8.4  +8.6   spread  8.6
+  hard  table voice all  :  -0.0  -0.7  -1.8  -2.0  -1.2  -0.6  -0.3  -0.1  -0.0   spread  1.9
+  hard  table voice loud :  -0.0  -0.9  -2.7  -4.1  -4.6  -4.8  -4.9  -4.9  -4.9   spread  4.9
+  hard  table voice quiet:  -0.0  -0.0  +0.4  +2.9  +6.7  +9.4 +10.8 +11.4 +11.6   spread 11.6
+  fold  table grit  all  :  -0.0  -1.1  -3.1  -6.5  -2.3  -2.3  -2.4  -2.1  +1.3   spread  7.8
+  fold  table grit  loud :  -0.0  -1.4  -4.5 -10.0  -6.8  -7.3  -7.4  -7.3  -4.5   spread 10.0
+  fold  table grit  quiet:  -0.0  -0.0  -0.0  -0.0  +7.7  +9.4  +9.7  +9.8 +13.4   spread 13.4
+  fold  table voice all  :  -0.0  -1.1  -2.3  -1.7  -0.4  -0.1  +0.5  +1.1  +2.5   spread  4.9
+  fold  table voice loud :  -0.0  -1.4  -3.7  -5.3  -4.8  -5.1  -4.6  -4.1  -3.3   spread  5.2
+  fold  table voice quiet:  -0.0  -0.0  +0.8  +4.7  +9.7 +11.6 +12.6 +12.9 +14.7   spread 14.7
+
+##### review/r4_alias.py
+f0 Hz | type drive in | 2x+ADAA | 4x+ADAA | 32x
+ 187.3 | soft  36 dB -18 dBFS |  -94.6 |  -94.9 |  -94.9
+ 187.3 | soft  48 dB -18 dBFS |  -58.9 |  -88.5 |  -94.7
+ 187.3 | soft  48 dB  -6 dBFS |  -49.4 |  -65.7 |  -94.0
+ 187.3 | hard  48 dB  -6 dBFS |  -48.3 |  -63.5 |  -77.0
+ 187.3 | fold  24 dB -18 dBFS |  -69.8 |  -87.4 |  -92.9
+ 187.3 | fold  24 dB  -6 dBFS |  -52.3 |  -70.5 |  -81.6
+ 187.3 | fold  48 dB -18 dBFS |  -24.2 |  -51.3 |  -61.0
+ 293.7 | soft  36 dB -18 dBFS |  -93.1 |  -93.1 |  -93.1
+ 293.7 | soft  48 dB -18 dBFS |  -58.7 |  -89.7 |  -93.0
+ 293.7 | soft  48 dB  -6 dBFS |  -49.0 |  -64.9 |  -92.5
+ 293.7 | hard  48 dB  -6 dBFS |  -48.1 |  -62.9 |  -76.6
+ 293.7 | fold  24 dB -18 dBFS |  -68.5 |  -87.8 |  -94.2
+ 293.7 | fold  24 dB  -6 dBFS |  -50.0 |  -70.3 |  -81.3
+ 293.7 | fold  48 dB -18 dBFS |  -24.8 |  -48.3 |  -61.1
+ 523.9 | soft  36 dB -18 dBFS |  -97.5 |  -97.6 |  -97.6
+ 523.9 | soft  48 dB -18 dBFS |  -56.9 |  -89.4 |  -96.7
+ 523.9 | soft  48 dB  -6 dBFS |  -46.2 |  -62.1 |  -95.2
+ 523.9 | hard  48 dB  -6 dBFS |  -45.4 |  -59.8 |  -72.6
+ 523.9 | fold  24 dB -18 dBFS |  -68.0 |  -85.7 |  -92.7
+ 523.9 | fold  24 dB  -6 dBFS |  -51.7 |  -69.1 |  -80.9
+ 523.9 | fold  48 dB -18 dBFS |  -18.2 |  -44.7 |  -53.6
+ 881.3 | soft  36 dB -18 dBFS |  -93.7 |  -93.7 |  -93.7
+ 881.3 | soft  48 dB -18 dBFS |  -59.2 |  -92.6 |  -93.5
+ 881.3 | soft  48 dB  -6 dBFS |  -47.0 |  -63.0 |  -92.9
+ 881.3 | hard  48 dB  -6 dBFS |  -46.3 |  -60.5 |  -75.5
+ 881.3 | fold  24 dB -18 dBFS |  -69.4 |  -88.6 |  -95.7
+ 881.3 | fold  24 dB  -6 dBFS |  -53.6 |  -72.4 |  -81.9
+ 881.3 | fold  48 dB -18 dBFS |  -34.3 |  -38.5 |  -55.3
+
+##### review/r5_latency.py
+group delay ms at 100 150 300 1000 3000 4500 8000 Hz
+2x pair                                        |  0.064  0.064  0.064  0.064  0.065  0.067  0.074 | first 0, |y[0]| 0.0003, energy 1/10/50 % at sample 2/3/4
+4x pair                                        |  0.096  0.096  0.096  0.096  0.097  0.099  0.108 | first 0, |y[0]| 0.0000, energy 1/10/50 % at sample 4/5/6
+pre HP 100 + 2x                                |  2.316  1.273  0.339  0.087  0.068  0.068  0.075 | first 0, |y[0]| 0.0003, energy 1/10/50 % at sample 2/3/4
+DEFAULT: HP 100 + de-fizz AP 4.5k + 2x         |  2.414  1.370  0.437  0.189  0.190  0.174  0.117 | first 0, |y[0]| 0.0001, energy 1/10/50 % at sample 3/5/7
+DEFAULT at quality on (4x)                     |  2.446  1.402  0.468  0.221  0.222  0.207  0.150 | first 0, |y[0]| 0.0000, energy 1/10/50 % at sample 5/7/9
+Two: default + AP 250                          |  4.450  3.538  1.868  0.308  0.202  0.180  0.119 | first 0, |y[0]| 0.0001, energy 1/10/50 % at sample 3/5/7
+Three: default + AP 250 + AP 3.5k              |  4.576  3.664  1.996  0.444  0.351  0.276  0.150 | first 0, |y[0]| 0.0001, energy 1/10/50 % at sample 4/6/8
+Three, de-fizz 0 (no AP 4.5k), HP off          |  2.227  2.358  1.623  0.319  0.226  0.169  0.108 | first 0, |y[0]| 0.0002, energy 1/10/50 % at sample 3/5/7
+REVIEW default: HP 100 + 2x (shelf de-fizz)    |  2.316  1.273  0.339  0.087  0.068  0.068  0.075 | first 0, |y[0]| 0.0003, energy 1/10/50 % at sample 2/3/4
+REVIEW default at quality on (4x)              |  2.348  1.305  0.371  0.119  0.100  0.100  0.108 | first 0, |y[0]| 0.0000, energy 1/10/50 % at sample 4/5/6
+REVIEW Two: HP 100 + AP 250 + 2x               |  4.353  3.440  1.771  0.206  0.081  0.074  0.077 | first 0, |y[0]| 0.0003, energy 1/10/50 % at sample 2/3/6
+REVIEW Three: HP 100 + AP 250 + AP 3.5k + 2x   |  4.479  3.567  1.898  0.342  0.229  0.170  0.108 | first 0, |y[0]| 0.0002, energy 1/10/50 % at sample 3/5/7
+DEFAULT (draft) : phase deg at 100/150/250/500/1k/2k/4k/8k Hz:   +84.2   +50.8   +19.5   -12.7   -50.4  -116.3  +108.8  -101.3
+REVIEW default  : phase deg at 100/150/250/500/1k/2k/4k/8k Hz:   +87.7   +56.0   +28.2    +4.9   -14.9   -42.1   -91.2  +167.2
+2x pair alone   : phase deg at 100/150/250/500/1k/2k/4k/8k Hz:    -2.3    -3.5    -5.8   -11.5   -23.0   -46.2   -93.2  +166.3
+REVIEW Three    : phase deg at 100/150/250/500/1k/2k/4k/8k Hz:   +15.2   -56.7  -163.2   +68.6   -20.3  -120.9   +76.4  -119.6
+
+##### review/r6_box.py
+== 1. mode sets
+  Tin Can      :  28 candidate modes | distinct sets over position  1, union  28 modes | modes kept at size 25/50/100/200/400 %: [17, 28, 28, 28, 27] | zero-gain modes among the kept at position 50 %: 0
+  Bucket       :  36 candidate modes | distinct sets over position  1, union  36 modes | modes kept at size 25/50/100/200/400 %: [36, 36, 36, 36, 35] | zero-gain modes among the kept at position 50 %: 0
+  Pipe         :  22 candidate modes | distinct sets over position  1, union  22 modes | modes kept at size 25/50/100/200/400 %: [19, 22, 22, 22, 22] | zero-gain modes among the kept at position 50 %: 0
+  Bottle       :  25 candidate modes | distinct sets over position  1, union  25 modes | modes kept at size 25/50/100/200/400 %: [18, 25, 25, 25, 24] | zero-gain modes among the kept at position 50 %: 0
+  Cardboard Box:  92 candidate modes | distinct sets over position 11, union  44 modes | modes kept at size 25/50/100/200/400 %: [48, 48, 48, 48, 48] | zero-gain modes among the kept at position 50 %: 0
+  Oil Drum     :  37 candidate modes | distinct sets over position  1, union  37 modes | modes kept at size 25/50/100/200/400 %: [37, 37, 37, 37, 34] | zero-gain modes among the kept at position 50 %: 12
+  Glass Jar    :  32 candidate modes | distinct sets over position  1, union  32 modes | modes kept at size 25/50/100/200/400 %: [20, 32, 32, 32, 32] | zero-gain modes among the kept at position 50 %: 0
+  Cone         :  27 candidate modes | distinct sets over position  1, union  27 modes | modes kept at size 25/50/100/200/400 %: [25, 27, 27, 27, 27] | zero-gain modes among the kept at position 50 %: 0
+  Hands        :   2 candidate modes | distinct sets over position  1, union   2 modes | modes kept at size 25/50/100/200/400 %: [2, 2, 2, 2, 2] | zero-gain modes among the kept at position 50 %: 0
+== 2. level on a sung vowel re bypass, pink-normalised (dB)
+  Tin Can      : over pitch min  -4.3 max  +7.3 power-mean  +1.3 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +4.8  -0.1  +0.0  +0.6  -2.1 | at decay 25/50/100/200/400 %:  +3.4  +1.7  +0.0  -1.3  -2.3
+  Bucket       : over pitch min  -2.4 max  +2.9 power-mean  -0.2 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +7.1  +1.8  +0.0  +1.0  -2.5 | at decay 25/50/100/200/400 %:  +4.0  +1.6  +0.0  -1.2  -2.3
+  Pipe         : over pitch min  -7.7 max  +1.9 power-mean  -3.1 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +5.5  +0.1  +0.0  -0.1  +0.6 | at decay 25/50/100/200/400 %:  +7.6  +3.6  +0.0  -3.0  -5.4
+  Bottle       : over pitch min  -4.9 max  +0.8 power-mean  -3.9 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +4.4  +0.1  +0.0  +0.9  -1.4 | at decay 25/50/100/200/400 %:  +3.6  +1.9  +0.0  -1.7  -3.0
+  Cardboard Box: over pitch min  -4.6 max  +1.9 power-mean  -1.8 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +8.9  +0.2  +0.0  -3.0  -2.1 | at decay 25/50/100/200/400 %:  +5.7  +2.9  +0.0  -2.5  -4.6
+  Oil Drum     : over pitch min  -4.4 max +10.5 power-mean  +3.0 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +3.4  +0.3  +0.0  -0.2  +1.3 | at decay 25/50/100/200/400 %:  +3.2  +1.6  +0.0  -1.3  -2.1
+  Glass Jar    : over pitch min  -5.5 max  +2.8 power-mean  -3.0 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +4.2  +0.6  +0.0  +0.2  -2.7 | at decay 25/50/100/200/400 %:  +4.4  +2.1  +0.0  -1.6  -2.7
+  Cone         : over pitch min  -3.7 max  -0.5 power-mean  -2.0 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +6.3  +0.6  +0.0  +0.3  +0.0 | at decay 25/50/100/200/400 %:  +7.1  +3.6  +0.0  -3.1  -5.4
+  Hands        : over pitch min  +0.7 max  +4.7 power-mean  +2.3 (p5's two notes: see results) | pink power at position 0/25/50/75/100 %:  +0.0  +0.0  +0.0  +0.0  +0.0 | at decay 25/50/100/200/400 %:  +3.2  +1.6  +0.0  -1.3  -2.2
+== 3. morph by rank: level of a sung 'a' (187.3 Hz) re bypass at morph 0 / 25 / 50 / 75 / 100 %, static (dB)
+  Tin Can  -> Bucket   (28 -> 36 modes), p5 padding        :  -3.4  -2.7  -1.8  -1.8  +0.5
+  Tin Can  -> Bucket   (28 -> 36 modes), silent slot = partner:  -3.4  -2.7  -1.8  -1.8  +0.5
+  Tin Can  -> Oil Drum (28 -> 37 modes), p5 padding        :  -3.4  -1.8  -1.5  -1.3  -0.1
+  Tin Can  -> Oil Drum (28 -> 37 modes), silent slot = partner:  -3.4  -1.9  -1.5  -1.3  -0.1
+  Hands    -> Tin Can  ( 2 -> 28 modes), p5 padding        :  +1.0  +0.8  +1.7  +6.0  -3.4
+  Hands    -> Tin Can  ( 2 -> 28 modes), silent slot = partner:  +1.0  -0.8  -1.7  -2.4  -3.4
+  Bottle   -> Cone     (25 -> 27 modes), p5 padding        :  -4.4  -5.2  -6.0  -2.9  -2.2
+  Bottle   -> Cone     (25 -> 27 modes), silent slot = partner:  -4.4  -5.2  -6.0  -2.9  -2.2
+== 4. one TPT mode in f32 against f64 (white noise in, 4 s): level error and peak shift
+  fs 48 kHz, mode 61 Hz Q 40: f32 - f64   -80.4 dB re the mode's output; level -0.001 dB
+  fs 48 kHz, mode 30 Hz Q 40: f32 - f64   -78.5 dB re the mode's output; level +0.001 dB
+  fs 48 kHz, mode 30 Hz Q 160: f32 - f64   -60.4 dB re the mode's output; level +0.008 dB
+  fs 192 kHz, mode 61 Hz Q 40: f32 - f64   -58.9 dB re the mode's output; level -0.007 dB
+  fs 192 kHz, mode 30 Hz Q 40: f32 - f64   -73.6 dB re the mode's output; level -0.001 dB
+  fs 192 kHz, mode 30 Hz Q 160: f32 - f64   -48.8 dB re the mode's output; level -0.027 dB
+
+##### review/r7_boxlevel.py
+object: residual pink level (dB re bypass) with the computed constant, at position 0/25/50/75/100 | decay 25/50/100/200/400 | size 25/50/100/200/400
+  Tin Can      :  +0.7  -0.0  -0.8  -0.6  -0.1 |  -2.1  -1.3  -0.8  -0.5  -0.3 |  +0.4  +0.6  -0.8  -0.6  -0.7
+  Bucket       :  +3.0  +1.7  -1.0  -0.3  -0.1 |  -1.8  -1.6  -1.0  -0.3  -0.1 |  -0.3  -1.0  -1.0  -1.1  -1.6
+  Pipe         :  +2.6  +2.0  +1.5  +1.3  +0.2 |  +3.6  +2.4  +1.5  +1.0  +0.7 |  +1.4  +1.1  +1.5  +1.8  +1.9
+  Bottle       :  -0.1  -1.3  -1.2  -0.4  -0.5 |  -2.8  -1.8  -1.2  -0.8  -0.5 |  +0.0  -0.7  -1.2  -1.3  -1.3
+  Cardboard Box:  +9.6  +2.8  +2.5  -0.5  -1.4 |  +3.1  +3.0  +2.5  +2.0  +1.4 |  +1.2  +2.3  +2.5  +2.6  +2.7
+  Oil Drum     :  +2.2  +0.7  +0.2  +0.2  +0.1 |  -0.5  +0.1  +0.2  +0.1  +0.1 |  +0.2  +0.2  +0.2  +0.2  +0.2
+  Glass Jar    :  +0.6  +0.4  -0.4  -0.4  -0.2 |  -0.8  -0.5  -0.4  -0.3  -0.1 |  +0.3  -0.3  -0.4  -0.2  -0.3
+  Cone         :  +7.0  +4.8  +4.3  +4.4  +3.0 |  +6.8  +5.8  +4.3  +2.9  +1.8 |  +2.9  +3.7  +4.3  +4.7  +4.8
+  Hands        :  +1.9  +1.9  +1.9  +1.9  +1.9 |  +2.5  +2.4  +1.9  +1.3  +0.8 |  +1.9  +1.9  +1.9  +1.8  +1.7
+worst |residual| 9.6 dB (the table per object and size leaves up to 8.9 dB over position and 7.6 dB over decay: r6)
+== table over position (9 points), log decay (5), log size (5): interpolation error at the midpoints, dB
+  Tin Can      : position 0.48 | decay 0.05 | size 0.30
+  Bucket       : position 0.87 | decay 0.10 | size 0.53
+  Pipe         : position 6.13 | decay 0.08 | size 0.55
+  Bottle       : position 1.28 | decay 0.06 | size 0.53
+  Cardboard Box: position 1.80 | decay 0.07 | size 0.71
+  Oil Drum     : position 0.86 | decay 0.06 | size 0.17
+  Glass Jar    : position 0.92 | decay 0.07 | size 0.32
+  Cone         : position 5.81 | decay 0.10 | size 0.45
+  Hands        : position 0.00 | decay 0.05 | size 0.14
+worst 6.13 dB
+
+##### review/r8_morph_live.py
+== p3 phrase
+  soft  -> hard            : ends  -0.0 /  +0.0 dB re input | linear  -0.0  -0.0  +0.0 | live rho -0.10 -0.09 -0.08
+  soft  -> fold            : ends  -0.0 /  +0.2 dB re input | linear  -1.4  -1.8  -1.2 | live rho -0.18 -0.10 -0.01
+  tube  -> rectify         : ends  -0.0 /  -0.2 dB re input | linear  -0.4  -0.6  -0.5 | live rho -0.04 -0.08 -0.13
+  soft  -> rectify         : ends  -0.0 /  -0.2 dB re input | linear  -0.3  -0.4  -0.4 | live rho -0.05 -0.09 -0.12
+  soft  -> rectify, DC kept: ends  -0.0 /  -0.1 dB re input | linear  -0.6  -0.9  -0.7 | live rho -0.06 -0.09 -0.11
+== real take
+  soft  -> hard            : ends  -1.5 /  -1.3 dB re input | linear  -0.0  -0.0  +0.0 | live rho -0.04 -0.00 +0.04
+  soft  -> fold            : ends  -1.5 /  -0.6 dB re input | linear  -1.1  -1.2  -0.6 | live rho -0.22 -0.01 +0.21
+  tube  -> rectify         : ends  -1.4 /  -0.3 dB re input | linear  -1.0  -0.8  -0.3 | live rho -0.54 -0.26 +0.17
+  soft  -> rectify         : ends  -1.5 /  -0.3 dB re input | linear  -0.9  -0.7  -0.2 | live rho -0.56 -0.26 +0.18
+  soft  -> rectify, DC kept: ends  -1.5 /  -0.1 dB re input | linear  -1.2  -1.1  -0.4 | live rho -0.57 -0.19 +0.29
