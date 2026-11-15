@@ -118,6 +118,8 @@ pub const GUITARS: [Guitar; 4] = [
 const MAX_CH: usize = 2;
 const FADE_MS: f64 = 30.0;
 const SETTLE_MS: f64 = 60.0;
+/// Linked mono: L == R for this long before channel 1 fades onto channel 0's output (over FADE_MS).
+const LINK_HOLD_MS: f64 = 60.0;
 const TILT_HZ: f64 = 800.0;
 
 /// Everything a crossfade switches.
@@ -371,12 +373,25 @@ pub struct Fuzz {
     last: Option<Controls>,
     /// (input dB, level dB, input gain, level gain).
     gains: (f32, f32, f64, f64),
+    /// (tilt dB, low gain, high gain), recomputed when the tone moves.
+    tilt_g: (f64, f64, f64),
     meter_coef: f64,
     supply_v: f64,
     k_lin: [f64; KINDS],
     /// The pool's configurations (its order).
     configs: Vec<Config>,
     dry_on: bool,
+    /// Linked mono (README, As coded): while channel 1's input is bit-identical to channel 0's, only
+    /// channel 0's circuit runs and channel 1 outputs its output. On the first sample that differs,
+    /// channel 1 takes a copy of channel 0's whole state and runs from there.
+    linked: bool,
+    /// Unlinked: consecutive samples with L == R, and the linear fade of channel 1 onto channel 0's
+    /// output (0 – 1) that relinks them.
+    same_run: u32,
+    relink: f64,
+    /// Tests: true stereo always (the reference linked mono is checked against).
+    #[doc(hidden)]
+    pub no_link: bool,
     /// Tests: forces the half-band stage count of every model (the alias measurements).
     #[doc(hidden)]
     pub stages_override: Option<usize>,
@@ -413,11 +428,16 @@ impl Fuzz {
             split_set: f64::NAN,
             last: None,
             gains: (f32::NAN, f32::NAN, 1.0, 1.0),
+            tilt_g: (f64::NAN, 1.0, 1.0),
             meter_coef: 0.0,
             supply_v: 0.0,
             k_lin: std::array::from_fn(|k| 10f64.powf(K_DB[k] / 20.0)),
             configs: Config::all(),
             dry_on: false,
+            linked: false,
+            same_run: 0,
+            relink: 0.0,
+            no_link: false,
             stages_override: None,
         }
     }
@@ -459,7 +479,8 @@ impl Fuzz {
             .iter()
             .position(|x| *x == cfg)
             .expect("a shipped configuration");
-        for ch in &mut self.ch {
+        let live = self.live();
+        for ch in self.ch.iter_mut().take(live) {
             let cc = &mut ch.pool[idx];
             cc.apply(&c, None);
             cc.nc.set_input(IN_SIG, 0.0);
@@ -479,6 +500,40 @@ impl Fuzz {
             }
         }
         self.split_set = f64::NAN;
+    }
+
+    /// The channels whose circuits run: channel 0 alone while linked.
+    fn live(&self) -> usize {
+        if self.linked {
+            1
+        } else {
+            self.ch.len()
+        }
+    }
+
+    /// Unlinks channel 1: a copy of channel 0's whole state (every compiled circuit, both slots, the
+    /// DC guard), so it continues exactly as if it had run on the same input all along. No allocation.
+    fn unlink(&mut self) {
+        self.linked = false;
+        self.same_run = 0;
+        self.relink = 0.0;
+        let (a, b) = self.ch.split_at_mut(1);
+        let (src, dst) = (&a[0], &mut b[0]);
+        for (d, s) in dst.pool.iter_mut().zip(&src.pool) {
+            d.nc.copy_state_from(&s.nc);
+            d.emf = s.emf;
+        }
+        for (d, s) in dst.slots.iter_mut().zip(&src.slots) {
+            d.cfg = s.cfg;
+            d.idx = s.idx;
+            d.os.copy_from(&s.os);
+            d.dry_os.copy_from(&s.dry_os);
+            d.tilt = s.tilt;
+            d.split_lo.clone_from(&s.split_lo);
+            d.split_hi.clone_from(&s.split_hi);
+        }
+        dst.dc = src.dc;
+        dst.bias_v = src.bias_v;
     }
 
     /// The trimmed transistor's collector voltage (magnitude, 50 ms average): the `bias_v` meter.
@@ -603,11 +658,16 @@ impl Effect for Fuzz {
         }
         self.now = 0;
         self.gains = (f32::NAN, f32::NAN, 1.0, 1.0);
+        self.tilt_g = (f64::NAN, 1.0, 1.0);
         self.dry_on = false;
         self.active = 0;
         self.fade = 0.0;
         self.settle = 0;
         self.last = None;
+        // every channel is put on the same state below, then linked (at the end)
+        self.linked = false;
+        self.same_run = 0;
+        self.relink = 0.0;
         if self.ch.is_empty() {
             return;
         }
@@ -628,6 +688,7 @@ impl Effect for Fuzz {
             c.bias_v = cc.nc.probe(cc.def.bias_meter).abs();
             self.supply_v = cc.nc.probe(cc.def.supply_meter).abs();
         }
+        self.linked = self.ch.len() == 2 && !self.no_link;
     }
 
     fn set_param(&mut self, id: &str, value: f32) {
@@ -664,7 +725,34 @@ impl Effect for Fuzz {
         }
         let n = buffers[0].len();
         let sr = self.sr;
+        let hold = (LINK_HOLD_MS * 0.001 * sr) as u32;
+        let relink_step = 1.0 / (FADE_MS * 0.001 * sr);
         for i in 0..n {
+            // ---- linked mono, decided per sample (block-size independent)
+            if nch == 2 && !self.no_link {
+                let same = buffers[0][i].to_bits() == buffers[1][i].to_bits();
+                if self.linked {
+                    if !same {
+                        self.unlink();
+                    }
+                } else {
+                    self.same_run = if same {
+                        self.same_run.saturating_add(1)
+                    } else {
+                        0
+                    };
+                    if self.same_run >= hold {
+                        self.relink += relink_step;
+                    } else if self.relink > 0.0 {
+                        self.relink = (self.relink - relink_step).max(0.0);
+                    }
+                    if self.relink >= 1.0 {
+                        self.linked = true;
+                        self.relink = 0.0;
+                    }
+                }
+            }
+            let live = self.live();
             // ---- structural changes: a fade to the other slot
             if self.fade == 0.0 {
                 let tgt = self.target();
@@ -703,7 +791,7 @@ impl Effect for Fuzz {
             let c = self.controls();
             if self.last != Some(c) || n_run == 2 {
                 let last = self.last;
-                for ch in &mut self.ch {
+                for ch in self.ch.iter_mut().take(live) {
                     for &s in &running[..n_run] {
                         let idx = ch.slots[s].idx;
                         ch.pool[idx].apply(&c, last.as_ref());
@@ -762,7 +850,10 @@ impl Effect for Fuzz {
             }
             self.dry_on = need_dry;
             let td = 6.0 * self.tone.value() as f64 / 100.0;
-            let (gl, gh) = (10f64.powf(-td / 20.0), 10f64.powf(td / 20.0));
+            if td != self.tilt_g.0 {
+                self.tilt_g = (td, 10f64.powf(-td / 20.0), 10f64.powf(td / 20.0));
+            }
+            let (gl, gh) = (self.tilt_g.1, self.tilt_g.2);
             let (wa, wb) = if self.settle > 0 {
                 (1.0, 0.0)
             } else if self.fade > 0.0 {
@@ -775,7 +866,7 @@ impl Effect for Fuzz {
             let mc = self.meter_coef;
             let active = self.active;
             let k_lin = self.k_lin;
-            for (ci, ch) in self.ch.iter_mut().enumerate().take(nch) {
+            for (ci, ch) in self.ch.iter_mut().enumerate().take(nch.min(live)) {
                 let x = buffers[ci][i] as f64;
                 let xin = x * in_g;
                 let mut y = 0.0;
@@ -825,6 +916,14 @@ impl Effect for Fuzz {
                 let y = ch.dc.process(lg * y);
                 let out = y + byp * (x - y);
                 buffers[ci][i] = if out.is_finite() { out as f32 } else { 0.0 };
+            }
+            if nch == 2 {
+                if self.linked {
+                    buffers[1][i] = buffers[0][i];
+                } else if self.relink > 0.0 {
+                    let (o0, o1) = (buffers[0][i] as f64, buffers[1][i] as f64);
+                    buffers[1][i] = (o1 + self.relink * (o0 - o1)) as f32;
+                }
             }
             if self.settle > 0 {
                 self.settle -= 1;

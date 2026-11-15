@@ -92,6 +92,33 @@ to re-measure on them (±1 LU target).
 | Blend OD | −27.0 | **+27.0 dB** (beyond `level`'s +24: its summing amp gives the clean feed +23 dB) |
 | MOSFET OD | −16.3 | +16.3 dB |
 
+**Linked mono** (after v0.1.0, from golem's first live test). REAPER hands every block 2-in / 2-out;
+on a guitar lane the mono DI arrives as L == R, and two circuits (≈ 7 µs per sample each on the
+maintainer's loaded machine, ≈ 14 – 17 µs per stereo frame) left too little of the 20.8 µs sample period
+at 48 kHz: stutters live, offline renders fine. The rule, decided per sample (so the output does not
+depend on the block size), as gfx-fuzz's:
+- After `prepare` / `reset` a stereo instance is linked: channel 0's circuit runs alone and its output
+  is copied to channel 1.
+- Linked, the first sample whose L and R differ (bit comparison) unlinks: channel 1 takes a copy of
+  channel 0's whole state, without allocating (every compiled circuit and twin by
+  `NonlinearCircuit::copy_state_from`, both slots' oversamplers by gfx-dsp's `OversamplerN::copy_from`,
+  `tight`, the bass-keep split, the DC guard), and runs on from there with its own input: exactly true
+  stereo, with no step of any kind.
+- Unlinked, after 60 ms of bit-identical L and R, channel 1's output fades linearly onto channel 0's in
+  30 ms, then channel 1 stops; if L and R differ during the fade it runs back at the same rate. After a
+  relink channel 1 plays channel 0's output, not what its own different past would have given: the only
+  case where linked mono is not bit-exact with true stereo.
+- Nulls against v0.1.0 (48 kHz, blocks of 192, 2.4 s of pink noise with a gain, a circuit, a `tight`, a
+  bass-keep, a `diodes` and an `input` change on the way): mono, stereo L != R, stereo L == R, and L == R
+  switching to L != R at 0.85 s: **bit-identical**. Tests: `linked_stereo_is_the_mono_output`,
+  `link_switches_are_exact_and_click_free` (channel 1 bit-identical to true stereo up to the relink; HF
+  burst at each transition −57 dB or less re peak, bound −30 dB; the unlink after the relink inside a
+  circuit fade; no sample step above channel 0's own), `linked_mono_is_block_size_invariant` (blocks 1,
+  64, 512, 4096, bit for bit). Bench 28 / 28.
+- CPU (same loaded machine, unpinned, 48 kHz, pink noise, blocks of 64): mono 6.8 µs per sample; stereo
+  L == R **13.6 → 6.8 µs per frame**; stereo L != R 13.8 – 14.2 µs (unchanged). The bench's line: 6,876 ns
+  mono, 6,915 ns per stereo frame (its stereo feeds L == R).
+
 **Deviations from the spec, and why.**
 
 1. **Discrete OD not shipped** (enum of four). It needs a JFET device in `circuit_nl`, the transistor-level
