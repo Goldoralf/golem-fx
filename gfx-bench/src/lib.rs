@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-grit"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -57,6 +57,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-crusher" | "crusher" => Some(Box::new(gfx_crusher::Crusher::new())),
         "gfx-ringmod" | "ringmod" => Some(Box::new(gfx_ringmod::RingMod::new())),
         "gfx-bassdi" | "bassdi" => Some(Box::new(gfx_bassdi::BassDi::new())),
+        "gfx-grit" | "grit" => Some(Box::new(gfx_grit::Grit::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -194,6 +195,15 @@ pub fn options(name: &str) -> checks::Options {
         // delay line, not reported (README §5, the gfx-drive / gfx-emet precedent)
         o.skip_latency = true;
         // README §5 allowed −30 dB for a `gain` jump; measured −78 dB worst: the default bound holds
+    }
+    if matches!(name, "gfx-grit" | "grit") {
+        // minimum-phase half-bands, one inner sample of averaging and the crossovers' all-pass
+        // dispersion (4.9 ms at DC, LR4 defaults): no delay line, not reported (README §2.7, the
+        // gfx-drive precedent)
+        o.skip_latency = true;
+        // a module change at high Amount creates real high-frequency content (README §5, gfx-crusher's
+        // bound)
+        o.click_bound_db = -30.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

@@ -369,6 +369,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-crusher': 'pixels',
     'gfx-ringmod': 'sidebands',
     'gfx-bassdi': 'parallel',
+    'gfx-grit': 'prism',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -601,6 +602,30 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             const small = near.includes(p), s = small ? 3 : 4;
             shape(`M${f1(p.x - s / 2)} ${f1(p.y - s / 2)}h${s}v${s}h${-s}Z`, small ? .55 : 1);
           });
+        });
+        break;
+      }
+      case 'prism': {
+        // one beam in on the left of the rune, four rays out on the right, fanning: each carries its
+        // band's dirt along its length, top to bottom clean, clipped (a sine with flat crests),
+        // folded (a zigzag), crushed (a staircase), fainter downwards like light dispersed
+        const xl = cx - cw / 2 - 2, x0 = cx + cw / 2 + 2, x1 = W - 6;
+        line(`M6 ${f1(cy)}H${f1(xl)}`);
+        const ends = [-.7, -.23, .23, .7].map(k => cy + k * ch), ops = [1, .85, .7, .55];
+        ends.forEach((y1, i) => {
+          const dx = x1 - x0, dy = y1 - cy, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+          const at = (s, o) => `${f1(x0 + ux * s - uy * o)} ${f1(cy + uy * s + ux * o)}`;
+          let d = `M${f1(x0)} ${f1(cy)}`;
+          if (i === 0) {
+            d += `L${f1(x1)} ${f1(y1)}`;
+          } else if (i === 1) {
+            for (let s = .5; s <= L; s += .5) d += `L${at(s, Math.max(-1.4, Math.min(1.4, 2.1 * Math.sin(2 * Math.PI * s / 6))))}`;
+          } else if (i === 2) {
+            for (let s = 1; s <= L; s += 1) d += `L${at(s, [1.6, 0, -1.6, 0][(s - 1) % 4])}`;
+          } else {
+            for (let x = x0 + 3; x <= x1 + .01; x += 3) d += `H${f1(x)}V${f1(cy + dy * (x - x0) / dx)}`;
+          }
+          line(d, ops[i]);
         });
         break;
       }

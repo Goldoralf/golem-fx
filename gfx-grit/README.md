@@ -1,7 +1,18 @@
 # gfx-grit
 
-> **Status: DESIGNED** (2026-11-14) — design only, no code. Reviewed 2026-11-14 (Fable 5.2): see the
-> Review section at the end; its changes are applied below.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Fable 5.2, last section).
+> Built as designed on gfx-dsp `crossover::Tree` (LR4 / LR8, compensation twins): one oversampling
+> domain (2× / 4×, halved at ≥ 88.2 kHz) around the split, two slots of 25 modules per band (the
+> catalogue's 23 in order, Tube and Fuzz appended), ADAA1 on every nonlinear module and a two-tap average
+> on every other path, the droop correction after the band sum, the 5 Hz DC block on each wet, the aligned
+> per-band dry / wet, band gains in dB on the whole band, solo / bypass, static make-up tables generated at
+> build time, Drive / Focus with the per-family weights, slot crossfades, and a pre-rolled second engine
+> for `quality` / `slope`. Measured: the clean sum is flat ±0.063 dB at 2× (±0.017 dB at 4×) and nulls the
+> all-pass reference at ≤ −144 dB; without the correction the droop is −0.95 / −4.02 dB at 10 / 20 kHz;
+> a blended band never dips more than 0.15 dB (Fuzz 0.09 dB at 20 kHz); every aliasing bound of §5 holds
+> with at least 4.2 dB to spare; the saturators hold their level within ±0.04 dB over Amount at the reference.
+> Bench 28 / 28, 23 behaviour tests, CPU 236 ns / sample mono at defaults (Grit preset 222 ns, Quality on
+> 392 ns, worst case 1.36 µs).
 
 golem's **multiband distortion**. It stands for golem's `grit` block ("Grit (multiband distortion)",
 category `lofi`, today UnplugRed's Prisma) and keeps its 25 parameter ids and names
@@ -17,6 +28,117 @@ reported latency 0.
 
 It is not a single-band drive (gfx-drive), not an exact sampler converter (gfx-crusher), not a spectral
 effect (gfx-glitch). §6 explains where it sits among them.
+
+## As coded (v0.1.0)
+
+**Files.** `src/curves.rs` (every module curve f and its antiderivative F, the Amount laws, the
+compensation tables' generator; plain `std`, also included by `build.rs`, which writes the tables as const
+data), `src/modules.rs` (the 25 modules: parameters at an effective Amount, their inner-rate state, the
+slot crossfade), `src/engine.rs` (one oversampled engine: half-bands, `crossover::Tree`, bands, dry
+alignment, DC blocks, band sum, droop correction), `src/lib.rs` (the processor, `PARAMS`, smoothing,
+Drive / Focus, the engine switch), `src/convert.rs` (golem's one-time value conversion, below),
+`src/plugin.rs` (class id `GoleMFxGrit00001`, mono 1 / 1 then 2 / 2, latency 0, the module values shown in
+their module's unit), `src/tests.rs`. No gfx-dsp change: `crossover` (merged with gfx-bassdi) is used as
+is.
+
+**Measured** (tests on synthetic signals at 48 kHz unless stated, and `gfx-bench check gfx-grit`):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| Clean sum (all Off; LR4 / LR8; Off / On; crossovers default, packed 25 / 27 / 29 %, 2 / 4 / 6 %, 94 / 96 / 98 %) | flat ±0.1 dB (2×), ±0.05 dB (4×), 20 Hz – 20 kHz; null ≤ −60 dB against the all-pass reference | ±0.063 dB (2×), ±0.017 dB (4×) in all 16 cases; null −144 to −165 dB |
+| Droop (correction off) | −0.95 / −4.0 dB at 10 / 20 kHz ±0.1 | −0.95 / −4.02 dB |
+| Coherence | one band Soft clip 0 % flat ±0.1 dB; `wet` 50 % × `mix` 50 %: no dip > 0.2 dB; Fuzz blended ≤ 0.6 dB at 20 kHz | ±0.063 dB; deepest dip −0.150 dB; Fuzz −0.09 dB at 20 kHz (see deviations) |
+| Crossover laws | −6 dB points at 112.5 / 632.5 / 3,557 Hz ±1 %; ordering push | −6.02 dB ±0.17 dB (= ±1 %) at all three; push and windows exact |
+| Prisma laws kept | hold rate, ring, LP / HP / Peak ±0.1 – 1 % | formulas exact; ring sum / difference tones and the hold's image measured |
+| Conversions | 101 values per type within 0.01 of Prisma's dB / bits; Zero cross within 3 dB; Sine fold same fold count; §3.3 table | all hold; the four presets convert to the §3.3 values (Gain 53 → 65 %, Hard clip 40 → 42 % = 20.4 dB, Heavy 55 → e 0.455, Soft clip 25 → 33 %, Bit crush 20 / 45 → 7.6 / 6.1 bits, Fold 35 → 41 %, gains 5 / 15 → −40 / −20.9 dB) |
+| Aliasing, Soft / Hard / Tube, 2 / 5 / 9 kHz at −6 dBFS | 50 %: Off ≤ −55 / −48 / −33, On ≤ −75 / −60 / −63; 100 %: Off ≤ −40 / −38 / −30, On ≤ −55 / −46 / −44 dB | Hard clip: 50 % Off −65.6 / −66.2 / −37.6, On −90.8 / −73.5 / −72.6; 100 % Off −54.0 / −42.2 / −41.3, On −67.2 / −52.6 / −54.3 dB; Soft clip and Tube within 3.5 dB of these or lower; every bound held by ≥ 4.2 dB |
+| Aliasing, 500 Hz in the low-mid band, Hard clip 100 % | Off ≤ −54, On ≤ −80 dB | −66.1 / −92.1 dB |
+| ADAA vs the same curve without (2×, 5 kHz, 50 %) | ≥ 15 dB better | Soft 18.9, Hard 18.9, Heavy 18.4, Asym 14.5, Rectify 14.7, Fold 20.5, Sine fold 22.6, Zero cross 18.2, Tube 16.2, Fuzz 18.4 dB (asserted on Soft / Hard / Tube / Fold; Asym and Rectify, whose naive aliasing is already −43 / −46 dB, reported) |
+| Level at the reference (1 kHz, −18 dBFS peak), Amount 0 → 100 % | ±0.5 dB | saturators ±0.04 dB, Fuzz ±0.11, Zero cross (to −30 dBFS) ±0.01; Fold / Sine fold ±0.40 dB to 90 %, +1.1 dB (2×) / +0.6 dB (4×) at 100 % (aliased energy, see deviations) |
+| Make-up limits | −30 – +12 dB; no gain on silence | tables within limits; Zero cross 100 % and Bit crush 1 bit output < −100 dBFS on the reference |
+| Heavy knee (100 %, −90 dBFS noise) | ≤ −60 dBFS | −67.9 dBFS peak |
+| Drive weights | Sample divide −2 octaves, Bit crush −3 bits; no preset driven to silence | exact; at `drive` 100 % on a synthetic drum loop (−14.7 dBFS RMS): Grit −14.7, Telephone −29.8, Broken −12.8, Megaphone −24.0 dBFS |
+| Drive / Focus neutral | bit-identical at 0; a linear band unchanged at any value | both bit-identical |
+| Intermodulation (report) | four bands ≥ 6 dB below one band [I] | power chord E2 + B2, Soft clip 30 dB: one band −6.5 dB, four bands −10.4 dB re the fundamentals (3.9 dB lower) |
+| Clicks | ≤ −30 dB re peak | type change Soft → Hard −157 dB; Off → Tube −591; Cabinet 10 → 90 % (four voicings) −104; solo −129; Rectify 100 % then gain → −60 dB or band bypass: no burst |
+| Quality / slope switches (82 Hz held) | no gap, no burst > −30 dB | Off ↔ On: bursts −165 / −176 dB, level held within 2 %; 24 ↔ 48: bursts −67 / −64 dB, a dip to 0.71 / 0.86 of the level for a few ms (see deviations) |
+| Stereo | 1 / 1: stereo modules inert; 2 / 2 equal inputs: L = R bit-exact | both bit-exact (8 mono modules checked, stereo = mono) |
+| Determinism | phases from 0 on reset | bit-identical (fresh, twice, after reset) |
+| Common checks, 44.1 – 192 kHz | — | 28 / 28; worst parameter step −51 dB re peak (`hm_m2` Off → Fuzz at 96 kHz), so the −30 dB allowance was not needed |
+| CPU (48 kHz, blocks of 128, mono) | Grit Off ≤ 320 ns, On ≤ 650 ns, worst (8 saturators, LR8, On) ≤ 1.4 µs | 222 / 392 ns, worst 1.36 µs (at the bound); defaults 236 ns mono, 306 ns stereo frame (bench) |
+
+**Deviations from the design, and why.**
+
+- **gfx-drive's shapers are copied, not moved into gfx-dsp `adaa`** (§2.8). Moving them would need a
+  bit-exact null of gfx-drive's renders; the curves gfx-grit needs are a few lines (`clip_f`, `clip_af`,
+  `ln_cosh`), so they live in `curves.rs` and gfx-drive is untouched. The move stays open for whoever next
+  touches gfx-drive. gfx-grit's ADAA keeps F at the previous input while the curve is unchanged (one
+  antiderivative per sample) and recomputes it when the Amount moves.
+- **Fuzz** is gfx-drive's two-stage shape re-voiced as two biased hard-clip stages (gains 2 g and 3, biases
+  0.2 and 0.1) with the **40 Hz** high-pass between them, as this README writes (gfx-drive's code has
+  150 Hz between the stages and 40 Hz before them). Its second average is corrected at once by one stage of
+  the droop filter, (1 + a) / (1 + a z⁻¹): it restores the magnitude and takes back most of the phase, so
+  a blended Fuzz band loses 0.09 dB at 20 kHz instead of the 1.48 dB measured without it (the design's
+  0.5 dB counted the phase only; the extra average's magnitude was the larger part).
+- **The make-up tables count the output's harmonics below 20 kHz** (of the 1 kHz reference), not its full
+  RMS: a folder at full drive puts most of its energy above 20 kHz, which the downsampler removes, and the
+  full-band table missed the level by 4 dB. What still aliases back below 20 kHz at full fold is not in the
+  table: Fold / Sine fold at 100 % come out +1.1 dB (2×) and +0.6 dB (4×) above the reference; the bound is
+  kept at 0.5 dB to 90 % and 1.5 dB at 100 % for the folders only.
+- **Slope switch**: LR4 and LR8 are about 120° apart at 82 Hz under a 112 Hz crossover, so any crossfade
+  between the two engines dips there. The switch crossfades at equal power (0.71 of the level at worst for
+  a few ms, 24 → 48) instead of equal gain (0.5 at worst); the `quality` switch, between near-identical
+  signals, keeps the raised-cosine equal-gain fade (level held within 2 %). A set-up switch, as §2.1 says.
+- **Slot type changes queue**: a new type (or cabinet voicing) starts its 10 ms fade only once the
+  previous fade ended. Restarting a fade mid-way dropped the oldest module at partial gain (−18.5 dB burst
+  on a Cabinet sweep through four voicings); queued, −104 dB.
+- **DC in slot 2 is inert** (a half-sample only), as the table says, rather than an offset the DC block
+  then removes (which would thump on every change).
+- **Laws the README leaves to Prisma's source and does not restate**: Stereo rectify is written as Rectify
+  with the right channel's |x| term negated (L rectified up, R down), compensated by Rectify's table; Pan
+  is a balance, L × min(1, 2 − 2p), R × min(1, 2p). Both [I]: to compare with Prisma by ear. Zero cross's
+  "6 dB knee" is a quadratic knee from T / √2 to (2 − 1/√2) T (−6 dB still at 2 T). Asym below −1 continues
+  linearly. The six Cabinet voicings (resonant high-pass, presence bell, two low-passes, normalised over
+  100 Hz – 5 kHz) are first values [by ear, bench].
+- **Band gain −60 dB is an exact mute** (gain 0), as "−60 = mute" reads.
+- **Display**: the module values show "% (unit)" with the unit of the slot's current type (12.0 dB,
+  7.60 bits, 7.62 kHz, e 0.455…), the crossovers "% (Hz)" before the ordering push.
+
+**Left for the owner and the bench**: the reference level (−18 dBFS) and the Drive weights by ear on real
+DIs; the Cabinet voicings and Tight Kick by ear; Stereo rectify and Pan against Prisma; the crossover-dip
+report (THD vs frequency, LR4 vs LR8) and the listening rows; preset levels were matched on synthetic
+material only (`level_db` within ±1.3 dB of the bypass there).
+
+### For golem-rack: converting golem's `grit` values (type-keyed)
+
+What golem's engine table needs to load golem's `grit` presets and saved chains into gfx-grit (code:
+`src/convert.rs`, `module_value` and `band_gain_db`; tested against Prisma's formulas):
+
+- **Option lists**: the eight `*_m1` / `*_m2` lists gain **Tube** and **Fuzz** at the end (25 options,
+  index / 24 in REAPER's normalisation). The 23 first keep their order.
+- **`*_gain`**: % → dB, **dB = clamp(40 · log₁₀(2 g / 100), −60, +12)**, g = 0 → −60 (a mute). Catalogue
+  entry: min −60, max 12, default 0, unit dB.
+- **`*_v1` / `*_v2`**: the unit stays %, the value is converted **once, by the type of the same slot**
+  (`lo_m1` keys `lo_v1`…). v = old % / 100, new % = 100 · clamp(v′, 0, 1):
+
+  | Slot type | v′ |
+  |---|---|
+  | Soft clip, Hard clip | val = 1 − (1 − ((1 − v)¹⁰ + 1 − v^0.2) / 2) · 0.99; v′ = −20 log₁₀(val) / 48 |
+  | Fold | v′ = 20 log₁₀(70 v² + 1) / 48 |
+  | Sine fold | v′ = min(5 v², 1) · 20 log₁₀(70 v² + 2) / 48 |
+  | Zero cross | v′ = (T + 66) / 60, T interpolated linearly in (v, T dBFS): (0.05, −67), (0.10, −46), (0.20, −34), (0.30, −30), (0.40, −27), (0.50, −25), (0.60, −22.5), (0.70, −20), (0.80, −16), (0.90, −11), (0.95, −8.5), (1, −6); T = −67 below 0.05 |
+  | Bit crush | bits = log₂(2 / (0.99 v⁵ + 0.01)); v′ = (16 − bits) / 15 |
+  | Gain | v′ = (40 log₁₀(v / 0.35) + 24) / 48 (v = 0 → 0) |
+  | DC | v′ = 0.5 + 0.5 (2 v − 1)⁵ |
+  | Stereo DC | v′ = v⁵ |
+  | every other type (Off included) | v′ = v |
+
+- **Unchanged**: `x1` – `x3`, `wet`, `quality` (both settings now report latency 0: the note "Keep Quality
+  OFF live" no longer applies).
+- **New ids** (defaults play the converted values exactly): `drive`, `focus`, `level`, `<b>_mix` (100),
+  `<b>_y1` / `<b>_y2` (+9 dB), `<b>_solo`, `<b>_bypass`, `slope` (24 dB/oct), `bypass`.
+- Fallback if a type-keyed conversion is impossible: §3.2's (Prisma's laws kept under the same %), not
+  implemented in the plugin.
 
 ## 1. State of the art
 

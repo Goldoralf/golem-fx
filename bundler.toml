@@ -100,3 +100,6 @@ name = "GoleM FX Crusher"
 name = "GoleM FX Ringmod"
 [gfx-bassdi]
 name = "GoleM FX Bass DI"
+
+[gfx-grit]
+name = "GoleM FX Grit"
