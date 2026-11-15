@@ -799,6 +799,28 @@
     "freeze"
    ],
    "category": "modulation"
+  },
+  "gfx-stretch": {
+   "name": "Stretch",
+   "blocks": [
+    "stretch"
+   ],
+   "knobs": [
+    "amount",
+    "fft",
+    "spread",
+    "vol"
+   ],
+   "selectors": [
+    "mode"
+   ],
+   "toggles": [
+    "capture",
+    "freeze",
+    "thru"
+   ],
+   "category": "reverb",
+   "color": "#a0a8ff"
   }
  }
 }

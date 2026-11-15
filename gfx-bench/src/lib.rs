@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-stretch"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -70,6 +70,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-irfx" | "irfx" => Some(Box::new(gfx_irfx::IrFx::new())),
         "gfx-correct" | "correct" => Some(Box::new(gfx_correct::Correct::new())),
         "gfx-vocoder" | "vocoder" => Some(Box::new(gfx_vocoder::Vocoder::new())),
+        "gfx-stretch" | "stretch" => Some(Box::new(gfx_stretch::Stretch::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -295,6 +296,16 @@ pub fn options(name: &str) -> checks::Options {
         // envelopes: it does not correlate with the input, and the dry is not delayed. Zero latency by
         // construction (IIR banks, no lookahead); Self's identity is checked by its own test (README §5)
         o.skip_latency = true;
+    }
+    if matches!(name, "gfx-stretch" | "stretch") {
+        // decorrelated random-phase channels from a mono DI (`width` 100 %): stereo by nature
+        // (README §5); the dry sits at sample 0 and the wet is late by design (reported 0, §2.9)
+        o.stereo_by_nature = true;
+        // Rolling ×4 plays the 0.5 s burst back four times slower: its head leaves the burst at
+        // 4 × (0.5 s + N) ≈ 5 s and the last frame sounds until ≈ 5.9 s (−3 dBFS at 3 s, measured).
+        // The floor is read after 7 s of silence instead of 3 (README As coded: §5's "the default
+        // holds" was wrong); the bound stays −140 dBFS
+        o.silence_tail_s = 7.0;
     }
     if matches!(name, "gfx-drive" | "drive") {
         // 4× minimum-phase oversampling: ~6 samples of group delay, no delay line, not reported (README §3)

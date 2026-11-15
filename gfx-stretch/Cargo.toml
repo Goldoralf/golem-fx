@@ -1,0 +1,25 @@
+[package]
+name = "gfx-stretch"
+version = "0.1.0"
+description = "GoleM FX Stretch — golem's time stretcher: takes, a rolling ghost, freeze"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["plugin"]
+# The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
+plugin = ["dep:nih_plug"]
+
+[dependencies]
+gfx-dsp.workspace = true
+# f16 takes; F16C at run time where the CPU has it
+half = "2.4"
+nih_plug = { workspace = true, optional = true }
+
+[dev-dependencies]
+realfft = "3.5"

@@ -1,7 +1,7 @@
 # golem-fx — golem's in-house effects (VST3, Rust / nih-plug). See README.md.
 [workspace]
 resolver = "2"
-members = ["gfx-dsp", "gfx-bench", "gfx-boost", "gfx-comp", "gfx-deesser", "gfx-eq", "gfx-gate", "gfx-limiter", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "xtask"]
+members = ["gfx-dsp", "gfx-bench", "gfx-boost", "gfx-comp", "gfx-deesser", "gfx-eq", "gfx-gate", "gfx-limiter", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-stretch", "xtask"]
 
 [workspace.package]
 edition = "2021"

@@ -30,6 +30,9 @@ pub struct Options {
     pub click_bound_db: f32,
     /// Floor allowed after 3 s of silence (dBFS); effects adding noise on purpose raise it.
     pub silence_floor_db: f32,
+    /// Seconds of silence after the burst before the floor is read (3 s; an effect that plays its
+    /// input back slower holds the burst longer by design).
+    pub silence_tail_s: f32,
     /// Stereo by nature: skip the L = R = mono check.
     pub stereo_by_nature: bool,
     /// Sample rates to run.
@@ -49,7 +52,7 @@ pub struct Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, step_exempt: Vec::new(), skip_steps: Vec::new(), key: None }
+        Self { click_bound_db: -50.0, silence_floor_db: -140.0, silence_tail_s: 3.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, step_exempt: Vec::new(), skip_steps: Vec::new(), key: None }
     }
 }
 
@@ -145,7 +148,7 @@ pub fn block_size(name: &str, sr: f32, opts: &Options) -> CheckResult {
 
 pub fn silence(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let burst = (sr * 0.5) as usize;
-    let tail = (sr * 3.0) as usize;
+    let tail = (sr * opts.silence_tail_s) as usize;
     let x = vec![signals::burst_then_silence(burst, tail, 0.5, 3)];
     let mut e = fresh(name, sr, 1, 512);
     // time the first and the last silent second

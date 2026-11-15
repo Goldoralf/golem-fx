@@ -57,3 +57,4 @@ gfx-irfx = { path = "../gfx-irfx", default-features = false }
 gfx-cab = { path = "../gfx-cab", default-features = false }
 gfx-correct = { path = "../gfx-correct", default-features = false }
 gfx-vocoder = { path = "../gfx-vocoder", default-features = false }
+gfx-stretch = { path = "../gfx-stretch", default-features = false }
