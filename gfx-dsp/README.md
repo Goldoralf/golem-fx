@@ -57,7 +57,8 @@ Added at the design review (2026-11-12), needed by the 22 designs:
 | `stft` | Real-time STFT, phase-gradient phase vocoder | pitch (Poly, if retained) |
 | `filterbank` | ERB complex IIR filterbank, IIR Hilbert pair | octaver (Poly), barberpole |
 | `motor` | First-order inertia with separate accelerate / decelerate constants, angle integration | rotary, vibrato rise |
-| `onset` | Zero-latency pick detector (high-passed fast / slow envelope difference) | killswitch, autowah |
+| `onset` | Zero-latency onset detectors, each usable alone, all relative to the playing level: `Level` (note level, phrase level, floor) and `LevelGate` (L); `Pick` (A: fast − slow envelope in dB with a slope test against the last period's peak; its own 1.5 kHz high-passed envelope or an **external level in dB**; R, slope window, floor, refractory as arguments); `Flux` (B: 16-band shape flux against a peak-held maximum filter, tremolo-corrected, adaptive threshold); `PitchJump` (C: YIN note changes, glides drag the reference, integer-ratio jumps ignored); `Strum` (one onset per strum, same-note hold-off, slides merged) | gfx-swell (coded); gfx-ducker (`Pick` on its sliding maximum), gfx-grains, gfx-killswitch (later, null-guarded) |
+| `swell` | The swell's gain engine: five rise curves with inverses (Square, Linear, S-Curve, dB, Pedal), rise / hold / bow decay / spent, raised-cosine retrigger dip continued through c⁻¹, scheduled (lookahead) triggers, reset fade | gfx-swell; gfx-delay, gfx-reverb, gfx-shimmer `swell` (later) |
 | `divider` | Adaptive Schmitt trigger + flip-flops (analog octave divider) | octaver |
 
 Numerics: audio is `f32`; recursive filter states, phase accumulators and angles are `f64` (a 20 Hz filter

@@ -37,11 +37,13 @@ pub struct Options {
     /// Resonant filters (wah): the noise cross-correlation finds the resonance's group delay, not a
     /// latency. Their latency is checked by construction (no delay line; reported 0).
     pub skip_latency: bool,
+    /// Parameters the parameter-step check leaves out (a setup-only latency change, a trigger).
+    pub skip_steps: Vec<&'static str>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false }
+        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, skip_steps: Vec::new() }
     }
 }
 
@@ -192,7 +194,7 @@ pub fn param_steps(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let x = vec![signals::sine(n, 1000.0, 0.25, sr)];
     let fc = 10000.0f32.min(sr * 0.4);
     let mut worst = (f32::MIN, String::new());
-    for p in params {
+    for p in params.iter().filter(|p| !opts.skip_steps.contains(&p.id)) {
         for (from, to) in [(p.min, p.max), (p.max, p.min)] {
             let mut e = fresh(name, sr, 1, 512);
             e.set_param(p.id, from);

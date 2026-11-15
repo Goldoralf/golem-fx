@@ -348,7 +348,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const METAL_CRATE_HUE = { 'gfx-shimmer': '#8a3ff0', 'gfx-gapmeter': '#6b7480', 'gfx-glitch': '#72c000' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -356,13 +356,15 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-killswitch': 'bolt', 'gfx-delay': 'echo', 'gfx-reverb': 'rays', 'gfx-shimmer': 'stars', 'gfx-octaver': 'diamonds',
     'gfx-pitch': 'stairs', 'gfx-pitch-classic': 'stairs', 'gfx-detune': 'stairs', 'gfx-gapmeter': 'ticks',
     'gfx-met': 'barbed', 'gfx-emet': 'flames', 'gfx-shem': 'chevrons', 'gfx-golem': 'waves', 'gfx-glitch': 'bins',
+    'gfx-swell': 'swells',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -484,6 +486,18 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             line(`M${f1(x)} ${f1(y0)}V${f1(cut)}`, op);
             line(`M${f1(x + slip)} ${f1(cut - gap)}V${f1(top)}`, op);
           } else line(`M${f1(x)} ${f1(y0)}V${f1(top)}`, op);
+        }
+        break;
+      }
+      case 'swells': {
+        // four notes along a baseline: each pick's tick (the attack removed, faint), then a concave-up
+        // rise (the Square curve) to a plateau, then the next note's dip; plateaus climb, a crescendo
+        const y0 = H - 40, sw = W / 4, w = sw - 4;
+        line(`M0 ${f1(y0)}H${W}`);
+        for (let k = 0; k < 4; k++) {
+          const x0 = k * sw + 2, yTop = cy + ch / 2 + 8 - 3 * k, op = .45 + .55 * k / 3;
+          line(`M${f1(x0)} ${f1(y0)}V${f1(y0 - 8)}`, .35);
+          line(`M${f1(x0)} ${f1(y0)}Q${f1(x0 + .75 * w)} ${f1(y0)} ${f1(x0 + .92 * w)} ${f1(yTop)}H${f1(x0 + w)}V${f1(y0)}`, op);
         }
         break;
       }

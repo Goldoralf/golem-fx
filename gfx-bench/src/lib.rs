@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-swell"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -51,6 +51,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-shem" | "shem" => Some(Box::new(gfx_shem::Shem::new())),
         "gfx-golem" | "golem" => Some(Box::new(gfx_golem::Golem::new())),
         "gfx-glitch" | "glitch" => Some(Box::new(gfx_glitch::Glitch::new())),
+        "gfx-swell" | "swell" => Some(Box::new(gfx_swell::Swell::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -116,6 +117,11 @@ pub fn options(name: &str) -> checks::Options {
         // frame edges by design and its engine fades in over 50 ms (−45 dB at 192 kHz)
         o.click_bound_db = -40.0;
         o.stereo_by_nature = true;
+    }
+    if matches!(name, "gfx-swell" | "swell") {
+        // `lookahead` changes the reported latency (setup only, README §2.6); `fire` is a trigger, not a
+        // level change (README §5)
+        o.skip_steps = vec!["lookahead", "fire"];
     }
     if matches!(name, "gfx-reverb" | "reverb") {
         // a 1.3 s tail is still at −138 dBFS three seconds after the burst: its own decay, not a residue

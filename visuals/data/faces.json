@@ -403,6 +403,22 @@
    ],
    "category": "modulation",
    "color": "#72c000"
+  },
+  "gfx-swell": {
+   "name": "Swell",
+   "blocks": [
+    "swell"
+   ],
+   "knobs": [
+    "rise",
+    "sens",
+    "legato",
+    "depth"
+   ],
+   "selectors": [
+    "curve"
+   ],
+   "category": "dynamics"
   }
  }
 }
