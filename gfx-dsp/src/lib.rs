@@ -41,6 +41,7 @@ pub mod ir_engine;
 pub mod ir_host;
 pub mod lfo;
 pub mod matched;
+pub mod modal;
 pub mod multipitch;
 pub mod noise;
 pub mod onset;
