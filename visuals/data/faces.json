@@ -728,6 +728,23 @@
    ],
    "category": "utility",
    "color": "#126e1c"
+  },
+  "gfx-radio": {
+   "name": "Radio",
+   "blocks": [
+    "radio"
+   ],
+   "knobs": [
+    "drive",
+    "noise",
+    "distance",
+    "tune"
+   ],
+   "selectors": [
+    "model"
+   ],
+   "category": "lofi",
+   "color": "#4b5320"
   }
  }
 }

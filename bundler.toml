@@ -122,3 +122,5 @@ name = "GoleM FX Ducker"
 name = "GoleM FX Fuzz"
 [gfx-tuner]
 name = "GoleM FX Tuner"
+[gfx-radio]
+name = "GoleM FX Radio"

@@ -362,10 +362,13 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // motif alone; no other pedal is copper)
     'gfx-fuzz': '#b0602a',
     // deep scope green: separated from gfx-glitch's lime and modulation's green by lightness (L* 40)
-    'gfx-tuner': '#126e1c' };
+    'gfx-tuner': '#126e1c',
+    // olive drab: field radio, signal-corps PA, military megaphone (gfx-radio's review: a third raspberry
+    // thrash lofi pedal would be told apart by its motif alone; ΔE 33 to gfx-tuner's deep green)
+    'gfx-radio': '#4b5320' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-radio': '#c8d86a' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -388,6 +391,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-ducker': 'dips',
     'gfx-fuzz': 'sputter',
     'gfx-tuner': 'strobe',
+    'gfx-radio': 'grille',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -395,7 +399,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-radio': 'thrash', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -782,6 +786,24 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
             x += s * pw;
           });
         });
+        break;
+      }
+      case 'grille': {
+        // a speaker grille each side of the rune: 4 pill slots (height 2.4, gap 2.0) stacked and centred
+        // on it, 14 / 11.5 / 9 / 6.5 long from the top, anchored at the outer margin; above the rune a
+        // tuning dial: a baseline from 8 to W − 8, 9 ticks alternating 2.5 / 1.4 tall, a 1.4-wide needle
+        // 6 tall at 62 % of the strip, between two ticks ("between stations")
+        const hh = 2.4, gap = 2.0, lens = [14, 11.5, 9, 6.5], top = cy - (4 * hh + 3 * gap) / 2;
+        lens.forEach((len, k) => {
+          const y = top + k * (hh + gap);
+          shape(pill(6, y, len, hh));
+          shape(pill(W - 6 - len, y, len, hh));
+        });
+        const yb = cy - ch / 2 - 6, x0 = 8, x1 = W - 8, step = (x1 - x0) / 8;
+        line(`M${f1(x0)} ${f1(yb)}H${f1(x1)}`);
+        for (let k = 0; k <= 8; k++) line(`M${f1(x0 + k * step)} ${f1(yb)}v${f1(k % 2 ? -1.4 : -2.5)}`, k % 2 ? .7 : 1);
+        const xn = x0 + .62 * (x1 - x0);
+        shape(`M${f1(xn - .7)} ${f1(yb + 1.5)}h1.4v-6h-1.4Z`);
         break;
       }
       case 'ticks':

@@ -1,0 +1,681 @@
+{
+ "crate": "gfx-radio",
+ "presets": [
+  {
+   "id": "old-phone-call",
+   "type": "radio",
+   "name": "Old phone call",
+   "desc": "Carbon-mic handset over an analog line: 2nd-harmonic grit, line hum and hiss that stop in silence",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "screen"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "film-score"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi"
+   ],
+   "default": true,
+   "params": {
+    "model": "Telephone"
+   },
+   "notes": "The default: recognisable at once with no drive; the noise follows the voice (squelch 25 %)"
+  },
+  {
+   "id": "readable-phone-vocal",
+   "type": "radio",
+   "name": "Readable phone vocal",
+   "desc": "Telephone opened half an octave each way, less line noise: still a phone, readable in a dense mix",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "alt-pop",
+    "alternative-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Telephone",
+    "band": 40,
+    "noise": 20
+   },
+   "notes": "band opens the device around its own voicing instead of blending the dry back in"
+  },
+  {
+   "id": "phone-layer",
+   "type": "radio",
+   "name": "Phone layer",
+   "desc": "A thin telephone copy blended under the clean vocal for presence",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "model": "Telephone",
+    "mix": 30,
+    "noise": 0
+   },
+   "notes": "Keep mix at 30 % or less: between 35 and 70 % the device and the dry comb like two out-of-phase sources"
+  },
+  {
+   "id": "bad-signal",
+   "type": "radio",
+   "name": "Bad signal",
+   "desc": "Cell call breaking up: smeared formants, hoarse excitation, bursty lost packets and comfort noise",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "pop",
+    "screen"
+   ],
+   "subgenres": [
+    "trip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Cell Phone",
+    "codec": 80,
+    "dropouts": 40
+   }
+  },
+  {
+   "id": "video-call",
+   "type": "radio",
+   "name": "Video call",
+   "desc": "A cell codec heard through a laptop's micro-speaker on a desk",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "electronic",
+    "other"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Cell Phone",
+    "channel": "Cell Codec",
+    "speaker": "Laptop",
+    "codec": 40
+   }
+  },
+  {
+   "id": "riot-bullhorn",
+   "type": "radio",
+   "name": "Riot bullhorn",
+   "desc": "Megaphone pushed into its class-B clip, horn throat grit, a street slap behind it",
+   "inst": "voice",
+   "genres": [
+    "punk",
+    "rock",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "punk-rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Megaphone",
+    "drive": 50,
+    "distance": 30
+   }
+  },
+  {
+   "id": "bullhorn-lead",
+   "type": "radio",
+   "name": "Bullhorn lead",
+   "desc": "The megaphone horn on guitar: less clip, a wider band, no street",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "punk"
+   ],
+   "subgenres": [
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Megaphone",
+    "drive": 20,
+    "band": 30,
+    "room": "None"
+   }
+  },
+  {
+   "id": "walkie-check",
+   "type": "radio",
+   "name": "Walkie check",
+   "desc": "Push-to-talk radio: voice-keyed carrier, roger beep and the squelch crash when the voice stops",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "electronic",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "film-score",
+    "video-game-music"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Walkie-Talkie",
+    "squelch": 40,
+    "roger": true
+   }
+  },
+  {
+   "id": "out-of-range",
+   "type": "radio",
+   "name": "Out of range",
+   "desc": "Walkie at the edge of its range: FM threshold clicks in bursts at the bottom of each fade",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "experimental",
+    "electronic"
+   ],
+   "subgenres": [
+    "film-score"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Walkie-Talkie",
+    "noise": 80,
+    "dropouts": 50
+   }
+  },
+  {
+   "id": "tune-the-dial",
+   "type": "radio",
+   "name": "Tune the dial",
+   "desc": "AM receiver for the expression pedal: neighbour stations, a squeal through zero beat, static between",
+   "inst": "any",
+   "genres": [
+    "experimental",
+    "electronic",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "AM Radio",
+    "tune": 0,
+    "whistle": -30,
+    "noise": 60
+   },
+   "notes": "Put the expression pedal on tune and sweep −100 → +100 %; the whistle's pitch follows the dial"
+  },
+  {
+   "id": "night-fading-am",
+   "type": "radio",
+   "name": "Night fading AM",
+   "desc": "Distant AM station at night: selective fading sweeps a notch through it, then the carrier distorts",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "electronic",
+    "folk"
+   ],
+   "subgenres": [
+    "psychedelic-rock"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi",
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "model": "AM Radio",
+    "dropouts": 60,
+    "noise": 55
+   }
+  },
+  {
+   "id": "station-announcement",
+   "type": "radio",
+   "name": "Station announcement",
+   "desc": "Tube PA into horn speakers down a hall, the other horns of the system echoing behind",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "electronic",
+    "other"
+   ],
+   "subgenres": [
+    "film-score"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "PA Horn",
+    "distance": 60
+   }
+  },
+  {
+   "id": "ticket-window",
+   "type": "radio",
+   "name": "Ticket window",
+   "desc": "Intercom box behind glass: a ringing metal box, hum, a narrow band",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "pop",
+    "other"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi"
+   ],
+   "default": false,
+   "params": {
+    "model": "Intercom",
+    "band": -30
+   }
+  },
+  {
+   "id": "front-door-buzzer",
+   "type": "radio",
+   "name": "Front door buzzer",
+   "desc": "Cheap intercom pushed into its IC amp's clip, hum up",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "electronic",
+    "screen"
+   ],
+   "subgenres": [
+    "alternative-hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Intercom",
+    "drive": 40,
+    "noise": 70
+   }
+  },
+  {
+   "id": "beach-radio",
+   "type": "radio",
+   "name": "Beach radio",
+   "desc": "An AM station on a 9 V pocket set: crossover grit and small-speaker breakup",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop",
+    "folk"
+   ],
+   "subgenres": [
+    "surf-rock",
+    "indie-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "vintage",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "model": "Pocket Radio",
+    "channel": "AM",
+    "drive": 25
+   }
+  },
+  {
+   "id": "pocket-radio-intro",
+   "type": "radio",
+   "name": "Pocket radio intro",
+   "desc": "The whole band from a transistor radio for an intro, then switch it off",
+   "inst": "any",
+   "genres": [
+    "rock",
+    "pop",
+    "hip-hop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "lo-fi-hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "model": "Pocket Radio",
+    "drive": 30
+   },
+   "notes": "The physical version of the classic radio EQ: 250 Hz – 6 kHz with a 57 mm speaker's breakup"
+  },
+  {
+   "id": "dying-battery",
+   "type": "radio",
+   "name": "Dying battery",
+   "desc": "A 9 V radio on a flat battery: the rail sags and sputters on every peak",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "experimental"
+   ],
+   "subgenres": [
+    "lo-fi-indie"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "model": "Pocket Radio",
+    "battery": 25,
+    "drive": 40
+   }
+  },
+  {
+   "id": "blown-speaker",
+   "type": "radio",
+   "name": "Blown speaker",
+   "desc": "The voice coil rubs at full excursion: buzz and rattle riding the bass notes",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "punk",
+    "experimental"
+   ],
+   "subgenres": [
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "model": "Pocket Radio",
+    "rattle": 60,
+    "drive": 60
+   }
+  },
+  {
+   "id": "78-horn",
+   "type": "radio",
+   "name": "78 horn",
+   "desc": "Acoustic gramophone horn and mica soundbox; chain a 78 medium before it for the record",
+   "inst": "any",
+   "genres": [
+    "jazz",
+    "folk",
+    "screen"
+   ],
+   "subgenres": [
+    "swing"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "model": "Gramophone",
+    "distance": 20,
+    "noise": 0
+   },
+   "notes": "noise 0 here: the record's surface noise and wow come from the medium pedal chained before"
+  },
+  {
+   "id": "laptop-demo",
+   "type": "radio",
+   "name": "Laptop demo",
+   "desc": "A drum loop played from a laptop on the desk: no bass, a 1 kHz bump, smart-amp pumping",
+   "inst": "drums",
+   "genres": [
+    "hip-hop",
+    "electronic",
+    "pop"
+   ],
+   "subgenres": [
+    "lo-fi-hip-hop"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "modern"
+   ],
+   "default": true,
+   "params": {
+    "model": "Laptop",
+    "distance": 20
+   }
+  },
+  {
+   "id": "phone-on-the-table",
+   "type": "radio",
+   "name": "Phone on the table",
+   "desc": "The handset put down on the table: its bass leaks away and the room takes over",
+   "inst": "voice",
+   "genres": [
+    "screen",
+    "pop"
+   ],
+   "subgenres": [
+    "film-score"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "lo-fi",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "model": "Telephone",
+    "distance": 70
+   }
+  },
+  {
+   "id": "ir-after",
+   "type": "radio",
+   "name": "Line out for a device IR",
+   "desc": "The device chain without its speaker, for a measured speaker IR in the cab block after it",
+   "inst": "any",
+   "genres": [
+    "other"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "default": false,
+   "params": {
+    "model": "Telephone",
+    "speaker": "None"
+   },
+   "notes": "speaker None is a line out: put golem's cab with a device impulse response after it"
+  },
+  {
+   "id": "broadcast-guitar",
+   "type": "radio",
+   "name": "Broadcast guitar",
+   "desc": "Guitar heard on a table radio from a station across town",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "blues",
+    "folk"
+   ],
+   "subgenres": [
+    "soul-blues"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "warm"
+   ],
+   "default": true,
+   "params": {
+    "model": "AM Radio",
+    "noise": 40
+   }
+  },
+  {
+   "id": "radio-keys",
+   "type": "radio",
+   "name": "Radio keys",
+   "desc": "Keys from a tube table radio in the next room",
+   "inst": "keys",
+   "genres": [
+    "pop",
+    "rock",
+    "electronic"
+   ],
+   "subgenres": [
+    "indie-pop",
+    "chillwave"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "lo-fi",
+    "dreamy"
+   ],
+   "default": true,
+   "params": {
+    "model": "AM Radio",
+    "distance": 40,
+    "noise": 30
+   }
+  }
+ ]
+}

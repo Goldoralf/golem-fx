@@ -1,7 +1,16 @@
 # gfx-radio
 
-> **Status: DESIGNED** (2026-11-14), **reviewed** (Fable 5.2, 2026-11-14: see the Review section at the end).
-> No code yet.
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed and reviewed 2026-11-14 (Review section), coded as
+> reviewed with the deviations listed in "As coded". Ten models run the same simulated chain (mic at 2×,
+> channel, amp + Klippel motor in one oversampled island, horn throat, matched body, distance, a shared
+> Fdn room), zero latency. AM and NBFM are complex baseband at the host rate: the whistle sits on
+> |2,500 − Δ| to 0.05 Hz, detuning distortion grows from a clean centre, the squelch tail lasts 164 ms
+> at 6.4 dB under the reference. The cell codec is the backward-adaptive order-8 lattice pair on the
+> converter's 8 kHz virtual samples: −284 dB residue at `codec` 0, frame levels −4.8 … +5.5 dB at 50 %.
+> Every model plays within ±0.1 dB of the bypass on pink at the reference (`drive` 0 → 100 %: within
+> +1.1 dB); worst alias −72 dB at `drive` 100 % (bound −70), carbon mic 4.9 % THD. gfx-bench 28 / 28,
+> 568 ns / sample mono at the defaults. New gfx-dsp modules `speaker`, `baseband`, `codec`, and
+> `adaa::Shaper::Hard` / `HardClip`.
 
 golem's **small-speaker and transmission pedal**. It covers the telephone, the cell phone, the megaphone, the
 walkie-talkie, the AM radio, the station PA, the intercom, the pocket transistor radio, the gramophone horn
@@ -921,6 +930,98 @@ Every preset is level-matched to the bypass (±2 LU on the bench DIs) with `leve
     defaulting to off.
 12. **Hue** → olive drab `#4b5320` thrash accepted, rune light `#c8d86a` (Visual). Raph, on the family
     sheet, at tile size next to gfx-tuner.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `speaker.rs` (new): `MotorParams` (b(x), k(x), the analytic small-signal response), `Motor`
+  (trapezoidal, predictor + 2 fixed-point iterations, p from the right-hand side, |x| ≤ 4), `Rattle`
+  (smooth excess past 0.85 gates > 2 kHz noise and a click per turn; skipped while idle), `Throat`
+  (matched 4th-order low-pass, η · HP₂₀₀(Δp²) · fs / 2π·1 kHz), `Body` / `Section` / `Role` (matched sections
+  tagged low edge / high edge / bell for `band` and `resonance`). 7 unit tests.
+- gfx-dsp `baseband.rs` (new): `Cx`, `Gauss` (Box-Muller), `Rotator`, `Lp2` / `IfFilter` (f64 TPT
+  Butterworth on I and Q), `noise_bandwidth`, `noise_variance` (the density rule), `Walk`, `Multipath`,
+  `EnvelopeDetector`, `Discriminator`, `NoiseSquelch`. 5 unit tests (clicks at Rice's rate at 48 and
+  96 kHz, noise density at 44.1 – 192 kHz within 0.3 dB, the IF's detuning THD).
+- gfx-dsp `codec.rs` (new): `lpc`, `quantise_lar`, `Predictor`, `NoiseSuppressor`, `GilbertElliott`,
+  `Plc`, `law`. 6 unit tests (identity < −180 dB, bounded coarse settings, suppressor identity and cut,
+  loss rate and bursts over 30,000 frames, the G.711 App. I schedule).
+- gfx-dsp `adaa.rs`: `Shaper::Hard` (closed-form antiderivative) and `HardClip` (a moving rail for
+  `Adaa1Fn`). Existing variants untouched (a new enum arm only); one new test, one extended.
+- `src/voicing.rs`: the device tables (mics, channels, amps, 9 speakers + the cell's receiver, rooms,
+  the 10 models, wet polarity, the makeup / drive table). `src/channel.rs`: Phone Line, Digital Line,
+  Cell Codec, AM, NBFM. `src/chain.rs`: mic, amp island, throat, body, distance. `src/room.rs`: the
+  rooms. `src/lib.rs`: parameters, keying, the 8 kHz clock, frames and losses (one for every chain),
+  chain and room switching, output. `src/plugin.rs`: VST3 `GoleMFxRadio0001`, mono 1 / 1 first then 2 / 2,
+  latency 0, `bypass` with trails, `state` read-only. `src/tests.rs`: 17 behaviour tests, plus
+  `calibrate`, `calibrate_polarity`, `cpu_per_configuration`, `cpu_parts` (ignored).
+
+**Measured** (48 kHz unless stated).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Small signal (motor) | 0.05 dB vs Thiele-Small | ≤ 0.05 dB at 96 kHz, f_s 120 – 700 Hz, Q 0.6 – 1.2, nonlinear constants on (gfx-dsp test) |
+| Telephone band | −3 dB at 300 ± 30 / 3,400 ± 100 Hz; ≤ −25 dB at 100 Hz / 4.5 kHz | 311 Hz / 3,367 Hz; −76 dB / −46 dB |
+| Motor large signal | THD monotonic, even harmonics only with x_b / κ1, b > 0, no DC, stable, 2 vs 8 iterations ≤ 1 dB | all hold (gfx-dsp tests; full-scale 20 Hz square at +30 dB with κ3 up to 50 and the rattle on) |
+| Throat | 2nd harmonic +9.5 ± 1.5 dB from 1 to 3 kHz | within the bound; 3.0 % at 1 kHz for η 0.1 and 0.3 peak |
+| Carbon mic | THD 5 ± 2 %, H2 dominant | 4.92 % (H2 4.92 %, H3 0.13 %) |
+| Aliasing, own speaker | ≤ −70 dB | −72.5 (Walkie) … −109.5 dB (Telephone); Cell excluded (its 8 kHz converter aliases by design) |
+| Aliasing, `speaker` None | ≤ −65 dB | −72.1 (AM Radio) … −121.9 dB |
+| Codec transparency | ≤ −120 dB | −284 dB (`codec` 0 vs the path without predictor and bells) |
+| Codec behaviour | frames within ±8 dB of `codec` 0 | −4.8 … +5.5 dB (synthetic voice with pauses); \|k̂\| ≤ 0.98 (gfx-dsp) |
+| PLC, loss process | README | gfx-dsp tests: period kept, unattenuated 10 ms, 0.6 at 30 ms, silence from 60 ms, no step; 30.0 % ± 3 % lost, bursts 2.0 ± 0.2 |
+| AM physics | whistle \|2,500 − Δ\| ± 1 Hz; neighbour > −40 dB at ±100 %; AGC ≤ +30 dB | 1,600 / 700 / 1,100 / 3,400 Hz exact to 0.05 Hz; neighbour −1.2 dB re reference; AGC 24.6 dB at ±55 % |
+| AM detuning (channel, tone through the broadcast AGC) | grows from a clean centre | THD 0.02 / 0.05 / 0.76 / 3.6 % at 0 / 10 / 22 / 33 %; the README's 3 % / 10 % figures are at m = 0.85 (gfx-dsp test: 3 % and 10 % ± tolerance at 2 / 3 kHz) |
+| NBFM | tail 150 ms ± 20 %, ≤ reference − 6 LU; `squelch` 0 never mutes; ±100 % muted | 164 ms, −6.4 dB; holds; exact 0 |
+| FM clicks | 0.5 – 2.5 / 10 – 20 / 50 – 90 per s at 8 / 6 / 4 dB, 0 at 15 dB | within, at 48 and 96 kHz (gfx-dsp test) |
+| Keying | exact 0 after hang + tail + room | every model ≤ −159 dBFS (PA Horn's hall) or exact 0; `state` 0 |
+| Key-up | note within 1 dB after 20 ms | 0.00 dB (Megaphone, Pocket Radio; the AGC models level by design) |
+| Switching | no click > −40 dB | worst −59 dB (every model, mic, channel, speaker and room switch) |
+| Level | ±2 LU defaults; `drive` ±3 LU; `distance` ≤ 6 LU | ±0.1 dB; −0.2 … +1.1 dB; −4.5 … −6.2 dB (K-weighted pink at −18 dBFS RMS) |
+| Mix | ≤ 6 dB notch at 30 % | **not met**: see Deviations. Deepest at 30 / 50 / 70 % (dB): Telephone −8.5 / −9.7 / −6.8, Cell −6.4 / −9.5 / −9.9, Megaphone −1.5 / −4.1 / −17.6, Walkie −9.4 / −12.7 / −6.0, AM −9.3 / −12.2 / −3.7, PA Horn −11.0 / −13.7 / −11.5, Intercom −8.3 / −10.7 / −11.7, Pocket Radio −0.3 / −0.8 / −2.1, Gramophone −8.2 / −15.9 / −15.1, Laptop −5.3 / −10.8 / −7.2 |
+| Rate independence | 0.5 dB below 15 kHz (44.1 / 48 / 96 kHz) | holds, every model (`room` None, `codec` 0) |
+| Determinism | strict null | holds with losses, fading, crackle, rattle, noise; stereo chains bit-identical (linked) |
+| CPU (mono, 48 kHz) | no room ≤ 300, typical ≤ 800, worst ≤ 1,500 ns | Pocket Radio 335, Intercom 436 (**over**); Telephone 568 (bench); Cell 495, Walkie 704, AM 860, PA Horn + AM 963; during a chain and room switch ≈ 1,550 for 40 ms |
+| gfx-bench | common checks | 28 / 28 at 44.1 – 192 kHz; parameter steps ≤ −61 dB; silence floor −240 dBFS |
+
+**Deviations.**
+- **Handset voicing**: f_s 290 Hz, Q_ts 1.33, bells −1.8 dB at 1 kHz and +5.6 dB at 2.6 kHz, a 3.28 kHz Q 4.2
+  roll-off: fitted so the whole Telephone chain (carbon mic + line + earpiece) meets the band row. With the
+  draft's f_s 400 Hz the chain's lower −3 dB point sat at 780 Hz.
+- **Carbon `drive`**: +12 dB at 100 % (0.12 dB per %), as §2.2's own figures (h·p 0.1 → 0.4); its "0.4 dB
+  per %" contradicted them. The dynamic and electret capsules take +6 dB, with ADAA on their curves.
+- **Oversampling**: the gramophone's soundbox runs at 4× (−66 dB at 2×); with `speaker` None every amp
+  runs one octave higher (8× hard rail: −65.0 dB at 4×; 4× tube: −59 dB at 2×). A 4× amp runs its motor
+  at 2× between two half-band pairs (the motor is smooth; at 4× it cost 200 ns). The class-B crossover and
+  rail are one curve under one ADAA (the crossover's steep centre aliased as much as the rail).
+- **`mix` 30 % bound not met**: the coded voicings have in-band peaks, so the wet crosses the dry's level
+  where its phase opposes (the review's prototype normalised the wet to its band RMS without peaks).
+  Reported, not bounded, like 50 / 70 %; the polarity rule is applied (the test checks it is the
+  shallower one). Presets at 30 % stay layering-only.
+- **Noise suppressor**: a cut band reopens as soon as its last 2.5 ms rise 6 dB over its floor (the
+  frame-late decision cut every onset after a pause by up to 23 dB for one frame).
+- **AGCs** start at their target (0 dB) at reset, so a first note is not blasted by +10 / +12 dB.
+- **AM neighbours** are crosstalk: −12 dB re the station at `noise` 50 %, under `noise` and the keying
+  like the static (at −6 dB and always on they leaked −37 dB of inharmonic sideband through the 3 kHz IF
+  at `noise` 0). The broadcast processor's AGC targets 0.5 per band.
+- **NBFM**: squelch threshold at 0.8 of the no-carrier noise (measured 1.126; CNR 0 dB reads 0.75, so
+  `noise` 100 % is noise over the voice, not muted); the follower's rise is set so the tail lasts
+  150 ms × `squelch_tail`. The receiver's noise limiter is (0.6 L_nc / L)^6.5 above 0.6 L_nc on the
+  5 ms noise average: the tail sits 6.4 dB under the reference and the audio is untouched down to about
+  3 dB CNR.
+- **Cell Phone speaker**: "Phone receiver" is the model's own voicing (no `speaker` option names it).
+- **Overrides are not re-matched**: the makeup belongs to the model (measured on its own chain); a
+  `mic` / `channel` / `speaker` override changes the level (presets set `level`).
+- **CPU**: no-room models measure 335 – 436 ns against the 300 ns estimate (the 4× island, the motor
+  and the matched body); typical and worst are inside.
+- **Not coded as bench rows**: the EXP control-rate sideband row (the `exp_smooth` smoother is shared and
+  tested in gfx-dsp) and the key-up spectrum row; the Listening row is the owner's.
+- `noise` (README §3's planned gfx-dsp module) was not needed: white noise is `lfo::Rng`, Gaussian is
+  `baseband::Gauss`, bands are SVFs.
+
+**Owner**: every voicing constant (§7.7), now with a calibration harness (`tests::calibrate` prints the
+makeup / drive table, the rooms' energies and the squelch levels; `tests::calibrate_polarity` the notch
+table): re-run both after any voicing change and paste the tables into `voicing.rs`.
 
 ## Review (Fable 5.2, 2026-11-14)
 

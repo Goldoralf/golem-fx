@@ -445,6 +445,11 @@
    "label": "Fuzz (circuit-simulated fuzz, the guitar included)",
    "uni": "⊓",
    "svg": "<path d='M2 17V6h5v11h2.5V8.5H13V17h2.5v-6h2.5v6h2v-3.5h1.5V17H22'/>"
+  },
+  "radio": {
+   "label": "Radio / megaphone (gfx)",
+   "uni": "◁",
+   "svg": "<path d='M3 10.5v3h2.5L15 18.5V5.5L5.5 10.5z'/><path d='M7.5 14l1 4.5h2l-.7-3.4'/><path d='M18 8.5l2.5 1.2-2.5 1.2 2.5 1.2-2.5 1.2 2.5 1.2' opacity='.6'/>"
   }
  }
 }

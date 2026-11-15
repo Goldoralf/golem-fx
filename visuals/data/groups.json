@@ -1925,6 +1925,68 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-radio": [
+      {
+        "id": "chain",
+        "name": "Chain",
+        "custom": null,
+        "params": [
+          "mic",
+          "channel",
+          "speaker",
+          "room"
+        ]
+      },
+      {
+        "id": "tone",
+        "name": "Tone",
+        "custom": null,
+        "params": [
+          "band",
+          "resonance"
+        ]
+      },
+      {
+        "id": "channel",
+        "name": "Channel",
+        "custom": null,
+        "params": [
+          "codec",
+          "dropouts",
+          "whistle",
+          "mains"
+        ]
+      },
+      {
+        "id": "keying",
+        "name": "Keying",
+        "custom": null,
+        "params": [
+          "squelch",
+          "squelch_tail",
+          "roger"
+        ]
+      },
+      {
+        "id": "dirt",
+        "name": "Dirt",
+        "custom": null,
+        "params": [
+          "battery",
+          "rattle"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "level",
+          "mix",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {

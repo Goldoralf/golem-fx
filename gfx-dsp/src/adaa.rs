@@ -11,6 +11,9 @@ pub enum Shaper {
     Tanh,
     /// tanh(x + b) − tanh(b): asymmetric, even harmonics, zero at zero.
     Asym(f64),
+    /// clamp(x, −1, 1): the hard rail (gfx-radio's transistor amps and TX limiters). F = x² / 2 inside,
+    /// |x| − ½ outside.
+    Hard,
 }
 
 #[inline]
@@ -25,6 +28,7 @@ impl Shaper {
         match self {
             Shaper::Tanh => x.tanh(),
             Shaper::Asym(b) => (x + b).tanh() - b.tanh(),
+            Shaper::Hard => x.clamp(-1.0, 1.0),
         }
     }
 
@@ -33,7 +37,36 @@ impl Shaper {
         match self {
             Shaper::Tanh => ln_cosh(x),
             Shaper::Asym(b) => ln_cosh(x + b) - x * b.tanh(),
+            Shaper::Hard => hard_integral(x, 1.0),
         }
+    }
+}
+
+/// The antiderivative of clamp(x, −c, c): x² / 2 inside, c·|x| − c² / 2 outside (C¹).
+#[inline]
+fn hard_integral(x: f64, c: f64) -> f64 {
+    let a = x.abs();
+    if a <= c {
+        0.5 * x * x
+    } else {
+        c * a - 0.5 * c * c
+    }
+}
+
+/// A hard clip at ±`c` whose ceiling may move every sample (a sagging rail), for [`Adaa1Fn`].
+#[derive(Clone, Copy, Debug)]
+pub struct HardClip {
+    pub c: f64,
+}
+
+impl Antiderivative for HardClip {
+    #[inline]
+    fn f(&self, x: f64) -> f64 {
+        x.clamp(-self.c, self.c)
+    }
+    #[inline]
+    fn antiderivative(&self, x: f64) -> f64 {
+        hard_integral(x, self.c)
     }
 }
 
@@ -244,6 +277,21 @@ mod tests {
     }
 
     #[test]
+    fn hard_adaa_reduces_aliasing() {
+        let sr = 48000.0;
+        let f0 = 4987.0;
+        let n = 8192;
+        let x: Vec<f32> = (0..n).map(|i| (8.0 * (2.0 * std::f64::consts::PI * f0 * i as f64 / sr).sin()) as f32).collect();
+        let naive: Vec<f32> = x.iter().map(|&v| v.clamp(-1.0, 1.0)).collect();
+        let mut a = Adaa1::new();
+        a.reset(Shaper::Hard);
+        let adaa: Vec<f32> = x.iter().map(|&v| a.process(Shaper::Hard, v)).collect();
+        let dn = inharmonic_db(&naive[1024..5120], f0, sr);
+        let da = inharmonic_db(&adaa[1024..5120], f0, sr);
+        assert!(da < dn - 3.0, "naive {dn:.1} dB, adaa {da:.1} dB");
+    }
+
+    #[test]
     fn small_signals_are_linear() {
         let mut a = Adaa1::new();
         a.reset(Shaper::Asym(0.3));
@@ -263,6 +311,7 @@ mod tests {
         // dF/dx = f, by central differences, across every piece
         let pair = DiodePair { d1: ParkerDiode::new(0.2 * 1.1, 0.4, 1.0), d2: ParkerDiode::new(0.2 * 0.9, 0.4, 1.0) };
         let t = TanhResidual { k: 6.0 };
+        let hc = HardClip { c: 0.7 };
         for i in -300..=300 {
             let x = i as f64 * 0.004 + 1e-4;
             let h = 1e-6;
@@ -270,6 +319,10 @@ mod tests {
             assert!((dp - pair.f(x)).abs() < 1e-6, "diode at {x}: {dp} vs {}", pair.f(x));
             let dt = (t.antiderivative(x + h) - t.antiderivative(x - h)) / (2.0 * h);
             assert!((dt - t.f(x)).abs() < 1e-5, "tanh residual at {x}: {dt} vs {}", t.f(x));
+            let dh = (hc.antiderivative(x + h) - hc.antiderivative(x - h)) / (2.0 * h);
+            assert!((dh - hc.f(x)).abs() < 1e-6, "hard clip at {x}: {dh} vs {}", hc.f(x));
+            let ds = (Shaper::Hard.antiderivative(x * 3.0 + h) - Shaper::Hard.antiderivative(x * 3.0 - h)) / (2.0 * h);
+            assert!((ds - Shaper::Hard.f(x * 3.0)).abs() < 1e-6, "Shaper::Hard at {}", x * 3.0);
         }
     }
 
