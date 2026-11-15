@@ -881,7 +881,7 @@
    "color": "#00a84f"
   },
   "gfx-sustainer": {
-   "name": "Feedback",
+   "name": "Sustainer",
    "blocks": [
     "sustainer"
    ],

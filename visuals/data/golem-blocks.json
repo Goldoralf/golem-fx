@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 48,
+ "catalog_version": 49,
  "effects": [
   {
    "type": "gate",
@@ -3288,6 +3288,59 @@
      "max": 100,
      "default": 0,
      "unit": "%"
+    }
+   ]
+  },
+  {
+   "type": "morph",
+   "name": "Morph",
+   "short": "Morph",
+   "category": "lofi",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Morph (GoleM)",
+   "color": "#9a0d2a",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "drive",
+     "name": "Drive",
+     "min": 0,
+     "max": 100,
+     "default": 40,
+     "unit": "%"
+    },
+    {
+     "id": "morph",
+     "name": "Morph",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "box",
+     "name": "Box",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "mix",
+     "name": "Mix",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "object",
+     "name": "Object",
+     "min": null,
+     "max": null,
+     "default": "Tin Can",
+     "unit": null
     }
    ]
   },

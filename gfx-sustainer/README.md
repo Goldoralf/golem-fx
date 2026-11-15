@@ -586,7 +586,7 @@ recordings, blind and level-matched: does it sound like the amp, or like a synth
   - A string line through both regions at y = cy (opacity .4). It stays inside the rune's band, clear of
     the knobs.
 - **Face** (`visuals/data/faces.json`):
-  `"gfx-sustainer": {"name": "Feedback", "blocks": ["sustainer"], "knobs": ["delay", "rise", "bloom", "dry"], "selectors": ["harmonic", "mode"], "category": "pitch"}`.
+  `"gfx-sustainer": {"name": "Sustainer", "blocks": ["sustainer"], "knobs": ["delay", "rise", "bloom", "dry"], "selectors": ["harmonic", "mode"], "category": "pitch"}`.
   No toggles (`feed` belongs to golem's footswitch). "Feedback" is a plain word, kept: it names what
   the default mode does and what players will look for; no parameter carries that name any more
   (`feed` is "Feed").
