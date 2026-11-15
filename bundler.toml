@@ -116,3 +116,9 @@ name = "GoleM FX MB Comp"
 
 [gfx-widener]
 name = "GoleM FX Widener"
+
+[gfx-cab]
+name = "GoleM FX Cab"
+
+[gfx-irfx]
+name = "GoleM FX IR FX"

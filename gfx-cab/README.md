@@ -1,7 +1,20 @@
 # gfx-cab
 
-> **Status: DESIGNED** (2026-11-14). Design only, no code yet. Reviewed 2026-11-14: see
-> [Review](#review-fable-52-2026-11-14) at the end; its changes are applied in the text.
+> **Status: CODED** (v0.1.0, 2026-11-15), with its sibling **gfx-irfx**. Designed and reviewed 2026-11-14
+> ([Review](#review-fable-52-2026-11-14) at the end, applied in the text). Built as designed: the
+> slot-and-index plumbing (`ir_a` / `ir_b`, golem's `ir-index.json` with sha256, the persisted fallback,
+> `loaded_a` / `loaded_b` meters, loads on nih-plug's background thread, synchronous load in
+> `initialize()` on a miss, a per-process kernel cache), the zero-latency engine (64-tap head, five
+> partition levels to 8,192 with their work spread over the callbacks and the big transforms split,
+> one FDL for the whole class layout, per-level 30 ms crossfades), the background preparation
+> (resampling, onset trim, auto-polarity, length / fade, minimum phase, correlation alignment,
+> Loudness at +14 dB for gfx-cab and 0 dB for gfx-irfx), the designed built-in IR, and the mix
+> (blend, `delay_b`, cuts, `bass_keep`, `dry`, Split). **The engine is −132 … −139 dB from an f64
+> convolution up to 20 s, bit-identical at every block size and exact for a Dirac; a swap never
+> dips (−0.06 dB) and never starts cold; auto-polarity agrees on all 262 same-cab pairs of golem's
+> library; the library's cab IRs play +14.1 dB raw (median, as the review measured) and within
+> 0.26 dB of each other after Loudness.** A 200 ms cab costs 0.42 % of a core at 48 kHz. See
+> [As coded](#as-coded-v010).
 
 golem's **impulse-response loader**: a cabinet block that plays one or two IRs blended, with zero
 latency. It stands for golem's `cab` block ("Cab (IR)", today x42 IR Convolver Mono) and keeps its
@@ -34,6 +47,86 @@ What sets it apart:
 
 Reported latency **0**, and it is exact: h[0] multiplies x[n]. Mono 1 / 1 first, stereo 2 / 2 second
 (gfx-irfx: 2 / 2 first).
+
+## As coded (v0.1.0)
+
+Files:
+- gfx-dsp (new modules, no existing one changed): `convolve.rs` (engine), `ir.rs` (preparation),
+  `cuts.rs` (the wet cuts), and behind the feature `ir-host` (hound, sha2, serde_json, rtrb; only
+  these two crates enable it) `ir_host.rs` (index, WAV, hash, cache, loader, queues) and
+  `ir_engine.rs` (`IrCore`, `Host`, `Worker`).
+- `gfx-cab/`: `src/lib.rs` (`Cab`, `PARAMS`, the mix), `src/builtin.rs` (the slot-0 voicing),
+  `src/plugin.rs` (VST3, class id `GoleMFxCab000001`, 1 / 1 then 2 / 2, meters read-only, `ir_files`
+  persisted), `src/tests.rs`.
+- `gfx-irfx/`: `src/lib.rs` (`IrFx`), `src/plugin.rs` (class id `GoleMFxIrFx00001`, 2 / 2 then 1 / 1),
+  `src/tests.rs`, a README with its parameter table.
+
+### Measured (crate tests and gfx-bench)
+
+| §5 row | Measured | Target |
+|---|---|---|
+| Dirac | δ, Raw, Off: output = input sample for sample at 44.1 – 192 kHz; δ at 37: input delayed 37 exactly | exact |
+| Accuracy | 0.2 s −133.7 dB, 2 s −132.4 dB, 20 s (gfx-irfx) −131.9 dB re output RMS; engine alone 300 – 70,000 taps −132.5 … −139.0 dB; a 44.1 kHz library cab through a 48 kHz instance −138.5 dB against its prepared IR; a 9.1 s stereo echo IR −132.0 dB | ≤ −110 dB |
+| Block-size independence | Blocks 1, 7, 64, 1,000, 4,096 and a seeded random mix: bit-identical, two kernels and a swap at the same sample; gfx-bench −240 dB (all rates) | bit-identical |
+| Schedule | `late_count` = 0 in every test (a level read before its cycle ended would count) | 0 |
+| Zero latency | output[0] = h[0] from a first block of one sample | exact |
+| Split transforms | forward and inverse vs whole realfft ≤ −130 dB (4,096 / 4 and 8,192 / 8) | ≤ −130 dB |
+| No cold start | from 100 ms to 2 s at t: −132.6 dB against the full convolution once the last level has crossfaded | ≤ −110 dB |
+| Swap | `ir_a` every 500 ms under a 1 kHz sine: lowest 5 ms window −0.06 dB re the quieter IR, HF burst −68.8 dB re peak; per-level fades: head + level 1 within one chunk, the last level within 2B + 30 ms | no step > −60 dB, ≤ 3 dB dip |
+| Failures keep playing | unknown slot −1, hash mismatch / bad WAV −2, the previous IR plays; the previous slot again: meter back with no job; a slot written before its entry loads 0.50 s after the entry | as stated |
+| Index plumbing | slot → `loaded_a` = slot through the host / worker path; 1,000 atomic index rewrites during 300 loads: 0 failures; slots 1 … 65,535 through the f32 normalised value exact; persisted path used when the index lacks the slot, the index wins otherwise | as stated |
+| Activation | 20 × prepare / reset with the file and the index deleted: same kernel, meter kept (no I/O, no preparation); a second instance on the same IR gets the same `Arc` | as stated |
+| Render determinism | slots set before `initialize()`: identical renders at blocks 64 and 1,000 from sample 0 | identical |
+| No allocation in process | `assert_no_alloc` (nih-plug's allocator) around tick + process over 50 swaps with `align` changes | none |
+| Resampling | complex error re level: 44.1 → 48 −106.7 dB to 20 kHz, 48 → 44.1 −107.7 dB to 19 kHz, 96 → 48 −99.7 dB, 48 → 192 −112.6 dB; 30 kHz alias 96 → 48 −119 dB; image 48 → 192 −110.7 dB | ±0.05 dB, ≤ −100 dB |
+| Onset / polarity | onset keeps 0.5 ms, first peak bit-equal from 0.25 ms before it; B = −A late 1.37 ms: lag within 0.01 ms, blend within 0.012 dB of A to 5 kHz | as stated |
+| Polarity on real files | 262 same-cab pairs (maestrium 1960TV and V30 sets, Palmer SM57 + Aston, Dauntless, Glockenklang): 0 left opposite, Correlation flips none | 0 |
+| Minimum phase | 1/12-octave within 0.0001 dB; cumulative energy deficit 5 × 10⁻⁷ of the total | ≤ 0.1 dB, ≥ |
+| Normalisation | 87 cab IRs of golem's library: raw +14.1 dB median (5 – 95 % spread 5.1 dB); after Loudness 0.26 dB spread on band-limited pink noise. 13 effect IRs: raw +17.1 … +28.0 dB (median +20.1), exactly 0 dB after Loudness | ≤ 1 LU, median 14 ± 0.5 |
+| Length / fade | 200 ms cab-like IR cut at 40 ms: 1/12-octave curve rises ≤ 0.16 dB over the whole IR's with a 20 % fade (0.09 dB hard) | ≤ 0.5 dB |
+| `delay_b` | half a sample: −0.45 dB at 10 kHz; ±10 ms in 2 s: HF −60 dB re peak; bench step −10 → +10 ms −82 dB | ≤ 0.5 dB, no click |
+| `bass_keep` | IR = δ at 120 Hz: flat within 0.000 dB | ±0.1 dB |
+| gfx-irfx channels | 2 ch L / R, 1 ch on both, 1 / 1 averaged, 4 ch plays 1 and 4: all −110 dB or better against references; predelay exact; reverse; width 0 % = L = R; trails ring +20 dB 125 ms after bypass, trails off = the input exactly after 10 ms | as stated |
+| CPU (64-sample blocks, this machine) | 200 ms cab 0.42 % of a core at 48 kHz; with B 0.79 %; 2 s cab 0.80 %; two IRs stereo at 192 kHz 6.2 %; gfx-irfx 4 s stereo 1.0 – 1.7 %, 20 s stereo 1.7 % | 1 %, 1.7 %, 12 %, 3 % |
+| CPU spikes | 99.9th-percentile block 3.7 – 4.7× the mean, 1.7 – 3.7 % of the period at 48 kHz; at 192 kHz stereo A + B 23 % of a 64-sample period (333 µs). Cost model: worst chunk 2.6× the mean | ≤ 4×, ≤ 5 % at 48 kHz |
+| gfx-bench common checks | gfx-cab 28 / 28 (worst step −54 dB, `highcut` 1 → 22 kHz), CPU 75.6 ns / sample mono, 149 ns / frame stereo; gfx-irfx 28 / 28, 40 ns / 82 ns (no IR) | pass |
+
+### Deviations from the text, and why
+
+1. **Split transforms**: the 2B-point real transform is done as a B-point complex FFT of the packed
+   signal (cut by 2 / 3 DIF passes into 4 / 8 sub-FFTs of 1,024), then a real post-pass that stores
+   the spectrum in natural order; the inverse mirrors it. The text's "bins left in sub-transform
+   order" assumed a DIF on the real sequence, which would need complex sub-transforms anyway. The
+   pack, each pass and the post / pre-passes run in pieces: a first version with whole post-passes
+   peaked at 100 – 170 µs per chunk (index arithmetic), now one piece ≈ one 1,024-point FFT.
+2. **Cycle lengths**: level 4 spreads its cycle over 63 chunks and level 5 over 126 (B / 64 + 1 −
+   stagger), so a staggered cycle still ends at its block boundary.
+3. **Resampling precursor**: the sinc's precursor before the file's time 0 is kept (a lead of half
+   the interpolator) when the onset trim or minimum phase follows, which then trims it; in Raw the
+   file's time origin is kept and the precursor dropped (else the wet would be 1.3 ms late). The
+   resampled IR is scaled by from / to so its response keeps its level. Both points were silent.
+4. **`delay_b` smoothing**: each voice's delay (max(0, −d) for A, max(0, d) for B) runs through two
+   25 ms one-poles instead of one 50 ms smoother of the signed value: crossing 0 at speed put a kink
+   in the read head's speed (−41 dB HF on the bench's −10 → +10 ms step; now −82 dB). Under one
+   sample the read is the cubic through taps 0 – 3, which meets the bypass at 0.
+5. **Where the shared code lives**: `IrCore`, `Host`, `Worker` and the cuts are in gfx-dsp
+   (`ir_engine`, `cuts`), not in gfx-cab: gfx-irfx linking gfx-cab exported two VST3 entry points
+   when both were built together.
+6. **No `ir_fixtures` bench option**: gfx-bench's common checks run on the built-in (gfx-cab) and on
+   "none" (gfx-irfx); the IR rows are crate tests on synthetic IRs and on golem's library, read in
+   place (`~/golem/assets/irs`, skipped when absent) rather than copied into the repository
+   (licences). `load_ir(slot, channels, rate)` is the bench / test entry, as specified.
+7. Silent points decided: multichannel cab IRs share one onset cut and take their polarity from the
+   channel sum; the correlation uses each IR's first 0.5 s; `wet` −60 dB is off as `dry`; only −1 is
+   retried (a −2 waits for a new slot); the debounce applies only when nothing but `length` / `fade`
+   moved; the cache also keeps decoded sources (a settings change does not re-read the file).
+8. **Spikes**: the measured 99.9th percentile is slightly over 4× the mean with two IRs (4.7×); the
+   per-period bound at 48 kHz holds with margin (≤ 3.7 % vs 5 %).
+
+Left for the owner and for golem-rack: the built-in voicing by ear (10 sections in `builtin.rs`, [I]);
+the motifs `cone` and `impulse` and the teal on the family sheet; G_ref +14 dB or unity; R1 – R8
+(index writer, engine table, waiting for `Loaded` before renders); the x42 null and blends by ear; a
+bundled smoke test in REAPER / the Golem Engine (`check-block-stall`).
 
 ## 1. State of the art
 

@@ -1785,6 +1785,78 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-cab": [
+      {
+        "id": "irs",
+        "name": "IRs",
+        "custom": null,
+        "params": [
+          "ir_a",
+          "ir_b",
+          "level_a",
+          "level_b",
+          "polarity_b",
+          "delay_b"
+        ]
+      },
+      {
+        "id": "shape",
+        "name": "Shape",
+        "custom": null,
+        "params": [
+          "length",
+          "fade",
+          "normalize",
+          "min_phase",
+          "lowcut_slope",
+          "highcut_slope"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "dry",
+          "bass_keep",
+          "stereo",
+          "bypass"
+        ]
+      }
+    ],
+    "gfx-irfx": [
+      {
+        "id": "ir",
+        "name": "IR",
+        "custom": null,
+        "params": [
+          "ir_a",
+          "length",
+          "fade",
+          "normalize",
+          "reverse"
+        ]
+      },
+      {
+        "id": "tone",
+        "name": "Tone",
+        "custom": null,
+        "params": [
+          "lowcut",
+          "lowcut_slope",
+          "highcut_slope",
+          "width"
+        ]
+      },
+      {
+        "id": "routing",
+        "name": "Routing",
+        "custom": null,
+        "params": [
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
