@@ -1,0 +1,463 @@
+{
+ "crate": "gfx-correct",
+ "presets": [
+  {
+   "id": "transparent-live",
+   "type": "pitch-correct",
+   "name": "Transparent live",
+   "desc": "Steady pitch pulled 80 % onto the note; vibrato, bends and far-off notes left as sung; Live latency",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": true,
+   "params": {
+    "corr": 0.8,
+    "filter": 0.15,
+    "transition": 40,
+    "vibrato": 100,
+    "flex": 40,
+    "fastmode": true
+   },
+   "notes": "The design's transparent setting (README §4): golem's default use; the song key is applied by golem when the scale is not Chromatic"
+  },
+  {
+   "id": "live-natural",
+   "type": "pitch-correct",
+   "name": "Live natural",
+   "desc": "Fast but not instant help on held notes (84 %, 33 ms): x42's own Live preset",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.84,
+    "filter": 0.033,
+    "fastmode": true
+   },
+   "notes": "x42-Autotune's factory Live preset (corr 0.84, filter 0.033), kept for golem users who knew it"
+  },
+  {
+   "id": "slightly-corrected",
+   "type": "pitch-correct",
+   "name": "Slightly corrected",
+   "desc": "A third of the pitch error removed, slowly: the singer's own pitch, a little steadier",
+   "inst": "voice",
+   "genres": [
+    "folk",
+    "rock",
+    "blues"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.33,
+    "filter": 0.0425,
+    "fastmode": true
+   },
+   "notes": "x42-Autotune's factory Slightly Corrected preset"
+  },
+  {
+   "id": "tight-pop",
+   "type": "pitch-correct",
+   "name": "Tight pop",
+   "desc": "Notes land fast on the key's scale, held notes stay human, vibrato kept",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.04,
+    "transition": 15,
+    "vibrato": 100,
+    "scale": "Major",
+    "fastmode": true
+   },
+   "notes": "Two times: transition 15 ms for the landing, filter 40 ms on the held note (README §3.5 re-voicing of golem's Tight pop)"
+  },
+  {
+   "id": "stair-step-robot",
+   "type": "pitch-correct",
+   "name": "Stair-step robot",
+   "desc": "Instant steps between the scale's notes, vibrato flattened: the 2000s hard-tune sound",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "pop",
+    "electronic"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Cher",
+     "song": "Believe",
+     "why": "the instant note steps that made hard tuning an effect",
+     "verified": false
+    },
+    {
+     "artist": "T-Pain",
+     "why": "the stair-step vocal used as the lead sound on every hook",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.0,
+    "transition": 0,
+    "vibrato": 0,
+    "hysteresis": 10,
+    "scale": "Minor",
+    "fastmode": true
+   },
+   "notes": "filter 0 and transition 0 are the robot; the minor scale and a short note hold keep the steps on the melody's notes"
+  },
+  {
+   "id": "hard-tune-keep-vibrato",
+   "type": "pitch-correct",
+   "name": "Hard tune, vibrato kept",
+   "desc": "Instant note steps while the singer's own vibrato rides on top of each note",
+   "inst": "voice",
+   "genres": [
+    "hip-hop",
+    "pop",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.0,
+    "transition": 0,
+    "vibrato": 100,
+    "fastmode": true
+   },
+   "notes": "The vibrato model splits the vibrato off once 2 – 3 of its cycles are heard; before that the first notes are flat"
+  },
+  {
+   "id": "vibrato-exaggerated",
+   "type": "pitch-correct",
+   "name": "Exaggerated vibrato",
+   "desc": "Locked notes with the singer's vibrato deepened to nearly twice its depth",
+   "inst": "voice",
+   "genres": [
+    "electronic",
+    "pop",
+    "experimental"
+   ],
+   "gain": "any",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.0,
+    "transition": 10,
+    "vibrato": 180,
+    "fastmode": true
+   },
+   "notes": "Above 100 % the fitted sinusoid is added, so the jitter is not deepened with it"
+  },
+  {
+   "id": "backing-lock",
+   "type": "pitch-correct",
+   "name": "Backing vocals lock",
+   "desc": "Unison and harmony lines pulled hard onto the notes so stacked voices lock together",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.02,
+    "transition": 30,
+    "vibrato": 50,
+    "fastmode": true
+   },
+   "notes": "Half the vibrato removed so stacked singers stop beating against each other"
+  },
+  {
+   "id": "blues-bends",
+   "type": "pitch-correct",
+   "name": "Blues bends kept",
+   "desc": "Held notes helped toward the minor pentatonic; bends and blue notes beyond 60 cents left alone",
+   "inst": "voice",
+   "genres": [
+    "blues",
+    "rnb",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.9,
+    "filter": 0.1,
+    "transition": 50,
+    "flex": 100,
+    "scale": "Minor Pentatonic",
+    "fastmode": true
+   },
+   "notes": "Flex 100 %: 15 cents off is pulled fully, 60 cents or more is a deliberate bend and stays"
+  },
+  {
+   "id": "sparse-scale-steady",
+   "type": "pitch-correct",
+   "name": "Sparse scale, steady",
+   "desc": "Pentatonic targets with a long note hold: an uncertain singer stays on the tune without hopping",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "folk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.1,
+    "transition": 40,
+    "hysteresis": 35,
+    "scale": "Major Pentatonic",
+    "fastmode": true
+   },
+   "notes": "Hysteresis 35 cents: the held note wins until the voice is 85 cents from it"
+  },
+  {
+   "id": "soprano-in-ears",
+   "type": "pitch-correct",
+   "name": "High voice, in-ears",
+   "desc": "Transparent correction for a high voice at the lowest latency (High register, 4.3 ms)",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "classical",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.8,
+    "filter": 0.15,
+    "transition": 40,
+    "vibrato": 100,
+    "flex": 40,
+    "register": "High",
+    "fastmode": true
+   },
+   "notes": "register High: 150 – 1,200 Hz, the Live latency falls to 4.3 ms; a setup parameter (changes the reported latency)"
+  },
+  {
+   "id": "studio-render",
+   "type": "pitch-correct",
+   "name": "Studio render",
+   "desc": "Every note corrected from its first cycle with the formants kept: for a recorded take",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rnb",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern"
+   ],
+   "default": false,
+   "params": {
+    "corr": 1.0,
+    "filter": 0.1,
+    "transition": 30,
+    "vibrato": 100,
+    "fastmode": false
+   },
+   "notes": "fastmode off = Studio (PSOLA, 26 ms in Mid): recalling it changes the reported latency, so keep it for renders, not live scenes"
+  },
+  {
+   "id": "capo-down-semitone",
+   "type": "pitch-correct",
+   "name": "Semitone down, formants kept",
+   "desc": "The whole voice a semitone lower with its vowels unchanged: a song moved down without retuning",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "folk",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": false,
+   "params": {
+    "corr": 0.0,
+    "offset": -1.0,
+    "formant_keep": true,
+    "fastmode": false
+   },
+   "notes": "Studio only keeps the formants in v1 (Live moves them 6 %); recalling it changes the reported latency"
+  },
+  {
+   "id": "fretless-cello",
+   "type": "pitch-correct",
+   "name": "Fretless and cello",
+   "desc": "Gentle intonation help for a fretless bass or a cello: low register, vibrato kept",
+   "inst": "bass",
+   "genres": [
+    "jazz",
+    "classical",
+    "folk"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.7,
+    "filter": 0.2,
+    "transition": 60,
+    "vibrato": 100,
+    "register": "Low"
+   },
+   "notes": "register Low reaches 60 Hz; its Live latency is 9.3 ms"
+  },
+  {
+   "id": "horns-and-strings",
+   "type": "pitch-correct",
+   "name": "Horns and strings",
+   "desc": "Light intonation help for trumpet, sax or violin; scoops and falls kept",
+   "inst": "any",
+   "genres": [
+    "jazz",
+    "classical",
+    "rnb"
+   ],
+   "gain": "any",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "corr": 0.6,
+    "filter": 0.2,
+    "transition": 40,
+    "flex": 60,
+    "vibrato": 100,
+    "fastmode": true
+   },
+   "notes": "Flex 60 %: scoops into the note are left, the held note is helped"
+  },
+  {
+   "id": "pitch-meter",
+   "type": "pitch-correct",
+   "name": "Pitch meter only",
+   "desc": "No correction: the block reads the sung note and its error for the singer's monitor",
+   "inst": "voice",
+   "genres": [
+    "pop",
+    "rock"
+   ],
+   "gain": "any",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": false,
+   "params": {
+    "corr": 0.0,
+    "fastmode": true
+   },
+   "notes": "Read the note and error meters; the output is the input delayed by the Live latency"
+  }
+ ]
+}

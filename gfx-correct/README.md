@@ -1,9 +1,19 @@
 # gfx-correct
 
-> **Status: DESIGNED** (2026-11-14, design only, no code). Design by Claude Opus 5.5, reviewed by Claude
-> Fable 5.2 on 2026-11-14 (see the Review section at the end). It uses gfx-dsp `psola` (gfx-golem's epoch
-> tracker and PSOLA, moved there with gfx-formant: one module, one API) and adds one shifter to gfx-dsp
-> `pitch`, `PeriodShifter` (§2.5). Live formant correction is staged on gfx-formant's `specenv` (§2.6).
+> **Status: CODED** (v0.1.0, 2026-11-15). Designed 2026-11-14 by Claude Opus 5.5, reviewed by Claude
+> Fable 5.2 (Review section), decided by Raph (end of file), coded as reviewed with the deviations listed
+> in "As coded". gfx-golem's epoch tracker moved to gfx-dsp `psola` (gfx-golem byte-identical before and
+> after, 54 renders) with the new fixed-delay `Reader`; gfx-dsp `pitch` gained `PeriodShifter`.
+>
+> - **Live** (default): latency 9.3 / 6.6 / 4.3 ms (Low / Mid / High); a 220 Hz note sung 40 ¢ flat is
+>   within 10 ¢ 24.9 ms after its onset; a ±50 ¢ 6 Hz vibrato keeps 13.3 % of its depth at `vibrato` 0 %
+>   and 99.0 % (centre +1.6 ¢) at 100 %. **Studio**: 37.3 / 26.2 / 17.3 ms, the first cycles of a note
+>   after silence within 0.4 ¢ of the target, vibrato 1.0 % / 98.9 %.
+> - The identity (corr 0, offset 0) is exact in both modes, voiced or not, and again after the Live head's
+>   re-centring; a midpoint vibrato of ±60 / ±100 ¢ flips the target 3 times before the model engages,
+>   never after; jitter 0.78 × the input's at `filter` 0 (Live), 0.89 × (Studio).
+> - 15 behaviour tests, bench 28 / 28 at 44.1 – 192 kHz; CPU 55 ns / sample mono (0.26 % of a core),
+>   64 ns stereo. Raph's sung phrase in E minor, hard settings: mean distance to the scale 44 → 7 – 9 ¢.
 
 golem's **pitch correction** for voice and mono instruments: it hears the note sung, chooses the note
 it should be, and moves the voice there, as hard as a robot or as gently as a good singer on a good day.
@@ -657,3 +667,79 @@ Still open:
 - **Song key**: `pitch-correct` follows golem's song key (`song_key_of`), never over Chromatic.
 - **Studio latency** 17.3 / 26.2 / 37.3 ms (Low / Mid / High `register`) is accepted.
 - `vibrato` stays 0 % by default until the bench passes on sung DIs (the trill case), then 100 %.
+
+## As coded (v0.1.0, 2026-11-15)
+
+**Files.**
+- gfx-dsp `psola.rs` (new): `Tracker` (gfx-golem's history, detector, octave rejection, voicing gate and
+  epoch tracker, moved without an arithmetic change; plus `predicted_next`, `set_detector_range` and the
+  optional backward seeding), `Reader` (the fixed-delay streaming reader of §2.7 / gfx-formant §2.3),
+  `REGISTERS`, `voicing_thresholds`, `level_norm`, `hermite`, `Events`. 4 unit tests (marks, seeding,
+  identity through an unvoiced burst, a +2 st shift).
+- gfx-dsp `pitch.rs`: `PeriodShifter` (§2.5). 1 unit test (identity, ±1 / +0.5 st within 2 ¢, re-centred
+  identity).
+- gfx-golem `src/lib.rs`: uses `psola::Tracker`; its overlap-add writer and scheduler stay in the crate.
+  **Bit-exact null**: 54 renders made before the move (guitar DIs lead, lead-clean, clean; the sung
+  phrase at 44.1, 48 and 96 kHz; default, −24, a free interval with formant +4, formant −4 with a second
+  voice, harmony, register Low with humanize and fine, register High with formant link and glide,
+  filters and gate settings, stereo in blocks of 97) are byte-identical after it. Its 7 tests and bench
+  (28 / 28) are green.
+- `src/lib.rs` (the processor `Correct`, `PARAMS`, `SCALE_NAMES`, `latency_samples`, `allowed_notes`),
+  `src/plugin.rs` (VST3 class `GoleMFxCorrect01`, mono 1 / 1 then 2 / 2, latency reported and updated
+  on a setup change, `bypass` = `make_bypass`, meters `state`, `note`, `error`), `src/tests.rs` (15
+  tests).
+- `presets/gfx-correct.json`: 16 presets (§4, plus x42's *Live* and *Slightly Corrected*).
+
+**Measured** (synthetic /a/ of §5, 48 kHz; the output's pitch read by the same epoch tracker).
+
+| §5 row | Bound | Measured |
+|---|---|---|
+| Latency | Live ≤ 9.3 ms; ±1 sample | Live 448 / 315 / 208 samples (9.33 / 6.56 / 4.33 ms), Studio 1,792 / 1,259 / 832 (37.3 / 26.2 / 17.3 ms); the bench measures = reported at 44.1 – 192 kHz |
+| Identity | ≤ −60 dB Live, −45 dB Studio | exact (max error < 1e-5, f32 rounding) in both modes, three registers, vibrato voice → noise → voice |
+| Re-centre (Live) | delayed by C ±1 sample 20 ms after the voicing closes | exact (bit for bit) from 77 ms after the voice ends: YIN's last frames + the 30 ms hold, then the 30 ms weight ramp (§2.2) to g_v = 0, then the 5 ms move (§2.5). About 35 ms after the gate closes: the spec's own 30 ms ramp precedes the move, so its 20 ms cannot hold |
+| Snap | ±3 ¢ | passes, both modes (+35 ¢ off A3) |
+| Laws | `corr` 0.5 removes 50 ± 3 %; τ = `filter` ±10 % | passes both modes; the remaining error after τ is e^−1 ± 0.1 |
+| Vibrato kept | centre ±3 ¢, depth ±10 % | Live +1.6 ¢ / 99.0 %; Studio +0.6 ¢ / 98.9 % (±50 ¢, 6 Hz, note 20 ¢ off) |
+| Vibrato removed | ≤ 15 % Live 220 Hz, ≤ 5 % Studio | Live 13.3 %, Studio 1.0 % |
+| No warble | ≤ 6 flips in the first 0.6 s, none after | ±60 and ±100 ¢ on a midpoint: 3 and 3, none after |
+| Jitter | ≤ 1.25 × (Live, filter 0), ≤ 1.05 × (filter ≥ 20 ms, Studio) | 0.78 ×, 0.99 ×, 0.89 × (0.7 % cycle jitter, 9.5 ¢ rms cycle to cycle) |
+| Scale / mask | steps on the scale; mask ∩ scale both paths; all off = none | passes (unit rows + the identity with every mask bit off) |
+| Hysteresis | switch at 50 + `hysteresis` ¢ | held at +72 ¢, switched at +74 ¢ (23 ¢) |
+| Flex | 15 ¢ removed ≥ 90 %, 70 ¢ ≤ 10 % | passes |
+| Level | ±0.5 dB to ±1 st | +0.00 dB Live, +0.17 dB Studio (+1.45 st) |
+| Bleed | offset only | exact delayed input, `state` 2 |
+| Onset (Live) | within 10 ¢ ≤ 25 ms (220 Hz, Mid) | 24.9 ms |
+| Onset (Studio) | first cycle within 5 ¢ | first three cycles within 0.4 ¢ (220 Hz and 101 Hz, after silence) |
+| Determinism, stereo | strict | bit-identical; stereo L = R = mono |
+| CPU | ≤ 1 % Live, ≤ 1.5 % Studio | Live 55 ns / sample (0.26 %), 64 ns stereo (bench); Studio renders of the 27 s sung phrase take the same time as Live (≤ 100 ns / sample with file I/O) |
+| gfx-golem | strict null after the move | byte-identical, 54 renders |
+
+**Deviations from the spec, and why.**
+- **YIN's input** is the tracker's (gfx-golem's), with no extra 50 Hz high-pass: the tracker is shared and
+  bit-exact for gfx-golem. The 1 kHz marker low-pass is the tracker's own.
+- **Epoch guard**: the tracker keeps gfx-golem's rule (a measured period counts only within 30 % of
+  YIN's; the period is pulled 5 % per mark toward YIN's), and a cycle pitch more than 30 % off the
+  smoothed period is not given to the correction. No separate re-seed.
+- **Studio cycle pitch**: the mean of the last three cycles (two in the register's lowest 15 %), stamped
+  at its centre; with the control timeline every value meets its audio exactly. A voiced onset is
+  back-dated: the correction weight ramps over the 10 ms before the first (backward-seeded) epoch, so the
+  first cycle plays corrected.
+- **Control timeline** (not in the spec's words, its intent): each control value carries the input time
+  it describes; Live reads it at t − C (the "control delayed to meet its audio"), Studio's reader asks
+  each grain's source cycle for its ratio.
+- **Live splice search** runs on the full-rate analysis line with a ~12 kHz step, then ±2 samples at the
+  full rate and a parabola (same result as a separate decimated copy, one buffer less).
+- **Studio level**: per-grain gain 1 (the pulse amplitude kept), not `level_norm`: +0.17 dB at +1.45 st.
+- **Studio `formant_keep` off** reads the grains at α = r from the plain history: no anti-alias copy
+  (α ≤ 1.26 at the largest shift, images above 19 kHz at 48 kHz).
+- **Plugin display**: `corr` is shown as a fraction and `filter` in seconds (the catalogue's own units),
+  not % / ms, so golem's descriptors and the host agree.
+- **psola `Reader`**: a grain starts when its known left half begins (else 1.3 periods ahead): starting
+  early costs nothing, so the predicted mark is committed only when the next epoch is genuinely late. A
+  gap between marks (the voice's return after freewheeling, a note under the floor) is bridged by evenly
+  spaced committed marks.
+
+**Not measured yet** (need sung DIs, x42 renders or more synthetic rows): A / B against x42, Formants
+(envelope peaks in Studio), Breathy, Octave errors, Wide leap, Note under vibrato, Not a vibrato (the
+semitone trill), Scoop, Changes, Splices residue. The vibrato model's thresholds and the onset-phase end
+are the prototype's values (§2.3, §2.4), to set on sung DIs (Monday's session).

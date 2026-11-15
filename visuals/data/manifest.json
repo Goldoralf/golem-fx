@@ -1018,6 +1018,36 @@
       {"id": "highcut_slope", "name": "High Cut Slope", "kind": "enum", "min": 0, "max": 1, "default": 0, "options": 2},
       {"id": "trails", "name": "Trails", "kind": "bool", "min": 0, "max": 1, "default": 1},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-correct": [
+      {"id": "corr", "name": "Correction", "kind": "float", "min": 0, "max": 1, "default": 1, "exp": true},
+      {"id": "filter", "name": "Filter", "kind": "float", "min": 0, "max": 1, "default": 0.1},
+      {"id": "transition", "name": "Transition", "kind": "float", "min": 0, "max": 500, "default": 0},
+      {"id": "vibrato", "name": "Vibrato", "kind": "float", "min": 0, "max": 200, "default": 0, "exp": true},
+      {"id": "key", "name": "Key", "kind": "enum", "min": 0, "max": 11, "default": 0, "options": 12},
+      {"id": "scale", "name": "Scale", "kind": "enum", "min": 0, "max": 10, "default": 0, "options": 11},
+      {"id": "fastmode", "name": "Fast Correction", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "offset", "name": "Offset", "kind": "float", "min": -2, "max": 2, "default": 0, "exp": true},
+      {"id": "flex", "name": "Flex", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "hysteresis", "name": "Note Hold", "kind": "float", "min": 0, "max": 50, "default": 23},
+      {"id": "formant_keep", "name": "Formant Keep", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "register", "name": "Register", "kind": "enum", "min": 0, "max": 2, "default": 1, "options": 3},
+      {"id": "reference", "name": "Reference", "kind": "float", "min": 400, "max": 480, "default": 440},
+      {"id": "sens", "name": "Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "thresh", "name": "Threshold", "kind": "float", "min": -90, "max": 0, "default": -50},
+      {"id": "m00", "name": "C", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m01", "name": "C#", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m02", "name": "D", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m03", "name": "D#", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m04", "name": "E", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m05", "name": "F", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m06", "name": "F#", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m07", "name": "G", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m08", "name": "G#", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m09", "name": "A", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m10", "name": "A#", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "m11", "name": "B", "kind": "bool", "min": 0, "max": 1, "default": 1},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

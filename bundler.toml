@@ -128,3 +128,5 @@ name = "GoleM FX Cab"
 
 [gfx-irfx]
 name = "GoleM FX IR FX"
+[gfx-correct]
+name = "GoleM FX Correct"

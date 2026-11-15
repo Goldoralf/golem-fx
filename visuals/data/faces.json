@@ -761,6 +761,24 @@
     "trails"
    ],
    "category": "reverb"
+  },
+  "gfx-correct": {
+   "name": "Correct",
+   "blocks": [
+    "pitch-correct"
+   ],
+   "knobs": [
+    "corr",
+    "filter",
+    "transition",
+    "vibrato"
+   ],
+   "selectors": [
+    "key",
+    "scale"
+   ],
+   "category": "pitch",
+   "color": "#7a1450"
   }
  }
 }

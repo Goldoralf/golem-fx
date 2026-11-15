@@ -40,6 +40,7 @@ pub mod oversample;
 pub mod pickup;
 pub mod pitch;
 pub mod pot;
+pub mod psola;
 pub mod reverb;
 pub mod sidechain;
 pub mod smooth;

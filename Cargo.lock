@@ -297,6 +297,7 @@ dependencies = [
  "gfx-cab",
  "gfx-chorus",
  "gfx-comp",
+ "gfx-correct",
  "gfx-crusher",
  "gfx-deesser",
  "gfx-delay",
@@ -368,6 +369,14 @@ dependencies = [
 
 [[package]]
 name = "gfx-comp"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
+]
+
+[[package]]
+name = "gfx-correct"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",

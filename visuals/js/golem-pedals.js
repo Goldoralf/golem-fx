@@ -364,10 +364,13 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // motif alone; no other pedal is copper)
     'gfx-fuzz': '#b0602a',
     // deep scope green: separated from gfx-glitch's lime and modulation's green by lightness (L* 40)
-    'gfx-tuner': '#126e1c' };
+    'gfx-tuner': '#126e1c',
+    // deep plum: a darker sister of the pitch family's magenta (gfx-correct's review: ΔE00 16 from it,
+    // 20.6 from preamp violet); it sits beside gfx-formant on a voice lane
+    'gfx-correct': '#7a1450' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -392,6 +395,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-tuner': 'strobe',
     'gfx-cab': 'cone',
     'gfx-irfx': 'impulse',
+    'gfx-correct': 'staff',
   };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
@@ -399,7 +403,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -486,6 +490,26 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
           }
         });
         break;
+      case 'staff': {
+        // five engraved staff lines across the face; on the left a free-hand pitch trace wanders between
+        // them with a small vibrato (60 %), on the right it rests on lines and spaces, joined by risers
+        const gap = ch * .3, ys = [-2, -1, 0, 1, 2].map(k => cy + k * gap);
+        ys.forEach(y => line(`M0 ${f1(y)}H${W}`, .45));
+        let d = '';
+        for (let x = 0; x <= W / 2 + .01; x += 2) {
+          const y = cy + gap * (1.1 * Math.sin(x / W * 5.2) - .5 * Math.sin(x / W * 11 + 1)) + .9 * Math.sin(x / 2.6);
+          d += (d ? 'L' : 'M') + f1(x) + ' ' + f1(y);
+        }
+        line(d, .6);
+        const steps = [.5, -1, 0, 1.5, .5], sw = (W / 2) / steps.length;
+        let q = `M${f1(W / 2)} ${f1(cy + steps[0] * gap)}`;
+        steps.forEach((k, i) => {
+          if (i) q += `V${f1(cy + k * gap)}`;
+          q += `H${f1(W / 2 + (i + 1) * sw)}`;
+        });
+        line(q);
+        break;
+      }
       case 'curve':
         for (let i = 1; i < 8; i++) line(`M${f1(W * i / 8)} ${f1(cy - ch)}V${f1(cy + ch)}`, .35);
         line(`M0 ${f1(cy + ch * .7)}C${f1(W * .18)} ${f1(cy + ch * .7)} ${f1(W * .18)} ${f1(cy - ch * .95)} ${f1(W * .35)} ${f1(cy - ch * .95)}` +
