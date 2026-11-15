@@ -90,4 +90,12 @@ pub trait Effect: Send {
     /// Processes in place. `buffers.len()` is the channel count given to `prepare`; every slice has
     /// the same length, at most `max_block`.
     fn process(&mut self, buffers: &mut [&mut [f32]]);
+
+    /// Processes in place with a key (sidechain) signal: the auxiliary bus's channels (1 or 2), each
+    /// as long as the main buffers; `None` when no key is connected. Effects without a key input
+    /// ignore it: the default is `process`, so nothing changes for them.
+    fn process_with_key(&mut self, buffers: &mut [&mut [f32]], key: Option<&[&[f32]]>) {
+        let _ = key;
+        self.process(buffers);
+    }
 }

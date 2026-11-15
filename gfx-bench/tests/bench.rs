@@ -12,8 +12,8 @@ fn catches_a_click() {
 
 #[test]
 fn catches_unreported_latency_and_dirty_reset() {
-    assert!(!checks::latency("_sloppy", 48000.0).pass);
-    assert!(!checks::determinism("_sloppy", 48000.0).pass);
+    assert!(!checks::latency("_sloppy", 48000.0, &Options::default()).pass);
+    assert!(!checks::determinism("_sloppy", 48000.0, &Options::default()).pass);
 }
 
 #[test]

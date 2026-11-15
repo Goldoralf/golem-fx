@@ -635,6 +635,26 @@
     "ceil_mode"
    ],
    "category": "dynamics"
+  },
+  "gfx-ducker": {
+   "name": "Duck",
+   "blocks": [
+    "ducker"
+   ],
+   "knobs": [
+    "thresh",
+    "depth",
+    "hold",
+    "release"
+   ],
+   "selectors": [
+    "mode",
+    "shape"
+   ],
+   "toggles": [
+    "force"
+   ],
+   "category": "dynamics"
   }
  }
 }

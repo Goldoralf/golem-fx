@@ -391,6 +391,11 @@ impl Effect for Met {
     fn process(&mut self, buffers: &mut [&mut [f32]]) {
         self.process_with_key(buffers, None);
     }
+
+    /// The key bus (gfx-bench drives it through the trait): the inherent `process_with_key`.
+    fn process_with_key(&mut self, buffers: &mut [&mut [f32]], key: Option<&[&[f32]]>) {
+        Met::process_with_key(self, buffers, key);
+    }
 }
 
 #[cfg(test)]

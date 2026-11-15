@@ -832,6 +832,32 @@
       {"id": "listen", "name": "Listen", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "delta", "name": "Delta", "kind": "bool", "min": 0, "max": 1, "default": 0},
       {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
+    ],
+    "gfx-ducker": [
+      {"id": "mode", "name": "Mode", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "thresh", "name": "Threshold", "kind": "float", "min": -90, "max": 0, "default": -40},
+      {"id": "depth", "name": "Depth", "kind": "float", "min": 0, "max": 60, "default": 12, "exp": true},
+      {"id": "attack", "name": "Attack", "kind": "float", "min": 0.5, "max": 500, "default": 10},
+      {"id": "hold", "name": "Hold", "kind": "float", "min": 0, "max": 2000, "default": 150},
+      {"id": "release", "name": "Release", "kind": "float", "min": 10, "max": 5000, "default": 400},
+      {"id": "shape", "name": "Band", "kind": "enum", "min": 0, "max": 4, "default": 0, "options": 5},
+      {"id": "hpf", "name": "Key Low Cut", "kind": "float", "min": 0, "max": 2000, "default": 0},
+      {"id": "lpf", "name": "Key High Cut", "kind": "float", "min": 100, "max": 22000, "default": 22000},
+      {"id": "knee", "name": "Knee", "kind": "float", "min": 0, "max": 24, "default": 6},
+      {"id": "hyst", "name": "Hysteresis", "kind": "float", "min": -24, "max": 0, "default": -3},
+      {"id": "freq", "name": "Band Frequency", "kind": "float", "min": 40, "max": 12000, "default": 1000, "exp": true},
+      {"id": "width", "name": "Band Width", "kind": "float", "min": 0.3, "max": 4, "default": 2},
+      {"id": "spread", "name": "Spectral Spread", "kind": "float", "min": 3, "max": 30, "default": 12},
+      {"id": "sync", "name": "Sync", "kind": "enum", "min": 0, "max": 16, "default": 7, "options": 17},
+      {"id": "length", "name": "Dip Length", "kind": "float", "min": 10, "max": 100, "default": 75},
+      {"id": "tension", "name": "Recovery Tension", "kind": "float", "min": -100, "max": 100, "default": 0},
+      {"id": "offset", "name": "Beat Offset", "kind": "float", "min": 0, "max": 100, "default": 0},
+      {"id": "sens", "name": "Trigger Sensitivity", "kind": "float", "min": 0, "max": 100, "default": 50},
+      {"id": "stereo", "name": "Stereo", "kind": "enum", "min": 0, "max": 2, "default": 0, "options": 3},
+      {"id": "lookahead", "name": "Lookahead", "kind": "enum", "min": 0, "max": 3, "default": 0, "options": 4},
+      {"id": "force", "name": "Duck Now", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "listen", "name": "Listen", "kind": "bool", "min": 0, "max": 1, "default": 0},
+      {"id": "bypass", "name": "Bypass", "kind": "bool", "min": 0, "max": 1, "default": 0}
     ]
   }
 }

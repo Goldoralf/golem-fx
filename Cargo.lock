@@ -255,6 +255,7 @@ dependencies = [
  "gfx-dist",
  "gfx-drive",
  "gfx-dsp",
+ "gfx-ducker",
  "gfx-emet",
  "gfx-eq",
  "gfx-flanger",
@@ -364,6 +365,14 @@ name = "gfx-dsp"
 version = "0.1.0"
 dependencies = [
  "realfft",
+]
+
+[[package]]
+name = "gfx-ducker"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "nih_plug",
 ]
 
 [[package]]

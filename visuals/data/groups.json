@@ -1661,6 +1661,60 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-ducker": [
+      {
+        "id": "envelope",
+        "name": "Envelope",
+        "custom": null,
+        "params": [
+          "attack"
+        ]
+      },
+      {
+        "id": "key",
+        "name": "Key",
+        "custom": null,
+        "params": [
+          "hpf",
+          "lpf",
+          "knee",
+          "hyst",
+          "listen"
+        ]
+      },
+      {
+        "id": "band",
+        "name": "Band",
+        "custom": null,
+        "params": [
+          "freq",
+          "width",
+          "spread",
+          "stereo"
+        ]
+      },
+      {
+        "id": "rhythm",
+        "name": "Rhythm",
+        "custom": null,
+        "params": [
+          "sync",
+          "length",
+          "tension",
+          "offset",
+          "sens"
+        ]
+      },
+      {
+        "id": "setup",
+        "name": "Setup",
+        "custom": null,
+        "params": [
+          "lookahead",
+          "bypass"
+        ]
+      }
     ]
   },
   "help": {
@@ -2200,6 +2254,24 @@
       "hp": {
         "param": "circuit",
         "equals": "MOSFET OD"
+      }
+    },
+    "gfx-ducker": {
+      "width": {
+        "param": "shape",
+        "equals": "Bell"
+      },
+      "spread": {
+        "param": "shape",
+        "equals": "Spectral"
+      },
+      "sens": {
+        "param": "mode",
+        "equals": "Trigger"
+      },
+      "offset": {
+        "param": "mode",
+        "equals": "Pump"
       }
     }
   }

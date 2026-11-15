@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //! The measurements common to every effect (README.md §4).
 
-use crate::{fresh, render, signals};
+use crate::{fresh, render_with_key, signals};
 use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::util::FtzGuard;
 use gfx_dsp::ParamKind;
@@ -42,12 +42,27 @@ pub struct Options {
     pub step_exempt: Vec<(&'static str, f32)>,
     /// Parameters the parameter-step check leaves out (a setup-only latency change, a trigger).
     pub skip_steps: Vec<&'static str>,
+    /// A key (sidechain) signal, (length, sample rate) → mono key, given to every check through
+    /// `Effect::process_with_key`: a keyed effect without a key may be the identity (gfx-ducker).
+    pub key: Option<fn(usize, f32) -> Vec<f32>>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, step_exempt: Vec::new(), skip_steps: Vec::new() }
+        Self { click_bound_db: -50.0, silence_floor_db: -140.0, stereo_by_nature: false, sample_rates: SAMPLE_RATES.to_vec(), skip_latency: false, step_exempt: Vec::new(), skip_steps: Vec::new(), key: None }
     }
+}
+
+/// The key for `n` samples, if the effect takes one.
+fn key_for(opts: &Options, n: usize, sr: f32) -> Option<Vec<Vec<f32>>> {
+    opts.key.map(|k| vec![k(n, sr)])
+}
+
+/// Renders with the options' key (if any).
+fn run(e: &mut dyn gfx_dsp::Effect, input: &[Vec<f32>], opts: &Options, sr: f32, block: usize) -> Vec<Vec<f32>> {
+    let n = input.first().map_or(0, |c| c.len());
+    let key = key_for(opts, n, sr);
+    render_with_key(e, input, key.as_deref(), block)
 }
 
 fn max_abs_diff(a: &[Vec<f32>], b: &[Vec<f32>]) -> f32 {
@@ -76,11 +91,11 @@ fn highpass4(x: &[f32], fc: f32, sr: f32) -> Vec<f32> {
 
 /// Latency by cross-correlation of noise in and out (an impulse would be shaped by gates and
 /// envelopes): the lag of the correlation peak, over the second half of a 1 s pink-noise render.
-pub fn latency(name: &str, sr: f32) -> CheckResult {
+pub fn latency(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let mut e = fresh(name, sr, 1, 512);
     let n = sr as usize;
     let x = signals::pink(n, 0.1, 17);
-    let y = render(e.as_mut(), std::slice::from_ref(&x), 512);
+    let y = run(e.as_mut(), std::slice::from_ref(&x), opts, sr, 512);
     let reported = e.latency();
     let from = n / 2;
     let max_lag = 4096.min(n / 4);
@@ -102,27 +117,27 @@ pub fn latency(name: &str, sr: f32) -> CheckResult {
     CheckResult::new("latency", sr, pass, format!("measured {best_lag} samples, reported {reported}"))
 }
 
-pub fn determinism(name: &str, sr: f32) -> CheckResult {
+pub fn determinism(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let x = vec![signals::pink((sr * 2.0) as usize, 0.1, 7)];
     let mut a = fresh(name, sr, 1, 512);
     let mut b = fresh(name, sr, 1, 512);
-    let ya = render(a.as_mut(), &x, 512);
-    let yb = render(b.as_mut(), &x, 512);
+    let ya = run(a.as_mut(), &x, opts, sr, 512);
+    let yb = run(b.as_mut(), &x, opts, sr, 512);
     // and after reset() of a used instance
     a.reset();
-    let yc = render(a.as_mut(), &x, 512);
+    let yc = run(a.as_mut(), &x, opts, sr, 512);
     let pass = ya == yb && ya == yc;
     CheckResult::new("determinism", sr, pass, if pass { "bit-identical (fresh ×2, after reset)".into() } else { format!("max diff {:.3e}", max_abs_diff(&ya, &yb).max(max_abs_diff(&ya, &yc))) })
 }
 
-pub fn block_size(name: &str, sr: f32) -> CheckResult {
+pub fn block_size(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let x = vec![signals::pink(sr as usize, 0.1, 11)];
     let mut r = fresh(name, sr, 1, 4096);
-    let reference = render(r.as_mut(), &x, 512);
+    let reference = run(r.as_mut(), &x, opts, sr, 512);
     let mut worst = 0.0f32;
     for b in [1usize, 32, 64, 4096] {
         let mut e = fresh(name, sr, 1, 4096);
-        worst = worst.max(max_abs_diff(&reference, &render(e.as_mut(), &x, b)));
+        worst = worst.max(max_abs_diff(&reference, &run(e.as_mut(), &x, opts, sr, b)));
     }
     let pass = worst <= 1e-6;
     CheckResult::new("block size", sr, pass, format!("max diff {:.1} dB (blocks 1, 32, 64, 512, 4096)", db(worst)))
@@ -136,13 +151,17 @@ pub fn silence(name: &str, sr: f32, opts: &Options) -> CheckResult {
     // time the first and the last silent second
     let mut out = x.clone();
     let n = out[0].len();
+    let key = key_for(opts, n, sr);
     let sec = sr as usize;
     let mut times = (0.0f64, 0.0f64);
     let mut start = 0;
     while start < n {
         let end = (start + 512).min(n);
         let t = Instant::now();
-        e.process(&mut [&mut out[0][start..end]]);
+        match &key {
+            Some(k) => e.process_with_key(&mut [&mut out[0][start..end]], Some(&[&k[0][start..end]])),
+            None => e.process(&mut [&mut out[0][start..end]]),
+        }
         let dt = t.elapsed().as_secs_f64();
         if start >= burst && start < burst + sec {
             times.0 += dt;
@@ -170,7 +189,7 @@ pub fn silence(name: &str, sr: f32, opts: &Options) -> CheckResult {
     )
 }
 
-pub fn extremes(name: &str, sr: f32) -> CheckResult {
+pub fn extremes(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let params = fresh(name, sr, 1, 512).params();
     let x = vec![signals::white((sr * 0.5) as usize, 4.0, 5)];
     let mut worst = String::new();
@@ -180,7 +199,7 @@ pub fn extremes(name: &str, sr: f32) -> CheckResult {
             let mut e = fresh(name, sr, 1, 512);
             e.set_param(p.id, v);
             e.reset();
-            let y = render(e.as_mut(), &x, 512);
+            let y = run(e.as_mut(), &x, opts, sr, 512);
             let ok = y[0].iter().all(|s| s.is_finite() && s.abs() < 1e3);
             if !ok {
                 pass = false;
@@ -195,6 +214,7 @@ pub fn param_steps(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let params = fresh(name, sr, 1, 512).params();
     let n = sr as usize;
     let x = vec![signals::sine(n, 1000.0, 0.25, sr)];
+    let key = key_for(opts, n, sr);
     let fc = 10000.0f32.min(sr * 0.4);
     let mut worst = (f32::MIN, String::new());
     for p in params.iter().filter(|p| !opts.skip_steps.contains(&p.id)) {
@@ -209,9 +229,19 @@ pub fn param_steps(name: &str, sr: f32, opts: &Options) -> CheckResult {
             let half = n / 2;
             {
                 let (a, b) = y[0].split_at_mut(half);
-                e.process(&mut [a]);
-                e.set_param(p.id, to);
-                e.process(&mut [b]);
+                match &key {
+                    Some(k) => {
+                        let (ka, kb) = k[0].split_at(half);
+                        e.process_with_key(&mut [a], Some(&[ka]));
+                        e.set_param(p.id, to);
+                        e.process_with_key(&mut [b], Some(&[kb]));
+                    }
+                    None => {
+                        e.process(&mut [a]);
+                        e.set_param(p.id, to);
+                        e.process(&mut [b]);
+                    }
+                }
             }
             let out_peak = peak(&y[0]);
             if out_peak < 1e-6 {
@@ -243,23 +273,27 @@ pub fn mono_stereo(name: &str, sr: f32, opts: &Options) -> CheckResult {
     let x = signals::pink(sr as usize / 2, 0.1, 9);
     let mut m = fresh(name, sr, 1, 512);
     let mut s = fresh(name, sr, 2, 512);
-    let ym = render(m.as_mut(), std::slice::from_ref(&x), 512);
-    let ys = render(s.as_mut(), &[x.clone(), x], 512);
+    let ym = run(m.as_mut(), std::slice::from_ref(&x), opts, sr, 512);
+    let ys = run(s.as_mut(), &[x.clone(), x], opts, sr, 512);
     let d = max_abs_diff(&[ym[0].clone(), ym[0].clone()], &ys);
     CheckResult::new("mono / stereo", sr, d <= 1e-7, format!("max diff L/R vs mono {:.1} dB", db(d)))
 }
 
-/// CPU in ns per sample-frame (mono and stereo, blocks of 128, 10 s of noise at 48 kHz).
+/// CPU in ns per sample-frame (mono and stereo, blocks of 128, 10 s of noise at 48 kHz), with the
+/// effect's bench key if it has one.
 pub fn cpu(name: &str) -> (f64, f64) {
+    let opts = crate::options(name);
     let sr = 48000.0;
     let n = (sr * 10.0) as usize;
     let x = signals::pink(n, 0.1, 13);
+    // the key is made before the clock starts
+    let key = key_for(&opts, n, sr);
     let mut res = [0.0f64; 2];
     for (k, ch) in [1usize, 2].into_iter().enumerate() {
         let mut e = fresh(name, sr, ch, 128);
         let input: Vec<Vec<f32>> = (0..ch).map(|_| x.clone()).collect();
         let t = Instant::now();
-        let _ = render(e.as_mut(), &input, 128);
+        let _ = render_with_key(e.as_mut(), &input, key.as_deref(), 128);
         res[k] = t.elapsed().as_secs_f64() * 1e9 / n as f64;
     }
     (res[0], res[1])
@@ -273,12 +307,12 @@ pub fn run_all(name: &str, opts: &Options) -> Vec<CheckResult> {
         if opts.skip_latency {
             v.push(CheckResult::new("latency", sr, true, "resonant filter: no delay line, reported 0 (by construction)".into()));
         } else {
-            v.push(latency(name, sr));
+            v.push(latency(name, sr, opts));
         }
-        v.push(determinism(name, sr));
-        v.push(block_size(name, sr));
+        v.push(determinism(name, sr, opts));
+        v.push(block_size(name, sr, opts));
         v.push(silence(name, sr, opts));
-        v.push(extremes(name, sr));
+        v.push(extremes(name, sr, opts));
         v.push(param_steps(name, sr, opts));
         v.push(mono_stereo(name, sr, opts));
     }

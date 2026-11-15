@@ -12,7 +12,7 @@ pub mod wav;
 use gfx_dsp::Effect;
 
 /// Every effect the bench knows, by crate name.
-pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient"];
+pub const EFFECTS: &[&str] = &["gfx-boost", "gfx-gate", "gfx-comp", "gfx-limiter", "gfx-eq", "gfx-deesser", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-poly", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-ducker"];
 
 pub fn make(name: &str) -> Option<Box<dyn Effect>> {
     match name {
@@ -61,6 +61,7 @@ pub fn make(name: &str) -> Option<Box<dyn Effect>> {
         "gfx-grit" | "grit" => Some(Box::new(gfx_grit::Grit::new())),
         "gfx-dist" | "dist" => Some(Box::new(gfx_dist::Dist::new())),
         "gfx-transient" | "transient" => Some(Box::new(gfx_transient::Transient::new())),
+        "gfx-ducker" | "ducker" => Some(Box::new(gfx_ducker::Ducker::new())),
         // the bench's own faulty effects (selftest.rs)
         "_hard-gain" => Some(Box::new(selftest::HardGain::default())),
         "_sloppy" => Some(Box::new(selftest::Sloppy::default())),
@@ -141,6 +142,13 @@ pub fn options(name: &str) -> checks::Options {
     }
     if matches!(name, "gfx-transient" | "transient") {
         // `lookahead` changes the reported latency (setup only, README §2.6 and §5)
+        o.skip_steps = vec!["lookahead"];
+    }
+    if matches!(name, "gfx-ducker" | "ducker") {
+        // without a key a ducker is the identity and every check would pass trivially (README §2.10):
+        // the common checks run with a key that ducks and releases all the time
+        o.key = Some(signals::key_bursts);
+        // `lookahead` changes the reported latency (setup only, README §2.9 and §2.10)
         o.skip_steps = vec!["lookahead"];
     }
     if matches!(name, "gfx-ringmod" | "ringmod") {
@@ -268,6 +276,22 @@ pub fn render(effect: &mut dyn Effect, input: &[Vec<f32>], block: usize) -> Vec<
         let end = (start + block).min(n);
         let mut slices: Vec<&mut [f32]> = out.iter_mut().map(|c| &mut c[start..end]).collect();
         effect.process(&mut slices);
+        start = end;
+    }
+    out
+}
+
+/// Same, with a key (sidechain) signal: `key` holds the auxiliary bus's channels, as long as `input`.
+pub fn render_with_key(effect: &mut dyn Effect, input: &[Vec<f32>], key: Option<&[Vec<f32>]>, block: usize) -> Vec<Vec<f32>> {
+    let Some(key) = key else { return render(effect, input, block) };
+    let mut out: Vec<Vec<f32>> = input.to_vec();
+    let n = out.first().map_or(0, |c| c.len());
+    let mut start = 0;
+    while start < n {
+        let end = (start + block).min(n);
+        let mut slices: Vec<&mut [f32]> = out.iter_mut().map(|c| &mut c[start..end]).collect();
+        let k: Vec<&[f32]> = key.iter().map(|c| &c[start..end]).collect();
+        effect.process_with_key(&mut slices, Some(&k));
         start = end;
     }
     out
