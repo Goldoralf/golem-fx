@@ -64,6 +64,31 @@ for (const crate of Object.keys(D.gfx || {})) {
 for (const b of D.blocks || []) cases.push([`pedalFor ${b.type}`, P.pedalFor(b.type)]);
 for (const fam of Object.keys(P.AMP_LOOK)) cases.push([`namHead ${fam}`, P.namHead({ family: fam, title: 'Head' })], [`namStack ${fam}`, P.namStack({ family: fam, title: 'Stack' })]);
 
+// the rig by sections: every section and the card, on every floor, outboard as rack and on the board
+{
+  require(path.join(__dirname, '../js/golem-stage.js'));
+  require(path.join(__dirname, '../js/golem-rig.js'));
+  const R = window.GolemRig, S = window.GolemStage;
+  const rigs = {
+    split: S.fromGolem({ pre: [{ id: 'w', type: 'whammy-dt' }, { id: 't', type: 'tuner' }, { id: 'g', type: 'gate' }],
+      split: { mode: 'merge', gain: -3, branches: [
+        { id: 'a', blocks: [{ id: 'd', type: 'guitar-drive' }, { id: 'h', type: 'amp-nam', label: 'EVH 5150 III Stealth' }, { id: 'c', type: 'cab', label: 'Mesa 4x12 <V30>' }] },
+        { id: 'b', blocks: [{ id: 'h2', type: 'amp-nam', label: 'Peavey 5150 II' }, { id: 'c2', type: 'cab', label: '4x12' }, { id: 'e', type: 'eq' }] }] },
+      post: [{ id: 'o', type: 'comp-nam', label: 'UA 1176 <A&B>' }, { id: 'i', type: 'ir-fx', label: 'Tank Spring Reverb 3' }, { id: 'dl', type: 'delay' }, { id: 'r', type: 'rec' }] },
+    { blocks: { dl: false }, branches: { b: { mute: true } } }),
+    voice: ['deesser', 'comp', { type: 'preamp-nam', label: 'Neve 1073' }, 'golem-double', 'delay', 'reverb-shimmer', 'click', 'looper'],
+    combo: ['wah', 'eq-graphic', { type: 'midi-pedal', kind: 'floor-multi' }, { type: 'amp', family: 'clean', title: 'Twin', form: 'combo' }, 'reverb'],
+    empty: [],
+  };
+  for (const [name, chain] of Object.entries(rigs)) for (const outboard of ['rack', 'board']) for (const features of ['tab', 'hide', 'inline']) {
+    const secs = R.sections(chain, { outboard, features });
+    for (const floor of R.FLOORS) {
+      for (const s of secs) cases.push([`rig ${name} ${outboard} ${features} ${floor} ${s.key}`, R.render(s, { floor, outboard, seed: name })]);
+      if (secs.length) cases.push([`rig card ${name} ${outboard} ${features} ${floor}`, R.card(secs, { floor, outboard, seed: 7 })]);
+    }
+  }
+}
+
 let bad = 0;
 for (const [name, svg] of cases) { const e = check(svg); if (e.length) { bad++; console.log(`✗ ${name}: ${e.slice(0, 3).join('; ')}`); } }
 console.log(`${cases.length} drawings, ${bad} invalid`);

@@ -1,0 +1,140 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>golem rig</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&family=Pirata+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/visuals.css">
+<style>
+  .rig { margin: 30px 0 46px; }
+  .rig h2 { margin: 0 0 2px; font-size: 24px; }
+  .rig .meta { color: var(--muted); margin: 0 0 12px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 26px; align-items: start; }
+  @media (max-width: 1000px) { .cols { grid-template-columns: 1fr; } }
+  .tabs { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+  .tabs button { background: transparent; border: 0; border-right: 1px solid var(--line); padding: 8px 18px; cursor: pointer; color: var(--muted); font-weight: 600; }
+  .tabs button:last-child { border-right: 0; }
+  .tabs button[aria-pressed="true"] { background: var(--accent); color: #150c08; }
+  .tabs .n { font-weight: 400; opacity: .7; margin-left: 6px; }
+  .view { border-radius: 14px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, .35); background: #0d0b09; }
+  .view svg, .pcard svg { display: block; width: 100%; height: auto; }
+  .view [data-idx] { cursor: pointer; }
+  .chain { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 0 0; align-items: center; }
+  .chain .arrow { color: var(--muted); }
+  .chain .gp-tile { cursor: pointer; transition: opacity .15s; }
+  .chain .gp-tile.dim { opacity: .38; }
+  .side h3 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+  .pcard { width: 320px; max-width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .pcard .body { padding: 10px 14px 12px; }
+  .pcard .t { font-weight: 700; font-size: 17px; }
+  .pcard .m { color: var(--muted); font-size: 14px; }
+</style>
+<script src="data/visuals-data.js"></script>
+<script src="js/golem-pedals.js"></script>
+<script src="js/golem-stage.js"></script>
+<script src="js/golem-rig.js"></script>
+</head>
+<body>
+<div id="defs"></div>
+<div class="wrap">
+  <header class="top">
+    <h1>golem rig</h1>
+    <p>A lane cut into sections, each in its natural view: the pedals from above, the heads, cabs and outboard from the front (<code>GolemRig</code>). The tabs come from the chain. Under the scene, the chain in signal order: a tile opens its section. On the right, the fixed picture for a card. Click a block to switch it on or off, a branch's tape to mute it. <a href="index.html">All the pedals</a>.</p>
+  </header>
+  <div class="lane-bar">
+    <span><span class="seg-label">Floor</span><span class="seg" id="floor-seg"></span></span>
+    <span><span class="seg-label">Outboard</span><span class="seg" id="ob-seg"><button data-v="rack" aria-pressed="true">Rack</button><button data-v="board" aria-pressed="false">On the board</button></span></span>
+    <span><span class="seg-label">golem's devices</span><span class="seg" id="feat-seg"><button data-v="tab" aria-pressed="true">Own tab</button><button data-v="inline" aria-pressed="false">On the board</button><button data-v="hide" aria-pressed="false">Hidden</button></span></span>
+  </div>
+  <div id="out"></div>
+</div>
+<script>
+(function () {
+  const P = GolemPedals, S = GolemStage, D = GOLEM_VISUALS, R = GolemRig;
+  const $ = id => document.getElementById(id);
+  $('defs').innerHTML = P.defs();
+  const pedalArch = id => (D.archetypes.pedals || []).find(p => p.id === id);
+  const ampArch = id => (D.archetypes.amps || []).find(p => p.id === id) || {};
+  const RIGS = [
+    { name: 'Modern Metal', genre: 'Metal', meta: 'split, two amps', chain: S.fromGolem({
+      pre: [{ id: 'tuner', type: 'tuner' }, { id: 'whammy', type: 'whammy-dt' }, { id: 'gate', type: 'gate' }, { id: 'eq', type: 'eq' }],
+      split: { mode: 'merge', gain: -3, branches: [
+        { id: 'lane-a', blocks: [{ id: 'stealth', type: 'amp-nam', label: 'EVH 5150 III Stealth' }, { id: 'v30', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] },
+        { id: 'lane-b', blocks: [{ id: 'clean', type: 'amp-nam', label: 'Peavey 5150 II' }, { id: 'v30b', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] }] },
+      post: [{ id: 'boost', type: 'clean-boost' }, { id: 'kill', type: 'killswitch' }, { id: 'dly', type: 'delay' }, { id: 'verb', type: 'reverb-plate' }, { id: 'rec', type: 'rec' }],
+    }, { blocks: { boost: false } }) },
+    { name: 'Plexi Crunch', genre: 'Classic rock', meta: 'one amp, two outboard units', chain: [
+      'gate', { type: 'pedal-nam', archetype: pedalArch('tube-screamer') }, 'guitar-drive', 'wah', 'chorus',
+      { type: 'amp-nam', family: ampArch('plexi').family, title: ampArch('plexi').short }, { type: 'cab', title: '1960 4x12', size: '4x12', family: 'crunch' },
+      { type: 'comp-nam', label: 'UA 1176' }, { type: 'preamp-nam', label: 'Neve 1073' }, 'delay', 'reverb'] },
+    { name: 'Lead Vocal', genre: 'Indie pop', meta: 'no amp', chain: ['deesser', 'comp', 'eq', 'golem-double', 'delay', 'reverb-shimmer', 'click'] },
+    { name: 'Slapback', genre: 'Rockabilly', meta: 'a combo', chain: ['comp', 'tremolo', { type: 'amp', family: ampArch('twin-reverb').family, title: ampArch('twin-reverb').short, form: 'combo' }, 'delay-tape', 'looper'] },
+    { name: 'Garage', genre: 'Punk', meta: 'a floor multi-effects before the amp', chain: [{ type: 'midi-pedal', kind: 'floor-multi' }, 'fuzz', { type: 'amp-nam', family: 'crunch', title: 'JCM800' }, { type: 'cab', size: '4x12', family: 'crunch' }] },
+  ];
+  RIGS.forEach(r => { r.chain = r.chain.map(c => (typeof c === 'string' ? { type: c } : c)); });
+  let floor = 'auto', outboard = 'rack', features = 'tab';
+  $('floor-seg').innerHTML = ['auto'].concat(R.FLOORS).map(n => `<button data-v="${n}" aria-pressed="${n === floor}">${n === 'auto' ? 'By genre' : n}</button>`).join('');
+  const seg = (id, set) => { $(id).onclick = e => { const b = e.target.closest('button'); if (!b) return; set(b.dataset.v); $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); draw(); }; };
+  seg('floor-seg', v => floor = v); seg('ob-seg', v => outboard = v); seg('feat-seg', v => features = v);
+
+  const gfxBlock = t => { const g = Object.values(D.gfx).find(x => x.blocks.includes(t)); return g && { type: t, glyph: g.glyph, name: g.name, short: g.name, color: g.color, category: g.category }; };
+  const tile = (it, key) => {
+    const t = it.type === 'amp' && !P.blockByType('amp') ? 'amp-nam' : it.type, b = P.blockByType(t) || gfxBlock(t) || { type: t, name: t };
+    const short = it.title || (it.archetype && it.archetype.short) || (it.label ? (P.archetypeFor('outboard', it.label) || {}).short : null);
+    return P.blockTile(Object.assign({}, b, short ? { short } : {}), { on: it.on !== false }).replace('class="gp-tile', `data-sec="${key}" class="gp-tile`);
+  };
+  // data-idx is a path in the chain: "3", or "3.1.0" inside a branch
+  function at(chain, path) {
+    const [i, b, j] = String(path).split('.').map(Number);
+    if (b == null) return { list: chain, i };
+    const br = chain[i] && chain[i].split && chain[i].split.branches[b];
+    return br ? { list: br.items, i: j } : {};
+  }
+  const shown = {};
+  function draw() {
+    const out = $('out');
+    out.innerHTML = '';
+    RIGS.forEach(r => {
+      const fl = floor === 'auto' ? R.floorFor(r.genre) : floor, o = { floor: fl, outboard, seed: r.name };
+      const secs = R.sections(r.chain, { outboard, features });
+      const cur = secs.find(s => s.key === shown[r.name]) || secs.find(s => s.key === 'amp') || secs[0];
+      const el = document.createElement('section');
+      el.className = 'rig';
+      const arrow = '<span class="arrow" aria-hidden="true">›</span>';
+      const ordered = secs.flatMap(s => s.items.map(it => ({ it, key: s.key }))).sort((a, b) => String(a.it.idx).localeCompare(String(b.it.idx), undefined, { numeric: true }));
+      el.innerHTML = `<h2>${r.name}</h2><p class="meta">${r.genre} · ${r.meta} · floor: ${fl}</p><div class="cols"><div>
+          <div class="tabs">${secs.map(s => `<button data-sec="${s.key}" aria-pressed="${s === cur}">${s.label}<span class="n">${s.items.length}</span></button>`).join('')}</div>
+          <div class="view">${R.render(cur, o)}</div>
+          <div class="chain">${ordered.map(x => tile(x.it, x.key).replace('class="gp-tile', `class="gp-tile${x.key === cur.key ? '' : ' dim'}`)).join(arrow)}</div></div>
+        <div class="side"><h3>The card (320 px)</h3><div class="pcard">${R.card(secs, o)}<div class="body"><div class="t">${r.name}</div><div class="m">${r.genre} · ${r.meta}</div></div></div></div></div>`;
+      el.addEventListener('click', e => {
+        const br = e.target.closest('.gr-branch');
+        if (br) { const sp = r.chain[+br.dataset.split].split.branches[+br.dataset.b]; sp.mute = !sp.mute; return draw(); }
+        const blk = e.target.closest('.view [data-idx]');
+        if (blk) {
+          const { list, i } = at(r.chain, blk.dataset.idx), it = list && list[i];
+          if (!it) return;
+          it.on = it.on === false;
+          const nx = list[i + 1];                       // a head and its cab switch together
+          if (nx && nx.type === 'cab' && (P.blockByType(it.type) || {}).family === 'nam-head') nx.on = it.on;
+          return draw();
+        }
+        const t = e.target.closest('[data-sec]');
+        if (t) { shown[r.name] = t.dataset.sec; draw(); }
+      });
+      out.appendChild(el);
+    });
+  }
+  const want = (new URLSearchParams(location.search).get('s') || '').split(',');
+  RIGS.forEach((r, i) => { if (want[i]) shown[r.name] = want[i]; });
+  const q = new URLSearchParams(location.search);
+  if (q.get('ob')) outboard = q.get('ob');
+  if (q.get('feat')) features = q.get('feat');
+  draw();
+})();
+</script>
+</body>
+</html>

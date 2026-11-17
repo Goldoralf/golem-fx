@@ -50,7 +50,9 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 | `data/visuals-data.js` | Everything above in one script (generated), read by the gallery and by golem |
 | `js/golem-pedals.js` | The renderers: pedals of the three families, amps, block tiles, glyphs. `pedalFor(type)` picks the right one |
 | `js/golem-stage.js` | `GolemStage.render(chain, {floor})`: the realistic lane |
-| `maquettes/sections.html` | **Mock-up (2026-11-17), validated direction**: the rig cut into sections, each in its natural view (pedals from above on a board, heads / cabs and the outboard rack from the front), tabs derived from the chain, the chain as tiles in signal order, and a fixed 16:9 card image (the sections as slanted bands). `maquettes/sections.js` is not a stable API yet; `maquettes/board.html` keeps the four single-image variants that were tried first |
+| `js/golem-rig.js` | `GolemRig`: **the rig by sections** (below): `sections(chain)`, `render(section, {floor})`, `card(sections, {floor})`, `floorFor(genre)` |
+| `rig.html` | The rig by sections, live: five rigs, the floor (by genre or forced), outboard as a rack or on the board, golem's devices in their own tab, on the board or hidden |
+| `maquettes/board.html` | The single-image variants tried before the sections (2026-11-17): backline, all from above, one high-angle view, diptych. Kept as a record, not an API |
 | `tools/build-data.py` | Builds `visuals-data.js` and `glyphs/`, checks that every catalogue type has a glyph and every face's parameters exist |
 
 Rebuild after a parameter change or a catalogue change:
@@ -60,6 +62,42 @@ python3 visuals/tools/build-data.py --manifest --golem ~/golem
 python3 visuals/tools/build-descriptors.py
 ```
 
+## The rig by sections (`GolemRig`)
+
+One picture cannot hold a board seen from above and an amp seen from the front without a clash of
+perspectives, so a rig is cut into sections, each in its natural view (the way amp-sim plugins do):
+
+| Section (`key`) | View | Holds |
+|---|---|---|
+| `pre`, `post` | A pedalboard from above, every unit at its real footprint, wrapped into rows of even width | The pedals before / after the amp (`Pedals` alone when the lane has no amp). Cables: tweed before the amp, teal after |
+| `amp` | From the front, against the floor's back wall | Heads, cabs, stacks, combos; the amps of a split side by side, a lettered tape under each |
+| `outboard` | From the front, 19" units in a flight case | `preamp-nam`, `comp-nam`, `ir-fx` (`outboard: 'rack'`, the default). With `outboard: 'board'` they stay on the pedalboard as 500-series modules |
+| `tools` | A pedalboard from above | golem's own devices (`FEATURE_TYPES`: rec, tuner, click, looper…), `features: 'tab'` (default); `'inline'` leaves them among the pedals, `'hide'` drops them |
+
+```js
+const secs = GolemRig.sections(GolemStage.fromGolem(lane.chain, laneState), { outboard: 'rack', features: 'tab' });
+tabs = secs.map(s => s.label);                                  // only the sections the chain has
+view.innerHTML = GolemRig.render(secs[i], { floor, seed: patch.id });       // one section, 16:9 (W, H to change it)
+card.innerHTML = GolemRig.card(secs, { floor: GolemRig.floorFor(song.genre), seed: patch.id });
+```
+
+- **Paths**: every item keeps its path in the chain as `idx` and is drawn with `data-idx`, the same paths as
+  `GolemStage` (`"3"`, `"3.1.0"` in a branch). A block of a split's branch carries `branch` (its letter) and a tape
+  with `data-split` / `data-branch` / `data-b`; a muted branch is drawn off and dimmed (`.gr-muted`).
+- **Where a block goes**: before the first amp of its path it is `pre`, after it `post`; a head directly followed
+  by a `cab` is one stack. The `outboard` tab sits after the amp as soon as one unit comes after it, before it
+  otherwise. The sections sort blocks by kind: show the chain's order next to them (the block tiles, as `rig.html` does).
+- **The card** is the fixed picture of a rig (golem.fm's patch and preset cards, shares): the sections as slanted
+  bands of one 16:9 image, the amp band the widest, without the `tools`. It is the same drawing as the sections,
+  reduced: there is no simplified level of detail yet, and its SVG filters are heavy for a wall of cards, so a
+  site should rasterise it once per patch (the renderers run under Node, see `tools/check-svg.js`).
+- **Floors** (`GolemRig.FLOORS`): `stage` (dark boards, red curtain), `rug` (persian rug, wood panelling),
+  `concrete` (rehearsal room), `plate` (tread plate, road cases), `parquet` (studio), `checker` (diner tiles).
+  Each has its floor from above and its back wall from the front. `floorFor(genre)` picks one from a free-text
+  genre (`GolemRig.GENRES`: metal → plate, punk / grunge → concrete, rockabilly / ska → checker, blues / folk /
+  classic → rug, pop / indie / jazz / funk → parquet, anything else → stage). `seed` (a number or any string,
+  such as a patch id) fixes the floor's random details.
+
 ## Real footprints
 
 `GolemPedals.footprint(svg)` gives a drawing's life-size footprint: `{w, h}` in native units, `k` its factor, `mm`
@@ -67,9 +105,11 @@ its real width. A compact stomp is the yardstick (124 units of viewBox, 73 mm); 
 same scale (`width = PW × footprint.w / 124`, `PW` the px width of a compact stomp), so a pitch treadle stands
 larger than a stomp. The large floor units are drawn smaller than life and take a factor (`GolemPedals.FOOTPRINT`,
 estimates, not measurements): wah treadle 1.23, pitch treadle 1.3, floor multi 2, loop switcher 1.9, foot
-controller 2.2. `GolemStage.render` still normalises widths.
+controller 2.2. `GolemRig` draws at real footprints; `GolemStage.render` still normalises widths.
 
 ## Integration in golem (later)
+
+- **The rig**: `GolemRig` (above) is the view to build on; `GolemStage.render`, the lane in one line, stays for now.
 
 - **Glyphs**: golem's catalogue keeps `glyph` as a Unicode character today, with duplicates (`∿` for eq,
   tremolo and vibrato; `≈` for chorus and stretch; `△` for both boosts). The SVG set gives each type its

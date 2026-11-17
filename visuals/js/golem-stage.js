@@ -349,6 +349,8 @@ ${plugs}
           const a = P().archetypeFor('pedals', b.label);
           if (a) it.archetype = a;
         }
+        // an outboard capture keeps its label: the rack unit and the 500 module read their setting from it
+        if (b.label != null && /^(preamp-nam|comp-nam|ir-fx)$/.test(b.type)) it.label = b.label;
         return it;
       });
     };
