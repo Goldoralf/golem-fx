@@ -40,7 +40,7 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 |---|---|
 | `data/glyphs.json` | **The glyph set**: one per catalogue type (+ `gapmeter`, `glitch`, `swell`: golem-fx pedals golem's catalogue does not list yet), inner SVG on a 24 × 24 grid, stroked in `currentColor` like golem's `app/icons.js`; `uni` = the former Unicode glyph, kept as a text fallback |
 | `glyphs/<type>.svg` | Each glyph as a standalone SVG (generated) |
-| `data/faces.json` | Each golem-fx pedal's face: knobs, selectors, toggles, the blocks it stands for; a slider face (`shape: "wide"`, gfx-geq) lists `faders`, `fader_sets` (one set per option of an enum, by rank: the drawn set follows its value, never the box's width), `fader_labels` and `level_fader`. `gfxPedal(crate, {values})` draws given values (an enum by index or label) |
+| `data/faces.json` | Each golem-fx pedal's face: knobs, selectors, toggles, the blocks it stands for; a slider face (`shape: "wide"`, gfx-geq) lists `faders`, `fader_sets` (one set per option of an enum, by rank: the drawn set follows its value, never the box's width), `fader_labels` and `level_fader`. `gfxPedal(crate, {values})` draws given values (see *A pedal at its settings*) |
 | `data/manifest.json` | Every effect's parameters, generated from the code: `cargo run -p gfx-bench -- manifest` |
 | `data/descriptors.json` | **Every pedal's complete descriptor** (generated, do not edit): plugin name and VST3 class id, the front panel (the pedal face), the expert groups with their Custom switches, and every parameter (kind, range, default, unit, display taper, step, decimals, enum labels, EXP, structural, `depends`, one-line help), plus reference presets. golem builds its block sheet from it |
 | `data/ai.json` → `data/ai-guide.json` | **golem.fm's patch-AI selection guide**. `ai.json` is hand-curated from each crate's README (purpose, roles, typical position, pairs well with, avoid, CPU, `setup_only` parameters kept out of scenes and EXP, chain rules); `build-descriptors.py` writes `ai-guide.json` (do not edit; golem.fm copies it with its sync tool) and fails if a bundled pedal has no entry or an entry cites an unknown crate, block type or parameter: a new pedal ships with its guide entry |
@@ -142,6 +142,24 @@ card.innerHTML = GolemRig.card(secs, { floor: GolemRig.floorFor(song.genre), see
   for any number of cards. Text is set in the fonts of `assets/fonts` (OFL, see its README); a drum kit's
   photograph goes in as JPEG because resvg does not decode WebP. On golem's 146 factory lanes and presets: about
   0.24 s and 24 KB a card at 640 px (12 to 41 KB).
+
+## A pedal at its settings
+
+`GolemPedals.gfxPedal(crate, {on, values})` draws every control at a given value: `values` is
+`{<param id>: value}` in the parameter's own unit, the block's `params` as a golem patch stores them (the ids of
+`descriptors.json`, which are the faces' `knobs[].id`). Knobs turn over their `min..max` (linearly, as the
+defaults always did), selectors point at the chosen option and print its name, toggles flip, sliders move; every
+finish follows (anodized, thrash, blackwork, clay, the treadle, the wide stomp, the enamel box of a block without
+a golem-fx face).
+
+- **Forms**: an enum takes its option's index or name (case ignored), a toggle `true`/`false` or `1`/`0`, a
+  number may come as a string. A missing key, `null` or a value that cannot be read leaves the default; a value
+  out of range stops at the end of the sweep.
+- **Through the rig**: `GolemStage.fromGolem` keeps each block's `params` on its item, and `pedalFor` reads an
+  item's `params` as `values`; so `GolemStage.render`, `GolemRig.render`, `card` and `presetCard` show the real
+  settings with nothing to pass. Your own items take `params` (or `values`) the same way.
+- **Where a control sits**: each drawn control is a group `.gp-knob`, `.gp-selector`, `.gp-toggle` or
+  `.gp-fader` carrying `data-param="<id>"`; inside a section, its pedal is the closest `[data-idx]`.
 
 ## Real footprints
 

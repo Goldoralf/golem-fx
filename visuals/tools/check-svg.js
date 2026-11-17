@@ -59,6 +59,12 @@ P.setStyle('auto');
 // slider faces: every fader set (by the enum's rank), on and off
 for (const crate of Object.keys(D.gfx || {})) {
   const fs = D.gfx[crate].fader_sets;
+  // every control at both ends of its range, an enum by name, a toggle as a boolean, junk values
+  const spec = D.gfx[crate];
+  const ctl = [...(spec.knobs || []), ...(spec.selectors || []), ...(spec.toggles || []), ...(spec.faders || [])];
+  const ends = f => Object.fromEntries(ctl.map(p => [p.id, p.min + (p.max - p.min) * f]));
+  const odd = Object.fromEntries(ctl.map(p => [p.id, p.options ? p.options[p.options.length - 1] : p.kind === 'bool' ? true : 'x<&"']));
+  for (const style of P.STYLES) [ends(0), ends(1), odd].forEach((values, i) => cases.push([`gfxPedal ${crate} ${style} values ${i}`, P.gfxPedal(crate, { style, values })]));
   if (fs && fs.param) fs.sets.forEach((_, rank) => [true, false].forEach(on => cases.push([`gfxPedal ${crate} set ${rank} on=${on}`, P.gfxPedal(crate, { on, values: { [fs.param.id]: rank, level: 6 } })])));
 }
 for (const b of D.blocks || []) cases.push([`pedalFor ${b.type}`, P.pedalFor(b.type)]);

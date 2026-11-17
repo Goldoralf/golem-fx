@@ -169,6 +169,28 @@
     if (typeof v !== 'number' || !isFinite(v)) v = (p.min + p.max) / 2;
     return -135 + 270 * Math.max(0, Math.min(1, (v - p.min) / (p.max - p.min)));
   };
+  // The value a control shows: `values` is {param id: value} in the parameter's own unit, as a golem patch
+  // stores a block's params. An enum also takes its option's name, a toggle a boolean; a missing or unreadable
+  // key leaves the default.
+  const valueOf = (p, values) => {
+    let v = values && values[p.id] != null ? values[p.id] : p.value != null ? p.value : p.default;
+    if (typeof v === 'boolean') v = v ? 1 : 0;
+    if (typeof v === 'string') {
+      const i = (p.options || []).findIndex(o => String(o).toLowerCase() === v.trim().toLowerCase());
+      v = i >= 0 ? i : v.trim() !== '' && isFinite(+v) ? +v : p.default;
+    }
+    return typeof v === 'number' && isFinite(v) ? v : (p.min + p.max) / 2;
+  };
+  // a face (or a catalogue block) with every control set to its value in `values`
+  const CONTROL_LISTS = ['knobs', 'selectors', 'toggles', 'params'];
+  function withValues(spec, values) {
+    if (!values || typeof values !== 'object') return spec;
+    const out = Object.assign({}, spec);
+    CONTROL_LISTS.forEach(k => {
+      if (Array.isArray(spec[k])) out[k] = spec[k].map(p => p && values[p.id] != null ? Object.assign({}, p, { value: valueOf(p, values) }) : p);
+    });
+    return out;
+  }
   const polar = (cx, cy, r, deg) => {
     const a = (deg - 90) * Math.PI / 180;
     return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
@@ -204,7 +226,7 @@
   // a small pointer selector, one tick per option
   function selectorClay(cx, cy, r, p, accent, inkOpacity, ink) {
     const n = (p.options || []).length || 2;
-    const idx = Math.round(p.value != null ? p.value : p.default);
+    const idx = Math.max(0, Math.min(n - 1, Math.round(p.value != null ? p.value : p.default) || 0));
     const sweep = Math.min(270, 30 * (n - 1));
     const at = i => n === 1 ? 0 : -sweep / 2 + sweep * i / (n - 1);
     let ticks = '';
@@ -224,7 +246,7 @@
 
   function toggleClay(cx, cy, p, ink) {
     const on = (p.value != null ? p.value : p.default) >= .5;
-    return `<g class="gp-toggle"><rect x="${cx - 3.2}" y="${cy - 5}" width="6.4" height="10" rx="1.6" fill="#16120f"/>
+    return `<g class="gp-toggle" data-param="${esc(p.id)}"><rect x="${cx - 3.2}" y="${cy - 5}" width="6.4" height="10" rx="1.6" fill="#16120f"/>
   <circle cx="${cx}" cy="${on ? cy - 2.4 : cy + 2.4}" r="2.1" fill="url(#gp-chrome)"/>
   <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-family="${FONT.gfx}" font-size="5.4" font-weight="600" fill="${ink || '#000'}" fill-opacity="${ink ? .9 : .6}">${esc(shortLabel(p.name))}</text></g>`;
   }
@@ -274,8 +296,11 @@
   // ---------- gfx: clay ----------
   function gfxPedal(crateOrSpec, opts) {
     opts = opts || {};
-    const spec = typeof crateOrSpec === 'string' ? data().gfx[crateOrSpec] : crateOrSpec;
+    let spec = typeof crateOrSpec === 'string' ? data().gfx[crateOrSpec] : crateOrSpec;
     if (!spec) return '';
+    // the controls at the block's settings: `values`, or `params` as a chain item carries them
+    const values = opts.values || opts.params;
+    if (values) { spec = withValues(spec, values); opts = Object.assign({}, opts, { values }); }
     let style = opts.style || api.style;
     if (style === 'auto') style = finishFor(spec);
     // the wide stomp (sliders) has no clay or blackwork drawing: those finishes fall back to anodized
@@ -1262,11 +1287,6 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   // fixed width (168, never driven by a parameter: the pedalboard must not reflow), one slider per fader
   // of the set the enum picks, the level slider set apart, a line through the caps when on.
   const WIDE_SLOT = { top: 16, bottom: 100, mid: 58, half: 42 };
-  const valueOf = (p, values) => {
-    let v = values && values[p.id] != null ? values[p.id] : p.value != null ? p.value : p.default;
-    if (typeof v === 'string' && p.options) v = Math.max(0, p.options.indexOf(v));
-    return typeof v === 'number' && isFinite(v) ? v : (p.min + p.max) / 2;
-  };
   // a monotone cubic through points equally spaced in x (Fritsch – Carlson), as Bézier segments
   function monotonePath(pts) {
     const n = pts.length;
@@ -1523,7 +1543,7 @@ ${parts}
   function knobEnamel(cx, cy, r, p) {
     const a = angleOf(p);
     const [px, py] = polar(cx, cy, r * .95, a), [qx, qy] = polar(cx, cy, r * .45, a);
-    return `<g class="gp-knob"><circle cx="${cx}" cy="${cy + 1.6}" r="${r + 2.4}" fill="#000" opacity=".35"/>
+    return `<g class="gp-knob" data-param="${esc(p.id)}"><circle cx="${cx}" cy="${cy + 1.6}" r="${r + 2.4}" fill="#000" opacity=".35"/>
   <circle cx="${cx}" cy="${cy}" r="${r + 2.4}" fill="#16130f"/>
   <circle cx="${cx}" cy="${cy}" r="${r + 2.4}" fill="none" stroke="#000" stroke-width="1.6" stroke-dasharray=".8 1.2"/>
   <circle cx="${cx}" cy="${cy}" r="${r * .62}" fill="url(#gp-chrome)"/>
@@ -1586,6 +1606,7 @@ ${glyphAt(block.type, W / 2, 92, 25, mix(hue, '#000', .35), 2)}
 
   function genericPedal(block, opts) {
     opts = opts || {};
+    block = withValues(block, opts.values || opts.params);
     if (isMidi(block) && block.category === 'pitch') return enamelTreadle(block, opts);
     const on = opts.on !== false;
     const hue = hueOf(block.color, block.category);

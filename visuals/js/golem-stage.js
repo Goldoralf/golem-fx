@@ -352,7 +352,9 @@ ${plugs}
         // an outboard capture keeps its label: the rack unit and the 500 module read their setting from it
         if (b.label != null && /^(preamp-nam|comp-nam|ir-fx)$/.test(b.type)) it.label = b.label;
         // an instrument (keys, pads, drum kit) is drawn from its sound: its params and name go with it
-        if (familyOf(b.type) === 'instrument') { it.params = b.params; if (b.label != null) it.label = b.label; if (b.title != null) it.title = b.title; }
+        if (familyOf(b.type) === 'instrument') { if (b.label != null) it.label = b.label; if (b.title != null) it.title = b.title; }
+        // the block's settings go with it: a pedal turns its knobs to them, an instrument reads its sound in them
+        if (b.params && typeof b.params === 'object') it.params = b.params;
         return it;
       });
     };
