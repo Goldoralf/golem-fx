@@ -164,7 +164,8 @@ ${tapes}
       const it = items[i], idx = prefix + i;
       if (it.split) { groups.push({ idx, kind: 'split', split: it.split, branches: it.split.branches.map((br, b) => Object.assign({}, br, { groups: groupItems(br.items, `${idx}.${b}.`) })) }); continue; }
       const fam = familyOf(it.type);
-      if (fam === 'nam-head' && items[i + 1] && familyOf(items[i + 1].type) === 'nam-cab') {
+      // the cab is golem-fx's own block now (family 'gfx'): its type says it is a cab
+      if (fam === 'nam-head' && items[i + 1] && (items[i + 1].type === 'cab' || familyOf(items[i + 1].type) === 'nam-cab')) {
         const cab = items[i + 1];
         groups.push({ idx, kind: 'amp', item: Object.assign({}, it, { type: 'amp', family: it.family || cab.family, size: cab.size || cab.title, cabTitle: cab.title }) });
         i++;
