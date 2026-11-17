@@ -72,6 +72,9 @@
       { type: 'comp-nam', label: 'UA 1176' }, { type: 'preamp-nam', label: 'Neve 1073' }, 'delay', 'reverb'] },
     { name: 'Lead Vocal', genre: 'Indie pop', meta: 'no amp', chain: ['deesser', 'comp', 'eq', 'golem-double', 'delay', 'reverb-shimmer', 'click'] },
     { name: 'Slapback', genre: 'Rockabilly', meta: 'a combo', chain: ['comp', 'tremolo', { type: 'amp', family: ampArch('twin-reverb').family, title: ampArch('twin-reverb').short, form: 'combo' }, 'delay-tape', 'looper'] },
+    { name: 'Hero Pad', genre: 'Ambient', meta: 'a keys lane: the synth, then its effects', chain: [{ type: 'vital', params: { preset: 'Sparkly_Dreamy_Pad' }, macros: [{ name: 'Bright', value: .6 }, { name: 'Motion', value: .3 }] }, 'chorus', 'reverb-shimmer', 'delay'] },
+    { name: 'Tonewheel', genre: 'Blues', meta: 'a keys lane: the organ and its drawbars', chain: [{ type: 'organ', params: { db16: 8, db513: 8, db8: 8, db4: 4 } }, 'rotary', 'reverb-room'] },
+    { name: 'Black Pearl', genre: 'Rock', meta: 'a drums lane: the kit is a photograph', chain: [{ type: 'drumkit', params: { kit: 'drums-black-pearl' }, kitType: 'vintage' }, 'comp', 'eq', 'reverb-room'] },
     { name: 'Garage', genre: 'Punk', meta: 'a floor multi-effects before the amp', chain: [{ type: 'midi-pedal', kind: 'floor-multi' }, 'fuzz', { type: 'amp-nam', family: 'crunch', title: 'JCM800' }, { type: 'cab', size: '4x12', family: 'crunch' }] },
   ];
   RIGS.forEach(r => { r.chain = r.chain.map(c => (typeof c === 'string' ? { type: c } : c)); });
@@ -82,7 +85,7 @@
 
   const gfxBlock = t => { const g = Object.values(D.gfx).find(x => x.blocks.includes(t)); return g && { type: t, glyph: g.glyph, name: g.name, short: g.name, color: g.color, category: g.category }; };
   const tile = (it, key) => {
-    const t = it.type === 'amp' && !P.blockByType('amp') ? 'amp-nam' : it.type, b = P.blockByType(t) || gfxBlock(t) || { type: t, name: t };
+    const t = it.type, b = P.blockByType(t) || gfxBlock(t) || { type: t, name: t };
     const short = it.title || (it.archetype && it.archetype.short) || (it.label ? (P.archetypeFor('outboard', it.label) || {}).short : null);
     return P.blockTile(Object.assign({}, b, short ? { short } : {}), { on: it.on !== false }).replace('class="gp-tile', `data-sec="${key}" class="gp-tile`);
   };
@@ -94,7 +97,7 @@
     return br ? { list: br.items, i: j } : {};
   }
   const shown = {};
-  function draw() {
+  let draw = function () {
     const out = $('out');
     out.innerHTML = '';
     RIGS.forEach(r => {
@@ -127,7 +130,19 @@
       });
       out.appendChild(el);
     });
+  };
+  // a preset is a band: one cell per lane, its instrument, its amp or its board
+  function drawPreset() {
+    const pick = ['Plexi Crunch', 'Hero Pad', 'Lead Vocal', 'Black Pearl'].map(n => RIGS.find(r => r.name === n));
+    const lanes = pick.map(r => ({ id: r.name, name: r.name, sections: R.sections(r.chain, { outboard, features }) }));
+    const el = document.createElement('section');
+    el.className = 'rig';
+    el.innerHTML = `<h2>A preset</h2><p class="meta">Several lanes in one picture (<code>GolemRig.presetCard</code>): each lane shows its instrument, else its amp, else its board.</p>
+      <div class="pcard" style="width:640px">${R.presetCard(lanes, { floor: floor === 'auto' ? 'stage' : floor, outboard, seed: 'preset' })}<div class="body"><div class="t">Sunday Band</div><div class="m">${lanes.length} lanes</div></div></div>`;
+    $('out').appendChild(el);
   }
+  const draw0 = draw;
+  draw = function () { draw0(); drawPreset(); };
   const want = (new URLSearchParams(location.search).get('s') || '').split(',');
   RIGS.forEach((r, i) => { if (want[i]) shown[r.name] = want[i]; });
   const q = new URLSearchParams(location.search);

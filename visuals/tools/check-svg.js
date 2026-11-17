@@ -78,8 +78,16 @@ for (const fam of Object.keys(P.AMP_LOOK)) cases.push([`namHead ${fam}`, P.namHe
     { blocks: { dl: false }, branches: { b: { mute: true } } }),
     voice: ['deesser', 'comp', { type: 'preamp-nam', label: 'Neve 1073' }, 'golem-double', 'delay', 'reverb-shimmer', 'click', 'looper'],
     combo: ['wah', 'eq-graphic', { type: 'midi-pedal', kind: 'floor-multi' }, { type: 'amp', family: 'clean', title: 'Twin', form: 'combo' }, 'reverb'],
+    keys: S.fromGolem({ chain: [{ id: 'v', type: 'vital', params: { preset: 'Sparkly_Dreamy <Pad>' } }, { id: 'o', type: 'organ', params: { db16: 8, db8: 8 } }, { id: 'c', type: 'chorus' }] }),
+    drums: S.fromLane({ id: 'd', chain: { chain: [{ id: 'k', type: 'drumkit', params: { kit: 'drums-black-pearl' } }, { id: 'p', type: 'pads', params: { kit: 'pads-lofi' } }, { id: 'c', type: 'comp' }] }, states: [{ id: 's', name: 'A', blocks: { c: false } }] }, 'A'),
+    kit: [{ type: 'drumkit', title: 'Jazz <kit>', kitType: 'jazz' }], piano: ['piano', { type: 'ep', title: 'Clav & Co' }],
     empty: [],
   };
+  const lanes = [{ id: 'g<1>', name: 'Guitar <1>', chain: { pre: [{ id: 'a', type: 'amp', label: 'Marshall JCM800' }, { id: 'c', type: 'cab', label: '4x12' }] } },
+    { id: 'k', name: 'Keys', chain: { chain: [{ id: 'p', type: 'piano' }] } }, { id: 'v', name: 'Voice', chain: [{ id: 'd', type: 'deesser' }] },
+    { id: 'e', name: 'Empty', chain: {} }, { id: 'd', name: 'Drums', chain: { chain: [{ id: 'k', type: 'drumkit' }] } }];
+  for (let n = 1; n <= lanes.length; n++) for (const floor of ['stage', 'neon']) cases.push([`rig presetCard ${n} ${floor}`, R.presetCard(lanes.slice(0, n), { floor, seed: 'p' })]);
+  cases.push(['rig presetCard 6', R.presetCard(lanes.concat(lanes[0], lanes[1]), {})]);
   for (const [name, chain] of Object.entries(rigs)) for (const outboard of ['rack', 'board']) for (const features of ['tab', 'hide', 'inline']) {
     const secs = R.sections(chain, { outboard, features });
     for (const floor of R.FLOORS) {

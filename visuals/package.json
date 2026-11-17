@@ -1,0 +1,11 @@
+{
+  "name": "golem-visuals",
+  "private": true,
+  "description": "golem-fx visuals: the dependencies of tools/render-rig.js (rasterising a rig without a browser)",
+  "license": "GPL-3.0-or-later",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "sharp": "^0.33.5"
+  }
+}

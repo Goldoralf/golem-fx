@@ -50,9 +50,10 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 | `data/visuals-data.js` | Everything above in one script (generated), read by the gallery and by golem |
 | `js/golem-pedals.js` | The renderers: pedals of the three families, amps, block tiles, glyphs. `pedalFor(type)` picks the right one |
 | `js/golem-stage.js` | `GolemStage.render(chain, {floor})`: the realistic lane |
-| `js/golem-rig.js` | `GolemRig`: **the rig by sections** (below): `sections(chain)`, `render(section, {floor})`, `card(sections, {floor})`, `floorFor(genre)` |
-| `tools/render-rig.js` | A rig's pictures as files: standalone SVG, PNG, WebP (above) |
-| `rig.html` | The rig by sections, live: five rigs, the floor (by genre or forced), outboard as a rack or on the board, golem's devices in their own tab, on the board or hidden |
+| `js/golem-rig.js` | `GolemRig`: **the rig by sections** (below): `fromLane(lane)` / `sections(chain)`, `render(section, {floor})`, `card(sections, {floor})`, `presetCard(lanes)`, `floorFor(genre)` |
+| `tools/render-rig.js`, `package.json` | A rig's or a preset's pictures as files, without a browser: WebP, PNG, standalone SVG, one by one or in a batch (above). `npm install` in `visuals/` |
+| `assets/fonts/` | The pedals' fonts as TTF (OFL), for `render-rig.js` |
+| `rig.html` | The rig by sections, live: guitar, voice, keys and drums rigs and a preset, the floor (by genre or forced), outboard as a rack or on the board, golem's devices in their own tab, on the board or hidden |
 | `maquettes/board.html` | The single-image variants tried before the sections (2026-11-17): backline, all from above, one high-angle view, diptych. Kept as a record, not an API |
 | `tools/build-data.py` | Builds `visuals-data.js` and `glyphs/`, checks that every catalogue type has a glyph and every face's parameters exist |
 
@@ -70,18 +71,30 @@ perspectives, so a rig is cut into sections, each in its natural view (the way a
 
 | Section (`key`) | View | Holds |
 |---|---|---|
+| `instrument` | From above, on the floor; a drum kit's photograph fills the frame | The instrument of a keys, pads or drums lane (catalogue family `instrument`: `piano`, `ep`, `organ`, `vital`, `pads`, `drumkit`), first of the sections. Drawn from the block's `params` as golem writes them (`kit`, `preset`, the organ's `db16`…`db1`) and from what the host knows better: `title`, `kitType` (`KIT_TYPES`; guessed from the kit's name, else `rock`), `style`, `family`, `macros`, `pads` |
 | `pre`, `post` | A pedalboard from above, every unit at its real footprint, wrapped into rows of even width | The pedals before / after the amp (`Pedals` alone when the lane has no amp). Cables: tweed before the amp, teal after |
 | `amp` | From the front, against the floor's back wall | Heads, cabs, stacks, combos; the amps of a split side by side, a lettered tape under each |
 | `outboard` | From the front, 19" units in a flight case | `preamp-nam`, `comp-nam`, `ir-fx` (`outboard: 'rack'`, the default). With `outboard: 'board'` they stay on the pedalboard as 500-series modules |
 | `tools` | A pedalboard from above | golem's own devices (`FEATURE_TYPES`: rec, tuner, click, looper…), `features: 'tab'` (default); `'inline'` leaves them among the pedals, `'hide'` drops them |
 
 ```js
-const secs = GolemRig.sections(GolemStage.fromGolem(lane.chain, laneState), { outboard: 'rack', features: 'tab' });
+const secs = GolemRig.fromLane(lane, state, { outboard: 'rack', features: 'tab' });   // a golem lane, any chain form
+// or: GolemRig.sections(GolemStage.fromGolem(lane.chain, laneState), …), or sections(items) with your own items
 tabs = secs.map(s => s.label);                                  // only the sections the chain has
 view.innerHTML = GolemRig.render(secs[i], { floor, seed: patch.id });       // one section, 16:9 (W, H to change it)
 card.innerHTML = GolemRig.card(secs, { floor: GolemRig.floorFor(song.genre), seed: patch.id });
 ```
 
+- **A lane's chain** comes in three forms and all are read: `{pre, split, post}`, `{chain: [blocks]}` (keys,
+  voice, drums and part of the factory) and a flat list. Any other form throws instead of drawing an empty
+  scene. `fromLane(lane, state)` takes the lane itself; `state` is a lane state, the id or name of one of
+  `lane.states`, or nothing for the first. A capture is recognised by its `label` only (an amp, a cab, a pedal,
+  an outboard unit: `archetypeFor` matches the catalogue's `match` / `aliases`); no other field of a block is
+  read besides `id`, `type`, `on` and, for an instrument, `params` and `title`.
+- **A preset** is several lanes. `GolemRig.preset(lanes, {states})` gives `[{id, name, role, sections}]`, and
+  `GolemRig.presetCard(lanes, {floor, seed})` its fixed picture: one cell per lane (two or three in a row, then
+  two rows), each showing the lane's instrument, else its amp, else its board, the lane's name on a strip of
+  tape. One lane alone gets its own `card`. For a preset's page: one row of lanes, then that lane's sections.
 - **Paths**: every item keeps its path in the chain as `idx` and is drawn with `data-idx`, the same paths as
   `GolemStage` (`"3"`, `"3.1.0"` in a branch). A block of a split's branch carries `branch` (its letter) and a tape
   with `data-split` / `data-branch` / `data-b`; a muted branch is drawn off and dimmed (`.gr-muted`).
@@ -113,16 +126,22 @@ card.innerHTML = GolemRig.card(secs, { floor: GolemRig.floorFor(song.genre), see
   patch id) fixes the floor's random details.
 - **Files**: `render()` and `card()` return SVG for a page that already called `GolemPedals.defs()`.
   `GolemRig.standalone(svg, {fontsCss})` makes it a file of its own (namespace, the shared defs, the fonts'
-  stylesheet). `tools/render-rig.js` does it from the command line and rasterises:
+  stylesheet). `tools/render-rig.js` renders to files without a browser or a network:
 
   ```sh
-  node visuals/tools/render-rig.js patch.json --out img --genre "Thrash metal" --sections --webp --width 1280
+  cd visuals && npm install        # @resvg/resvg-js and sharp, once
+  node tools/render-rig.js patch.json --out img --genre "Thrash metal" --sections --format webp,svg --width 640
+  node tools/render-rig.js --batch --out img < jobs.ndjson       # one JSON document per line, one JSON line back
   ```
 
-  `patch.json` is golem's lane chain (`{pre, split, post}` or a flat block list), or `{chain, state, genre, id,
-  name}`. It writes `<name>-card.svg` (and one `<name>-<section>.svg` per section with `--sections`), `--png`
-  through a headless Chrome / Chromium, `--webp` through `cwebp`, and prints the sections and files as JSON.
-  A 640 px card is about 25 KB in WebP.
+  A document is a golem lane (`{chain, states, name, id}`), a bare chain, or a preset (`{lanes: […]}`, drawn with
+  `presetCard`); its `name`, `id` and `genre` (or `style` / `styles[0]`) are read, and what only concerns the
+  picture goes under `render` (`floor`, `state`, `states`, `format`, `width`, `sections`, `out`…). It writes
+  `<name>-card.webp` (and one picture per section with `--sections`) and answers `{ok, name, floor, sections |
+  lanes, files}` or `{ok: false, error}`: a bad document does not stop a batch, and `--batch` keeps one process
+  for any number of cards. Text is set in the fonts of `assets/fonts` (OFL, see its README); a drum kit's
+  photograph goes in as JPEG because resvg does not decode WebP. On golem's 146 factory lanes and presets: about
+  0.24 s and 24 KB a card at 640 px (12 to 41 KB).
 
 ## Real footprints
 
