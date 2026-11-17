@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>golem board : maquettes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Saira+Semi+Condensed:wght@400;600;700&family=Shrikhand&family=Pirata+One&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/visuals.css">
+<style>
+  .mk h2 { margin: 34px 0 4px; font-size: 24px; }
+  .mk h3 { margin: 26px 0 8px; font-size: 17px; color: var(--muted); font-weight: 600; }
+  .mk p.lead { margin: 0 0 6px; color: var(--muted); max-width: 86ch; }
+  .big { border-radius: 14px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, .35); background: #0d0b09; }
+  .big svg, .pcard svg { display: block; width: 100%; height: auto; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .pair { grid-template-columns: 1fr; } }
+  .tag { display: inline-block; font-weight: 700; letter-spacing: .6px; padding: 2px 10px; border-radius: 999px; background: var(--accent); color: #150c08; margin-right: 8px; font-size: 14px; }
+  .cards { display: flex; gap: 18px; flex-wrap: wrap; padding: 6px 0 10px; }
+  .pcard { width: 320px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .pcard .body { padding: 10px 14px 12px; }
+  .pcard .t { font-weight: 700; font-size: 17px; }
+  .pcard .m { color: var(--muted); font-size: 14px; }
+  .pcard .v { float: right; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+</style>
+<script src="../data/visuals-data.js"></script>
+<script src="../js/golem-pedals.js"></script>
+<script src="../js/golem-stage.js"></script>
+<script src="board.js"></script>
+</head>
+<body>
+<div id="defs"></div>
+<div class="wrap mk">
+  <header class="top">
+    <h1>golem board : maquettes</h1>
+    <p>Le rig sur un pedalboard vu de dessus, au format 16:9. Rangée avant : avant l'ampli (câbles jaunes). Rangée arrière : après l'ampli (câbles bleus). A à D : quatre façons de montrer l'ampli.</p>
+  </header>
+  <div id="out"></div>
+  <footer>Maquette statique : pas de clic, pas encore de version simplifiée pour la card (c'est la même image, réduite).</footer>
+</div>
+<script>
+(function () {
+  const P = GolemPedals, S = GolemStage, D = GOLEM_VISUALS, B = GolemBoard;
+  document.getElementById('defs').innerHTML = P.defs();
+  const pedalArch = id => (D.archetypes.pedals || []).find(p => p.id === id);
+  const ampArch = id => (D.archetypes.amps || []).find(p => p.id === id) || {};
+  const RIGS = [
+    { name: 'Modern Metal', meta: 'Metal · split, deux amplis', floor: 'concrete', chain: S.fromGolem({
+      pre: [{ id: 'whammy', type: 'whammy-dt' }, { id: 'gate', type: 'gate' }, { id: 'eq', type: 'eq' }],
+      split: { mode: 'merge', gain: -3, branches: [
+        { id: 'lane-a', blocks: [{ id: 'stealth', type: 'amp-nam', label: 'EVH 5150 III Stealth' }, { id: 'v30', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] },
+        { id: 'lane-b', blocks: [{ id: 'clean', type: 'amp-nam', label: 'Peavey 5150 II' }, { id: 'v30b', type: 'cab', label: 'Mesa 4x12 Celestion V30' }] }] },
+      post: [{ id: 'boost', type: 'clean-boost' }, { id: 'kill', type: 'killswitch' }, { id: 'dly', type: 'delay' }, { id: 'verb', type: 'reverb-plate' }],
+    }, { blocks: { boost: false } }) },
+    { name: 'Plexi Crunch', meta: 'Classic rock · un ampli', floor: 'planks', chain: [
+      'gate', { type: 'pedal-nam', archetype: pedalArch('tube-screamer') }, 'guitar-drive', 'wah', 'chorus',
+      { type: 'amp-nam', family: ampArch('plexi').family, title: ampArch('plexi').short }, { type: 'cab', title: '1960 4x12', size: '4x12', family: 'crunch' },
+      'delay', 'reverb', { type: 'comp-nam', label: 'UA 1176' }, { type: 'preamp-nam', label: 'Neve 1073' }] },
+  ];
+  const VARIANTS = [
+    { key: 'A', amp: 'backline', title: 'ampli de face, en backline', lead: 'Le sol et le board sont vus de dessus, les amplis tiennent debout contre le mur du fond, vus de face. Les dessins d\'amplis actuels resservent tels quels.' },
+    { key: 'B', amp: 'top', title: 'tout vu de dessus', lead: 'Une seule perspective : l\'ampli est vu de dessus lui aussi (tête posée sur le baffle, poignée, tranche du panneau, un scotch avec son nom).' },
+    { key: 'C', amp: 'tilt', title: 'une seule plongée, comme sur la photo', lead: 'Tout est vu du même point, en plongée de face : le sol et les pédales sont un peu écrasés, l\'ampli montre sa façade et son dessus, les pédales ont une épaisseur.' },
+    { key: 'D', amp: 'diptych', title: 'diptyque : board de dessus, éclair, backline de face', lead: 'Deux plans séparés par un éclair, chacun dans sa perspective. À gauche le pedalboard vu de dessus ; à droite les amplis et l\'outboard dans son rack, de face. Les câbles traversent l\'éclair.' },
+  ];
+  let html = '';
+  VARIANTS.forEach(v => {
+    html += `<h2><span class="tag">${v.key}</span>${v.title}</h2><p class="lead">${v.lead}</p>`;
+    RIGS.forEach(r => { html += `<h3>${r.name} · ${r.meta}</h3><div class="big" id="big-${v.key}-${r.name.replace(/\W/g, '')}">${B.render(r.chain, { amp: v.amp, floor: r.floor })}</div>`; });
+  });
+  html += '<h2>En card (320 px)</h2><p class="lead">Les mêmes images à la taille d\'une card de liste de patches.</p><div class="cards" id="cards">';
+  RIGS.forEach(r => VARIANTS.forEach(v => {
+    html += `<div class="pcard">${B.render(r.chain, { amp: v.amp, floor: r.floor })}<div class="body"><span class="v">${v.key}</span><div class="t">${r.name}</div><div class="m">${r.meta}</div></div></div>`;
+  }));
+  html += '</div>';
+  document.getElementById('out').innerHTML = html;
+})();
+</script>
+</body>
+</html>

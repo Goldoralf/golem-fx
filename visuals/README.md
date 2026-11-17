@@ -50,6 +50,7 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 | `data/visuals-data.js` | Everything above in one script (generated), read by the gallery and by golem |
 | `js/golem-pedals.js` | The renderers: pedals of the three families, amps, block tiles, glyphs. `pedalFor(type)` picks the right one |
 | `js/golem-stage.js` | `GolemStage.render(chain, {floor})`: the realistic lane |
+| `maquettes/sections.html` | **Mock-up (2026-11-17), validated direction**: the rig cut into sections, each in its natural view (pedals from above on a board, heads / cabs and the outboard rack from the front), tabs derived from the chain, the chain as tiles in signal order, and a fixed 16:9 card image (the sections as slanted bands). `maquettes/sections.js` is not a stable API yet; `maquettes/board.html` keeps the four single-image variants that were tried first |
 | `tools/build-data.py` | Builds `visuals-data.js` and `glyphs/`, checks that every catalogue type has a glyph and every face's parameters exist |
 
 Rebuild after a parameter change or a catalogue change:
@@ -58,6 +59,15 @@ Rebuild after a parameter change or a catalogue change:
 python3 visuals/tools/build-data.py --manifest --golem ~/golem
 python3 visuals/tools/build-descriptors.py
 ```
+
+## Real footprints
+
+`GolemPedals.footprint(svg)` gives a drawing's life-size footprint: `{w, h}` in native units, `k` its factor, `mm`
+its real width. A compact stomp is the yardstick (124 units of viewBox, 73 mm); a scene draws every unit at the
+same scale (`width = PW × footprint.w / 124`, `PW` the px width of a compact stomp), so a pitch treadle stands
+larger than a stomp. The large floor units are drawn smaller than life and take a factor (`GolemPedals.FOOTPRINT`,
+estimates, not measurements): wah treadle 1.23, pitch treadle 1.3, floor multi 2, loop switcher 1.9, foot
+controller 2.2. `GolemStage.render` still normalises widths.
 
 ## Integration in golem (later)
 
