@@ -3214,7 +3214,7 @@ ${ribs.join('')}${plate ? `<rect x="${f1(x + w * .26 - 1)}" y="${f1(y + h * .22 
   // large floor units are drawn smaller than life so they read alone in a gallery: on a board next to stomps
   // they take this factor. footprint(svg) -> {w, h} in native units at life size, {mm} the real width;
   // a scene draws every unit at the same px per unit: width = footprint.w × scale.
-  const FOOTPRINT = { 'gp-treadle': 1.23, 'gp-hw-pitch-treadle': 1.3, 'gp-hw-floor-multi': 2, 'gp-hw-loop-switcher': 1.9, 'gp-hw-foot-controller': 2.2 };
+  const FOOTPRINT = { 'gp-treadle': 1.26, 'gp-hw-pitch-treadle': 1.36, 'gp-hw-floor-multi': 2, 'gp-hw-loop-switcher': 1.9, 'gp-hw-foot-controller': 2.2 };
   function footprint(svg) {
     const vb = /viewBox="[-\d.]+ [-\d.]+ ([\d.]+) ([\d.]+)"/.exec(svg) || [0, 124, 216];
     const cls = (/class="([^"]*)"/.exec(svg) || [0, ''])[1].split(/\s+/);

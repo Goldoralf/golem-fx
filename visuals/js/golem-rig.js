@@ -6,6 +6,8 @@
 //   GolemRig.render(secs[i], {floor, seed, W, H, width})   one section, 16:9 by default
 //   GolemRig.card(secs, {floor, seed, width})              the fixed 16:9 picture of a rig (cards, shares)
 //   GolemRig.floorFor(genre)                               a floor for a song's genre
+//   GolemRig.standalone(svg, {fontsCss})                   the same drawing as a file of its own
+// detail: 'badge' (the card's default) puts each block's glyph, large, over its pedal; 'full' leaves it bare.
 //
 // chain: GolemStage.render()'s items (block types, {type, on, …} objects, {split: {…}}), so
 // GolemRig.sections(GolemStage.fromGolem(lane.chain, laneState)) draws a golem lane.
@@ -102,12 +104,15 @@
     }
     return `<defs>${grain(id, fq, .9, -.25)}</defs><rect width="${W}" height="${H}" fill="${shade(tones[0], .45)}"/>${s}<rect width="${W}" height="${H}" filter="url(#${id}-grain)"/>`;
   }
+  // a velvet curtain in four tones (shadow, light, mid, deep shadow)
+  const curtain = (id, W, wy, c) => `<defs><linearGradient id="${id}-fold" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="${c[0]}"/><stop offset=".35" stop-color="${c[1]}"/><stop offset=".6" stop-color="${c[2]}"/><stop offset="1" stop-color="${c[3]}"/></linearGradient>
+    <pattern id="${id}-curtain" width="74" height="10" patternUnits="userSpaceOnUse"><rect width="74" height="10" fill="url(#${id}-fold)"/></pattern></defs><rect width="${W}" height="${wy}" fill="url(#${id}-curtain)"/>`;
+  const bricks = (W, wy, mortar, tones, R) => { let b = ''; for (let y = 0, r = 0; y < wy; y += 30, r++) for (let x = -(r % 2) * 43; x < W; x += 86) b += `<rect x="${x + 1.5}" y="${y + 1.5}" width="83" height="27" fill="${tones[Math.floor(R() * tones.length)]}"/>`; return `<rect width="${W}" height="${wy}" fill="${mortar}"/>${b}`; };
   const FLOORS = {
     // a stage: dark boards, a red curtain behind
     stage: {
       floor: (id, W, H, R) => boards(id, W, H, R, 46, ['#2b221b', '#251d17', '#30261e'], '.003 .22'),
-      wall: (id, W, wy) => `<defs><linearGradient id="${id}-fold" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#1c0d0f"/><stop offset=".35" stop-color="#4a1a1e"/><stop offset=".6" stop-color="#2a1114"/><stop offset="1" stop-color="#14090a"/></linearGradient>
-        <pattern id="${id}-curtain" width="74" height="10" patternUnits="userSpaceOnUse"><rect width="74" height="10" fill="url(#${id}-fold)"/></pattern></defs><rect width="${W}" height="${wy}" fill="url(#${id}-curtain)"/>`,
+      wall: (id, W, wy) => curtain(id, W, wy, ['#1c0d0f', '#4a1a1e', '#2a1114', '#14090a']),
       edge: '#140f0c',
     },
     // a persian rug on a dark floor, wood panelling behind
@@ -165,14 +170,60 @@
       wall: (id, W, wy) => FLOORS.stage.wall(id, W, wy),
       edge: '#161514',
     },
+    // a modern studio: dark carpet, acoustic foam
+    carpet: {
+      floor: (id, W, H) => `<defs><filter id="${id}-grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="6"/><feColorMatrix type="matrix" values="0 0 0 0 .5  0 0 0 0 .55  0 0 0 0 .7  0 0 0 .9 -.3"/></filter>
+        <pattern id="${id}-tile" width="400" height="400" patternUnits="userSpaceOnUse"><rect width="400" height="400" fill="#23262d"/><rect width="200" height="200" fill="#1f2228"/><rect x="200" y="200" width="200" height="200" fill="#1f2228"/></pattern></defs>
+        <rect width="${W}" height="${H}" fill="url(#${id}-tile)"/><rect width="${W}" height="${H}" filter="url(#${id}-grain)" opacity=".55"/>`,
+      wall: (id, W, wy) => `<defs><pattern id="${id}-foam" width="64" height="64" patternUnits="userSpaceOnUse"><rect width="64" height="64" fill="#1b1d21"/>
+        <path d="M0 0L32 32L64 0z" fill="#2c2f35"/><path d="M0 0L32 32L0 64z" fill="#23262b"/><path d="M64 0L32 32L64 64z" fill="#15171a"/><path d="M0 64L32 32L64 64z" fill="#0f1012"/></pattern></defs><rect width="${W}" height="${wy}" fill="url(#${id}-foam)"/>`,
+      edge: '#1f2228',
+    },
+    // a bar: worn wide boards, a brick wall
+    bar: {
+      floor: (id, W, H, R) => boards(id, W, H, R, 62, ['#4a3020', '#55381f', '#3f2a1c', '#5c3f26', '#463021'], '.004 .16') + `<rect width="${W}" height="${H}" fill="#000" opacity=".18"/>`,
+      wall: (id, W, wy, R) => bricks(W, wy, '#2a1d17', ['#6b3526', '#5c2e22', '#74402c', '#4f2a20'], R),
+      edge: '#3f2a1c',
+    },
+    // a jazz club: herringbone parquet, a midnight curtain
+    chevron: {
+      floor: (id, W, H) => `<defs><pattern id="${id}-herr" width="120" height="60" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="120" height="60" fill="#6f4a2a"/>
+        <rect x="1" y="1" width="118" height="28" fill="#8a5f38"/><rect x="1" y="31" width="58" height="28" fill="#7a5230"/><rect x="61" y="31" width="58" height="28" fill="#946a40"/></pattern>${grain(id, '.004 .5', .6, -.2)}</defs>
+        <rect width="${W}" height="${H}" fill="url(#${id}-herr)"/><rect width="${W}" height="${H}" filter="url(#${id}-grain)"/><rect width="${W}" height="${H}" fill="#000" opacity=".3"/>`,
+      wall: (id, W, wy) => curtain(id, W, wy, ['#0b1220', '#1f3a5c', '#13243c', '#070b14']),
+      edge: '#5a3b20',
+    },
+    // the seventies: an orange shag carpet, wood panelling with stripes
+    shag: {
+      floor: (id, W, H) => `<defs><filter id="${id}-grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="turbulence" baseFrequency=".09 .16" numOctaves="3" seed="12"/><feColorMatrix type="matrix" values="0 0 0 0 .25  0 0 0 0 .08  0 0 0 0 0  0 0 0 1.4 -.35"/></filter></defs>
+        <rect width="${W}" height="${H}" fill="#c4691f"/><rect width="${W}" height="${H}" filter="url(#${id}-grain)"/><rect width="${W}" height="${H}" fill="#000" opacity=".26"/>`,
+      wall: (id, W, wy) => `${FLOORS.rug.wall(id, W, wy)}<rect y="${f(wy * .3)}" width="${W}" height="${f(wy * .07)}" fill="#d98a2b"/><rect y="${f(wy * .37)}" width="${W}" height="${f(wy * .07)}" fill="#a8421c"/><rect y="${f(wy * .44)}" width="${W}" height="${f(wy * .07)}" fill="#e7d3a1"/>`,
+      edge: '#8a4514',
+    },
+    // a synth stage: a dark floor with a lit grid, a night wall with a low sun
+    neon: {
+      floor: (id, W, H) => `<defs><pattern id="${id}-grid" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="#0d0a1c"/><path d="M0 0H100M0 0V100" stroke="#ff3fd0" stroke-width="5" opacity=".35"/><path d="M0 0H100M0 0V100" stroke="#ff9bef" stroke-width="1.6"/></pattern>
+        <radialGradient id="${id}-glow" cx=".5" cy=".5" r=".7"><stop offset="0" stop-color="#35e0ff" stop-opacity=".2"/><stop offset="1" stop-color="#35e0ff" stop-opacity="0"/></radialGradient></defs>
+        <rect width="${W}" height="${H}" fill="url(#${id}-grid)"/><rect width="${W}" height="${H}" fill="url(#${id}-glow)"/>`,
+      wall: (id, W, wy) => `<defs><linearGradient id="${id}-night" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#07061a"/><stop offset=".7" stop-color="#2a1150"/><stop offset="1" stop-color="#b0308f"/></linearGradient>
+        <linearGradient id="${id}-sun" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ffd23c"/><stop offset="1" stop-color="#ff3f8f"/></linearGradient></defs>
+        <rect width="${W}" height="${wy}" fill="url(#${id}-night)"/><circle cx="${f(W / 2)}" cy="${f(wy * .78)}" r="${f(Math.min(W * .3, wy * .5))}" fill="url(#${id}-sun)" opacity=".8"/>
+        ${[.56, .66, .75, .83, .9].map((t, i) => `<rect y="${f(wy * t)}" width="${W}" height="${f(wy * (.012 + i * .006))}" fill="#160a30"/>`).join('')}`,
+      edge: '#0d0a1c',
+    },
   };
   // a floor for a genre (free text: "Thrash Metal", "indie-pop"); the first family that matches wins
   const GENRES = [
-    ['plate', /metal|djent|thrash|death|indus|core\b|nu[- ]?metal/],
-    ['concrete', /punk|grunge|garage|stoner|doom|sludge|noise|hardcore|emo|shoegaze/],
-    ['checker', /rockabilly|rock ?'?n'? ?roll|ska|surf|swing|doo[- ]?wop|reggae/],
-    ['rug', /classic|blues|folk|country|americana|acoustic|southern|psych|prog|70s|60s/],
-    ['parquet', /pop|indie|jazz|soul|funk|r ?& ?b|fusion|gospel|disco|electro|synth|ambient|worship/],
+    ['plate', /metal|djent|thrash|death|indus|core\b/],
+    ['concrete', /punk|grunge|garage|stoner|doom|sludge|noise|emo|shoegaze/],
+    ['neon', /synth|electro|edm|techno|house|wave\b|cyber|hyperpop|trance|drum ?(and|&|n) ?bass|dubstep/],
+    ['checker', /rockabilly|rock ?'?n'? ?roll|ska|surf|doo[- ]?wop/],
+    ['shag', /funk|soul|disco|psych|motown|afrobeat|reggae|r ?(&|n) ?b|70s/],
+    ['chevron', /jazz|bossa|swing|fusion|lounge|bebop|latin|manouche/],
+    ['bar', /blues|country|americana|southern|honky|bluegrass|roots|outlaw|rhythm/],
+    ['rug', /classic|folk|acoustic|singer|60s|celtic|unplugged/],
+    ['carpet', /prog|modern|ambient|post[- ]?rock|math|worship|hip[- ]?hop|rap|trap|studio|session|cinematic/],
+    ['parquet', /pop|indie|alternative|gospel/],
   ];
   function floorFor(genre) {
     const g = String(genre || '').toLowerCase();
@@ -248,7 +299,13 @@
         const pl = place(n.svg, x, y0 + rowH - n.h, n.w, n.it.idx), sc = pl.h / pl.vb[3];
         const jy = pl.y + (/gp-hw/.test(n.svg) ? pl.h * .62 : (40 - pl.vb[1]) * sc);
         n.in = [x + 2, jy]; n.out = [x + n.w - 2, jy];
-        draw += n.it.muted ? `<g class="gr-muted" opacity=".5">${pl.svg}</g>` : pl.svg;
+        let d = pl.svg;
+        if (o.detail === 'badge' && /class="gp-pedal/.test(n.svg)) {   // the card: the block's glyph, large, over its pedal
+          const b = P().blockByType(n.it.type) || {}, cx = x + n.w / 2, cy = pl.y + pl.h * .36, r = n.w * .36;
+          d += `<g class="gr-badge" pointer-events="none"><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="#0b0b0d" opacity="${n.it.on === false ? .5 : .78}"/><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="${f(r * .06)}"/>
+            ${P().glyphAt(b.glyph || n.it.type, cx, cy, r * 1.35, n.it.on === false ? '#8d949b' : '#fff', 2.1)}</g>`;
+        }
+        draw += n.it.muted ? `<g class="gr-muted" opacity=".5">${d}</g>` : d;
         if (n.it.branchInfo) tapes += `<g ${branchAttrs(n.it.branchInfo)}>${tape(x + n.w / 2, pl.y + pl.h + 6 * k, n.it.branch + (n.it.muted ? ' · MUTED' : ''), -2, k * .8, n.it.muted)}</g>`;
         if (prev) {
           const a = prev.out, b = n.in;
@@ -269,7 +326,7 @@
   // ---------- what stands: the back wall with a pool of light, the floor's front edge ----------
   function room(id, W, H, o, FL) {
     const F = floorOf(o.floor);
-    return `${F.wall(id, W, FL)}<defs><linearGradient id="${id}-wsh" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".7" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
+    return `${F.wall(id, W, FL, o.R)}<defs><linearGradient id="${id}-wsh" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset=".7" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
       <radialGradient id="${id}-pool" cx=".5" cy=".62" r=".55"><stop offset="0" stop-color="#ffe2b0" stop-opacity=".26"/><stop offset="1" stop-color="#ffe2b0" stop-opacity="0"/></radialGradient></defs>
       <rect width="${W}" height="${f(FL)}" fill="url(#${id}-wsh)"/><rect width="${W}" height="${f(FL)}" fill="url(#${id}-pool)"/>
       <rect y="${f(FL - 9)}" width="${W}" height="9" fill="#0c0b0a"/>
@@ -314,7 +371,7 @@
   function render(sec, opts) {
     opts = opts || {};
     if (!sec || !(sec.items || []).length) return '';
-    const id = 'gr' + (++count), W = opts.W || 1600, H = opts.H || 900, o = { floor: opts.floor, outboard: opts.outboard, R: rng(seedOf(opts.seed)) };
+    const id = 'gr' + (++count), W = opts.W || 1600, H = opts.H || 900, o = { floor: opts.floor, outboard: opts.outboard, detail: opts.detail, R: rng(seedOf(opts.seed)) };
     return `<svg class="gr-scene gr-${sec.key}" viewBox="0 0 ${W} ${H}"${sizeAttr(opts, W, H)} role="img" aria-label="${P().esc(sec.label)}: ${sec.items.length} block${sec.items.length > 1 ? 's' : ''}">${defs(id)}${inner(id, sec, W, H, o)}
 <rect width="${W}" height="${H}" fill="url(#${id}-spot)" pointer-events="none"/></svg>`;
   }
@@ -331,7 +388,7 @@
     const tw = list.reduce((t, s) => t + wt(s), 0);
     let x = 0, out = '', lines = '';
     list.forEach((s, i) => {
-      const w = W * wt(s) / tw, id = 'gr' + (++count), bwd = w + SL * 2, o = { floor: opts.floor, outboard: opts.outboard, R: rng(seed + i) };
+      const w = W * wt(s) / tw, id = 'gr' + (++count), bwd = w + SL * 2, o = { floor: opts.floor, outboard: opts.outboard, detail: opts.detail || 'badge', R: rng(seed + i) };
       const last = i === list.length - 1, x0 = i ? x + SL : 0, x1 = last ? W : x + w + SL, x2 = last ? W : x + w - SL, x3 = i ? x - SL : 0;
       out += `<clipPath id="${cid}-c${i}"><polygon points="${f(x0)},0 ${f(x1)},0 ${f(x2)},${H} ${f(x3)},${H}"/></clipPath>
 <g clip-path="url(#${cid}-c${i})"><svg x="${f(x - SL)}" y="0" width="${f(bwd)}" height="${H}" viewBox="0 0 ${f(bwd)} ${H}">${defs(id)}${inner(id, s, bwd, H, o)}<rect width="${f(bwd)}" height="${H}" fill="url(#${id}-spot)"/></svg></g>`;
@@ -341,5 +398,14 @@
     return `<svg class="gr-scene gr-card" viewBox="0 0 ${W} ${H}"${sizeAttr(opts, W, H)} role="img" aria-label="rig: ${list.map(s => P().esc(s.label)).join(', ')}">${out}${lines}</svg>`;
   }
 
-  root.GolemRig = { sections, render, card, floorFor, FLOORS: Object.keys(FLOORS), GENRES, OUTBOARD };
+  // a drawing as a file: the namespace, golem-pedals' shared defs and (fontsCss: a stylesheet URL) the fonts.
+  // What render() and card() return is meant for a page that already called GolemPedals.defs().
+  function standalone(svg, opts) {
+    opts = opts || {};
+    const d = /<defs>([\s\S]*)<\/defs>/.exec(P().defs());
+    const style = opts.fontsCss ? `<style>@import url("${P().esc(opts.fontsCss)}");</style>` : '';
+    return String(svg).replace(/^<svg /, '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, `>${style}<defs>${d ? d[1] : ''}</defs>`);
+  }
+
+  root.GolemRig = { sections, render, card, floorFor, standalone, FLOORS: Object.keys(FLOORS), GENRES, OUTBOARD };
 })(typeof window !== 'undefined' ? window : globalThis);

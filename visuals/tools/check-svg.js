@@ -85,6 +85,7 @@ for (const fam of Object.keys(P.AMP_LOOK)) cases.push([`namHead ${fam}`, P.namHe
     for (const floor of R.FLOORS) {
       for (const s of secs) cases.push([`rig ${name} ${outboard} ${features} ${floor} ${s.key}`, R.render(s, { floor, outboard, seed: name })]);
       if (secs.length) cases.push([`rig card ${name} ${outboard} ${features} ${floor}`, R.card(secs, { floor, outboard, seed: 7 })]);
+      if (secs.length && floor === 'stage') cases.push([`rig standalone ${name} ${outboard} ${features}`, R.standalone(R.card(secs, { floor, outboard, detail: 'full' }), { fontsCss: 'https://example.org/f.css?a=1&b=2' })]);
     }
   }
 }

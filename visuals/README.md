@@ -51,6 +51,7 @@ No family copies a maker's livery: amps take a period and a material, not a bran
 | `js/golem-pedals.js` | The renderers: pedals of the three families, amps, block tiles, glyphs. `pedalFor(type)` picks the right one |
 | `js/golem-stage.js` | `GolemStage.render(chain, {floor})`: the realistic lane |
 | `js/golem-rig.js` | `GolemRig`: **the rig by sections** (below): `sections(chain)`, `render(section, {floor})`, `card(sections, {floor})`, `floorFor(genre)` |
+| `tools/render-rig.js` | A rig's pictures as files: standalone SVG, PNG, WebP (above) |
 | `rig.html` | The rig by sections, live: five rigs, the floor (by genre or forced), outboard as a rack or on the board, golem's devices in their own tab, on the board or hidden |
 | `maquettes/board.html` | The single-image variants tried before the sections (2026-11-17): backline, all from above, one high-angle view, diptych. Kept as a record, not an API |
 | `tools/build-data.py` | Builds `visuals-data.js` and `glyphs/`, checks that every catalogue type has a glyph and every face's parameters exist |
@@ -88,24 +89,50 @@ card.innerHTML = GolemRig.card(secs, { floor: GolemRig.floorFor(song.genre), see
   by a `cab` is one stack. The `outboard` tab sits after the amp as soon as one unit comes after it, before it
   otherwise. The sections sort blocks by kind: show the chain's order next to them (the block tiles, as `rig.html` does).
 - **The card** is the fixed picture of a rig (golem.fm's patch and preset cards, shares): the sections as slanted
-  bands of one 16:9 image, the amp band the widest, without the `tools`. It is the same drawing as the sections,
-  reduced: there is no simplified level of detail yet, and its SVG filters are heavy for a wall of cards, so a
-  site should rasterise it once per patch (the renderers run under Node, see `tools/check-svg.js`).
-- **Floors** (`GolemRig.FLOORS`): `stage` (dark boards, red curtain), `rug` (persian rug, wood panelling),
-  `concrete` (rehearsal room), `plate` (tread plate, road cases), `parquet` (studio), `checker` (diner tiles).
-  Each has its floor from above and its back wall from the front. `floorFor(genre)` picks one from a free-text
-  genre (`GolemRig.GENRES`: metal → plate, punk / grunge → concrete, rockabilly / ska → checker, blues / folk /
-  classic → rug, pop / indie / jazz / funk → parquet, anything else → stage). `seed` (a number or any string,
-  such as a patch id) fixes the floor's random details.
+  bands of one 16:9 image, the amp band the widest, without the `tools`. A pedal is small there, so each one
+  wears its block's glyph on a dark badge (`detail: 'badge'`, the card's default; `'full'` removes it, and
+  `render(section, {detail: 'badge'})` adds it to a section). Its SVG filters are heavy for a wall of cards: a
+  site should rasterise it once per patch (`tools/render-rig.js`).
+- **Floors** (`GolemRig.FLOORS`), each with its floor from above and its back wall from the front:
+
+  | Floor | Look | Genres (`floorFor`, first match wins) |
+  |---|---|---|
+  | `plate` | Aluminium tread plate, road cases | metal, djent, thrash, industrial, -core |
+  | `concrete` | Raw concrete, painted blocks | punk, grunge, garage, stoner, doom, emo, shoegaze |
+  | `neon` | A dark floor with a lit grid, a night wall with a low sun | synth, electro, techno, house, -wave |
+  | `checker` | Black and white tiles, a red curtain | rockabilly, rock'n'roll, ska, surf |
+  | `shag` | An orange shag carpet, panelling with 70s stripes | funk, soul, disco, psych, reggae, R&B |
+  | `chevron` | Herringbone parquet, a midnight curtain | jazz, bossa, swing, fusion, latin |
+  | `bar` | Worn wide boards, a brick wall | blues, country, americana, southern, bluegrass |
+  | `rug` | A persian rug, wood panelling | classic, folk, acoustic, singer-songwriter |
+  | `carpet` | Dark studio carpet, acoustic foam | prog, modern, ambient, post-rock, hip-hop, worship |
+  | `parquet` | Pale parquet, acoustic panels | pop, indie, alternative |
+  | `stage` | Dark boards, a red curtain | everything else (rock) |
+
+  `floorFor(genre)` reads a free-text genre (`GolemRig.GENRES`). `seed` (a number or any string, such as a
+  patch id) fixes the floor's random details.
+- **Files**: `render()` and `card()` return SVG for a page that already called `GolemPedals.defs()`.
+  `GolemRig.standalone(svg, {fontsCss})` makes it a file of its own (namespace, the shared defs, the fonts'
+  stylesheet). `tools/render-rig.js` does it from the command line and rasterises:
+
+  ```sh
+  node visuals/tools/render-rig.js patch.json --out img --genre "Thrash metal" --sections --webp --width 1280
+  ```
+
+  `patch.json` is golem's lane chain (`{pre, split, post}` or a flat block list), or `{chain, state, genre, id,
+  name}`. It writes `<name>-card.svg` (and one `<name>-<section>.svg` per section with `--sections`), `--png`
+  through a headless Chrome / Chromium, `--webp` through `cwebp`, and prints the sections and files as JSON.
+  A 640 px card is about 25 KB in WebP.
 
 ## Real footprints
 
 `GolemPedals.footprint(svg)` gives a drawing's life-size footprint: `{w, h}` in native units, `k` its factor, `mm`
 its real width. A compact stomp is the yardstick (124 units of viewBox, 73 mm); a scene draws every unit at the
 same scale (`width = PW × footprint.w / 124`, `PW` the px width of a compact stomp), so a pitch treadle stands
-larger than a stomp. The large floor units are drawn smaller than life and take a factor (`GolemPedals.FOOTPRINT`,
-estimates, not measurements): wah treadle 1.23, pitch treadle 1.3, floor multi 2, loop switcher 1.9, foot
-controller 2.2. `GolemRig` draws at real footprints; `GolemStage.render` still normalises widths.
+larger than a stomp. The large floor units are drawn smaller than life and take a factor (`GolemPedals.FOOTPRINT`):
+wah treadle 1.26 (a 102 mm wide wah) and pitch treadle 1.36 (208 × 196 mm, the published size of the pitch
+treadle golem drives), then three generic formats sized by estimate: floor multi 2 (~400 mm), loop switcher 1.9,
+foot controller 2.2. `GolemRig` draws at real footprints; `GolemStage.render` still normalises widths.
 
 ## Integration in golem (later)
 
