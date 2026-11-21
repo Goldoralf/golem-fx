@@ -76,7 +76,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 34 | [gfx-dist](gfx-dist/) | new block `dist` (circuit distortions and overdrives) | — | **coded** (4 circuits; Discrete OD later), bench green, to test in golem |
 | 35 | [gfx-bassdi](gfx-bassdi/) | new block `bass-di` (bass preamp / DI) | — | **coded** (cab voicings and loudness tables [A] until bass DIs exist), bench green, to test in golem |
 | 36 | [gfx-tape](gfx-tape/) | new block `tape` (tape and media saturation) | — | **coded**, bench green, to test in golem |
-| 37 | [gfx-grit](gfx-grit/) | `grit` | Prisma | **coded** (reference level, Drive weights, cabinet voicings [A] until bench DIs exist), bench green, to test in golem (needs the type-keyed value conversion, README) |
+| 37 | [gfx-grit](gfx-grit/) | `grit` | Prisma | **coded** (reference level, Drive weights, cabinet voicings [A] until bench DIs exist), bench green; wired in golem (catalogue v51, golem dae7c7d6: golem-fx only, old values converted on load), to test in golem |
 | 38 | [gfx-transient](gfx-transient/) | new block `transient` (transient shaper) | — | **coded**, bench green, to test in golem |
 | 39 | [gfx-mbcomp](gfx-mbcomp/) | new block `mb-comp` (multiband compressor) | — | **coded** (R, default times, Tilt and the Lift-transient law [A] until bench DIs exist), bench green, to test in golem (needs the `mb-comp` catalogue entry) |
 | 40 | [gfx-ducker](gfx-ducker/) | new block `ducker` (key / self / pump ducking) | — | **coded** (Absolute detection; Relative later), bench green, to test in golem |

@@ -25,6 +25,10 @@ the Golem Engine (Ardour 9.9, headless). Agreed with golem's rack session on 202
     strongest curve; Surge's exponential delay `time`): the design gives the conversion formula, golem's
     presets and saved chains are converted once, and the catalogue entry changes with golem-rack's
     agreement (gfx-crusher, gfx-freqshift).
+- **A converted setting takes a new catalogue id** (golem, catalogue v51, first applied to `grit` on 2026-11-21).
+  The plugin keeps its ids. In golem's catalogue the setting whose unit changes is renamed and declares its old id
+  (`was`); golem maps it to the plugin by parameter name and converts a document that still carries the old id when
+  it loads it. An old id is never a new one, so the conversion is pure and idempotent, with no version stamp.
 - **Linear ranges only.** Ardour converts plain values through the plugin's controller, but REAPER's path
   (golem_rig) writes the normalized value as (v − min) / (max − min) — measured on gfx-boost 2026-11-12. A
   skewed range would land on the wrong value in REAPER. Knob feel is golem's UI's business, not the

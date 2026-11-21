@@ -112,6 +112,17 @@ material only (`level_db` within ±1.3 dB of the bypass there).
 
 ### For golem-rack: converting golem's `grit` values (type-keyed)
 
+> **Applied on 2026-11-21** (golem dae7c7d6, catalogue v51; golem's `docs/golem-fx-migration.md` §4).
+> `grit` is a golem-fx-only block there: Prisma and `golem_grit.jsfx` no longer play it. The plugin's ids are
+> unchanged. In golem's **catalogue**, the twelve settings whose unit changes took a new id, so that an old
+> document can be told from a new one without a version stamp: `<band>_v1` / `_v2` → `<band>_amt1` / `_amt2`,
+> `<band>_gain` → `<band>_lvl`. golem maps them to the plugin by parameter name ("Low Module 1 Value", "Low
+> Gain"), converts a document that still carries an old id when it loads it (`bridge/option_renames.py`, the
+> formulas below) and translates this crate's presets to its ids when it seeds them. A scene that changes a
+> slot's type without restating its value gets the block's value converted for the new type. Not converted: an
+> old document that names a type and no value for it (Prisma's value 0, which for Bit crush was 7.6 bits, now
+> plays 16 bits).
+
 What golem's engine table needs to load golem's `grit` presets and saved chains into gfx-grit (code:
 `src/convert.rs`, `module_value` and `band_gain_db`; tested against Prisma's formulas):
 
