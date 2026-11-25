@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Builds every pedal WITH its editor (gfx-ui, `cargo xtask dist`) for Windows and macOS, the build a DAW
+# opens. It publishes nothing: each archive is an artifact of the run (Actions ▸ the run ▸ Artifacts).
+# golem's own release (no editor) stays golem-binaries' golem-fx.yml.
+# Runs on each push to the gfx-ui branch, or by hand (Actions ▸ editor-build ▸ Run workflow).
+name: editor-build
+on:
+  push:
+    branches: [gfx-ui]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_TERM_COLOR: never
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            name: windows-x86_64
+          - os: macos-latest
+            name: macos-universal
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          if [ "${{ runner.os }}" = macOS ]; then rustup target add x86_64-apple-darwin aarch64-apple-darwin; fi
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: editor-${{ matrix.name }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: editor-${{ matrix.name }}-
+      - name: Every pedal with its editor
+        # One pedal at a time (xtask dist): a few reuse another pedal's processor without its plugin feature.
+        run: cargo xtask dist --no-archive
+      - name: Ad-hoc code signature (macOS, required on Apple silicon)
+        if: runner.os == 'macOS'
+        working-directory: dist/vst3/${{ matrix.name }}
+        run: for b in *.vst3; do codesign --force --deep --sign - "$b"; done
+      - name: Archive
+        run: |
+          v="$(git describe --tags --always)"
+          mkdir out
+          cd "dist/vst3/${{ matrix.name }}"
+          if [ "${{ runner.os }}" = Windows ]; then
+            7z a -tzip "../../../out/golem-fx-$v-${{ matrix.name }}-editor.zip" ./*.vst3 > /dev/null
+          else
+            tar czf "../../../out/golem-fx-$v-${{ matrix.name }}-editor.tar.gz" ./*.vst3
+          fi
+          cd ../../../out
+          if [ "${{ runner.os }}" = macOS ]; then shasum -a 256 ./* | sed 's| \./| |' > SHA256SUMS; else sha256sum ./* | sed 's| \./| |' > SHA256SUMS; fi
+          echo "golem-fx $(git rev-parse HEAD) ($v), runner ${{ matrix.os }}, $(rustc --version), $(ls "../dist/vst3/${{ matrix.name }}" | grep -c '\.vst3$') VST3" > BUILDINFO.txt
+          cat BUILDINFO.txt SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: golem-fx-editor-${{ matrix.name }}
+          path: out/
