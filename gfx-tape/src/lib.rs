@@ -29,7 +29,7 @@ pub mod models;
 pub mod transport;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;

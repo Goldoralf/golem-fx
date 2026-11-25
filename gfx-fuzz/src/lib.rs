@@ -30,7 +30,7 @@ pub mod circuits;
 use circuits::*;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 /// Parameter indices (PARAMS order).
 pub mod p {

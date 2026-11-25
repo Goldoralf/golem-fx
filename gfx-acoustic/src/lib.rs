@@ -41,7 +41,7 @@ use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 /// Parameter indices (PARAMS order).
 pub mod p {

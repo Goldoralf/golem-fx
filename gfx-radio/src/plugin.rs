@@ -330,6 +330,11 @@ impl Plugin for GfxRadio {
         self.params.clone()
     }
 
+    #[cfg(feature = "gui")]
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-radio"))
+    }
+
     fn initialize(&mut self, layout: &AudioIOLayout, config: &BufferConfig, _ctx: &mut impl InitContext<Self>) -> bool {
         let channels = layout.main_output_channels.map_or(1, |c| c.get() as usize);
         self.sync(true);

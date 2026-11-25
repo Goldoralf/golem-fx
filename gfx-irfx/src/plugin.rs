@@ -197,6 +197,11 @@ impl Plugin for GfxIrFx {
         self.params.clone()
     }
 
+    #[cfg(feature = "gui")]
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-irfx"))
+    }
+
     fn task_executor(&mut self) -> TaskExecutor<Self> {
         let w = self.worker.clone();
         Box::new(move |t| match t {

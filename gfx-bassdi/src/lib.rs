@@ -21,7 +21,7 @@ use gfx_dsp::{Effect, ParamInfo};
 pub mod engine;
 pub mod post;
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 use engine::{Ctl, Engine, Model, Voicing};
 use post::{eq_targets, Cab, CabModel, Eq};

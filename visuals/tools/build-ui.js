@@ -34,6 +34,30 @@ const FONT_DIR = path.join(V, 'assets/fonts');
 const fontFiles = fs.readdirSync(FONT_DIR).filter(f => /\.(ttf|otf)$/i.test(f)).map(f => path.join(FONT_DIR, f));
 const SHARED = /<defs>([\s\S]*)<\/defs>/.exec(P.defs())[1];
 const DESC = JSON.parse(fs.readFileSync(path.join(V, 'data/descriptors.json'), 'utf8')).descriptors;
+const METERS = JSON.parse(fs.readFileSync(path.join(V, '../gfx-ui/meters.json'), 'utf8'));
+const METER_KINDS = ['gr', 'bar', 'lamp', 'state', 'value', 'bands'];
+
+// The meters shown under the pedal (gfx-ui/meters.json): every meter of the descriptor shown once or hidden.
+function meters(crate, desc) {
+  const have = (desc.meters || []).map(m => m.id), spec = METERS[crate];
+  if (!have.length && !spec) return [];
+  if (!spec) throw new Error(`${crate}: meters ${have.join(', ')} are not in gfx-ui/meters.json`);
+  const rows = spec.rows || [], hide = spec.hide || [];
+  const named = rows.flatMap(r => r.kind === 'bands' ? r.ids : [r.id]).concat(hide);
+  for (const r of rows) {
+    if (!METER_KINDS.includes(r.kind)) throw new Error(`${crate}: meter kind "${r.kind}"`);
+    if (r.kind === 'state' && !(r.states || []).length) throw new Error(`${crate}: state meter ${r.id} has no states`);
+    if (r.kind === 'bands' && (r.labels || []).length !== r.ids.length) throw new Error(`${crate}: bands ${r.label}: one label per meter`);
+    if (['gr', 'bar', 'bands'].includes(r.kind) && !(r.max > (r.min || 0))) throw new Error(`${crate}: meter ${r.id || r.label} has no range`);
+  }
+  for (const id of named) if (!have.includes(id)) throw new Error(`${crate}: gfx-ui/meters.json names ${id}, not a meter of the plugin`);
+  for (const id of have) if (named.filter(x => x === id).length !== 1) throw new Error(`${crate}: meter ${id} must be shown or hidden once in gfx-ui/meters.json`);
+  return rows.map(r => ({ kind: r.kind, label: r.label, ids: r.kind === 'bands' ? r.ids : [r.id], labels: r.labels || [],
+    min: r.kind === 'gr' ? 0 : r.kind === 'bands' ? -r.max : (r.min || 0), max: r.max || 1, center: !!r.center || r.kind === 'bands',
+    states: r.states || [], format: r.format || null }));
+}
+// A meter row's height in rows (the editor's ROW): the bands take two.
+const rowsOf = (ms) => ms.reduce((n, m) => n + (m.kind === 'bands' ? 2 : 1), 0);
 
 // A drawing as a file of its own: namespace and the shared defs.
 const standalone = (svg) => svg.replace(/^<svg /, '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, `><defs>${SHARED}</defs>`);
@@ -171,14 +195,16 @@ function bundle(crate) {
   const doc = { version: VERSION, crate, name: desc.name, class_id: desc.class_id, face: f,
     front: desc.front, groups: desc.groups,
     params: Object.fromEntries(Object.entries(desc.params).map(([id, p]) => [id, keep(p)])),
-    meters: desc.meters || [],
+    meters: meters(crate, desc),
     presets: (desc.presets || []).map(p => ({ id: p.id, type: p.type, name: p.name, desc: p.desc, default: !!p.default, params: p.params })) };
   const json = JSON.stringify(doc);
   // Header, read without inflating (the window's size is needed when the plugin loads): "GFXU", version,
-  // flags (bit 0: an expert panel), the face's width and height in viewBox units (u16 LE).
+  // flags (bit 0: an expert panel; bits 1-4: the meter rows under the pedal), the face's width and height
+  // in viewBox units (u16 LE).
   const onFace = new Set(f.controls.map(c => c.param));
   const panel = Object.keys(doc.params).some(id => !onFace.has(id));
-  const head = Buffer.alloc(10); head.write('GFXU', 0, 'latin1'); head[4] = VERSION; head[5] = panel ? 1 : 0;
+  const head = Buffer.alloc(10); head.write('GFXU', 0, 'latin1'); head[4] = VERSION; const rows = rowsOf(doc.meters); if (rows > 15) throw new Error(`${crate}: ${rows} meter rows, 15 at most`);
+  head[5] = (panel ? 1 : 0) | rows << 1;
   head.writeUInt16LE(Math.ceil(f.view_box[2]), 6); head.writeUInt16LE(Math.ceil(f.view_box[3]), 8);
   return { data: Buffer.concat([head, zlib.deflateSync(Buffer.from(json, 'utf8'), { level: 9 })]), head, json, raw: json.length, check, controls: f.controls.length };
 }

@@ -26,7 +26,7 @@
 pub mod spectral;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;

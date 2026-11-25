@@ -855,6 +855,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-comp",
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -873,6 +874,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-comp",
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -956,6 +958,7 @@ version = "0.1.0"
 dependencies = [
  "assert_no_alloc",
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -974,6 +977,7 @@ name = "gfx-comp"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -982,6 +986,7 @@ name = "gfx-correct"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -990,6 +995,7 @@ name = "gfx-crusher"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "num-complex",
  "realfft",
@@ -1000,6 +1006,7 @@ name = "gfx-deesser"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1056,6 +1063,7 @@ name = "gfx-ducker"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1072,6 +1080,7 @@ name = "gfx-eq"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1089,6 +1098,7 @@ name = "gfx-formant"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1108,6 +1118,7 @@ name = "gfx-fuzz"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1124,6 +1135,7 @@ name = "gfx-gate"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1157,6 +1169,7 @@ name = "gfx-grains"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1175,6 +1188,7 @@ name = "gfx-irfx"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1184,6 +1198,7 @@ name = "gfx-killswitch"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1192,6 +1207,7 @@ name = "gfx-limiter"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1201,6 +1217,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-comp",
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1218,6 +1235,7 @@ name = "gfx-morph"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1263,6 +1281,7 @@ name = "gfx-polysynth"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1272,6 +1291,7 @@ name = "gfx-radio"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1290,6 +1310,7 @@ name = "gfx-ringmod"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1324,6 +1345,7 @@ name = "gfx-spectralcomp"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1332,6 +1354,7 @@ name = "gfx-stretch"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "half",
  "nih_plug",
  "realfft",
@@ -1342,6 +1365,7 @@ name = "gfx-sustainer"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1350,6 +1374,7 @@ name = "gfx-swell"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1358,6 +1383,7 @@ name = "gfx-tape"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1368,6 +1394,7 @@ version = "0.1.0"
 dependencies = [
  "gfx-dsp",
  "gfx-limiter",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1415,6 +1442,7 @@ name = "gfx-vocoder"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1431,6 +1459,7 @@ name = "gfx-widener"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]

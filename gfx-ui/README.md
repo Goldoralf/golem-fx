@@ -181,7 +181,11 @@ the control (never a panic in a host).
   `custom` switch in its header; a parameter whose `depends` is not met is greyed, still readable.
   Float = slider with its value, enum = list, bool = switch. Parameters on the face are not repeated;
   parameters in no group go to a last section "Other".
-- **Meters**: the plugin's output parameters, as bars under the pedal, 30 Hz.
+- **Meters**: the plugin's output parameters, one row each under the pedal, redrawn about 30 times a
+  second. `gfx-ui/meters.json` says how each is shown (a reduction bar, a bar, signed or not, a lamp, a
+  named state, the value as text, a row of bands) or hides it (counters kept for golem); `build-ui.js`
+  fails on a meter it does not name, and the header carries the rows so the window is sized before the
+  bundle is inflated.
 - **Presets**: the list, grouped by block type when the plugin stands for several (Boost: `volume`,
   `clean-boost`), each with its description as a tooltip; ◀ ▶ step through. Loading sets every
   parameter the preset lists but the host's bypass, as one gesture per parameter (values already there
@@ -218,9 +222,6 @@ the control (never a panic in a host).
 
 - **Sizes** (100 / 125 / 150 %) and HiDPI on Linux: `nih_plug_egui` keeps the window's size private and
   takes no scale from an X11 host; both need a patch in the fork.
-- **Meters**: drawn under the pedal but the window leaves them no room, and many output parameters are
-  counters or states a bar means nothing for (31 plugins have meters, gfx-tuner 23). Needs a kind
-  (bar / lamp / text) in the descriptor.
 - **Faces that are not cut yet**: gfx-geq (the body changes with the sliders and the layout), gfx-wah
   (the treadle is not a control), Blackwork and Clay to check one by one.
 - A selector with many options (gfx-glitch: 30), `depends` on the face, a group's `custom` switch in its

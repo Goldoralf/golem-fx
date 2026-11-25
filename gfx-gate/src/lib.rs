@@ -19,7 +19,7 @@ use gfx_dsp::util::db_to_gain;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 const CTL: u64 = 32;

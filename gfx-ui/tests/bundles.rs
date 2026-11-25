@@ -27,6 +27,11 @@ fn bundles_parse_and_name_their_crate() {
         assert_eq!(head.height, b.face.view_box[3].ceil() as u16, "{name}: header height");
         let off_face = b.params.order.iter().any(|id| !b.on_face(id));
         assert_eq!(head.panel, off_face, "{name}: header panel flag");
+        let rows: u8 = b.meters.iter().map(|m| m.rows()).sum();
+        assert_eq!(head.rows, rows, "{name}: header meter rows");
+        for m in &b.meters {
+            assert!(!m.ids.is_empty() && m.max > m.min, "{name}: meter {}", m.label);
+        }
     }
 }
 

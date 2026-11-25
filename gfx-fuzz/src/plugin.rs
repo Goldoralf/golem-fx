@@ -240,6 +240,11 @@ impl Plugin for GfxFuzz {
         self.params.clone()
     }
 
+    #[cfg(feature = "gui")]
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-fuzz"))
+    }
+
     fn initialize(
         &mut self,
         layout: &AudioIOLayout,

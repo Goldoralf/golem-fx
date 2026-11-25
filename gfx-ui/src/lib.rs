@@ -19,7 +19,7 @@ mod presets;
 pub mod raster;
 mod theme;
 
-pub use bundle::{Bundle, Header};
+pub use bundle::{Bundle, Header, MeterKind};
 pub use params::Binding;
 
 use face::FaceView;
@@ -30,6 +30,7 @@ use entry::Entry;
 use params::{Held, Setter};
 use presets::PresetBar;
 use std::sync::Arc;
+use std::time::Duration;
 use theme::Theme;
 
 /// The bundle of a crate, embedded in the plugin: `gfx_ui::bundle!("gfx-boost")`.
@@ -41,12 +42,15 @@ macro_rules! bundle {
 }
 
 const BAR: f32 = 38.0;
-const METERS: f32 = 26.0;
+/// A meter row under the pedal, and the margin around the rows.
+const ROW: f32 = 22.0;
+const METERS_PAD: f32 = 10.0;
 
 /// The window's size in logical pixels, from the bundle's header alone.
 pub fn window_size(head: Header) -> (u32, u32) {
     let w = head.width as f32 * face::UNIT + if head.panel { panel::WIDTH } else { 0.0 };
-    let h = head.height as f32 * face::UNIT + BAR;
+    let meters = if head.rows > 0 { head.rows as f32 * ROW + 2.0 * METERS_PAD } else { 0.0 };
+    let h = head.height as f32 * face::UNIT + BAR + meters;
     (w.max(300.0).ceil() as u32, h.ceil() as u32)
 }
 
@@ -149,7 +153,12 @@ fn draw(ctx: &egui::Context, setter: Setter, binding: &Binding, held: &mut Optio
         .show(ctx, |ui| {
             ui.spacing_mut().item_spacing = vec2(0.0, 0.0);
             face.show(ui, bundle, binding, setter, held, entry, theme, 1.0);
-            meters(ui, bundle, binding, theme);
+            if !bundle.meters.is_empty() {
+                ui.add_space(METERS_PAD);
+                meters(ui, bundle, binding, theme);
+                // The meters move with the audio, not with the pointer: about 30 frames a second.
+                ctx.request_repaint_after(Duration::from_millis(33));
+            }
         });
     egui::CentralPanel::default().frame(egui::Frame::new().fill(theme.bg).inner_margin(egui::Margin::same(8))).show(ctx, |ui| {
         if !sections.is_empty() {
@@ -158,16 +167,96 @@ fn draw(ctx: &egui::Context, setter: Setter, binding: &Binding, held: &mut Optio
     });
 }
 
-/// The plugin's output parameters as bars over their own range.
+/// A MIDI note number as a name (60 = C4); 0 is no note.
+fn note_name(n: f32) -> String {
+    const NAMES: [&str; 12] = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    let n = n.round() as i32;
+    if n <= 0 { "—".into() } else { format!("{}{}", NAMES[(n % 12) as usize], n / 12 - 1) }
+}
+
+/// The plugin's output parameters, one row each (gfx-ui/meters.json says how).
 fn meters(ui: &mut egui::Ui, bundle: &Bundle, binding: &Binding, theme: &Theme) {
+    const LABEL: f32 = 96.0;
+    const VALUE: f32 = 70.0;
+    let small = egui::FontId::proportional(13.0);
     for meter in &bundle.meters {
-        let Some(p) = binding.get(&meter.id) else { continue };
-        let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), METERS), egui::Sense::hover());
-        let bar = rect.shrink2(vec2(10.0, 8.0));
-        ui.painter().rect_filled(bar, 2.0, theme.track);
-        let mut fill = bar;
-        fill.set_width(bar.width() * p.normalized().clamp(0.0, 1.0));
-        ui.painter().rect_filled(fill, 2.0, theme.accent);
-        resp.on_hover_text(format!("{}  {}", meter.name, p.text(p.normalized())));
+        let params: Vec<_> = meter.ids.iter().map(|id| binding.get(id)).collect();
+        let (rect, resp) = ui.allocate_exact_size(vec2(ui.available_width(), ROW * meter.rows() as f32), egui::Sense::hover());
+        let Some(Some(first)) = params.first().copied() else { continue };
+        let row = rect.shrink2(vec2(14.0, 0.0));
+        let painter = ui.painter_at(rect);
+        let mid_y = row.top() + ROW / 2.0;
+        painter.text(egui::pos2(row.left(), mid_y), egui::Align2::LEFT_CENTER, &meter.label, small.clone(), theme.dim);
+        let area = egui::Rect::from_min_max(egui::pos2(row.left() + LABEL, row.top()), row.max);
+        let span = (meter.max - meter.min).max(f32::EPSILON);
+        let at = |v: f32| ((v - meter.min) / span).clamp(0.0, 1.0);
+        let lamp = |on: bool, x: f32| {
+            let c = egui::pos2(x + 6.0, mid_y);
+            painter.circle_filled(c, 5.5, if on { theme.accent } else { theme.track });
+            if on {
+                painter.circle_filled(c, 9.0, theme.accent.gamma_multiply(0.18));
+            }
+        };
+        let hover = match meter.kind {
+            MeterKind::Gr | MeterKind::Bar => {
+                let bar = egui::Rect::from_min_max(egui::pos2(area.left(), mid_y - 4.0), egui::pos2(area.right() - VALUE, mid_y + 4.0));
+                painter.rect_filled(bar, 2.0, theme.track);
+                let v = first.plain();
+                let (a, b) = if meter.center { let z = at(0.0f32.clamp(meter.min, meter.max)); let t = at(v); (z.min(t), z.max(t)) } else { (0.0, at(v)) };
+                let fill = egui::Rect::from_min_max(egui::pos2(bar.left() + bar.width() * a, bar.top()), egui::pos2(bar.left() + bar.width() * b, bar.bottom()));
+                painter.rect_filled(fill, 2.0, theme.accent);
+                if meter.center {
+                    let x = bar.left() + bar.width() * at(0.0f32.clamp(meter.min, meter.max));
+                    painter.line_segment([egui::pos2(x, bar.top() - 3.0), egui::pos2(x, bar.bottom() + 3.0)], egui::Stroke::new(1.0_f32, theme.dim));
+                }
+                let text = first.text(first.normalized());
+                painter.text(egui::pos2(area.right(), mid_y), egui::Align2::RIGHT_CENTER, &text, small.clone(), theme.text);
+                text
+            }
+            MeterKind::Lamp => {
+                let on = first.plain() >= 0.5;
+                lamp(on, area.left());
+                (if on { "on" } else { "off" }).to_string()
+            }
+            MeterKind::State => {
+                let i = first.plain().round().max(0.0) as usize;
+                let name = meter.states.get(i).cloned().unwrap_or_else(|| i.to_string());
+                lamp(i > 0, area.left());
+                painter.text(egui::pos2(area.left() + 22.0, mid_y), egui::Align2::LEFT_CENTER, &name, small.clone(), theme.text);
+                name
+            }
+            MeterKind::Value => {
+                let text = match meter.format.as_deref() {
+                    Some("midi") => note_name(first.plain()),
+                    _ => first.text(first.normalized()),
+                };
+                painter.text(egui::pos2(area.left(), mid_y), egui::Align2::LEFT_CENTER, &text, small.clone(), theme.text);
+                text
+            }
+            MeterKind::Bands => {
+                let n = params.len().max(1) as f32;
+                let w = area.width() / n;
+                let top = area.top() + 4.0;
+                let bottom = area.bottom() - 16.0;
+                let zero = top + (bottom - top) * (1.0 - at(0.0));
+                let mut parts = Vec::new();
+                for (k, p) in params.iter().enumerate() {
+                    let x = area.left() + w * k as f32 + w / 2.0;
+                    let col = egui::Rect::from_min_max(egui::pos2(x - 4.0, top), egui::pos2(x + 4.0, bottom));
+                    painter.rect_filled(col, 2.0, theme.track);
+                    if let Some(p) = p {
+                        let y = top + (bottom - top) * (1.0 - at(p.plain()));
+                        painter.rect_filled(egui::Rect::from_min_max(egui::pos2(col.left(), y.min(zero)), egui::pos2(col.right(), y.max(zero))), 2.0, theme.accent);
+                        parts.push(format!("{} {}", meter.labels.get(k).map_or("", |s| s.as_str()), p.text(p.normalized())));
+                    }
+                    painter.line_segment([egui::pos2(col.left() - 2.0, zero), egui::pos2(col.right() + 2.0, zero)], egui::Stroke::new(1.0_f32, theme.dim));
+                    if let Some(l) = meter.labels.get(k) {
+                        painter.text(egui::pos2(x, area.bottom() - 2.0), egui::Align2::CENTER_BOTTOM, l, egui::FontId::proportional(11.0), theme.dim);
+                    }
+                }
+                parts.join("\n")
+            }
+        };
+        resp.on_hover_text(format!("{}  {}", meter.label, hover));
     }
 }

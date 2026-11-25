@@ -27,7 +27,7 @@ pub mod types;
 pub mod voice;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;

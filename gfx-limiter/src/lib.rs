@@ -23,7 +23,7 @@ use gfx_dsp::util::one_pole_coef;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 const CTL: u64 = 32;

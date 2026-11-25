@@ -14,12 +14,16 @@ crate-type = ["cdylib", "rlib"]
 default = ["plugin"]
 # The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
 plugin = ["dep:nih_plug"]
+# The editor a DAW opens (gfx-ui): --features gui, what `cargo xtask dist` builds. Off by default: golem plays the
+# pedals without it (it has its own drawers) and its release must not link X11 and OpenGL.
+gui = ["plugin", "dep:gfx-ui"]
 
 [dependencies]
 gfx-dsp.workspace = true
 # f16 takes; F16C at run time where the CPU has it
 half = "2.4"
 nih_plug = { workspace = true, optional = true }
+gfx-ui = { workspace = true, optional = true }
 
 [dev-dependencies]
 realfft = "3.5"

@@ -25,7 +25,7 @@ use gfx_dsp::util::one_pole_coef;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 /// `sync` options (catalogue order) in quarter notes; 0 = Free.
 pub const SYNC_BEATS: [f64; 7] = [0.0, 1.0, 0.5, 1.0 / 3.0, 0.25, 1.0 / 6.0, 0.125];

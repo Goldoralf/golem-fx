@@ -251,6 +251,11 @@ impl Plugin for GfxAcoustic {
         self.params.clone()
     }
 
+    #[cfg(feature = "gui")]
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-acoustic"))
+    }
+
     fn initialize(
         &mut self,
         layout: &AudioIOLayout,

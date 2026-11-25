@@ -12,6 +12,8 @@ pub const VERSION: u8 = 1;
 pub struct Header {
     /// Whether the plugin has parameters that are not on its face.
     pub panel: bool,
+    /// The meter rows under the pedal.
+    pub rows: u8,
     /// The face's size in viewBox units.
     pub width: u16,
     pub height: u16,
@@ -24,6 +26,7 @@ impl Header {
         }
         Some(Self {
             panel: bytes[5] & 1 != 0,
+            rows: (bytes[5] >> 1) & 0x0f,
             width: u16::from_le_bytes([bytes[6], bytes[7]]),
             height: u16::from_le_bytes([bytes[8], bytes[9]]),
         })
@@ -117,10 +120,48 @@ pub struct Depends {
     pub equals: serde_json::Value,
 }
 
+/// A row of meters under the pedal (gfx-ui/meters.json, merged by build-ui.js).
 #[derive(Deserialize, Debug)]
 pub struct Meter {
-    pub id: String,
-    pub name: String,
+    pub kind: MeterKind,
+    pub label: String,
+    /// One parameter, or several for `bands`.
+    pub ids: Vec<String>,
+    #[serde(default)]
+    pub labels: Vec<String>,
+    #[serde(default)]
+    pub min: f32,
+    #[serde(default = "one")]
+    pub max: f32,
+    /// A signed value: the bar fills from the middle.
+    #[serde(default)]
+    pub center: bool,
+    #[serde(default)]
+    pub states: Vec<String>,
+    #[serde(default)]
+    pub format: Option<String>,
+}
+
+fn one() -> f32 {
+    1.0
+}
+
+#[derive(Deserialize, Debug, Clone, Copy, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum MeterKind {
+    Gr,
+    Bar,
+    Lamp,
+    State,
+    Value,
+    Bands,
+}
+
+impl Meter {
+    /// Its height in meter rows.
+    pub fn rows(&self) -> u8 {
+        if self.kind == MeterKind::Bands { 2 } else { 1 }
+    }
 }
 
 #[derive(Deserialize, Debug)]

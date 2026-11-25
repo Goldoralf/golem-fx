@@ -24,7 +24,7 @@ pub mod decorr;
 pub mod vnd_tables;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;
