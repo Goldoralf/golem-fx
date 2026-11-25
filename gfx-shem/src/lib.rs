@@ -10,7 +10,7 @@ use gfx_dsp::smooth::{LinearRamp, OnePole};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 pub static PARAMS: [ParamInfo; 3] = [
     ParamInfo::float("grind", "Grind", -8.0, 20.0, 10.0).with_exp(),

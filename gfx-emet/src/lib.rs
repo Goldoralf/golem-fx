@@ -13,7 +13,7 @@ use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 pub static PARAMS: [ParamInfo; 8] = [
     ParamInfo::float("gain", "Gain", 0.0, 100.0, 35.0).with_exp(),

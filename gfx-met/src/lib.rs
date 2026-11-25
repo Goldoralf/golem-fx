@@ -11,7 +11,7 @@ use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::float("thresh", "Threshold", -90.0, 0.0, -45.0),
