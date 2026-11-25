@@ -1,7 +1,8 @@
 # gfx-ui — the shared editor of the golem-fx plugins
 
-> **Status: PROTOTYPE** (2026-11-22) on gfx-boost and gfx-grit, seen running standalone under X11, not
-> yet in a DAW. One editor for every golem-fx VST3 when it is opened in a DAW (REAPER, Ardour, Bitwig,
+> **Status: ON EVERY PEDAL** (2026-11-25): the 57 pedals have their editor (`--features gui`, built by
+> `cargo xtask dist`), each seen in a virtual screen; Boost tried in REAPER, the others still to try in a
+> DAW. One editor for every golem-fx VST3 when it is opened in a DAW (REAPER, Ardour, Bitwig,
 > Live…). golem's engine runs the plugins headless and never opens it. Not done yet: §10.
 
 ## 1. Goal
@@ -73,7 +74,8 @@ build and out of the release builds. Expected size: 20 – 60 KB each.
       { "param": "drive", "kind": "knob",     "bbox": [x, y, w, h], "frames": ["<svg…>", …] },   // 65 frames
       { "param": "quality", "kind": "toggle", "bbox": […],          "frames": [off, on] }
     ],
-    "variants": null                   // gfx-geq: {"param": "layout", "faces": [face, face, face]}
+    "curve": null,                     // gfx-geq: the line through the caps, drawn by the editor
+    "variants": null                   // gfx-geq: {"param": "layout", "faces": [face, face]}, options 1, 2
   },
   "front": ["wet", "quality", "drive", "focus", "level"],
   "groups": [{ "id": "low", "name": "Low", "custom": null, "params": […] }, …],
@@ -95,7 +97,13 @@ build and out of the release builds. Expected size: 20 – 60 KB each.
 - **`bbox`** = the union of the frames' opaque pixels, in viewBox units, widened by 1.5 units: the
   control's hit area, and the rectangle its texture covers.
 - **A face that changes with a parameter** (gfx-geq draws another set of sliders for each `layout`):
-  one face per option, listed in `variants`; the editor shows the one the parameter selects.
+  one face per option, the first being the face itself and the others in `variants`; the editor shows the
+  one the parameter selects. Each is drawn in a node process of its own. The faders of a set that is not
+  shown do not drive the EQ, so the panel does not list them either.
+- **A drawing that depends on several controls at once** (gfx-geq's line through the caps): the renderer
+  puts it in a `gp-curve` group that names its faders and their exact places; the bundle keeps the group as
+  a template whose paths read `d="{d}"`, and the editor writes the monotone cubic through the caps (the
+  renderer's own formula) and rasterises it again when a fader moves. The check draws it the same way.
 - **The check, at build time**: for the defaults, both ends of every control and 8 random settings (each
   value on its frame), the tool rasterises `body + frames`, each frame cut to its `bbox` as the editor
   draws it, and the full `gfxPedal(crate, {values})`, and fails above 8 / 255 on more than 0.05 % of
@@ -222,8 +230,7 @@ the control (never a panic in a host).
 
 - **Sizes** (100 / 125 / 150 %) and HiDPI on Linux: `nih_plug_egui` keeps the window's size private and
   takes no scale from an X11 host; both need a patch in the fork.
-- **Faces that are not cut yet**: gfx-geq (the body changes with the sliders and the layout), gfx-wah
-  (the treadle is not a control), Blackwork and Clay to check one by one.
+- **The wah's treadle** is not a control of the face: its position is played in the panel.
 - A selector with many options (gfx-glitch: 30), `depends` on the face, a group's `custom` switch in its
   header, a failed OpenGL context (baseview aborts the host), the fork's `!is_processing` guard on
   parameter writes from the editor.

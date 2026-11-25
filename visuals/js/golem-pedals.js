@@ -1338,8 +1338,10 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
       pts.push([x, capY(p)]);
     });
     if (lvl) sliders += slider(lvl, x0 + pitch * (faders.length + .5) + gap, 'LVL', accent, style === 'thrash' ? '#000' : mix(c.hue, '#000', .6));
+    // in a group of its own, with the faders it passes through and their exact places: gfx-ui's build-ui.js
+    // cuts it out and the editor draws it from the caps
     const curve = on && pts.length > 1
-      ? `<path d="${monotonePath(pts)}" fill="none" stroke="${c.light}" stroke-width="1.6" opacity=".55" filter="url(#gp-glow-soft)"/><path d="${monotonePath(pts)}" fill="none" stroke="${mix(c.light, '#fff', .5)}" stroke-width=".7"/>` : '';
+      ? `<g class="gp-curve" data-params="${faders.map(p => esc(p.id)).join(' ')}" data-x="${pts.map(q => q[0]).join(' ')}" data-slot="${S.top} ${S.bottom}"><path d="${monotonePath(pts)}" fill="none" stroke="${c.light}" stroke-width="1.6" opacity=".55" filter="url(#gp-glow-soft)"/><path d="${monotonePath(pts)}" fill="none" stroke="${mix(c.light, '#fff', .5)}" stroke-width=".7"/></g>` : '';
 
     const body = style === 'thrash'
       ? `<rect x="0" y="5" width="${W}" height="${H}" rx="${rx}" fill="${c.base}"/>

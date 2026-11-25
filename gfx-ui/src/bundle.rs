@@ -57,6 +57,66 @@ pub struct Face {
     pub accent: String,
     pub body: String,
     pub controls: Vec<Control>,
+    /// The graphic EQ's line through the caps, drawn by the editor (`face.rs`).
+    #[serde(default)]
+    pub curve: Option<Curve>,
+    /// The faces of the other options of a parameter (gfx-geq's `layout`); this face is option 0.
+    #[serde(default)]
+    pub variants: Option<Variants>,
+}
+
+/// A line through the caps of some faders: `svg` is a drawing of its own whose paths read `d="{d}"`.
+#[derive(Deserialize, Debug)]
+pub struct Curve {
+    pub svg: String,
+    pub params: Vec<String>,
+    /// The faders' x, and the slot's top and bottom, in viewBox units.
+    pub xs: Vec<f32>,
+    pub top: f32,
+    pub bottom: f32,
+    pub bbox: [f32; 4],
+}
+
+impl Curve {
+    /// The path through the caps, `t` each fader's place over its range (0 at the bottom): a monotone
+    /// cubic (Fritsch - Carlson), written as the pedal renderer writes it (build-ui.js curveD).
+    pub fn d(&self, t: &[f32]) -> String {
+        let f1 = |v: f64| format!("{:.1}", (v * 10.0).round() / 10.0);
+        let n = self.xs.len().min(t.len());
+        if n < 2 {
+            return String::new();
+        }
+        let (top, bottom) = (self.top as f64, self.bottom as f64);
+        let pts: Vec<(f64, f64)> = (0..n).map(|i| (self.xs[i] as f64, bottom - (bottom - top) * t[i].clamp(0.0, 1.0) as f64)).collect();
+        let m: Vec<f64> = (0..n - 1).map(|i| (pts[i + 1].1 - pts[i].1) / (pts[i + 1].0 - pts[i].0)).collect();
+        let mut d = vec![0.0; n];
+        d[0] = m[0];
+        d[n - 1] = m[n - 2];
+        for i in 1..n - 1 {
+            d[i] = if m[i - 1] * m[i] <= 0.0 { 0.0 } else { 2.0 / (1.0 / m[i - 1] + 1.0 / m[i]) };
+        }
+        let mut s = format!("M{} {}", f1(pts[0].0), f1(pts[0].1));
+        for i in 0..n - 1 {
+            let h = (pts[i + 1].0 - pts[i].0) / 3.0;
+            s += &format!(
+                "C{} {} {} {} {} {}",
+                f1(pts[i].0 + h),
+                f1(pts[i].1 + d[i] * h),
+                f1(pts[i + 1].0 - h),
+                f1(pts[i + 1].1 - d[i + 1] * h),
+                f1(pts[i + 1].0),
+                f1(pts[i + 1].1)
+            );
+        }
+        s
+    }
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Variants {
+    pub param: String,
+    /// The faces of options 1, 2…
+    pub faces: Vec<Face>,
 }
 
 #[derive(Deserialize, Debug, Clone, Copy, PartialEq)]
@@ -272,8 +332,22 @@ impl Bundle {
         serde_json::from_slice(&json).map_err(|e| format!("json: {e}"))
     }
 
-    /// Whether the face carries this parameter (the panel shows the others).
+    /// Every face: the face itself, then its variants'.
+    pub fn faces(&self) -> impl Iterator<Item = &Face> {
+        std::iter::once(&self.face).chain(self.face.variants.iter().flat_map(|v| v.faces.iter()))
+    }
+
+    /// The face shown for an option of the variants' parameter, and its number (0: the face itself).
+    pub fn face_at(&self, option: usize) -> (usize, &Face) {
+        match &self.face.variants {
+            Some(v) if option > 0 && option <= v.faces.len() => (option, &v.faces[option - 1]),
+            _ => (0, &self.face),
+        }
+    }
+
+    /// Whether a face carries this parameter (the panel shows the others). A fader of a set that is not
+    /// shown does not drive the EQ either: it is not listed.
     pub fn on_face(&self, id: &str) -> bool {
-        self.face.controls.iter().any(|c| c.param == id)
+        self.faces().any(|f| f.controls.iter().any(|c| c.param == id))
     }
 }

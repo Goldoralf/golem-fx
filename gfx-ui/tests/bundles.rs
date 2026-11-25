@@ -39,7 +39,7 @@ fn bundles_parse_and_name_their_crate() {
 fn controls_have_a_frame_for_every_position() {
     for (name, bytes) in bundles() {
         let b = Bundle::parse(&bytes).unwrap();
-        for c in &b.face.controls {
+        for c in b.faces().flat_map(|f| f.controls.iter()) {
             let p = b.params.get(&c.param).unwrap_or_else(|| panic!("{name}: control {} has no parameter", c.param));
             let want = match p.kind {
                 ParamKind::Bool => 2,
@@ -53,7 +53,16 @@ fn controls_have_a_frame_for_every_position() {
             assert!(c.bbox[2] > 0.0 && c.bbox[3] > 0.0, "{name}: box of {}", c.param);
             assert!(c.frames.iter().all(|f| f.starts_with("<svg") && !f.contains("<text")), "{name}: {} keeps text", c.param);
         }
-        assert!(!b.face.body.contains("<text"), "{name}: the body keeps text");
+        for f in b.faces() {
+            assert!(!f.body.contains("<text"), "{name}: the body keeps text");
+            assert_eq!(f.view_box, b.face.view_box, "{name}: a variant of another size");
+            if let Some(curve) = &f.curve {
+                assert!(curve.svg.contains("{d}") && curve.params.len() == curve.xs.len(), "{name}: curve");
+                assert!(curve.params.iter().all(|id| f.controls.iter().any(|c| &c.param == id)), "{name}: curve through a fader not on its face");
+                let d = curve.d(&vec![0.5; curve.xs.len()]);
+                gfx_ui::raster::render(&curve.svg.replace("{d}", &d), [0, 0, 10, 10], 1.0).unwrap_or_else(|e| panic!("{name}: curve: {e}"));
+            }
+        }
     }
 }
 

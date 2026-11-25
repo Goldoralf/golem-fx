@@ -22,8 +22,12 @@ const NOTCH: f32 = 40.0;
 pub struct FaceView {
     /// Physical pixels per viewBox unit the textures were drawn at.
     px_per_unit: f32,
-    body: Option<TextureHandle>,
-    frames: HashMap<(usize, usize), TextureHandle>,
+    /// The body of the face shown (its number among the variants).
+    body: Option<(usize, TextureHandle)>,
+    /// Frames by (face, control, frame).
+    frames: HashMap<(usize, usize, usize), TextureHandle>,
+    /// The graphic EQ's line, as last drawn: (face, path, texture).
+    curve: Option<(usize, String, TextureHandle)>,
     /// The selector a drag is turning, and where the drag stands in options.
     turn: Option<(usize, f32)>,
     /// The control under the wheel and the scroll it has not used yet.
@@ -64,23 +68,27 @@ impl FaceView {
         if (px_per_unit - self.px_per_unit).abs() > 1e-3 {
             self.body = None;
             self.frames.clear();
+            self.curve = None;
             self.px_per_unit = px_per_unit;
         }
-        let vb = bundle.face.view_box;
+        // The face the variants' parameter picks (gfx-geq's layout), else the face itself.
+        let option = bundle.face.variants.as_ref().and_then(|v| binding.get(&v.param)).map_or(0, |p| p.plain().round().max(0.0) as usize);
+        let (vi, face) = bundle.face_at(option);
+        let vb = face.view_box;
         let (pw, ph) = raster::face_pixels(vb, px_per_unit);
         let (rect, _) = ui.allocate_exact_size(vec2(pw as f32, ph as f32) / ppp, Sense::hover());
         // On the pixel grid, so the layers meet the body exactly.
         let origin = pos2((rect.min.x * ppp).round() / ppp, (rect.min.y * ppp).round() / ppp);
         let uv = Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0));
 
-        if self.body.is_none() {
-            self.body = texture(&ctx, format!("{}-body", bundle.krate), &bundle.face.body, [0, 0, pw, ph], px_per_unit);
+        if self.body.as_ref().is_none_or(|b| b.0 != vi) {
+            self.body = texture(&ctx, format!("{}-body-{vi}", bundle.krate), &face.body, [0, 0, pw, ph], px_per_unit).map(|t| (vi, t));
         }
-        if let Some(body) = &self.body {
+        if let Some((_, body)) = &self.body {
             ui.painter().image(body.id(), Rect::from_min_size(origin, vec2(pw as f32, ph as f32) / ppp), uv, Color32::WHITE);
         }
 
-        for (n, control) in bundle.face.controls.iter().enumerate() {
+        for (n, control) in face.controls.iter().enumerate() {
             let (Some(info), Some(p)) = (bundle.params.get(&control.param), binding.get(&control.param)) else { continue };
             let px = raster::pixel_box(vb, control.bbox, px_per_unit);
             let at = Rect::from_min_size(origin + vec2(px[0] as f32, px[1] as f32) / ppp, vec2(px[2] as f32, px[3] as f32) / ppp);
@@ -90,12 +98,12 @@ impl FaceView {
             let holding = held.as_ref().filter(|h| h.param == p).map(|h| h.at);
             let normalized = holding.map_or_else(|| p.normalized(), |t| info.normalized(t));
             let frame = control.frame(info.kind, normalized, p.plain());
-            if let std::collections::hash_map::Entry::Vacant(slot) = self.frames.entry((n, frame)) {
-                if let Some(t) = texture(&ctx, format!("{}-{}-{}", bundle.krate, control.param, frame), &control.frames[frame], px, px_per_unit) {
+            if let std::collections::hash_map::Entry::Vacant(slot) = self.frames.entry((vi, n, frame)) {
+                if let Some(t) = texture(&ctx, format!("{}-{vi}-{}-{}", bundle.krate, control.param, frame), &control.frames[frame], px, px_per_unit) {
                     slot.insert(t);
                 }
             }
-            if let Some(t) = self.frames.get(&(n, frame)) {
+            if let Some(t) = self.frames.get(&(vi, n, frame)) {
                 ui.painter().image(t.id(), at, uv, Color32::WHITE);
             }
 
@@ -184,6 +192,29 @@ impl FaceView {
                         ui.label(help);
                     }
                 });
+            }
+        }
+
+        // The graphic EQ's line through the caps, over the faders, where they are drawn (a held fader
+        // where the pointer put it); drawn again only when it moves.
+        if let Some(curve) = &face.curve {
+            let t: Vec<f32> = curve
+                .params
+                .iter()
+                .map(|id| match (bundle.params.get(id), binding.get(id)) {
+                    (Some(info), Some(p)) => held.as_ref().filter(|h| h.param == p).map_or_else(|| p.normalized(), |h| info.normalized(h.at)),
+                    _ => 0.5,
+                })
+                .collect();
+            let d = curve.d(&t);
+            if self.curve.as_ref().is_none_or(|c| c.0 != vi || c.1 != d) {
+                let px = raster::pixel_box(vb, curve.bbox, px_per_unit);
+                self.curve = texture(&ctx, format!("{}-curve", bundle.krate), &curve.svg.replace("{d}", &d), px, px_per_unit).map(|tex| (vi, d, tex));
+            }
+            if let Some((_, _, tex)) = &self.curve {
+                let px = raster::pixel_box(vb, curve.bbox, px_per_unit);
+                let at = Rect::from_min_size(origin + vec2(px[0] as f32, px[1] as f32) / ppp, vec2(px[2] as f32, px[3] as f32) / ppp);
+                ui.painter().image(tex.id(), at, uv, Color32::WHITE);
             }
         }
     }

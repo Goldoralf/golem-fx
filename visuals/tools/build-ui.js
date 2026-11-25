@@ -29,11 +29,14 @@ const flag = (name) => { const i = args.indexOf(name); if (i < 0) return null; c
 const OUT = flag('--out') || path.join(V, '../gfx-ui/bundles');
 const PNG = flag('--png');
 const CHECK = args.includes('--check'); if (CHECK) args.splice(args.indexOf('--check'), 1);
+// Internal: one variant of a face, drawn in a process of its own and written as JSON to this file.
+const VARIANT = flag('--variant');
 
 const FONT_DIR = path.join(V, 'assets/fonts');
 const fontFiles = fs.readdirSync(FONT_DIR).filter(f => /\.(ttf|otf)$/i.test(f)).map(f => path.join(FONT_DIR, f));
 const SHARED = /<defs>([\s\S]*)<\/defs>/.exec(P.defs())[1];
 const DESC = JSON.parse(fs.readFileSync(path.join(V, 'data/descriptors.json'), 'utf8')).descriptors;
+const FACES = JSON.parse(fs.readFileSync(path.join(V, 'data/faces.json'), 'utf8')).faces;
 const METERS = JSON.parse(fs.readFileSync(path.join(V, '../gfx-ui/meters.json'), 'utf8'));
 const METER_KINDS = ['gr', 'bar', 'lamp', 'state', 'value', 'bands'];
 
@@ -66,34 +69,37 @@ const resvg = (svg, width) => new Resvg(svg, { fitTo: { mode: 'width', value: wi
 // Text as paths, `use` resolved, unused defs dropped: what the plugin's resvg reads without a font.
 const flatten = (svg) => resvg(standalone(svg), 100).toString();
 
-// Cuts a pedal: {head, body, controls: [{kind, id, svg}]}, each control's svg a drawing of its own
-// (the root, the pedal's defs, the group inside its ancestors' opening tags).
+// Cuts a pedal: {head, body, controls: [{kind, id, svg}], curve}, each control's svg a drawing of its own
+// (the root, the pedal's defs, the group inside its ancestors' opening tags). `curve` is the graphic EQ's
+// line through the caps (a `gp-curve` group), cut the same way, or null.
 function cut(svg) {
   const head = /^<svg [^>]*>/.exec(svg)[0];
   const defs = (/^<svg [^>]*>\s*(<defs>[\s\S]*?<\/defs>)/.exec(svg) || [])[1] || '';
   const tag = /<(\/?)([a-zA-Z][\w:-]*)((?:\s+[\w:-]+=(?:"[^"]*"|'[^']*'))*)\s*(\/?)>/g;
   const stack = [], controls = [];
+  let curve = null;
   let m, body = '', last = 0;
   while ((m = tag.exec(svg))) {
     const [open, close, name, attrs, self] = m;
     if (close) { const top = stack.pop(); if (!top || top.name !== name) throw new Error(`</${name}> closes <${top && top.name}>`); continue; }
-    const c = name === 'g' && /class="(?:[^"]* )?gp-(knob|selector|toggle|fader)(?: [^"]*)?"/.exec(attrs);
-    const id = c && (/data-param="([^"]*)"/.exec(attrs) || [])[1];
+    const c = name === 'g' && /class="(?:[^"]* )?gp-(knob|selector|toggle|fader|curve)(?: [^"]*)?"/.exec(attrs);
+    const id = c && (c[1] === 'curve' ? 'curve' : (/data-param="([^"]*)"/.exec(attrs) || [])[1]);
     if (!c || !id || self) { if (!self) stack.push({ name, open }); continue; }
     let depth = 1, end = tag.lastIndex, k;
     const inner = /<(\/?)([a-zA-Z][\w:-]*)(?:\s+[\w:-]+=(?:"[^"]*"|'[^']*'))*\s*(\/?)>/g; inner.lastIndex = end;
     while (depth > 0 && (k = inner.exec(svg))) { if (k[3]) continue; depth += k[1] ? -1 : 1; end = inner.lastIndex; }
     if (depth) throw new Error(`control ${id}: unbalanced group`);
     const anc = stack.slice(1);          // without the root
-    controls.push({ kind: c[1], id, svg: head + defs + anc.map(a => a.open).join('') + svg.slice(m.index, end)
-      + anc.slice().reverse().map(a => `</${a.name}>`).join('') + '</svg>' });
+    const piece = { kind: c[1], id, svg: head + defs + anc.map(a => a.open).join('') + svg.slice(m.index, end)
+      + anc.slice().reverse().map(a => `</${a.name}>`).join('') + '</svg>' };
+    if (c[1] === 'curve') { if (curve) throw new Error('two curves'); curve = piece; } else controls.push(piece);
     body += svg.slice(last, m.index); last = end; tag.lastIndex = end;
   }
   // Nothing the regular expression missed: every control group of the drawing was cut, once per parameter.
   const drawn = (svg.match(/\bgp-(knob|selector|toggle|fader)\b[^>]*data-param=/g) || []).length;
   if (drawn !== controls.length) throw new Error(`${drawn} control groups drawn, ${controls.length} cut`);
   if (new Set(controls.map(c => c.id)).size !== controls.length) throw new Error('two controls for one parameter');
-  return { head, body: body + svg.slice(last), controls };
+  return { head, body: body + svg.slice(last), controls, curve };
 }
 
 // Source over, inside the rectangle [x, y, w, h] of pixels only: the editor draws a frame cut to its box.
@@ -105,6 +111,21 @@ const over = (dst, src, width, box) => { const height = dst.length / 4 / width;
 // A box in viewBox units as pixels of the face (gfx-ui's raster::pixel_box).
 const pixelBox = (vb, b) => { const x0 = Math.floor((b[0] - vb[0]) * SCALE), y0 = Math.floor((b[1] - vb[1]) * SCALE);
   return [x0, y0, Math.ceil((b[0] + b[2] - vb[0]) * SCALE) - x0, Math.ceil((b[1] + b[3] - vb[1]) * SCALE) - y0]; };
+
+// The graphic EQ's line: a monotone cubic (Fritsch - Carlson) through the caps, `t` each fader's place
+// over its range (0 at the bottom of the slot), as the renderer's monotonePath writes it.
+function curveD(curve, t) {
+  const f1 = (v) => (+v).toFixed(1);
+  const pts = curve.xs.map((x, i) => [x, curve.bottom - (curve.bottom - curve.top) * t[i]]), n = pts.length;
+  const m = [], d = [];
+  for (let i = 0; i < n - 1; i++) m.push((pts[i + 1][1] - pts[i][1]) / (pts[i + 1][0] - pts[i][0]));
+  d[0] = m[0]; d[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) d[i] = m[i - 1] * m[i] <= 0 ? 0 : 2 / (1 / m[i - 1] + 1 / m[i]);
+  let s = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 0; i < n - 1; i++) { const h = (pts[i + 1][0] - pts[i][0]) / 3;
+    s += `C${f1(pts[i][0] + h)} ${f1(pts[i][1] + d[i] * h)} ${f1(pts[i + 1][0] - h)} ${f1(pts[i + 1][1] - d[i + 1] * h)} ${f1(pts[i + 1][0])} ${f1(pts[i + 1][1])}`; }
+  return s;
+}
 
 // The values a control is drawn at, one per frame.
 function positions(kind, p) {
@@ -149,7 +170,28 @@ function face(crate, desc, fixed) {
   });
   // The chrome's accent: the body's own colour (the middle stop of the pedal's body gradient).
   const stops = [...((/<linearGradient id="gpm-b"[^>]*>([\s\S]*?)<\/linearGradient>/.exec(base) || [])[1] || '').matchAll(/stop-color="(#[0-9a-fA-F]{6})"/g)].map(s => s[1]);
-  const out = { view_box: vb, accent: stops[1] || stops[0] || '#c8a24a', body: flatten(parts.body), controls };
+  const out = { view_box: vb, accent: stops[1] || stops[0] || '#c8a24a', body: flatten(parts.body), controls, curve: null };
+
+  // The graphic EQ's line through the caps depends on every fader at once: the editor draws it itself,
+  // from a template (the group with its paths' d left as {d}) and the caps' places.
+  let curveAt = null;
+  if (parts.curve) {
+    // The faders the line passes through and their exact places, written on the group by the renderer.
+    const attr = (name) => (new RegExp(` data-${name}="([^"]*)"`).exec(parts.curve.svg) || [])[1];
+    const params = (attr('params') || '').split(' ').filter(Boolean), xs = (attr('x') || '').split(' ').map(Number);
+    const [top, bottom] = (attr('slot') || '').split(' ').map(Number);
+    if (!params.length || params.length !== xs.length || !(bottom > top)) throw new Error(`${crate}: the curve does not say its faders`);
+    for (const id of params) if (!controls.some(c => c.param === id && c.kind === 'fader')) throw new Error(`${crate}: the curve passes through ${id}, not a fader of the face`);
+    const glow = /<filter id="gp-glow-soft"[\s\S]*?<\/filter>/.exec(SHARED);
+    if (!glow) throw new Error('the shared defs have no gp-glow-soft');
+    const svg = parts.curve.svg.replace(/^<svg /, '<svg xmlns="http://www.w3.org/2000/svg" ').replace(/>/, `><defs>${glow[0]}</defs>`)
+      .replace(/<path d="[^"]*"/g, '<path d="{d}"');
+    const pad = 4, x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
+    out.curve = { svg, params, xs, top, bottom, bbox: [x0, top - pad, x1 - x0, bottom - top + 2 * pad] };
+    // The line at given values (the editor's rule, gfx-ui face.rs curve_d).
+    curveAt = (values) => out.curve.svg.split('{d}').join(curveD(out.curve, out.curve.params.map(id => {
+      const p = desc.params[id]; return Math.max(0, Math.min(1, (values[id] - p.min) / ((p.max - p.min) || 1))); })));
+  }
 
   // The check: body + frames against the full drawing.
   const rnd = (() => { let s = 0x9e3779b9 ^ crate.length; for (const ch of crate) s = Math.imul(s ^ ch.charCodeAt(0), 0x85ebca6b);
@@ -171,14 +213,21 @@ function face(crate, desc, fixed) {
     const comp = Buffer.from(bodyPx.pixels);
     for (const c of controls) { const p = desc.params[c.param];
       over(comp, resvg(c.frames[frameOf(c, p, values[c.param])], width).render().pixels, bodyPx.width, pixelBox(vb, c.bbox)); }
+    if (curveAt) over(comp, resvg(curveAt(values), width).render().pixels, bodyPx.width, pixelBox(vb, out.curve.bbox));
     let level = 0, count = 0; const a = full.pixels;
     for (let i = 0; i < comp.length; i++) { const d = Math.abs(comp[i] - a[i]); if (d > level) level = d; if (d > TOL.level) count++; }
     const share = count / (comp.length / 4);
-    if (share > worst.share) worst = { level, share, values };
+    if (share > worst.share) worst = { level, share, values, full, comp };
     if (PNG && n === 0) { fs.mkdirSync(PNG, { recursive: true });
       fs.writeFileSync(path.join(PNG, `${crate}-full.png`), full.asPng());
       fs.writeFileSync(path.join(PNG, `${crate}-body.png`), bodyPx.asPng()); }
   });
+  if (worst.share > TOL.share && PNG) {
+    // Where the cut differs, to look at: the full drawing and the composed one at the worst setting.
+    fs.mkdirSync(PNG, { recursive: true });
+    fs.writeFileSync(path.join(PNG, `${crate}-worst-full.png`), worst.full.asPng());
+    fs.writeFileSync(path.join(PNG, `${crate}-worst-comp.raw`), worst.comp);
+  }
   if (worst.share > TOL.share)
     throw new Error(`${crate}: body + layers differ from the full drawing on ${(worst.share * 100).toFixed(2)} % of the pixels (max ${worst.level}) at ${JSON.stringify(worst.values)}`);
   out.check = worst.share;
@@ -188,8 +237,24 @@ function face(crate, desc, fixed) {
 function bundle(crate) {
   const desc = DESC[crate];
   if (!desc) throw new Error(`${crate}: no descriptor`);
-  const f = face(crate, desc, {});
-  const check = f.check; delete f.check;
+  // A face that changes with a parameter (the graphic EQ's fader set, faces.json `fader_sets`): one face
+  // per option, the first being the face itself; the editor shows the one the parameter picks. Each is
+  // drawn in a process of its own, as the pedals are: a face's frames hold their memory until the end.
+  const sets = (FACES[crate] || {}).fader_sets;
+  const varied = sets && sets.param && sets.sets.length > 1;
+  const faceIn = (value) => {
+    const file = path.join(require('os').tmpdir(), `gfxui-${process.pid}-${crate}-${value}.json`);
+    const r = require('child_process').spawnSync(process.execPath, [__filename, '--variant', `${sets.param}=${value}:${file}`, crate], { stdio: 'inherit' });
+    if (r.status !== 0) throw new Error(`${crate}: the face for ${sets.param} = ${value} failed (${r.status === null ? r.signal : 'exit ' + r.status})`);
+    const v = JSON.parse(fs.readFileSync(file, 'utf8')); fs.unlinkSync(file); return v;
+  };
+  const f = varied ? faceIn(0) : face(crate, desc, {});
+  let check = f.check; delete f.check;
+  f.variants = null;
+  if (varied) {
+    const others = sets.sets.slice(1).map((_, i) => { const v = faceIn(i + 1); check = Math.max(check, v.check); delete v.check; v.variants = null; return v; });
+    f.variants = { param: sets.param, faces: others };
+  }
   const keep = (p) => ({ name: p.name, kind: p.kind, min: p.min, max: p.max, default: p.default, unit: p.unit,
     display: p.display, step: p.step, decimals: p.decimals, options: p.options, depends: p.depends, help: p.help });
   const doc = { version: VERSION, crate, name: desc.name, class_id: desc.class_id, face: f,
@@ -201,7 +266,9 @@ function bundle(crate) {
   // Header, read without inflating (the window's size is needed when the plugin loads): "GFXU", version,
   // flags (bit 0: an expert panel; bits 1-4: the meter rows under the pedal), the face's width and height
   // in viewBox units (u16 LE).
-  const onFace = new Set(f.controls.map(c => c.param));
+  // The parameters of every variant count as on the face: a fader set that does not drive the EQ is not
+  // listed in the panel either.
+  const onFace = new Set([f].concat(f.variants ? f.variants.faces : []).flatMap(x => x.controls.map(c => c.param)));
   const panel = Object.keys(doc.params).some(id => !onFace.has(id));
   const head = Buffer.alloc(10); head.write('GFXU', 0, 'latin1'); head[4] = VERSION; const rows = rowsOf(doc.meters); if (rows > 15) throw new Error(`${crate}: ${rows} meter rows, 15 at most`);
   head[5] = (panel ? 1 : 0) | rows << 1;
@@ -211,6 +278,11 @@ function bundle(crate) {
 
 const crates = args.length ? args : Object.keys(DESC);
 let failed = 0;
+if (VARIANT) {
+  const [, param, value, file] = /^([^=]+)=(\d+):(.+)$/.exec(VARIANT);
+  fs.writeFileSync(file, JSON.stringify(face(crates[0], DESC[crates[0]], { [param]: +value })));
+  process.exit(0);
+}
 // Several pedals: one process each. The rendered frames of a pedal are only freed when its process ends
 // (about 165 MB per control), and all the pedals in one process need more memory than a desktop has.
 if (crates.length > 1) {
