@@ -1,7 +1,7 @@
 # golem-fx — golem's in-house effects (VST3, Rust / nih-plug). See README.md.
 [workspace]
 resolver = "2"
-members = ["gfx-dsp", "gfx-bench", "gfx-boost", "gfx-comp", "gfx-deesser", "gfx-eq", "gfx-gate", "gfx-limiter", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp", "gfx-morph", "gfx-formant", "xtask"]
+members = ["gfx-dsp", "gfx-bench", "gfx-boost", "gfx-comp", "gfx-deesser", "gfx-eq", "gfx-gate", "gfx-limiter", "gfx-wah", "gfx-autowah", "gfx-tremolo", "gfx-vibrato", "gfx-chorus", "gfx-flanger", "gfx-phaser", "gfx-rotary", "gfx-drive", "gfx-delay", "gfx-reverb", "gfx-shimmer", "gfx-killswitch", "gfx-octaver", "gfx-pitch", "gfx-pitch-classic", "gfx-detune", "gfx-gapmeter", "gfx-met", "gfx-emet", "gfx-shem", "gfx-golem", "gfx-glitch", "gfx-geq", "gfx-freqshift", "gfx-swell", "gfx-crusher", "gfx-ringmod", "gfx-bassdi", "gfx-tape", "gfx-grit", "gfx-dist", "gfx-transient", "gfx-mbcomp", "gfx-widener", "gfx-ducker", "gfx-fuzz", "gfx-tuner", "gfx-cab", "gfx-irfx", "gfx-correct", "gfx-vocoder", "gfx-acoustic", "gfx-radio", "gfx-stretch", "gfx-grains", "gfx-sustainer", "gfx-polysynth", "gfx-spectralcomp", "gfx-morph", "gfx-formant", "gfx-ui", "xtask"]
 
 [workspace.package]
 edition = "2021"
@@ -14,7 +14,10 @@ publish = false
 # (read-only) parameters for meters and applies controller writes while processing.
 nih_plug = { git = "https://github.com/Goldoralf/nih-plug.git", rev = "572f787d9ce7d5daf39642fea2f12f1aedffbcf8", features = ["assert_process_allocs"] }
 nih_plug_xtask = { git = "https://github.com/robbert-vdh/nih-plug.git", rev = "de421011f41a6d10fc8c7a6084e4f4dee0143683" }
+# The editor (gfx-ui). No default fonts: gfx-ui embeds its own.
+nih_plug_egui = { git = "https://github.com/Goldoralf/nih-plug.git", rev = "572f787d9ce7d5daf39642fea2f12f1aedffbcf8", default-features = false, features = ["opengl"] }
 gfx-dsp = { path = "gfx-dsp" }
+gfx-ui = { path = "gfx-ui" }
 
 [profile.release]
 lto = "thin"

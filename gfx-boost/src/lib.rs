@@ -11,7 +11,7 @@ use gfx_dsp::smooth::LinearRamp;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 pub const GAIN_MIN_DB: f32 = -60.0;
 pub const GAIN_MAX_DB: f32 = 12.0;
