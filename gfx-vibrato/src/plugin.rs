@@ -145,6 +145,11 @@ impl Plugin for GfxVibrato {
         self.params.clone()
     }
 
+    #[cfg(feature = "gui")]
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
+        gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-vibrato"))
+    }
+
     fn initialize(&mut self, layout: &AudioIOLayout, config: &BufferConfig, _ctx: &mut impl InitContext<Self>) -> bool {
         let channels = layout.main_output_channels.map_or(1, |c| c.get() as usize);
         self.dsp.prepare(config.sample_rate, config.max_buffer_size as usize, channels);

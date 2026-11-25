@@ -19,7 +19,7 @@ use gfx_dsp::smooth::OnePole;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 /// `detune` = 1 is this many cents each way.

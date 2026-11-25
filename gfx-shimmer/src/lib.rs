@@ -31,7 +31,7 @@ use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const GRID: u32 = 16;
 

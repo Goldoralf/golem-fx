@@ -33,7 +33,7 @@ use gfx_dsp::transport::{Sync, TransportInfo};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const GRID: u32 = 16;
 const N_ER: usize = 24;

@@ -26,7 +26,7 @@ use gfx_dsp::pv_shift::PvShifter;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 pub static PARAMS: [ParamInfo; 11] = [

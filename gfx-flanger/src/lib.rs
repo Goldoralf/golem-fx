@@ -8,7 +8,7 @@
 pub use gfx_dsp::flanger::*;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;

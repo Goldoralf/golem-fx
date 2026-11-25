@@ -24,7 +24,7 @@
 #![allow(clippy::needless_range_loop)]
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 #[cfg(test)]
 mod tests;

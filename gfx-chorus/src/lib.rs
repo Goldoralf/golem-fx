@@ -32,7 +32,7 @@ use gfx_dsp::{Effect, ParamInfo};
 use voicing::{c, Engine, Structure, LOG, N_COLOUR, RANDOM, ROUNDED, SINE, TRIANGLE};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_VOICES: usize = 6;
 const MAX_DELAY_MS: f64 = 40.0;

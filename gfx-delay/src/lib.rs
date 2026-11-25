@@ -34,7 +34,7 @@ use gfx_dsp::transport::TransportInfo;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 /// The line holds 8 s.
 const MAX_S: f64 = 8.0;

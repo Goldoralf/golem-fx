@@ -28,7 +28,7 @@ use gfx_dsp::vibe::{Lamp, Vibe};
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 /// Longest mean delay (s).

@@ -27,7 +27,7 @@ use gfx_dsp::util::one_pole_coef;
 use gfx_dsp::{Effect, ParamInfo};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const C_SOUND: f64 = 343.0;
 const TAU: f64 = std::f64::consts::TAU;

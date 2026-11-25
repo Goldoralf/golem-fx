@@ -24,7 +24,7 @@ use gfx_dsp::{Effect, ParamInfo};
 use gfx_dsp::wah::{lookup, Voice, GCB95, MODELS};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 

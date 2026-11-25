@@ -863,6 +863,7 @@ name = "gfx-autowah"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -964,6 +965,7 @@ name = "gfx-chorus"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1006,6 +1008,7 @@ name = "gfx-delay"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1014,6 +1017,7 @@ name = "gfx-detune"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1022,6 +1026,7 @@ name = "gfx-dist"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1030,6 +1035,7 @@ name = "gfx-drive"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1074,6 +1080,7 @@ name = "gfx-flanger"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1091,6 +1098,7 @@ name = "gfx-freqshift"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1219,6 +1227,7 @@ name = "gfx-octaver"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1227,6 +1236,7 @@ name = "gfx-phaser"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1235,6 +1245,7 @@ name = "gfx-pitch"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1243,6 +1254,7 @@ name = "gfx-pitch-classic"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1269,6 +1281,7 @@ name = "gfx-reverb"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1285,6 +1298,7 @@ name = "gfx-rotary"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1301,6 +1315,7 @@ name = "gfx-shimmer"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1361,6 +1376,7 @@ name = "gfx-tremolo"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1390,6 +1406,7 @@ name = "gfx-vibrato"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
