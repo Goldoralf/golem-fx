@@ -127,7 +127,7 @@ nih-plug's `ParamSetter` (begin / set / end gestures, so automation records).
 In a plugin:
 
 ```rust
-// Cargo.toml:  gui = ["plugin", "dep:gfx-ui"], in the default features
+// Cargo.toml:  gui = ["plugin", "dep:gfx-ui"], not in the default features
 #[cfg(feature = "gui")]
 fn editor(&mut self, _: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
     gfx_ui::editor(self.params.clone(), gfx_ui::bundle!("gfx-boost"))
@@ -136,8 +136,13 @@ fn editor(&mut self, _: AsyncExecutor<Self>) -> Option<Box<dyn Editor>> {
 
 `bundle!` is `include_bytes!` of the crate's file, so a plugin embeds its own bundle only. The window
 state lives in the editor, not in the plugin's `Params`: **the plugin's saved state does not change**,
-golem's sessions and the descriptors stay as they are. `--no-default-features --features plugin` builds
-a plugin without its editor.
+golem's sessions and the descriptors stay as they are.
+
+**The editor is opt-in** (decided by the maintainer, 2026-11-25): golem plays the pedals without it, it has
+its own drawers. `cargo xtask bundle <crate> --release` and the release of golem-binaries build a pedal as
+before, with no editor and no X11 / OpenGL to link. `--features gui` adds the editor; `cargo xtask dist`
+builds every pedal with it into `dist/vst3/<platform>/` and packs them (`--headless`: the other build, into
+`dist/vst3-headless/<platform>/`).
 
 Binding is by id: the bundle's parameter ids are the plugin's `#[id]`s. At the editor's creation every
 bundle id is looked up in `param_map()`; a debug build asserts none is missing, a release build hides
@@ -211,10 +216,6 @@ the control (never a panic in a host).
 
 ## 10. Not done yet
 
-- **The build split.** With the editor a plugin links libX11, libxcb and libGL (and weighs 5.9 MB against
-  1.2 MB): on a machine without them it does not load at all. golem's engine must get binaries built
-  `--no-default-features --features plugin`, or `gui` must leave the default features. To decide before
-  any release of golem-binaries.
 - **Sizes** (100 / 125 / 150 %) and HiDPI on Linux: `nih_plug_egui` keeps the window's size private and
   takes no scale from an X11 host; both need a patch in the fork.
 - **Meters**: drawn under the pedal but the window leaves them no room, and many output parameters are

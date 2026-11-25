@@ -11,10 +11,11 @@ publish.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["plugin", "gui"]
+default = ["plugin"]
 # The nih-plug wrapper (VST3). gfx-bench builds the processor alone, with default-features = false.
 plugin = ["dep:nih_plug"]
-# The editor a DAW opens (gfx-ui). golem's engine never opens it; a build without it: --no-default-features --features plugin.
+# The editor a DAW opens (gfx-ui): --features gui, what `cargo xtask dist` builds. Off by default: golem plays the
+# pedals without it (it has its own drawers) and its release must not link X11 and OpenGL.
 gui = ["plugin", "dep:gfx-ui"]
 
 [dependencies]

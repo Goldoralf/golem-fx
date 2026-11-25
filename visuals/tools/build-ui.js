@@ -5,7 +5,8 @@
 //
 //   node visuals/tools/build-ui.js [crate…]      write the bundles (all pedals by default)
 //   node visuals/tools/build-ui.js --check       fail if a committed bundle is not current
-//   --out <dir>   another output directory        --png <dir>   also write full / composed PNGs (to look at)
+//   (several pedals, or all: one node process per pedal, so memory stays that of one pedal)
+//   --out <dir>   another output directory       --png <dir>   also write full / composed PNGs (to look at)
 //
 // Every bundle is checked before it is written: body + layers, composed, must give the full drawing back
 // at the defaults, at both ends of every control and at random settings. Needs `npm install` in visuals/.
@@ -184,6 +185,16 @@ function bundle(crate) {
 
 const crates = args.length ? args : Object.keys(DESC);
 let failed = 0;
+// Several pedals: one process each. The rendered frames of a pedal are only freed when its process ends
+// (about 165 MB per control), and all the pedals in one process need more memory than a desktop has.
+if (crates.length > 1) {
+  const pass = ['--out', OUT].concat(PNG ? ['--png', PNG] : [], CHECK ? ['--check'] : []);
+  for (const crate of crates) {
+    const r = require('child_process').spawnSync(process.execPath, [__filename, ...pass, crate], { stdio: 'inherit' });
+    if (r.status !== 0) { if (r.status === null) console.error(`${crate}: stopped (${r.signal || r.error})`); failed++; }
+  }
+  process.exit(failed ? 1 : 0);
+}
 for (const crate of crates) {
   try {
     const b = bundle(crate), file = path.join(OUT, `${crate}.gfxui`);

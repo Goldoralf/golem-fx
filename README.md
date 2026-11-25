@@ -28,6 +28,7 @@ cargo run --release -p gfx-bench -- check gfx-boost     # full common checks, fo
 cargo run --release -p gfx-bench -- render gfx-boost --in di.wav --out out.wav --set gain=6
 cargo run --release -p gfx-bench -- manifest  # every effect's parameters as JSON (visuals/data/manifest.json)
 cargo xtask bundle gfx-boost --release        # → target/bundled/GoleM FX Boost.vst3 (same for gfx-gate)
+cargo xtask dist                              # every pedal with its editor (gfx-ui) → dist/vst3/<platform>/ and an archive
 ```
 
 Each effect crate has a host-independent processor (`gfx_dsp::Effect`) and a nih-plug wrapper behind the
