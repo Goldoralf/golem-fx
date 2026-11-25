@@ -64,5 +64,12 @@
   "gfx-morph":       { "rows": [{ "id": "state", "kind": "lamp", "label": "Guard" },
                                 { "id": "gr", "kind": "gr", "label": "Comp", "max": 24 },
                                 { "id": "defizz_gr", "kind": "gr", "label": "De-fizz", "max": 12 }] },
+  "gfx-tuner":       { "rows": [{ "id": "state", "kind": "state", "label": "State", "states": ["Silence", "Settling", "Settled", "Strum"] },
+                                { "id": "note", "kind": "value", "label": "Note", "format": "midi" },
+                                { "id": "cents", "kind": "bar", "label": "Cents", "min": -50, "max": 50, "center": true },
+                                { "id": "freq", "kind": "value", "label": "Frequency" },
+                                { "kind": "bands", "label": "Strings", "ids": ["s1_cents", "s2_cents", "s3_cents", "s4_cents", "s5_cents", "s6_cents", "s7_cents", "s8_cents"],
+                                  "labels": ["1", "2", "3", "4", "5", "6", "7", "8"], "max": 50 }],
+                       "hide": ["confidence", "string", "seq", "s1_conf", "s2_conf", "s3_conf", "s4_conf", "s5_conf", "s6_conf", "s7_conf", "s8_conf"] },
   "gfx-formant":     { "rows": [{ "id": "state", "kind": "state", "label": "Voice", "states": ["Held", "Untracked", "Voiced"] }] }
 }

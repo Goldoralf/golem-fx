@@ -24,7 +24,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, AtomicUsize, Ordering}
 use std::sync::Arc;
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 pub const RING: usize = 256;
 

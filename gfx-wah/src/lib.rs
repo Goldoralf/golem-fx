@@ -22,7 +22,7 @@ pub use gfx_dsp::wah::{lookup, Law, Model, Voice, GCB95, MODELS, W};
 use gfx_dsp::wah::{freq_at, logpot};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 
 const MAX_CH: usize = 2;
 

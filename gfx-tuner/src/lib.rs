@@ -29,7 +29,7 @@ use gfx_dsp::zoom::{cents, Zoom};
 use gfx_dsp::{Effect, ParamInfo, ParamKind};
 
 #[cfg(feature = "plugin")]
-mod plugin;
+pub mod plugin;
 #[cfg(test)]
 mod tests;
 

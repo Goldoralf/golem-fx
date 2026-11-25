@@ -1128,6 +1128,7 @@ name = "gfx-gapmeter"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1153,6 +1154,7 @@ name = "gfx-glitch"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
  "realfft",
 ]
@@ -1416,6 +1418,7 @@ name = "gfx-tuner"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
@@ -1455,6 +1458,7 @@ name = "gfx-wah"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
