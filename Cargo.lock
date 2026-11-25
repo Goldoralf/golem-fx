@@ -1146,6 +1146,7 @@ name = "gfx-geq"
 version = "0.1.0"
 dependencies = [
  "gfx-dsp",
+ "gfx-ui",
  "nih_plug",
 ]
 
