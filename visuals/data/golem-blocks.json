@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 51,
+ "catalog_version": 52,
  "effects": [
   {
    "type": "gate",
@@ -3638,6 +3638,128 @@
      "max": 12,
      "default": 0,
      "unit": "dB"
+    }
+   ]
+  },
+  {
+   "type": "guitar-organ",
+   "name": "Guitar Organ",
+   "short": "Organ",
+   "category": "pitch",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Organ (GoleM)",
+   "color": "#b06ad4",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "register",
+     "name": "Register",
+     "min": null,
+     "max": null,
+     "default": "Trio",
+     "unit": null
+    },
+    {
+     "id": "organ",
+     "name": "Organ",
+     "min": -60,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "dry",
+     "name": "Dry",
+     "min": -60,
+     "max": 0,
+     "default": -60,
+     "unit": "dB"
+    },
+    {
+     "id": "mod",
+     "name": "Mod",
+     "min": 0,
+     "max": 100,
+     "default": 50,
+     "unit": "%"
+    },
+    {
+     "id": "click",
+     "name": "Click",
+     "min": 0,
+     "max": 100,
+     "default": 30,
+     "unit": "%"
+    },
+    {
+     "id": "leslie",
+     "name": "Rotor",
+     "min": null,
+     "max": null,
+     "default": "slow",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "octafuzz",
+   "name": "Octafuzz",
+   "short": "Octafuzz",
+   "category": "drive",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Octafuzz (GoleM)",
+   "color": "#b0602a",
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "fuzz",
+     "name": "Fuzz",
+     "min": 0,
+     "max": 100,
+     "default": 70,
+     "unit": "%"
+    },
+    {
+     "id": "octave",
+     "name": "Octave",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "tone",
+     "name": "Tone",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "guitar_vol",
+     "name": "Guitar Vol",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "buffer",
+     "name": "Buffer",
+     "min": null,
+     "max": null,
+     "default": false,
+     "unit": null
     }
    ]
   }
