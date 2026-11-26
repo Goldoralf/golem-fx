@@ -7,9 +7,46 @@ Marshall) servent de références de son ; ils n'apparaissent ni dans le nom des
 
 Ordre : 1 → 2 → 3 → 4. Les lignes « Fait quand » sont les critères pour cocher.
 
+## État — conception complète et relecture Fable 5.2 (2026-11-26)
+
+Les quatre points sont conçus (Claude Opus 5.5) et relus (Claude Fable 5.2) ; le détail, les chiffres et les
+questions ouvertes sont dans chaque README (section « Review (Fable 5.2, 2026-11-26) » à la fin). Rien n'est codé.
+Deux points de cette feuille de route étaient déjà en partie conçus avant 0.8, ce qui corrige les sections plus bas :
+
+| Point | Où | Verdict | Ce qui bloque le codage |
+|---|---|---|---|
+| 1. Fuzz octave | `gfx-fuzz/README.md`, modèle **Octave Up** (déjà prévu, jamais codé), désormais le type à **transformateur** de l'Octavio ; netlist d'après madbean Retrograde24, Aion Octagon, PCB Guitar Mania Octavius | Bon | CPU ≈ 2× le contrat (30–50 % d'un cœur) ; inductance magnétisante du transformateur 42TM022 jamais publiée (à mesurer) ; pédale à part (`gfx-octafuzz` sur le moteur de gfx-fuzz, conseil Fable) ou modèle de Fuzz |
+| 2. Orgue | `gfx-organ/README.md` (nouvelle pédale) sur le cœur Spectral de Polysynth ; tirettes = puissances de la phase de chaque bande, sans suivi de hauteur ; Leslie intégré | Vaut d'être construit, **à risque** sur un point | Le registre complet arrive 100–170 ms après l'attaque (le 8' à 20 ms) ; le « tamis des fondamentales » doit être prouvé sur des DI annotées avant tout autre code ; déplacement du cœur Spectral, du rotor et du scanner dans gfx-dsp (nulls bit à bit + CPU à 3 %) |
+| 3. Trois voicings Dist | `gfx-dist/README.md` : **Discrete OD** (le Blues Driver, déjà conçu, jamais codé ; + `fat` pour la variante Custom ; nouveau modèle de paire JFET dans circuit_nl), **Studio OD** (ODR-1), **Plexi Dist** (Red Rox, + `contour`) | Solide · Solide · Bon | CPU ≈ 24 % d'un cœur pour Discrete OD et Plexi (à mesurer) ; alias du Plexi à 18 V ; l'enum `circuit` passe de 4 à 7 : catalogue de golem et VST3 dans la même release |
+| 4. Bend déclenché de Pitch | `gfx-pitch/README.md` : `bend` ajouté à `shift` pendant le déclenchement, `rise` / `fall` séparés, courbes Linear · Smooth, + `rest` (Mix · Dry) | Solide, codable | Nom de l'id du geste (`trigger` existe déjà ailleurs) ; le footswitch de golem n'envoie pas encore le relâchement (momentané) |
+
+### Décisions de Raph (2026-11-26 : les recommandations des relecteurs, acceptées)
+
+1. Fuzz octave : **pédale à part, `gfx-octafuzz`**, mince, sur le moteur de gfx-fuzz ; Fuzz et sa façade ne changent
+   pas, `octave` est sur la façade de gfx-octafuzz.
+2. Son CPU : la netlist est d'abord codée dans gfx-bench et mesurée ; une **exception CPU pour cette pédale seule**
+   est acceptée si la mesure reste au-dessus du contrat (30–40 % attendus).
+3. Transformateur : **mesurer un 42TM022** (inductance selon le niveau, résistances, fuite, saturation) — Raph.
+4. Orgue : le registre complet à 100–170 ms (le 8' à 20 ms) est accepté pour l'instant, à juger à l'oreille.
+5. Orgue : Raph enregistre des **DI annotées** (accords, arpèges, lignes rapides, notes connues) ; prouver le tamis
+   des fondamentales dessus est la première tâche de code de l'orgue.
+6. Plexi Dist : `supply` plafonné à **150 %** ; le preset « 18 Volt Plexi » est abandonné ; `contour` compte comme un
+   réglage pour la règle d'alias.
+7. Discrete OD et Plexi Dist : ≈ 24 % d'un cœur accepté si la mesure codée donne **≤ 5 µs par échantillon**.
+8. Pitch : le geste s'appelle **`bend`** (booléen) et l'intervalle **`interval`**.
+9. Pitch : **`rest`** (Mix · Dry) accepté ; défauts 100 / 250 ms, 8 s au plus, Linear.
+
+Le reste suit les recommandations des relecteurs (noms des circuits, `fat` en interrupteur, `contour` en expert,
+`mod` de l'orgue en profondeur, crans de tirettes de 3 dB à confirmer à l'oreille, libellé « Rotor »…).
+
+Trouvé en passant (à corriger dans 0.8) : **Pitch v0.1.0, après un bend, ne revient pas au son de départ** — le wet
+ne s'annule plus contre le dry, et le mode Poly reste 2–3 dB plus bas (re-centrer les têtes et remettre les phases du
+vocodeur à ratio 1, gfx-dsp).
+
 ## 1. Fuzz octave — référence MXR Octavio (Roger Mayer Octavia)
 
-Nouvelle pédale, `gfx-octafuzz` (nom de travail ; nom affiché « GoleM FX Octafuzz »).
+Nouvelle pédale, `gfx-octafuzz` (« GoleM FX Octafuzz »), mince, sur le moteur de gfx-fuzz ; le circuit (modèle
+Octave Up, à transformateur) est conçu dans `gfx-fuzz/README.md`.
 
 - Le son : une fuzz dont l'octave supérieure naît d'un redressement double alternance (transformateur et diodes
   dans l'original), qui chante surtout sur les notes aiguës, près des micros manche, tonalité en retrait.
@@ -55,7 +92,7 @@ Vérifié le 2026-11-26 : Pitch (moteur Whammy) n'a qu'un **Glide** (0–1000 ms
 pas de déclencheur ; on le joue en pilotant `shift` à la pédale d'expression. La Ricochet, elle, monte vers
 l'intervalle à l'appui et revient au relâchement, avec deux temps séparés.
 
-- Ajouter : `trigger` (booléen, momentané ou verrouillé), `rise` (temps de montée), `fall` (temps de retour). Hors
+- Ajouter : `bend` (booléen, le geste), `interval`, `rise` (temps de montée), `fall` (temps de retour), `curve`, `rest`. Hors
   déclenchement, Pitch reste exactement ce qu'il est (ids `shift` et `mix` du bloc `pitch` inchangés).
 - Le trigger se branche sur un footswitch de golem.
 - Fait quand : montée et retour suivent les temps réglés (test), aucun changement pour un preset existant.
