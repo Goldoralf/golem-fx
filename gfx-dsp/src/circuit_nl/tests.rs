@@ -622,3 +622,260 @@ fn newton_parts_cost() {
     });
     eprintln!("LU 10: {t:.1} ns ({acc})");
 }
+
+// ---- the JFET and the JFET pair port (gfx-dist §2.11, roadmap 0.8)
+
+const JF: JfetModel = JfetModel { n_channel: true, vto: -0.45, beta: 18e-3, lambda: 4e-3, is: 1e-14, n: 1.0, vtotc: 0.0, betatce: 0.0, tnom: 25.0, soft: 0.0 };
+
+/// The analytic Jacobian of a device at `v`, and the same by central differences.
+fn jac_check(model: DeviceModel, v: &[f64]) -> (Vec<f64>, Vec<f64>) {
+    let ev = evaluate(&model, (0.0, 1.0), 25.0, 9.0);
+    let m = ev.ports();
+    let mut i = [0.0; 4];
+    let mut j = [0.0; 4];
+    ev.eval(v, &mut i, &mut j, m, 0);
+    let mut fd = vec![0.0; m * m];
+    for c in 0..m {
+        let (mut a, mut b) = (v.to_vec(), v.to_vec());
+        a[c] += 1e-7;
+        b[c] -= 1e-7;
+        let (mut ia, mut ib, mut jj) = ([0.0; 4], [0.0; 4], [0.0; 4]);
+        ev.eval(&a, &mut ia, &mut jj, m, 0);
+        ev.eval(&b, &mut ib, &mut jj, m, 0);
+        for r in 0..m {
+            fd[r * m + c] = (ia[r] - ib[r]) / 2e-7;
+        }
+    }
+    (j[..m * m].to_vec(), fd)
+}
+
+#[test]
+fn jfet_follows_shichman_hodges_both_ways() {
+    let ev = evaluate(&DeviceModel::Jfet(JF), (0.0, 0.0), 25.0, 9.0);
+    let (mut i, mut j) = ([0.0; 2], [0.0; 4]);
+    // saturation: v_GS −0.2, v_DS 3 (v_GD −3.2)
+    ev.eval(&[-0.2, -3.2], &mut i, &mut j, 2, 0);
+    let want = 18e-3 * 0.25f64.powi(2) * (1.0 + 4e-3 * 3.0);
+    assert!((i[1] - want).abs() < 1e-12, "{} vs {want}", i[1]);
+    // linear region: v_DS 0.1
+    ev.eval(&[-0.2, -0.3], &mut i, &mut j, 2, 0);
+    let want = 18e-3 * 0.1 * (2.0 * 0.25 - 0.1) * (1.0 + 4e-3 * 0.1);
+    assert!((i[1] - want).abs() < 1e-12);
+    // drain and source swapped: the same channel current, the other way (gate currents ~10⁻¹⁴ A)
+    ev.eval(&[-0.3, -0.2], &mut i, &mut j, 2, 0);
+    assert!((i[1] + want).abs() < 1e-12, "{} vs {}", i[1], -want);
+    // pinched off
+    ev.eval(&[-0.6, -3.6], &mut i, &mut j, 2, 0);
+    assert!(i[1].abs() < 1e-12);
+    // the Jacobian, wherever the law is smooth
+    let close = |a: &[f64], b: &[f64]| a.iter().zip(b).all(|(x, y)| (x - y).abs() <= 1e-5 * x.abs().max(1e-6));
+    for v in [[-0.2, -3.2], [-0.2, -0.3], [-0.3, -0.2], [-0.1, 0.05], [0.3, -2.0], [-0.44, -1.0]] {
+        let (a, fd) = jac_check(DeviceModel::Jfet(JF), &v);
+        assert!(close(&a, &fd), "{v:?}: {a:?} vs {fd:?}");
+    }
+    // the soft knee and the P channel
+    let soft = JfetModel { soft: 0.05, ..JF };
+    let pch = JfetModel { n_channel: false, ..JF };
+    for (m, v) in [(soft, [-0.45, -2.0]), (soft, [-0.6, -3.0]), (pch, [0.2, 3.2]), (pch, [0.2, 0.3])] {
+        let (a, fd) = jac_check(DeviceModel::Jfet(m), &v);
+        assert!(close(&a, &fd), "{m:?} {v:?}: {a:?} vs {fd:?}");
+    }
+    let ep = evaluate(&DeviceModel::Jfet(pch), (0.0, 0.0), 25.0, 9.0);
+    ep.eval(&[0.2, 3.2], &mut i, &mut j, 2, 0);
+    assert!((i[1] + 18e-3 * 0.25f64.powi(2) * (1.0 + 4e-3 * 3.0)).abs() < 1e-12, "P channel {}", i[1]);
+}
+
+const PAIR: PairModel = PairModel { beta: 18e-3, i_tail: 0.93e-3, tail_r: 4.7e3, vto: -0.45 };
+
+#[test]
+fn pair_law_saturates_smoothly() {
+    let fixed = PairModel { tail_r: 0.0, ..PAIR };
+    let ev = evaluate(&DeviceModel::Pair(fixed), (0.0, 0.0), 25.0, 9.0);
+    let lim = (0.93e-3f64 / 18e-3).sqrt();
+    let (mut i, mut j) = ([0.0; 1], [0.0; 1]);
+    ev.eval(&[0.0], &mut i, &mut j, 1, 0);
+    assert!((i[0] - 0.465e-3).abs() < 1e-15);
+    // at balance: half the pair's differential transconductance √(2 β I_t) on one drain
+    assert!((j[0] - 0.5 * (2.0 * 18e-3 * 0.93e-3f64).sqrt()).abs() < 1e-12, "{}", j[0]);
+    ev.eval(&[lim * 1.0001], &mut i, &mut j, 1, 0);
+    assert!((i[0] - 0.93e-3).abs() < 1e-15 && j[0] == 0.0);
+    ev.eval(&[lim * 0.9999], &mut i, &mut j, 1, 0);
+    assert!((i[0] - 0.93e-3).abs() < 1e-9 && j[0] < 1e-4, "C¹ at the edge: {} {}", i[0], j[0]);
+    for v in [0.0, 0.05, -0.1, 0.2] {
+        let (a, fd) = jac_check(DeviceModel::Pair(fixed), &[v]);
+        assert!((a[0] - fd[0]).abs() < 1e-7, "{v}: {a:?} vs {fd:?}");
+    }
+    // the tail law: R_t I + √(I / 2β) = v_cm − V_TO
+    for vcm in [0.0, 1.0, 4.05] {
+        let it = PAIR.tail_at(vcm);
+        assert!((4.7e3 * it + (it / 36e-3).sqrt() - (vcm + 0.45)).abs() < 1e-12, "{vcm}");
+    }
+    assert!(PAIR.tail_at(-1.0) < 1e-12);
+}
+
+/// A non-inverting discrete op-amp stage (gfx-dist's Discrete OD stage 2, gain pot at 50 kΩ): the
+/// pair as a port or as two JFETs on the 4.7 kΩ tail, the PNP, its loads.
+fn discrete_stage(transistor_level: bool, tail: bool) -> (Netlist, usize) {
+    const PNP: BjtModel = BjtModel { npn: false, is: 2e-14, bf: 300.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0, nf: 1.0, nr: 1.0 };
+    let mut n = Netlist::new(3);
+    let sig = n.input(0);
+    let va = n.input(1);
+    let vb = n.input(2);
+    let g = n.node();
+    let gm = n.node();
+    let d = n.node();
+    let o = n.node();
+    let fb = n.node();
+    let leg = n.node();
+    n.c(sig, g, 2.2e-9);
+    n.r(g, vb, 1e6);
+    if transistor_level {
+        let s = n.node();
+        n.jfet(d, g, s, JF);
+        n.jfet(va, gm, s, JF);
+        n.r(s, 0, 4.7e3);
+    } else {
+        n.jfet_pair(g, gm, d, if tail { PAIR } else { PairModel { tail_r: 0.0, ..PAIR } });
+    }
+    n.r(va, d, 2.2e3);
+    n.bjt(o, d, va, PNP);
+    n.c(d, o, 100e-12);
+    n.r(o, 0, 2.2e3);
+    n.c(gm, o, 100e-12);
+    n.r(gm, fb, 33e3);
+    n.r(fb, o, 50e3);
+    n.r(gm, leg, 2.2e3);
+    n.c(leg, 0, 1e-6);
+    let out = n.output(o);
+    (n, out)
+}
+
+/// Runs the stage on a 1 kHz sine of `amp` V at `fs`: harmonics 1 – 5 (h1 in dB re the input,
+/// h2 – h5 in dBc) and the output's DC point.
+fn stage_harmonics(transistor_level: bool, tail: bool, amp: f64, fs: f64, tol: f64) -> ([f64; 5], f64) {
+    let (net, out) = discrete_stage(transistor_level, tail);
+    let mut c = NonlinearCircuit::monolithic(&net, fs);
+    c.set_tolerance(tol);
+    c.set_input(1, 8.1);
+    c.set_input(2, 4.05);
+    assert!(c.init_dc(), "DC point");
+    let dc = c.output(out);
+    let per = (fs / 1000.0) as usize;
+    let (ns, nm) = (per * 30, per * 10);
+    let mut y = Vec::new();
+    for k in 0..ns + nm {
+        c.set_input(0, amp * (2.0 * PI * 1000.0 * k as f64 / fs).sin());
+        c.process();
+        if k >= ns {
+            y.push(c.output(out));
+        }
+    }
+    assert_eq!(c.stats().unsolved, 0);
+    let at = |h: f64| {
+        let w = 2.0 * PI * 1000.0 * h / fs;
+        let (mut a, mut b) = (0.0, 0.0);
+        for (k, v) in y.iter().enumerate() {
+            a += v * (w * (k + ns) as f64).cos();
+            b += v * (w * (k + ns) as f64).sin();
+        }
+        2.0 * a.hypot(b) / y.len() as f64
+    };
+    let h1 = at(1.0);
+    let mut h = [20.0 * (h1 / amp).log10(), 0.0, 0.0, 0.0, 0.0];
+    for k in 2..=5 {
+        h[k - 1] = 20.0 * (at(k as f64) / h1).log10();
+    }
+    (h, dc)
+}
+
+#[test]
+fn pair_port_is_the_transistor_level_stage() {
+    // gfx-dist §2.11's table: the pair port with the lagged common-mode tail + the PNP against two
+    // JFETs on the tail + the PNP; harmonics 2 – 5 where ≥ −80 dBc, the DC point within 10 mV
+    let fs = 384000.0;
+    for amp in [0.01, 0.05, 0.2] {
+        let (tl, dtl) = stage_harmonics(true, true, amp, fs, 1e-9);
+        let (pt, dpt) = stage_harmonics(false, true, amp, fs, 1e-9);
+        eprintln!("{amp} V: transistor level {tl:.2?} (DC {dtl:.3}), pair port {pt:.2?} (DC {dpt:.3})");
+        assert!((dtl - dpt).abs() < 0.01, "DC {dtl} vs {dpt}");
+        assert!((tl[0] - pt[0]).abs() < 0.1);
+        // below clipping within 0.1 dB (README §2.11); clipped hard (0.2 V into 31 dB: the loop opens,
+        // one JFET cuts off, where λ and the gate junctions the port leaves out show) within 1.5 dB
+        let tol = if amp < 0.1 { 0.1 } else { 1.5 };
+        for k in 1..5 {
+            if tl[k] > -80.0 {
+                assert!((tl[k] - pt[k]).abs() < tol, "{amp} V h{}: {} vs {}", k + 1, tl[k], pt[k]);
+            }
+        }
+    }
+    let (ft, _) = stage_harmonics(false, false, 0.05, fs, 1e-9);
+    eprintln!("fixed tail at 50 mV: {ft:.2?}");
+}
+
+#[test]
+fn pair_tail_is_in_the_small_signal_analysis() {
+    // the AC analysis linearizes the tail implicitly; the transient lags it one sample: at 1 kHz and
+    // 384 kHz the two agree within 0.02 dB
+    let (net, out) = discrete_stage(false, true);
+    let mut c = NonlinearCircuit::new(&net, 384000.0);
+    c.set_input(1, 8.1);
+    c.set_input(2, 4.05);
+    assert!(c.init_dc());
+    let want = db(c.ac_response(1000.0, 0, out));
+    let n = 38400;
+    let (mut ei, mut eo, mut mean) = (0.0, 0.0, 0.0);
+    let mut ys = Vec::new();
+    for k in 0..n {
+        let x = 1e-4 * (2.0 * PI * 1000.0 * k as f64 / 384000.0).sin();
+        c.set_input(0, x);
+        c.process();
+        if k >= n / 2 {
+            ei += x * x;
+            ys.push(c.output(out));
+            mean += c.output(out);
+        }
+    }
+    mean /= ys.len() as f64;
+    for y in ys {
+        eo += (y - mean).powi(2);
+    }
+    let got = 10.0 * (eo / ei).log10();
+    eprintln!("1 kHz: transient {got:.3} dB, ac {want:.3} dB");
+    assert!((got - want).abs() < 0.02, "{got} vs {want}");
+}
+
+#[test]
+fn pair_latch_is_state() {
+    // copy_state_from carries the latched tail; a temperature change keeps it
+    let (net, out) = discrete_stage(false, true);
+    let mut a = NonlinearCircuit::new(&net, 384000.0);
+    a.set_input(1, 8.1);
+    a.set_input(2, 4.05);
+    a.init_dc();
+    for k in 0..2000 {
+        a.set_input(0, 0.3 * (k as f64 * 0.01).sin());
+        a.process();
+    }
+    let mut b = NonlinearCircuit::new(&net, 384000.0);
+    b.copy_state_from(&a);
+    a.set_temperature(26.0);
+    a.set_temperature(25.0);
+    for k in 2000..3000 {
+        for c in [&mut a, &mut b] {
+            c.set_input(0, 0.3 * (k as f64 * 0.01).sin());
+            c.process();
+        }
+        assert_eq!(a.output(out).to_bits(), b.output(out).to_bits(), "sample {k}");
+    }
+}
+
+#[test]
+fn pair_and_jfet_decks() {
+    let (net, _) = discrete_stage(true, true);
+    let deck = net.to_spice("tl", &[0.0, 8.1, 4.05], &[], 25.0, 8.1);
+    assert!(deck.contains("NJF(VTO=-0.45 BETA=1.8e-2"), "{deck}");
+    assert_eq!(deck.matches("\nJ").count(), 2);
+    let (net, _) = discrete_stage(false, true);
+    let deck = net.to_spice("pair", &[0.0, 8.1, 4.05], &[], 25.0, 8.1);
+    assert!(deck.contains("JFET pair port") && deck.contains("sqrt("), "{deck}");
+}
