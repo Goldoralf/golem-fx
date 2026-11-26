@@ -7,7 +7,23 @@ Marshall) servent de références de son ; ils n'apparaissent ni dans le nom des
 
 Ordre : 1 → 2 → 3 → 4. Les lignes « Fait quand » sont les critères pour cocher.
 
-## État — conception complète et relecture Fable 5.2 (2026-11-26)
+## État — codé, release 0.8 (2026-11-26)
+
+Les quatre points sont codés (détail mesuré dans la section « As coded » de chaque README) : gfx-pitch (correctif du
+retour après un bend + bend déclenché), gfx-organ v0.1.0, gfx-octafuzz v0.1.0, gfx-dist v0.2.0. Décisions de Raph
+au codage (les recommandations, acceptées) :
+
+- gfx-octafuzz : **8× gardé** ; alias de la sortie octave −57 dB à 1,2 kHz au lieu de −65 (16× doublerait le CPU,
+  ≈ 75 % d'un cœur). La règle de Fuzz est à remesurer avec un test dont les repliements tombent entre les harmoniques.
+- gfx-dist : CPU de Discrete OD et Plexi Dist accepté tel que mesuré (5,2–6,2 µs sur un signal de guitare,
+  8,5–10,7 µs sur le bruit rose du banc) ; les deux optimisations prévues (cache de la dernière solution, IC1.1 linéaire
+  sous le plein gain) restent à essayer. Plexi Dist à `supply` 150 % : −64,6 dB (borne −65).
+
+Restent (golem-rack) : les sept `circuit` de Dist dans le catalogue de la même release que celle que golem installe,
+les entrées `octafuzz` et `guitar-organ`, les nouveaux paramètres, le footswitch momentané. Restent (Raph) : mesurer
+un 42TM022, enregistrer des DI annotées pour l'orgue.
+
+## Conception complète et relecture Fable 5.2 (2026-11-26)
 
 Les quatre points sont conçus (Claude Opus 5.5) et relus (Claude Fable 5.2) ; le détail, les chiffres et les
 questions ouvertes sont dans chaque README (section « Review (Fable 5.2, 2026-11-26) » à la fin). Rien n'est codé.
