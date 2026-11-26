@@ -282,12 +282,18 @@ pub enum DeviceModel {
     Clipper(ClipperModel),
     Bjt(BjtModel),
     OpAmp(OpAmpModel),
+    /// A BJT whose collector junction never conducts (an emitter follower held off saturation by
+    /// its topology): one port, v_BE; the collector current i_f = Is (e^(v_BE / N_F V_T) − 1), the
+    /// base current i_f / βF. The reverse junction's saturation current (fA) is dropped. βF is in
+    /// the circuit's matrices: a part swap keeps it ([`NonlinearCircuit::set_device`] asserts).
+    /// gfx-octafuzz's Q2 (gfx-fuzz §2.8, way 2).
+    BjtForward(BjtModel),
 }
 
 impl DeviceModel {
     fn ports(&self) -> usize {
         match self {
-            DeviceModel::Clipper(_) => 1,
+            DeviceModel::Clipper(_) | DeviceModel::BjtForward(_) => 1,
             DeviceModel::Bjt(_) | DeviceModel::OpAmp(_) => 2,
         }
     }
@@ -322,6 +328,13 @@ enum Eval {
         vtr: f64,
         vcritr: f64,
         ivtr: f64,
+    },
+    BjtFwd {
+        s: f64,
+        is: f64,
+        vt: f64,
+        vcrit: f64,
+        ivt: f64,
     },
     OpAmp {
         it: f64,
@@ -376,6 +389,11 @@ fn evaluate(model: &DeviceModel, rails: (f64, f64), celsius: f64, supply: f64) -
                 vcritr: vcrit(is, vtr),
                 ivtr: 1.0 / vtr,
             }
+        }
+        DeviceModel::BjtForward(b) => {
+            let j = Junction { is: b.is, n: b.nf, eg: b.eg, xti: b.xti, tnom: b.tnom };
+            let (is, vt) = j.at(celsius);
+            Eval::BjtFwd { s: if b.npn { 1.0 } else { -1.0 }, is, vt, vcrit: vcrit(is, vt), ivt: 1.0 / vt }
         }
         DeviceModel::OpAmp(o) => {
             let it = o.sr * CC;
@@ -462,6 +480,12 @@ impl Eval {
                 jac[(off + 1) * m + off + 1] = -gr * (1.0 + kl / br);
                 2
             }
+            Eval::BjtFwd { s, is, ivt, .. } => {
+                let (ef, def) = exp_lin(s * v[off] * ivt);
+                i[off] = s * is * (ef - 1.0);
+                jac[off * m + off] = is * def * ivt;
+                1
+            }
             Eval::OpAmp { it, square, g, hi, lo, vc, gc, ivlin, ivc, .. } => {
                 let x = v[off] * ivlin;
                 let mut exps = 0;
@@ -522,6 +546,9 @@ impl Eval {
             Eval::Bjt { s, vt, vcrit, vtr, vcritr, .. } => {
                 vnew[off] = s * pnjlim(s * vnew[off], s * vold[off], vt, vcrit);
                 vnew[off + 1] = s * pnjlim(s * vnew[off + 1], s * vold[off + 1], vtr, vcritr);
+            }
+            Eval::BjtFwd { s, vt, vcrit, .. } => {
+                vnew[off] = s * pnjlim(s * vnew[off], s * vold[off], vt, vcrit);
             }
             Eval::OpAmp { vlin, hi, lo, vc, .. } => {
                 // the input stage moves by at most 3 V_lin, unless it stays saturated on one side
@@ -776,6 +803,12 @@ impl Netlist {
         self.device(DeviceModel::Bjt(model), (0.0, 0.0), [c, b, e])
     }
 
+    /// A forward-only BJT (collector, base, emitter): [`DeviceModel::BjtForward`], one port. Returns
+    /// the device index.
+    pub fn bjt_forward(&mut self, c: Node, b: Node, e: Node, model: BjtModel) -> usize {
+        self.device(DeviceModel::BjtForward(model), (0.0, 0.0), [c, b, e])
+    }
+
     /// An op-amp macromodel (+, −, out). `rails` = (negative, positive) rail as multiples of the
     /// supply ([`NonlinearCircuit::set_supply`]): (0, 1) on a single supply. `rout` > 0 puts an
     /// output resistance after the ideal buffer (then the output is no exact cut). Returns the
@@ -950,7 +983,7 @@ impl Netlist {
                             }
                         }
                     }
-                    DeviceModel::Bjt(b) => {
+                    DeviceModel::Bjt(b) | DeviceModel::BjtForward(b) => {
                         let m = format!("Q{k}M");
                         s += &format!("Q{k} {} {} {} {m}\n", name(n[0]), name(n[1]), name(n[2]));
                         // ngspice's BJT temperature law has no NF: Eg / NF and XTI / NF give ours; the
@@ -1304,6 +1337,8 @@ struct Stage {
     in_map: Vec<InSrc>,
     reactive: Vec<(Node, Node, f64, RKind)>, // (p, q, value, kind)
     ports: Vec<[Node; 4]>,                   // (vp, vn, ip, in)
+    /// A port's second injection, weighted (port, ip, in, weight): a forward-only BJT's base current.
+    extra: Vec<(usize, Node, Node, f64)>,
     devs: Vec<(usize, usize, Eval)>,          // (global device, port offset, evaluated)
     vars: Vec<(Node, Node, usize)>,           // (a, b, global var)
     var_g0: Vec<f64>,
@@ -1378,7 +1413,7 @@ struct Newton<'a> {
 fn blocks(devs: &[(usize, usize, Eval)]) -> [(usize, usize); MAX_PORTS] {
     let mut b = [(0, 0); MAX_PORTS];
     for &(_, off, ev) in devs {
-        let n = if let Eval::Clipper { .. } = ev { 1 } else { 2 };
+        let n = if let Eval::Clipper { .. } | Eval::BjtFwd { .. } = ev { 1 } else { 2 };
         for k in off..off + n {
             b[k] = (off, off + n);
         }
@@ -1572,6 +1607,7 @@ impl Stage {
                     v[off] = s * vcrit;
                     v[off + 1] = 0.0;
                 }
+                Eval::BjtFwd { s, vcrit, .. } => v[off] = s * vcrit,
                 Eval::OpAmp { hi, lo, .. } => {
                     v[off] = 0.0;
                     v[off + 1] = 0.5 * (hi + lo);
@@ -1755,10 +1791,14 @@ impl Stage {
             }
             cols.push(c);
         }
-        for pt in &self.ports {
+        for (k, pt) in self.ports.iter().enumerate() {
             let mut c = Vec::new();
             node(pt[2], -1.0, &mut c);
             node(pt[3], 1.0, &mut c);
+            for &(_, a, b, w) in self.extra.iter().filter(|x| x.0 == k) {
+                node(a, -w, &mut c);
+                node(b, w, &mut c);
+            }
             cols.push(c);
         }
         cols
@@ -2075,6 +2115,14 @@ impl Stage {
                     if pt[3] > 0 {
                         add(pt[3] - 1, 1.0);
                     }
+                    for &(_, a, b, w) in self.extra.iter().filter(|x| x.0 == c - nu) {
+                        if a > 0 {
+                            add(a - 1, -w);
+                        }
+                        if b > 0 {
+                            add(b - 1, w);
+                        }
+                    }
                 }
                 self.p_dc[row * ncd + c] = acc;
             }
@@ -2282,7 +2330,12 @@ impl Stage {
                     }
                     let (ip, inn) = (self.ports[k][2], self.ports[k][3]);
                     let (vp, vn) = (self.ports[l][0], self.ports[l][1]);
-                    for (row, s) in [(ip, 1.0), (inn, -1.0)] {
+                    let mut inj = vec![(ip, 1.0), (inn, -1.0)];
+                    for &(_, a, b, w) in self.extra.iter().filter(|x| x.0 == k) {
+                        inj.push((a, w));
+                        inj.push((b, -w));
+                    }
+                    for (row, s) in inj {
                         if row == 0 {
                             continue;
                         }
@@ -2490,6 +2543,7 @@ impl NonlinearCircuit {
             let mut elems = Vec::new();
             let mut reactive = Vec::new();
             let mut ports = Vec::new();
+            let mut extra = Vec::new();
             let mut devs = Vec::new();
             let mut vars = Vec::new();
             for (k, e) in net.elements.iter().enumerate() {
@@ -2536,6 +2590,11 @@ impl NonlinearCircuit {
                                 ports.push([ln[1], ln[2], ln[1], ln[2]]);
                                 ports.push([ln[1], ln[0], ln[0], ln[2]]);
                             }
+                            DeviceModel::BjtForward(b) => {
+                                // the port's current is the collector's; the base's is 1 / βF of it
+                                extra.push((ports.len(), ln[1], ln[2], 1.0 / b.bf));
+                                ports.push([ln[1], ln[2], ln[0], ln[2]]);
+                            }
                             DeviceModel::OpAmp(_) => {
                                 ports.push([ln[0], ln[1], 0, ln[2]]);
                                 ports.push([ln[2], 0, ln[2], 0]);
@@ -2567,6 +2626,7 @@ impl NonlinearCircuit {
                 in_map,
                 reactive,
                 ports,
+                extra,
                 devs,
                 vars,
                 var_g0,
@@ -2699,6 +2759,9 @@ impl NonlinearCircuit {
     /// Replaces a device's constants (a part swap). Must keep the device's kind.
     pub fn set_device(&mut self, device: usize, model: DeviceModel) {
         assert_eq!(model.ports(), self.dev_models[device].ports(), "a part swap keeps the device's kind");
+        if let (DeviceModel::BjtForward(a), DeviceModel::BjtForward(b)) = (model, self.dev_models[device]) {
+            assert_eq!(a.bf, b.bf, "a forward-only BJT's βF is in the matrices");
+        }
         if self.dev_models[device] != model {
             self.dev_models[device] = model;
             let (s, k) = self.dev_map[device];

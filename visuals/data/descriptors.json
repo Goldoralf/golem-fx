@@ -51950,6 +51950,527 @@
     }
    ]
   },
+  "gfx-octafuzz": {
+   "name": "GoleM FX Octafuzz",
+   "class_id": "GoleMFxOctaFz001",
+   "blocks": [
+    "octafuzz"
+   ],
+   "front": [
+    "fuzz",
+    "octave",
+    "tone",
+    "level",
+    "guitar_vol",
+    "buffer"
+   ],
+   "groups": [
+    {
+     "id": "guitar",
+     "name": "Guitar",
+     "custom": null,
+     "params": [
+      "pickup",
+      "input"
+     ]
+    },
+    {
+     "id": "circuit",
+     "name": "Circuit",
+     "custom": null,
+     "params": [
+      "bias",
+      "temp"
+     ]
+    },
+    {
+     "id": "power",
+     "name": "Power",
+     "custom": null,
+     "params": [
+      "voltage",
+      "sag"
+     ]
+    },
+    {
+     "id": "blend",
+     "name": "Blend",
+     "custom": null,
+     "params": [
+      "mix",
+      "bass_keep",
+      "bypass"
+     ]
+    }
+   ],
+   "params": {
+    "fuzz": {
+     "name": "Fuzz",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 70,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The 1 kΩ B fuzz rheostat in the loop's AC ground (100 % = R_MIN): the series-series feedback around Q1 – Q3"
+    },
+    "octave": {
+     "name": "Octave",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Linear crossfade from the fuzz alone (0 %, the tap a · v(winding)) to the rectified output (100 %, the stock pedal); 50 % is a clone's lifted diode to first…"
+    },
+    "tone": {
+     "name": "Tone",
+     "kind": "float",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Tilt ±6 dB around 800 Hz after the circuit, 0 = off (the circuit has no tone control)"
+    },
+    "level": {
+     "name": "Level",
+     "kind": "float",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "0 dB = unity loudness at the defaults (K = −21.7 dB; the volume pot fully up is level +21.7 dB)"
+    },
+    "guitar_vol": {
+     "name": "Guitar Vol",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The guitar's volume knob, real taper and impedance, in the netlist"
+    },
+    "buffer": {
+     "name": "Buffer",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "A buffer between the guitar and the pedal: the pickup no longer sees the ≈ 270 kΩ input"
+    },
+    "pickup": {
+     "name": "Pickup",
+     "kind": "enum",
+     "min": 0,
+     "max": 3,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Single Coil",
+      "Humbucker",
+      "P-90",
+      "Active"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "The guitar the DI was recorded with: coil, pots, cable"
+    },
+    "bias": {
+     "name": "Bias",
+     "kind": "float",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "The trimmer R2 (Q1's base resistor, stock 680 kΩ) × 2^(+bias / 100): + raises bias_v (4.0 – 6.3 V at 9 V)"
+    },
+    "temp": {
+     "name": "Temperature",
+     "kind": "float",
+     "min": 0,
+     "max": 50,
+     "default": 25,
+     "unit": "°C",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Device temperature: the silicon barely moves, the germanium rectifier diodes follow"
+    },
+    "voltage": {
+     "name": "Voltage",
+     "kind": "float",
+     "min": 3,
+     "max": 18,
+     "default": 9,
+     "unit": "V",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Battery voltage: low = starved, 18 V = headroom"
+    },
+    "sag": {
+     "name": "Sag",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Battery internal resistance, 0 – 2 kΩ with a 47 µF reservoir"
+    },
+    "input": {
+     "name": "Input",
+     "kind": "float",
+     "min": -12,
+     "max": 12,
+     "default": 0,
+     "unit": "dB",
+     "display": "lin",
+     "step": null,
+     "decimals": 1,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "For a DI hotter or weaker than 0 dBFS = 1 V"
+    },
+    "mix": {
+     "name": "Mix",
+     "kind": "float",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": true,
+     "structural": false,
+     "depends": null,
+     "help": "Linear crossfade dry ↔ wet, the dry through the same oversampler path"
+    },
+    "bass_keep": {
+     "name": "Bass Keep",
+     "kind": "float",
+     "min": 0,
+     "max": 500,
+     "default": 0,
+     "unit": "Hz",
+     "display": "lin",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Below it: dry (shared id)"
+    },
+    "bypass": {
+     "name": "Bypass",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Shared bypass"
+    }
+   },
+   "meters": [
+    {
+     "id": "bias_v",
+     "name": "bias_v",
+     "kind": "float"
+    },
+    {
+     "id": "supply_v",
+     "name": "supply_v",
+     "kind": "float"
+    }
+   ],
+   "presets": [
+    {
+     "id": "octave-ring",
+     "type": "octafuzz",
+     "name": "Octave ring",
+     "desc": "Neck humbucker, tone rolled back: the rectified octave rings over sustained notes above the 12th fret",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "classic-rock"
+     ],
+     "gain": "high",
+     "use": "lead",
+     "refs": [
+      {
+       "artist": "Jimi Hendrix",
+       "why": "transformer octave fuzz on the neck pickup, high on the neck",
+       "verified": false
+      }
+     ],
+     "level_db": 0,
+     "tags": [
+      "vintage",
+      "dark"
+     ],
+     "default": true,
+     "params": {
+      "fuzz": 70,
+      "octave": 100,
+      "tone": -40,
+      "level": -1.5,
+      "guitar_vol": 100,
+      "buffer": false,
+      "pickup": "Humbucker",
+      "bias": 0,
+      "temp": 25,
+      "voltage": 9,
+      "sag": 0,
+      "input": 0,
+      "mix": 100,
+      "bass_keep": 0,
+      "bypass": false
+     },
+     "notes": "Play single notes above the 12th fret and let them ring: 2f up to 24 dB over f on a held note at L_m = 1 H"
+    },
+    {
+     "id": "octave-bloom",
+     "type": "octafuzz",
+     "name": "Octave bloom",
+     "desc": "The pick attack in fuzz, the octave growing as the note decays and the input clamp lets go",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "stoner-rock"
+     ],
+     "gain": "high",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage",
+      "dreamy"
+     ],
+     "params": {
+      "fuzz": 60,
+      "octave": 100,
+      "tone": 0,
+      "level": 1.5,
+      "guitar_vol": 100,
+      "buffer": false,
+      "pickup": "Single Coil",
+      "bias": 0,
+      "temp": 25,
+      "voltage": 9,
+      "sag": 0,
+      "input": -6,
+      "mix": 100,
+      "bass_keep": 0,
+      "bypass": false
+     },
+     "notes": "Hold single notes: the coupling capacitors release the bias over a few tens of ms and the octave swells in"
+    },
+    {
+     "id": "octave-blend",
+     "type": "octafuzz",
+     "name": "Octave blend",
+     "desc": "Half fuzz, half octave: the octave as a colour on a plain fuzz, chords stay readable",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "garage-rock",
+      "classic-rock"
+     ],
+     "gain": "high",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "vintage"
+     ],
+     "params": {
+      "fuzz": 80,
+      "octave": 50,
+      "tone": 0,
+      "level": -2,
+      "guitar_vol": 100,
+      "buffer": false,
+      "pickup": "Single Coil",
+      "bias": 0,
+      "temp": 25,
+      "voltage": 9,
+      "sag": 0,
+      "input": 0,
+      "mix": 100,
+      "bass_keep": 0,
+      "bypass": false
+     },
+     "notes": "octave 50 % is a clone's lifted-diode position to first order: one half-wave added to the fuzz"
+    },
+    {
+     "id": "ring-chords",
+     "type": "octafuzz",
+     "name": "Ring chords",
+     "desc": "Full fuzz on double stops and bends: ring-modulator intermodulation and dive-bombs",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "psychedelic-rock",
+      "garage-rock"
+     ],
+     "gain": "high",
+     "use": "solo",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "extreme",
+      "aggressive"
+     ],
+     "params": {
+      "fuzz": 100,
+      "octave": 100,
+      "tone": 0,
+      "level": -1,
+      "guitar_vol": 100,
+      "buffer": false,
+      "pickup": "Single Coil",
+      "bias": 0,
+      "temp": 25,
+      "voltage": 9,
+      "sag": 0,
+      "input": 0,
+      "mix": 100,
+      "bass_keep": 0,
+      "bypass": false
+     },
+     "notes": "The rectifier multiplies the notes of a double stop: sum and difference tones, the dive on a bent double stop"
+    },
+    {
+     "id": "octave-lead-hot",
+     "type": "octafuzz",
+     "name": "Octave lead, hot",
+     "desc": "Raised bias and a 12 V supply: Q3 further from saturation, the octave holds on harder picking",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "psychedelic-rock"
+     ],
+     "gain": "high",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "modern",
+      "bright"
+     ],
+     "params": {
+      "fuzz": 70,
+      "octave": 100,
+      "tone": 0,
+      "level": -3,
+      "guitar_vol": 100,
+      "buffer": false,
+      "pickup": "Single Coil",
+      "bias": 60,
+      "temp": 25,
+      "voltage": 12,
+      "sag": 0,
+      "input": 0,
+      "mix": 100,
+      "bass_keep": 0,
+      "bypass": false
+     },
+     "notes": "bias_v ≈ 7.5 V at 12 V (4.9 V stock at 9 V): more headroom before the duty moves; to be judged by ear"
+    }
+   ]
+  },
   "gfx-tuner": {
    "name": "GoleM FX Tuner",
    "class_id": "GoleMFxTuner0001",

@@ -1115,6 +1115,36 @@
     "input"
    ]
   },
+  "gfx-octafuzz": {
+   "purpose": "Transformer octave fuzz simulated as a circuit, the guitar in front: the octave (2f) blooms on held and high notes; the pick attack stays a fuzz.",
+   "roles": [
+    "guitar"
+   ],
+   "position": "input",
+   "position_note": "first after the input, on the raw DI; before the amp",
+   "pairs_well_with": [
+    {
+     "id": "amp-nam",
+     "why": "A clean or edge-of-breakup amp after it keeps the octave readable"
+    },
+    {
+     "id": "amp",
+     "why": "Octave fuzz goes in front of the amp; guitar_vol or octave on EXP"
+    }
+   ],
+   "avoid": [
+    {
+     "id": "gfx-octaver",
+     "why": "a second octave stage before it smears the rectified octave into intermodulation"
+    }
+   ],
+   "cpu": "heavy",
+   "cpu_note": "7.7-7.9 us per sample mono (38 % of a core at 48 kHz), a per-pedal exception to the 20 % contract",
+   "setup_only": [
+    "pickup",
+    "input"
+   ]
+  },
   "gfx-tuner": {
    "purpose": "Strobe-precision tuner with string-aware and strum (polyphonic) readings; bit-exact pass-through or muted while tuning, zero latency.",
    "roles": [
@@ -1585,6 +1615,7 @@
     "gfx-widener",
     "gfx-ducker",
     "gfx-fuzz",
+    "gfx-octafuzz",
     "gfx-tuner",
     "gfx-cab",
     "gfx-irfx",
@@ -1647,6 +1678,7 @@
     "gfx-widener",
     "gfx-ducker",
     "gfx-fuzz",
+    "gfx-octafuzz",
     "gfx-tuner",
     "gfx-cab",
     "gfx-irfx",
@@ -1683,6 +1715,7 @@
     "gfx-widener",
     "gfx-ducker",
     "gfx-fuzz",
+    "gfx-octafuzz",
     "gfx-cab",
     "gfx-irfx",
     "gfx-correct",
@@ -1725,17 +1758,19 @@
   },
   {
    "id": "one-circuit-sim-per-lane",
-   "text": "No more than one circuit-simulation pedal (gfx-fuzz, gfx-dist) per lane: each costs about 4-5 µs per sample, a fifth of a core; keep them on mono lanes.",
+   "text": "No more than one circuit-simulation pedal (gfx-fuzz, gfx-octafuzz, gfx-dist) per lane: fuzz and dist cost about 4-5 µs per sample, octafuzz about 8 µs; keep them on mono lanes.",
    "applies_to": [
     "gfx-fuzz",
+    "gfx-octafuzz",
     "gfx-dist"
    ]
   },
   {
    "id": "fuzz-first-on-di",
-   "text": "gfx-fuzz models the guitar's pickup from the raw DI: put it first, before any buffer or drive, then the amp.",
+   "text": "gfx-fuzz and gfx-octafuzz model the guitar's pickup from the raw DI: put them first, before any buffer or drive, then the amp.",
    "applies_to": [
     "gfx-fuzz",
+    "gfx-octafuzz",
     "amp-nam",
     "amp"
    ]
@@ -1884,6 +1919,7 @@
     "gfx-sustainer",
     "gfx-drive",
     "gfx-fuzz",
+    "gfx-octafuzz",
     "gfx-dist",
     "amp-nam"
    ]

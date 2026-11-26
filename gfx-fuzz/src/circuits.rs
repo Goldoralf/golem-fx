@@ -43,6 +43,13 @@ pub struct Circuit {
     pub ge: Vec<(usize, BjtModel)>,
     /// The supply's sign (−1: PNP, positive ground).
     pub supply_sign: f64,
+    /// The trimmer's law: R = stock × 2^(`bias_sign` · `bias`), so that + raises `bias_v` (−1 on
+    /// the faces and the muff, +1 on Octave Up's R2).
+    pub bias_sign: f64,
+    /// Octave Up: the fuzz tap s1 = a · v(winding), `octave` 0 % (an output index); None elsewhere.
+    pub tap: Option<usize>,
+    /// Named nodes the tests read (Octave Up's DC point, the winding); empty elsewhere.
+    pub nodes: Vec<(&'static str, Node)>,
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -186,6 +193,9 @@ pub fn face(q: [BjtModel; 2], jc: (f64, f64), r3: f64, g: &Guitar, buffer: bool)
         sag,
         ge,
         supply_sign: if q[0].npn { 1.0 } else { -1.0 },
+        bias_sign: -1.0,
+        tap: None,
+        nodes: Vec::new(),
     }
 }
 
@@ -320,5 +330,173 @@ pub fn si_four(stack: usize, g: &Guitar, buffer: bool) -> Circuit {
         sag,
         ge: Vec::new(),
         supply_sign: 1.0,
+        bias_sign: -1.0,
+        tap: None,
+        nodes: Vec::new(),
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Octave Up (gfx-octafuzz's circuit, README §2.3 "Octave Up")
+
+/// 2N4401 (Q2, Q3) [U: a common SPICE model; βF from Retrograde24's measured hFE 169 / 173].
+pub const Q_2N4401: BjtModel = BjtModel {
+    npn: true,
+    is: 26.03e-15,
+    bf: 170.0,
+    br: 1.01,
+    leak: 1.0,
+    eg: 1.11,
+    xti: 3.0,
+    tnom: 25.0,
+    nf: 1.0,
+    nr: 1.0,
+};
+/// 2N5087 (Q1, PNP) [U: a common SPICE model].
+pub const Q_2N5087: BjtModel = BjtModel {
+    npn: false,
+    is: 6.73e-15,
+    bf: 254.0,
+    br: 2.68,
+    ..Q_2N4401
+};
+/// Junction capacitances (C_cb, C_eb) [U, the same models].
+pub const CAPS_2N4401: (f64, f64) = (7.3e-12, 26e-12);
+pub const CAPS_2N5087: (f64, f64) = (9.5e-12, 9e-12);
+/// The rectifier's 1N34A: Is 0.1 µA, N 1.3 (0.30 V at 1 mA, fitted to typical figures [U]; not
+/// gfx-dsp's `D_1N34A`, whose 0.2 µA is gfx-dist's choice).
+pub const D_1N34A_OCT: Junction = Junction::germanium(0.1e-6, 1.3);
+
+/// **L_m, the 42TM022's magnetising inductance on its 600 Ω winding [U]: the one number to change
+/// when Raph's measurement arrives** (README O1). 1 H is the design's working value, the one the
+/// Octave bench row's marks are set for; the review's estimate of the real part is 0.1 – 0.5 H
+/// (gfx-octafuzz README, As coded).
+pub const L_M: f64 = 1.0;
+/// The 600 Ω winding's DCR (45 Ω by one distributor table [U]).
+pub const DCR_600: f64 = 45.0;
+/// Each half of the 1.5 kΩ winding against the 600 Ω winding: √(1500 / 600) / 2.
+pub const OCT_A: f64 = 0.790_569_415_042_094_9;
+/// R2, the trimmer (Q1's base resistor to ground), stock: not re-trimmed (the document's value).
+pub const R2_OCT: f64 = 680e3;
+
+/// **Octave Up**: the transformer octave (Tycobrahe-type, negative-ground conversion). Values of
+/// madbean's Retrograde24 (2024), topology of PCB Guitar Mania's Octavius (2021), checked on Aion FX
+/// Octagon (2024). Stage 1: the guitar, Q1 – Q3 and the 600 Ω winding as one inductor L_m behind its
+/// DCR (the secondaries are open: leakage drops out), the secondary's half-winding voltage a · v(L_m)
+/// through ideal buffers → s1, an exact cut. Stage 2: s1 and its mirror s3 = −s1 (an ideal inverting
+/// op-amp), the two 1N34A into the 500 kΩ volume pot fully up. No output capacitor.
+pub fn octave_up(g: &Guitar, buffer: bool) -> Circuit {
+    octave_up_with(g, buffer, Q2_FORWARD, true)
+}
+
+/// The rectifier's load (the volume pot fully up).
+pub const RECT_LOAD: f64 = 500e3;
+
+/// Q2 (the emitter follower) as a forward-only BJT: its collector junction never conducts (README
+/// §2.8, way 2: −4.9 to −5.0 V on every run; by topology, Q2's base cannot pass the supply). One
+/// port fewer in stage 1 (5 instead of 6).
+pub const Q2_FORWARD: bool = true;
+
+/// [`octave_up`] with Q2 forward-only or a full Ebers–Moll BJT (the tests run both); without
+/// `stage2` the netlist stops at the tap (`out` = s1: the tests' stage-1 diagnostics).
+pub fn octave_up_with(g: &Guitar, buffer: bool, q2_forward: bool, stage2: bool) -> Circuit {
+    let mut n = Netlist::new(2);
+    let (inp, volume) = front(&mut n, g, buffer);
+    let (vcc, sag) = supply(&mut n);
+    let b1 = n.named("q1_base");
+    let e1 = n.named("q1_emitter");
+    let c1 = n.named("q1_collector");
+    let e2 = n.named("q2_emitter");
+    let c3 = n.named("q3_collector");
+    let e3 = n.named("q3_emitter");
+    let x = n.named("bias_filter");
+    let y = n.named("loop");
+    let f = n.named("fuzz_cap");
+    let z = n.node();
+    let w = n.named("winding");
+    let wl = n.named("winding_lm");
+    n.r(inp, 0, 1e6); // R1
+    n.c(inp, b1, 100e-9); // C1
+    n.c(b1, 0, 150e-12); // C2
+    let bias = n.var(b1, 0, R2_OCT, 0.5 * R2_OCT, 2.0 * R2_OCT); // R2, the trimmer
+    n.r(b1, x, 820e3); // R3
+    n.r(x, vcc, 180e3); // R4
+    n.c(x, 0, 33e-6);
+    n.r(e1, y, 1e3); // R7
+    n.c(y, f, 100e-6);
+    // the 1 kΩ B fuzz rheostat from the capacitor to ground, (1 − fuzz) · 1 kΩ (100 % = R_MIN): the
+    // pot's other half runs from a node of its own to ground
+    let spare = n.node();
+    let fuzz = n.pot(spare, 0, f, 1e3, Taper::Linear, 0.7);
+    n.r(y, c3, 47e3); // R8, the loop
+    n.r(c1, 0, 220e3); // R5
+    n.r(c1, z, 220.0); // R6 + C4: the treble cut
+    n.c(z, 0, 1e-9);
+    n.r(e2, 0, 22e3); // R9
+    n.r(e3, 0, 470.0); // R10 ∥ C5
+    n.c(e3, 0, 220e-6);
+    n.r(vcc, c3, 1.2e3); // R11
+    n.c(c3, w, 33e-6);
+    n.r(w, wl, DCR_600);
+    n.l(wl, 0, L_M);
+    n.bjt(c1, b1, e1, Q_2N5087);
+    if q2_forward {
+        n.bjt_forward(vcc, c1, e2, Q_2N4401);
+    } else {
+        n.bjt(vcc, c1, e2, Q_2N4401);
+    }
+    n.bjt(c3, e2, e3, Q_2N4401);
+    caps(&mut n, c1, b1, e1, CAPS_2N5087);
+    caps(&mut n, vcc, c1, e2, CAPS_2N4401);
+    caps(&mut n, c3, e2, e3, CAPS_2N4401);
+    // the secondary: a · v(L_m), through ideal buffers (the winding sees no load)
+    let bw = n.node();
+    n.buffer(wl, bw);
+    let dv = n.node();
+    n.r(bw, dv, (1.0 - OCT_A) * 10e3);
+    n.r(dv, 0, OCT_A * 10e3);
+    let s1 = n.named("s1");
+    n.buffer(dv, s1);
+    let out = if stage2 {
+        n.cut(s1);
+        // stage 2: the centre-tapped half-windings ±s1, the full-wave rectifier, the volume pot
+        let mi = n.node();
+        let s3 = n.named("s3");
+        n.r(s1, mi, 10e3);
+        n.r(mi, s3, 10e3);
+        n.opamp_ideal(0, mi, s3);
+        let out = n.named("out");
+        n.clipper(s1, out, ClipperModel::diode(D_1N34A_OCT));
+        n.clipper(s3, out, ClipperModel::diode(D_1N34A_OCT));
+        n.r(out, 0, RECT_LOAD);
+        out
+    } else {
+        s1
+    };
+    let nodes = vec![
+        ("q1_emitter", e1),
+        ("q1_base", b1),
+        ("q1_collector", c1),
+        ("q2_emitter", e2),
+        ("q3_collector", c3),
+        ("q3_emitter", e3),
+        ("winding_lm", wl),
+    ];
+    Circuit {
+        out: n.output(out),
+        tap: Some(n.output(s1)),
+        bias_meter: n.probe(c3),
+        supply_meter: n.probe(vcc),
+        net: n,
+        fuzz,
+        volume,
+        tone: None,
+        mids: None,
+        bias: (bias, R2_OCT),
+        sag,
+        ge: Vec::new(),
+        supply_sign: 1.0,
+        bias_sign: 1.0,
+        nodes,
     }
 }

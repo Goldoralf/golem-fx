@@ -871,3 +871,313 @@ fn linked_mono_is_block_size_invariant() {
         );
     }
 }
+
+// ---- the octave engine (gfx-octafuzz) must not move a bit of the shipped models
+
+/// FNV-1a over the f32 bits of every sample.
+fn fnv(h: &mut u64, y: &[f32]) {
+    for v in y {
+        for b in v.to_bits().to_le_bytes() {
+            *h ^= b as u64;
+            *h = h.wrapping_mul(0x100000001b3);
+        }
+    }
+}
+
+/// Renders of v0.1.0 + linked mono (before gfx-octafuzz's engine was added): mono per model ×
+/// buffer with knob, temperature, voltage, sag, mix, bass-keep and model changes on the way; stereo
+/// L ≠ R; 96 kHz.
+fn reference_renders() -> u64 {
+    let mut h = 0xcbf29ce484222325u64;
+    let x = pink(14400, 0.1, 7);
+    let ev: [(usize, &str, f32); 8] = [
+        (1536, "fuzz", 95.0),
+        (3072, "tone", -40.0),
+        (4608, "bias", 35.0),
+        (6144, "voltage", 6.0),
+        (7680, "guitar_vol", 55.0),
+        (9216, "sag", 60.0),
+        (10752, "mix", 70.0),
+        (12288, "bass_keep", 120.0),
+    ];
+    for m in 0..N_MODELS {
+        for buffer in [0.0, 1.0] {
+            let mut e = fuzz(
+                48000.0,
+                &[("model", m as f32), ("buffer", buffer), ("temp", 30.0)],
+            );
+            let mut y = x.clone();
+            for (k, c) in y.chunks_mut(512).enumerate() {
+                for &(t, id, v) in &ev {
+                    if t == 512 * k {
+                        e.set_param(id, v);
+                    }
+                }
+                if k == 20 {
+                    e.set_param("model", (1 - m) as f32);
+                }
+                e.process(&mut [c]);
+            }
+            fnv(&mut h, &y);
+        }
+    }
+    let d = pink(14400, 0.02, 9);
+    let r: Vec<f32> = x.iter().zip(&d).map(|(a, b)| a + b).collect();
+    let [l, r] = run_pair(&mut fuzz2(&[], false), &x, &r, 512, &LINK_EVENTS);
+    fnv(&mut h, &l);
+    fnv(&mut h, &r);
+    let mut e = fuzz(96000.0, &[("fuzz", 100.0)]);
+    let y = run(&mut e, &x);
+    fnv(&mut h, &y);
+    h
+}
+
+#[test]
+fn shipped_renders_are_bit_identical() {
+    let h = reference_renders();
+    eprintln!("renders: {h:#018x}");
+    assert_eq!(h, RENDERS_V010);
+}
+
+const RENDERS_V010: u64 = 0xfab5_9003_ec20_a70a;
+
+// ---- Octave Up (gfx-octafuzz's engine; its behaviour rows live in gfx-octafuzz's tests)
+
+/// Octave Up's DC point at `volts`, `bias` (−1 … 1), `celsius`: the named node voltages.
+fn octave_dc(volts: f64, bias: f64, celsius: f64) -> Vec<(&'static str, f64)> {
+    let mut def = octave_up(&SINGLE_COIL, true);
+    let probes: Vec<(&str, usize)> = def
+        .nodes
+        .clone()
+        .into_iter()
+        .map(|(k, n)| (k, def.net.probe(n)))
+        .collect();
+    let mut nc = NonlinearCircuit::new(&def.net, 352800.0);
+    nc.set_temperature(celsius);
+    nc.set_input(IN_VS, volts);
+    nc.set_pot(def.fuzz, 0.7);
+    nc.set_var(def.bias.0, R2_OCT * bias.exp2());
+    assert!(nc.init_dc(), "DC point");
+    probes.into_iter().map(|(k, o)| (k, nc.probe(o))).collect()
+}
+
+#[test]
+fn octave_up_dc_point() {
+    // README §5 "Octave Up DC": 9.26 V, within 0.15 V of the prototype's 4.32 / 3.77 / 2.91, 2.33,
+    // 4.99 / 1.67 V; `bias` ±100 % at 9 V: 6.28 / 4.04 V ± 0.2 V
+    let want = [4.32, 3.77, 2.91, 2.33, 4.99, 1.67];
+    let got = octave_dc(9.26, 0.0, 25.0);
+    for ((k, v), w) in got.iter().zip(want) {
+        eprintln!("{k}: {v:.3} V (prototype {w})");
+        assert!((v - w).abs() < 0.15, "{k}: {v}");
+    }
+    for (b, w) in [
+        (1.0, 6.28),
+        (0.5, 5.58),
+        (0.0, 4.87),
+        (-0.5, 4.22),
+        (-1.0, 4.04),
+    ] {
+        let c3 = octave_dc(9.0, b, 25.0)[4].1;
+        eprintln!("bias {b:+}: Q3 C {c3:.2} V (prototype {w})");
+        assert!((c3 - w).abs() < 0.2, "{b}: {c3}");
+    }
+    for (t, w) in [(15.0, 4.90), (35.0, 4.85)] {
+        let c3 = octave_dc(9.0, 0.0, t)[4].1;
+        eprintln!("{t} °C: Q3 C {c3:.2} V (prototype {w})");
+        assert!((c3 - w).abs() < 0.1, "{t}: {c3}");
+    }
+    for (v, w) in [(4.5, 2.80), (18.0, 9.00)] {
+        let c3 = octave_dc(v, 0.0, 25.0)[4].1;
+        eprintln!("{v} V: Q3 C {c3:.2} V (prototype {w})");
+        assert!((c3 - w).abs() < 0.15, "{v}: {c3}");
+    }
+}
+
+#[test]
+#[ignore = "diagnostics (O3, measured first): the Octave Up netlist alone at 8×, CPU per host sample"]
+fn cpu_octave_netlist() {
+    // README §2.8 decided by Raph (O3): the netlist measured first. 48 kHz host, 8× = 384 kHz, mono;
+    // pink noise at 0.1 RMS (the bench's, held over 8) and a 1.2 kHz sine at −12 dBFS, `fuzz` 70 /
+    // 100 %, buffer off / on. FAST=0 / QUAD=0 turn the cheap steps off
+    let _ftz = gfx_dsp::util::FtzGuard::new();
+    let fs = 384000.0;
+    let fast = std::env::var("FAST").map_or(true, |v| v != "0");
+    let quad = std::env::var("QUAD").map_or(true, |v| v != "0");
+    let n = 38400;
+    let pk = pink(n / 8 + 64, 0.1, 1);
+    for buffer in [false, true] {
+        for fz in [0.7, 1.0] {
+            for sig in ["pink", "sine", "silence"] {
+                let fwd = std::env::var("FWD").map_or(true, |v| v != "0");
+                // STAGE2=0: stage 1 alone (the netlist stops at the tap)
+                let st2 = std::env::var("STAGE2").map_or(true, |v| v != "0");
+                let def = octave_up_with(&SINGLE_COIL, buffer, fwd, st2);
+                let mut nc = NonlinearCircuit::new(&def.net, fs);
+                nc.set_fast_solve(fast);
+                nc.set_quadratic_seed(quad);
+                nc.set_input(IN_VS, 9.0);
+                nc.set_pot(def.fuzz, fz);
+                nc.init_dc();
+                let mut emf = SINGLE_COIL.emf_filter(fs, gfx_dsp::pickup::EMF_POLE_HZ);
+                let mut k = 0usize;
+                let mut worst_block: f64 = 0.0;
+                let ns = best_ns(n, || {
+                    for b in 0..n / 512 {
+                        let t = std::time::Instant::now();
+                        for _ in 0..512 {
+                            let x = if sig == "pink" {
+                                pk[k / 8] as f64
+                            } else if sig == "silence" {
+                                0.0
+                            } else {
+                                0.25 * (2.0 * PI * 1200.0 * k as f64 / fs).sin()
+                            };
+                            nc.set_input(IN_SIG, if buffer { x } else { emf.process(x) });
+                            nc.process();
+                            k += 1;
+                        }
+                        if b > 0 {
+                            worst_block = worst_block.max(t.elapsed().as_secs_f64() * 1e9 / 512.0);
+                        }
+                    }
+                    k = 0;
+                });
+                let s = nc.stats();
+                let ns_ = nc.stage_count();
+                eprintln!(
+                    "buffer {buffer:5} fuzz {fz} {sig}: {:.2} µs / host sample ({ns:.0} ns / solve), worst block {:.2} µs; mean it {:.2} (last stages {:.2}, {:.2}), worst {}, fallbacks {}, unsolved {}, ports {:?}",
+                    8.0 * ns / 1000.0,
+                    8.0 * worst_block / 1000.0,
+                    s.mean(),
+                    nc.stage_stats(ns_.saturating_sub(2)).mean(),
+                    nc.stage_stats(ns_ - 1).mean(),
+                    s.worst,
+                    s.fallbacks,
+                    s.unsolved,
+                    nc.ports()
+                );
+            }
+        }
+    }
+}
+
+/// The tap s1 of a render of Octave Up's stage 1 at `fs`: a sine at `f`, `amp` V on the DI,
+/// `buffer` on, `fuzz` 100 %, `q2_forward` or not; and the circuit's own stage-2 output when
+/// `stage2`. Returns (s1, out) per sample after `settle` seconds.
+fn octave_render(fs: f64, f: f64, amp: f64, q2_forward: bool, secs: f64) -> (Vec<f64>, Vec<f64>) {
+    let def = octave_up_with(&SINGLE_COIL, true, q2_forward, true);
+    let mut nc = NonlinearCircuit::new(&def.net, fs);
+    nc.set_fast_solve(true);
+    nc.set_quadratic_seed(true);
+    nc.set_input(IN_VS, 9.0);
+    nc.set_pot(def.fuzz, 1.0);
+    nc.init_dc();
+    let n = (secs * fs) as usize;
+    let tap = def.tap.unwrap();
+    let mut s1 = Vec::with_capacity(n);
+    let mut out = Vec::with_capacity(n);
+    for k in 0..n {
+        nc.set_input(IN_SIG, amp * (2.0 * PI * f * k as f64 / fs).sin());
+        nc.process();
+        s1.push(nc.output(tap));
+        out.push(nc.output(def.out));
+    }
+    assert_eq!(nc.stats().unsolved, 0);
+    (s1, out)
+}
+
+#[test]
+fn octave_up_q2_forward_matches_the_full_bjt() {
+    // way 2 (README §2.8): Q2 forward-only against the full Ebers–Moll Q2, 440 Hz at 0.3 V and 82 Hz
+    // at 1 V, `fuzz` 100 %, buffer on: the outputs within −60 dB of their peak (the reverse
+    // junction's fA dropped); Q2's base-collector voltage stays below −3 V on the full BJT
+    for (f, a) in [(440.0, 0.3), (82.4, 1.0)] {
+        let (_, o1) = octave_render(384000.0, f, a, true, 0.1);
+        let (_, o0) = octave_render(384000.0, f, a, false, 0.1);
+        let pk = o0.iter().fold(0.0f64, |m, v| m.max(v.abs()));
+        let d = o1
+            .iter()
+            .zip(&o0)
+            .fold(0.0f64, |m, (x, y)| m.max((x - y).abs()));
+        eprintln!(
+            "{f} Hz {a} V: forward-only Q2 vs full: {:.1} dB re peak",
+            20.0 * (d / pk).log10()
+        );
+        assert!(d < 1e-3 * pk, "{d} vs {pk}");
+    }
+}
+
+#[test]
+fn octave_up_voltage_step_without_the_forward_q2() {
+    // README §5 Octave Up DC: `voltage` stepped from 18 to 3 V at full speed (here instantly, the bare
+    // circuit) under a 196 Hz note at 0.3 V, `fuzz` 100 %: no unsolved sample, with and without the
+    // forward-only Q2
+    for fwd in [true, false] {
+        let fs = 384000.0;
+        let def = octave_up_with(&SINGLE_COIL, true, fwd, true);
+        let mut nc = NonlinearCircuit::new(&def.net, fs);
+        nc.set_fast_solve(true);
+        nc.set_quadratic_seed(true);
+        nc.set_input(IN_VS, 18.0);
+        nc.set_pot(def.fuzz, 1.0);
+        nc.init_dc();
+        for k in 0..(0.2 * fs) as usize {
+            if k == (0.05 * fs) as usize {
+                nc.set_input(IN_VS, 3.0);
+            }
+            nc.set_input(IN_SIG, 0.3 * (2.0 * PI * 196.0 * k as f64 / fs).sin());
+            nc.process();
+            assert!(nc.output(def.out).is_finite());
+        }
+        let s = nc.stats();
+        eprintln!(
+            "forward-only Q2 {fwd}: worst {}, fallbacks {}, unsolved {}",
+            s.worst, s.fallbacks, s.unsolved
+        );
+        assert_eq!(s.unsolved, 0, "{fwd}");
+    }
+}
+
+#[test]
+fn octave_up_flux_linkage() {
+    // README §5 Octave Up DC, the saturation diagnostic (L_m = 1 H): the winding's peak flux linkage
+    // L_m · i = ∫ v(L_m) dt at 41, 82 and 196 Hz, 0.3 V, `fuzz` 100 % [P 13.3 / 8.8 / 4.2 mWb against
+    // 8.25 rated]; reported, and within 25 % of the prototype's
+    let fs = 384000.0;
+    let rated = 11.0 * 2f64.sqrt() / (2.0 * PI * 300.0);
+    for (f, want) in [(41.2, 13.3e-3), (82.4, 8.8e-3), (196.0, 4.2e-3)] {
+        let mut def = octave_up_with(&SINGLE_COIL, true, true, false);
+        let wl = def.nodes.iter().find(|n| n.0 == "winding_lm").unwrap().1;
+        let pw = def.net.probe(wl);
+        let mut nc = NonlinearCircuit::new(&def.net, fs);
+        nc.set_fast_solve(true);
+        nc.set_input(IN_VS, 9.0);
+        nc.set_pot(def.fuzz, 1.0);
+        nc.init_dc();
+        let n = (0.4 * fs) as usize;
+        let (mut lam, mut v1) = (0.0, 0.0);
+        let mut tail = Vec::new();
+        for k in 0..n {
+            nc.set_input(IN_SIG, 0.3 * (2.0 * PI * f * k as f64 / fs).sin());
+            nc.process();
+            let v = nc.probe(pw);
+            lam += 0.5 * (v + v1) / fs;
+            v1 = v;
+            if k > n / 2 {
+                tail.push(lam);
+            }
+        }
+        // in steady state the winding's mean current is the 33 µF's, zero: λ = ∫ v dt less its mean
+        let mean = tail.iter().sum::<f64>() / tail.len() as f64;
+        let pk = tail.iter().fold(0.0f64, |m, l| m.max((l - mean).abs()));
+        eprintln!(
+            "{f} Hz, 0.3 V: peak flux linkage {:.1} mWb ({:.2} × rated {:.2} mWb; prototype {:.1})",
+            pk * 1e3,
+            pk / rated,
+            rated * 1e3,
+            want * 1e3
+        );
+        assert!((pk / want - 1.0).abs() < 0.25, "{f}: {pk}");
+    }
+}

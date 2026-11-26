@@ -918,6 +918,7 @@ dependencies = [
  "gfx-mbcomp",
  "gfx-met",
  "gfx-morph",
+ "gfx-octafuzz",
  "gfx-octaver",
  "gfx-phaser",
  "gfx-pitch",
@@ -1244,6 +1245,16 @@ dependencies = [
  "gfx-ui",
  "nih_plug",
  "realfft",
+]
+
+[[package]]
+name = "gfx-octafuzz"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "gfx-fuzz",
+ "gfx-ui",
+ "nih_plug",
 ]
 
 [[package]]

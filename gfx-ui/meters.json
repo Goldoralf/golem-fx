@@ -39,6 +39,8 @@
   "gfx-ducker":      { "rows": [{ "id": "gr", "kind": "gr", "label": "Duck", "max": 30 }], "hide": ["state"] },
   "gfx-fuzz":        { "rows": [{ "id": "bias_v", "kind": "value", "label": "Bias" },
                                 { "id": "supply_v", "kind": "value", "label": "Supply" }] },
+  "gfx-octafuzz":    { "rows": [{ "id": "bias_v", "kind": "value", "label": "Bias" },
+                                { "id": "supply_v", "kind": "value", "label": "Supply" }] },
   "gfx-cab":         { "rows": [], "hide": ["loaded_a", "loaded_b"] },
   "gfx-irfx":        { "rows": [], "hide": ["loaded_a"] },
   "gfx-correct":     { "rows": [{ "id": "state", "kind": "state", "label": "Voice", "states": ["Idle", "Correcting", "Gated"] },

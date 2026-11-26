@@ -120,6 +120,9 @@ name = "GoleM FX Widener"
 name = "GoleM FX Ducker"
 [gfx-fuzz]
 name = "GoleM FX Fuzz"
+
+[gfx-octafuzz]
+name = "GoleM FX Octafuzz"
 [gfx-tuner]
 name = "GoleM FX Tuner"
 
