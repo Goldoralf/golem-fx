@@ -53,8 +53,8 @@ fn series_strings_collapse_exactly() {
     let e2 = evaluate(&DeviceModel::Clipper(two), (0.0, 0.0), 25.0, 9.0);
     let (mut i1, mut i2) = ([0.0; 1], [0.0; 1]);
     let mut j = [0.0; 1];
-    e1.eval(&[0.55], &mut i1, &mut j, 1, 0);
-    e2.eval(&[1.10], &mut i2, &mut j, 1, 0);
+    e1.eval(&[0.55], &mut i1, &mut j, 1, 0, false);
+    e2.eval(&[1.10], &mut i2, &mut j, 1, 0, false);
     assert!((i1[0] - i2[0]).abs() < 1e-8 * i1[0].abs(), "{} vs {}", i1[0], i2[0]);
 }
 
@@ -486,7 +486,7 @@ fn timing() {
     let ev = evaluate(&DeviceModel::Clipper(ClipperModel::pair(D_1N914, 1)), (0.0, 0.0), 25.0, 9.0);
     let devs = [(0usize, 0usize, ev)];
     let kk = [-1000.0];
-    let nw = Newton { k: &kk, m: 1, devs: &devs, tol: 1e-6, dc: false, plain_steps: false, blk: blocks(&devs), recip: false };
+    let nw = Newton { k: &kk, m: 1, devs: &devs, tol: 1e-6, dc: false, plain_steps: false, blk: blocks(&devs), recip: false, lean: false };
     let t = Instant::now();
     let mut its = 0;
     for k in 0..1_000_000 {
@@ -504,7 +504,7 @@ fn timing() {
         let v = [0.3 + 1e-7 * k as f64; MAX_PORTS];
         let mut i = [0.0; MAX_PORTS];
         let mut j = [0.0; 4];
-        ev.eval(&v, &mut i, &mut j, 1, 0);
+        ev.eval(&v, &mut i, &mut j, 1, 0, false);
         acc += i[0];
     }
     eprintln!("eval: {:.1} ns", t.elapsed().as_secs_f64() * 1e9 / 1e6);
@@ -585,8 +585,8 @@ fn newton_parts_cost() {
     let t = best(n, &mut || {
         for k in 0..n {
             v[0] = -0.2 - 1e-9 * (k & 7) as f64;
-            ev.eval(&v, &mut i, &mut j, 4, 0);
-            ev.eval(&v, &mut i, &mut j, 4, 2);
+            ev.eval(&v, &mut i, &mut j, 4, 0, false);
+            ev.eval(&v, &mut i, &mut j, 4, 2, false);
         }
     });
     eprintln!("2 BJT evals: {t:.1} ns ({})", i[0]);
@@ -633,15 +633,15 @@ fn jac_check(model: DeviceModel, v: &[f64]) -> (Vec<f64>, Vec<f64>) {
     let m = ev.ports();
     let mut i = [0.0; 4];
     let mut j = [0.0; 4];
-    ev.eval(v, &mut i, &mut j, m, 0);
+    ev.eval(v, &mut i, &mut j, m, 0, false);
     let mut fd = vec![0.0; m * m];
     for c in 0..m {
         let (mut a, mut b) = (v.to_vec(), v.to_vec());
         a[c] += 1e-7;
         b[c] -= 1e-7;
         let (mut ia, mut ib, mut jj) = ([0.0; 4], [0.0; 4], [0.0; 4]);
-        ev.eval(&a, &mut ia, &mut jj, m, 0);
-        ev.eval(&b, &mut ib, &mut jj, m, 0);
+        ev.eval(&a, &mut ia, &mut jj, m, 0, false);
+        ev.eval(&b, &mut ib, &mut jj, m, 0, false);
         for r in 0..m {
             fd[r * m + c] = (ia[r] - ib[r]) / 2e-7;
         }
@@ -654,18 +654,18 @@ fn jfet_follows_shichman_hodges_both_ways() {
     let ev = evaluate(&DeviceModel::Jfet(JF), (0.0, 0.0), 25.0, 9.0);
     let (mut i, mut j) = ([0.0; 2], [0.0; 4]);
     // saturation: v_GS −0.2, v_DS 3 (v_GD −3.2)
-    ev.eval(&[-0.2, -3.2], &mut i, &mut j, 2, 0);
+    ev.eval(&[-0.2, -3.2], &mut i, &mut j, 2, 0, false);
     let want = 18e-3 * 0.25f64.powi(2) * (1.0 + 4e-3 * 3.0);
     assert!((i[1] - want).abs() < 1e-12, "{} vs {want}", i[1]);
     // linear region: v_DS 0.1
-    ev.eval(&[-0.2, -0.3], &mut i, &mut j, 2, 0);
+    ev.eval(&[-0.2, -0.3], &mut i, &mut j, 2, 0, false);
     let want = 18e-3 * 0.1 * (2.0 * 0.25 - 0.1) * (1.0 + 4e-3 * 0.1);
     assert!((i[1] - want).abs() < 1e-12);
     // drain and source swapped: the same channel current, the other way (gate currents ~10⁻¹⁴ A)
-    ev.eval(&[-0.3, -0.2], &mut i, &mut j, 2, 0);
+    ev.eval(&[-0.3, -0.2], &mut i, &mut j, 2, 0, false);
     assert!((i[1] + want).abs() < 1e-12, "{} vs {}", i[1], -want);
     // pinched off
-    ev.eval(&[-0.6, -3.6], &mut i, &mut j, 2, 0);
+    ev.eval(&[-0.6, -3.6], &mut i, &mut j, 2, 0, false);
     assert!(i[1].abs() < 1e-12);
     // the Jacobian, wherever the law is smooth
     let close = |a: &[f64], b: &[f64]| a.iter().zip(b).all(|(x, y)| (x - y).abs() <= 1e-5 * x.abs().max(1e-6));
@@ -681,7 +681,7 @@ fn jfet_follows_shichman_hodges_both_ways() {
         assert!(close(&a, &fd), "{m:?} {v:?}: {a:?} vs {fd:?}");
     }
     let ep = evaluate(&DeviceModel::Jfet(pch), (0.0, 0.0), 25.0, 9.0);
-    ep.eval(&[0.2, 3.2], &mut i, &mut j, 2, 0);
+    ep.eval(&[0.2, 3.2], &mut i, &mut j, 2, 0, false);
     assert!((i[1] + 18e-3 * 0.25f64.powi(2) * (1.0 + 4e-3 * 3.0)).abs() < 1e-12, "P channel {}", i[1]);
 }
 
@@ -693,13 +693,13 @@ fn pair_law_saturates_smoothly() {
     let ev = evaluate(&DeviceModel::Pair(fixed), (0.0, 0.0), 25.0, 9.0);
     let lim = (0.93e-3f64 / 18e-3).sqrt();
     let (mut i, mut j) = ([0.0; 1], [0.0; 1]);
-    ev.eval(&[0.0], &mut i, &mut j, 1, 0);
+    ev.eval(&[0.0], &mut i, &mut j, 1, 0, false);
     assert!((i[0] - 0.465e-3).abs() < 1e-15);
     // at balance: half the pair's differential transconductance √(2 β I_t) on one drain
     assert!((j[0] - 0.5 * (2.0 * 18e-3 * 0.93e-3f64).sqrt()).abs() < 1e-12, "{}", j[0]);
-    ev.eval(&[lim * 1.0001], &mut i, &mut j, 1, 0);
+    ev.eval(&[lim * 1.0001], &mut i, &mut j, 1, 0, false);
     assert!((i[0] - 0.93e-3).abs() < 1e-15 && j[0] == 0.0);
-    ev.eval(&[lim * 0.9999], &mut i, &mut j, 1, 0);
+    ev.eval(&[lim * 0.9999], &mut i, &mut j, 1, 0, false);
     assert!((i[0] - 0.93e-3).abs() < 1e-9 && j[0] < 1e-4, "C¹ at the edge: {} {}", i[0], j[0]);
     for v in [0.0, 0.05, -0.1, 0.2] {
         let (a, fd) = jac_check(DeviceModel::Pair(fixed), &[v]);

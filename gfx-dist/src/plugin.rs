@@ -9,9 +9,10 @@ use gfx_dsp::Effect;
 use nih_plug::prelude::*;
 use std::sync::Arc;
 
-const NP: usize = 11;
+const NP: usize = 13;
 
-/// `circuit`: the shipped circuits, in the README's order (the Discrete OD is appended later).
+/// `circuit`: the shipped circuits, in the README's order; the three of 0.8 appended (never reorder:
+/// REAPER reads an enum as index / (n − 1), the state stores the ids).
 #[derive(Enum, Debug, PartialEq, Clone, Copy)]
 enum CircuitP {
     #[id = "opamp-dist"]
@@ -26,6 +27,15 @@ enum CircuitP {
     #[id = "mosfet-od"]
     #[name = "MOSFET OD"]
     MosfetOd,
+    #[id = "discrete-od"]
+    #[name = "Discrete OD"]
+    DiscreteOd,
+    #[id = "studio-od"]
+    #[name = "Studio OD"]
+    StudioOd,
+    #[id = "plexi-dist"]
+    #[name = "Plexi Dist"]
+    PlexiDist,
 }
 
 #[derive(Enum, Debug, PartialEq, Clone, Copy)]
@@ -106,6 +116,10 @@ struct DistParams {
     input: FloatParam,
     #[id = "bass_keep"]
     bass_keep: FloatParam,
+    #[id = "fat"]
+    fat: BoolParam,
+    #[id = "contour"]
+    contour: FloatParam,
 }
 
 impl Default for DistParams {
@@ -122,6 +136,8 @@ impl Default for DistParams {
             tight: f(8, " Hz", 0),
             input: f(9, " dB", 1),
             bass_keep: f(10, " Hz", 0),
+            fat: BoolParam::new("Fat", false),
+            contour: f(12, " %", 0),
         }
     }
 }
@@ -140,6 +156,8 @@ impl DistParams {
             self.tight.value(),
             self.input.value(),
             self.bass_keep.value(),
+            if self.fat.value() { 1.0 } else { 0.0 },
+            self.contour.value(),
         ]
     }
 }

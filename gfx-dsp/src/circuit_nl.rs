@@ -70,6 +70,8 @@ pub const MAX_PORTS: usize = 12;
 pub const MAX_VARS: usize = 12;
 /// Exponentials continue linearly beyond this argument (SPICE).
 const EXP_LIM: f64 = 40.0;
+/// [`NonlinearCircuit::set_lean_exp`]: e^(−36) = 2.3·10⁻¹⁶.
+const LEAN_LIM: f64 = 36.0;
 
 /// The thermal voltage kT / q at `celsius`.
 pub fn thermal_voltage(celsius: f64) -> f64 {
@@ -538,7 +540,9 @@ impl Eval {
 impl Eval {
     /// Port currents and their Jacobian (rows / cols `off..off + ports`, row stride `m`).
     #[inline]
-    fn eval(&self, v: &[f64], i: &mut [f64], jac: &mut [f64], m: usize, off: usize) -> usize {
+    /// `lean`: an exponential whose argument is below −LEAN_LIM is taken as 0 (its term is under
+    /// 10⁻¹⁵ of the device's scale), and skipped ([`NonlinearCircuit::set_lean_exp`]).
+    fn eval(&self, v: &[f64], i: &mut [f64], jac: &mut [f64], m: usize, off: usize, lean: bool) -> usize {
         match *self {
             Eval::Clipper { isp, nvp, isn, nvn, chp, chn, ivp, ivn, .. } => {
                 let x = v[off];
@@ -584,8 +588,9 @@ impl Eval {
             Eval::Bjt { s, is, bf, br, kl, ivt, ivtr, .. } => {
                 let vbe = s * v[off];
                 let vbc = s * v[off + 1];
-                let (ef, def) = exp_lin(vbe * ivt);
-                let (er, der) = exp_lin(vbc * ivtr);
+                let (xf, xr) = (vbe * ivt, vbc * ivtr);
+                let (ef, def) = if lean && xf < -LEAN_LIM { (0.0, 0.0) } else { exp_lin(xf) };
+                let (er, der) = if lean && xr < -LEAN_LIM { (0.0, 0.0) } else { exp_lin(xr) };
                 let i_f = is * (ef - 1.0);
                 let i_r = is * (er - 1.0);
                 let gf = is * def * ivt;
@@ -611,6 +616,9 @@ impl Eval {
                         i[off] = it * y.signum();
                         jac[off * m + off] = 0.0;
                     }
+                } else if lean && 2.0 * x.abs() > LEAN_LIM {
+                    jac[off * m + off] = 0.0;
+                    i[off] = it * x.signum();
                 } else {
                     let a = fast_exp(-2.0 * x.abs());
                     let q = 1.0 / (1.0 + a);
@@ -626,10 +634,12 @@ impl Eval {
                 // the rail clamp: a diode-like conductance gc with a soft-plus knee of vc
                 let x = if w > mid { w - hi } else { lo - w };
                 let s = if w > mid { 1.0 } else { -1.0 };
-                let (sp, ds) = softplus(x, vc, ivc);
-                cur += s * gc * sp;
-                d += gc * ds;
-                exps += 1;
+                if !(lean && x * ivc < -LEAN_LIM) {
+                    let (sp, ds) = softplus(x, vc, ivc);
+                    cur += s * gc * sp;
+                    d += gc * ds;
+                    exps += 1;
+                }
                 i[off + 1] = cur;
                 jac[(off + 1) * m + off + 1] = d;
                 exps
@@ -901,6 +911,11 @@ impl Netlist {
         let n = self.node();
         self.names.push((n, name));
         n
+    }
+
+    /// The node given `name` by [`Netlist::named`] (tests and probes).
+    pub fn node_named(&self, name: &str) -> Option<Node> {
+        self.names.iter().find(|x| x.1 == name).map(|x| x.0)
     }
 
     /// The node driven by input `k` (an ideal source to ground; one node per input).
@@ -1634,6 +1649,7 @@ struct Stage {
     lazy: usize,
     stepped: bool,
     recip: bool,
+    lean: bool,
     stats: Stats,
 }
 
@@ -1653,6 +1669,8 @@ struct Newton<'a> {
     /// The Jacobian solve multiplies by each pivot's reciprocal instead of dividing (opt-in:
     /// [`NonlinearCircuit::set_fast_solve`]).
     recip: bool,
+    /// Negligible exponentials skipped (opt-in: [`NonlinearCircuit::set_lean_exp`]).
+    lean: bool,
 }
 
 /// The device block of every port.
@@ -1676,7 +1694,7 @@ impl Newton<'_> {
         }
         let mut e = 0;
         for d in self.devs {
-            e += d.2.eval(v, i, jf, m, d.1);
+            e += d.2.eval(v, i, jf, m, d.1, self.lean);
         }
         e as u32
     }
@@ -2182,7 +2200,7 @@ impl Stage {
         matvec(&self.p, ncol, &self.x[..nr + nu], None, &mut p[..m]);
         let mut held = false;
         if m > 0 {
-            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
             let mut v = self.v;
             if self.quad && self.plain[0] && self.plain[1] && self.plain2 {
                 for r in 0..m {
@@ -2383,7 +2401,7 @@ impl Stage {
                 k[r * m + c] = self.p_dc[r * ncd + nu + c];
             }
         }
-        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
         let pdc = |u: &[f64], p: &mut [f64; MAX_PORTS], pdc: &[f64]| {
             for r in 0..m {
                 let mut acc = 0.0;
@@ -2486,7 +2504,7 @@ impl Stage {
                 if moved < 1e-9 {
                     break;
                 }
-                let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+                let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
                 if !nw.solve(&p, &mut v, &mut i, 50).0 {
                     ok = false;
                     break;
@@ -2494,7 +2512,7 @@ impl Stage {
             }
         }
         if m > 0 {
-            let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+            let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
             let mut jf = [0.0; MAX_PORTS * MAX_PORTS];
             nw.eval(&v, &mut i, &mut jf);
         }
@@ -2604,7 +2622,7 @@ impl Stage {
             let mut jf = [0.0; MAX_PORTS * MAX_PORTS];
             let mut i = [0.0; MAX_PORTS];
             for d in &self.devs {
-                d.2.eval(&self.v, &mut i, &mut jf, m, d.1);
+                d.2.eval(&self.v, &mut i, &mut jf, m, d.1, false);
             }
             for k in 0..m {
                 for l in 0..m {
@@ -2985,6 +3003,7 @@ impl NonlinearCircuit {
                 lazy: lazy[s],
                 stepped: false,
                 recip: false,
+                lean: false,
                 stats: Stats::default(),
             };
             st.build();
@@ -3033,6 +3052,16 @@ impl NonlinearCircuit {
     pub fn set_fast_solve(&mut self, on: bool) {
         for s in &mut self.stages {
             s.recip = on;
+        }
+    }
+
+    /// Exponentials of an argument below −36 taken as 0 and not computed (the op-amp macro's tanh in
+    /// saturation and its rail clamp far from the rail, a BJT's reverse-biased junction): their terms
+    /// are below 2·10⁻¹⁶ of the device's scale. Off by default (gfx-dist's four v0.1.0 circuits and
+    /// gfx-fuzz are unchanged); gfx-dist's circuits of 0.8 turn it on.
+    pub fn set_lean_exp(&mut self, on: bool) {
+        for s in &mut self.stages {
+            s.lean = on;
         }
     }
 
@@ -3245,7 +3274,7 @@ impl NonlinearCircuit {
             st2.woodbury();
         }
         st2.kmat(&mut k);
-        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false, blk: blocks(&st.devs), recip: st.recip };
+        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false, blk: blocks(&st.devs), recip: st.recip, lean: st.lean };
         let mut vv = [0.0; MAX_PORTS];
         vv[..m].copy_from_slice(v);
         let mut i = [0.0; MAX_PORTS];

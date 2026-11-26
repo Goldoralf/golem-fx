@@ -585,6 +585,405 @@
     "bass_keep": 0
    },
    "notes": "1N34A at about 0.3 V: a softer, compressed clip"
+  },
+  {
+   "id": "edge-of-breakup",
+   "type": "dist",
+   "name": "Edge of breakup",
+   "desc": "Discrete op-amp stage clipping softly on its rails: cleans up with the guitar's volume",
+   "inst": "guitar",
+   "genres": [
+    "blues"
+   ],
+   "subgenres": [
+    "electric-blues",
+    "modern-electric-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "John Mayer",
+     "why": "discrete blues overdrive at low gain over a clean amp",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Discrete OD",
+    "gain": 35,
+    "tone_stack": 35,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "Tone below noon tames the circuit's famous treble; stage 2 breaks up unevenly, the even order of its class-A output"
+  },
+  {
+   "id": "cranked-blues",
+   "type": "dist",
+   "name": "Cranked blues",
+   "desc": "Both discrete stages pushed: asymmetric breakup with a bass bump, into a clean amp",
+   "inst": "guitar",
+   "genres": [
+    "blues",
+    "rock"
+   ],
+   "subgenres": [
+    "blues-rock",
+    "texas-blues"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Discrete OD",
+    "gain": 75,
+    "tone_stack": 40,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "The diodes after stage 1 and stage 2's rails share the clipping: thick, still touch-sensitive"
+  },
+  {
+   "id": "fat-blues",
+   "type": "dist",
+   "name": "Fat blues",
+   "desc": "The discrete overdrive with its bass switch on: low-end weight under a mild breakup",
+   "inst": "guitar",
+   "genres": [
+    "blues"
+   ],
+   "subgenres": [
+    "modern-electric-blues",
+    "soul-blues"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Discrete OD",
+    "gain": 40,
+    "tone_stack": 40,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": true,
+    "contour": 70
+   },
+   "notes": "Fat switches 83 nF across the 18 nF into the tone pot: about +5 dB at 120 Hz, +2 dB at 1 kHz"
+  },
+  {
+   "id": "volume-knob-blues",
+   "type": "dist",
+   "name": "Volume-knob blues",
+   "desc": "Even-order discrete breakup that cleans up as the guitar's volume rolls back",
+   "inst": "guitar",
+   "genres": [
+    "blues",
+    "rock"
+   ],
+   "subgenres": [
+    "electric-blues",
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Discrete OD",
+    "gain": 60,
+    "tone_stack": 35,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "The pair and the class-A PNP make the 2nd harmonic before any rail: roll the guitar back for a clean core"
+  },
+  {
+   "id": "studio-crunch",
+   "type": "dist",
+   "name": "Studio crunch",
+   "desc": "Upper-mid pre-emphasis into two clippers, lows tightened: a session-player rhythm crunch",
+   "inst": "guitar",
+   "genres": [
+    "folk",
+    "rock"
+   ],
+   "subgenres": [
+    "contemporary-country",
+    "country-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Studio OD",
+    "gain": 35,
+    "tone_stack": 55,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 120,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "Tight 120 Hz stands in for the clones' Bass knob: the stock bass shelf is huge"
+  },
+  {
+   "id": "spectrum-lead",
+   "type": "dist",
+   "name": "Spectrum lead",
+   "desc": "Bright Spectrum over a bass shelf that saturates on low notes: a singing overdrive lead",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "hard-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Studio OD",
+    "gain": 75,
+    "tone_stack": 75,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "IC2B clips on its rails on low notes: the low end compresses while the top stays open"
+  },
+  {
+   "id": "dark-spectrum",
+   "type": "dist",
+   "name": "Dark spectrum",
+   "desc": "Spectrum turned dark, the 700 Hz roll-off: a warm, articulate edge for clean-ish parts",
+   "inst": "guitar",
+   "genres": [
+    "jazz",
+    "rnb"
+   ],
+   "subgenres": [
+    "jazz-fusion",
+    "neo-soul"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark",
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Studio OD",
+    "gain": 25,
+    "tone_stack": 15,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "Low gain keeps the feedback clipper soft; the dark Spectrum takes the fizz off"
+  },
+  {
+   "id": "plexi-crunch",
+   "type": "dist",
+   "name": "Plexi crunch",
+   "desc": "Three op-amp gain stages with a bright cap at low gain, mids kept: a cranked-stack rhythm",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "hard-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [
+    {
+     "artist": "AC/DC",
+     "why": "cranked plexi-style rhythm crunch",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Plexi Dist",
+    "gain": 40,
+    "tone_stack": 55,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 70
+   },
+   "notes": "Into a clean amp; the contour at 70 % keeps the mids forward"
+  },
+  {
+   "id": "scooped-stack",
+   "type": "dist",
+   "name": "Scooped stack",
+   "desc": "The bridged-T scoop fully in at high gain, lows tightened: an 80s metal rhythm",
+   "inst": "guitar",
+   "genres": [
+    "metal"
+   ],
+   "subgenres": [
+    "thrash-metal",
+    "heavy-metal"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "tight"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Plexi Dist",
+    "gain": 80,
+    "tone_stack": 50,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 100,
+    "input": 0,
+    "bass_keep": 0,
+    "fat": false,
+    "contour": 0
+   },
+   "notes": "Contour 0 % dips 1 kHz by about 12 dB re 100 Hz"
+  },
+  {
+   "id": "plexi-bass",
+   "type": "dist",
+   "name": "Plexi bass",
+   "desc": "Marshall-in-a-box drive on the upper band, the fundamental kept clean below 100 Hz",
+   "inst": "bass",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "classic-rock"
+   ],
+   "gain": "crunch",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive"
+   ],
+   "default": false,
+   "params": {
+    "circuit": "Plexi Dist",
+    "gain": 50,
+    "tone_stack": 50,
+    "level": 0,
+    "diodes": "Circuit",
+    "opamp": "Circuit",
+    "supply": 100,
+    "hp": false,
+    "tight": 20,
+    "input": 0,
+    "bass_keep": 100,
+    "fat": false,
+    "contour": 60
+   },
+   "notes": "Bass keep sends the low band through the post-clipper network made linear (polarity matched)"
   }
  ]
 }
