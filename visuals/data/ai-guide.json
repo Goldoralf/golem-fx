@@ -1938,6 +1938,18 @@
     {
      "id": "gfx-rotary",
      "why": "its Leslie is inside (speaker Off if a full gfx-rotary panel follows)"
+    },
+    {
+     "id": "gfx-octafuzz",
+     "why": "fuzz before it smears partials into intermodulation"
+    },
+    {
+     "id": "gfx-dist",
+     "why": "any drive before it: the filterbank needs clean partials"
+    },
+    {
+     "id": "pedal-nam",
+     "why": "a captured drive pedal before it breaks the clean-partial requirement"
     }
    ],
    "cpu": "medium",
@@ -2004,6 +2016,7 @@
     "gfx-grains",
     "gfx-sustainer",
     "gfx-polysynth",
+    "gfx-organ",
     "gfx-spectralcomp",
     "gfx-morph",
     "gfx-formant"
@@ -2067,6 +2080,7 @@
     "gfx-grains",
     "gfx-sustainer",
     "gfx-polysynth",
+    "gfx-organ",
     "gfx-spectralcomp",
     "gfx-morph",
     "gfx-formant"
