@@ -1,0 +1,408 @@
+{
+ "crate": "gfx-organ",
+ "presets": [
+  {
+   "id": "trio-comp",
+   "type": "guitar-organ",
+   "name": "Organ trio comping",
+   "desc": "Chords become an 88 8000 000 organ with 3rd percussion and a slow rotor; the guitar's top removed",
+   "inst": "guitar",
+   "genres": [
+    "jazz",
+    "rnb"
+   ],
+   "subgenres": [
+    "soul-jazz",
+    "jazz-funk"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "vintage"
+   ],
+   "default": true,
+   "params": {
+    "register": "Trio",
+    "leslie": "Slow",
+    "mod": 50,
+    "click": 30
+   },
+   "notes": "Let chords ring and mute to stop: the registration blooms 100 - 170 ms after the pick"
+  },
+  {
+   "id": "trio-solo-fast",
+   "type": "guitar-organ",
+   "name": "Organ trio solo, fast rotor",
+   "desc": "Single lines as a percussive drawbar organ with the rotor on fast; medium tempo lines bloom",
+   "inst": "guitar",
+   "genres": [
+    "jazz"
+   ],
+   "subgenres": [
+    "soul-jazz",
+    "hard-bop"
+   ],
+   "gain": "clean",
+   "use": "solo",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "register": "Trio",
+    "leslie": "Fast",
+    "click": 50,
+    "touch": 50
+   },
+   "notes": "Fast picked lines are heard as their sine, percussion and click; slower lines get the full registration"
+  },
+  {
+   "id": "choir-swell",
+   "type": "guitar-organ",
+   "name": "Gospel swell",
+   "desc": "A full gospel registration with scanner chorus and rotor; the expression pedal on Organ swells it",
+   "inst": "guitar",
+   "genres": [
+    "rnb"
+   ],
+   "subgenres": [
+    "traditional-black-gospel",
+    "classic-soul"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm"
+   ],
+   "default": false,
+   "params": {
+    "register": "Choir",
+    "swell": 300,
+    "leslie": "Slow"
+   },
+   "notes": "Put the expression pedal on organ: it drives the rotor's preamp harder, as a swell pedal does"
+  },
+  {
+   "id": "bark-rock",
+   "type": "guitar-organ",
+   "name": "Driven rock organ",
+   "desc": "Chords through a driven 147 rotor with 2nd percussion: a 60s rock organ",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "hard-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "aggressive",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "register": "Bark",
+    "drive": 20,
+    "leslie": "Fast"
+   }
+  },
+  {
+   "id": "combo-garage",
+   "type": "guitar-organ",
+   "name": "Garage combo organ",
+   "desc": "A reedy, square-ish combo organ with scanner vibrato and no rotor",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "register": "Combo",
+    "mod": 60
+   }
+  },
+  {
+   "id": "nave-pad",
+   "type": "guitar-organ",
+   "name": "Cathedral pad",
+   "desc": "Held chords as a slow-attack organ pad under a shallow scanner shimmer, dry guitar kept under it",
+   "inst": "guitar",
+   "genres": [
+    "classical",
+    "pop"
+   ],
+   "subgenres": [
+    "choral",
+    "ambient-pop"
+   ],
+   "gain": "clean",
+   "use": "ambient",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dreamy"
+   ],
+   "default": false,
+   "params": {
+    "register": "Nave",
+    "swell": 600,
+    "hold": 100,
+    "dry": -12
+   },
+   "notes": "The slow attack hides the registration's bloom entirely"
+  },
+  {
+   "id": "chime-arp",
+   "type": "guitar-organ",
+   "name": "Bell organ arpeggios",
+   "desc": "Arpeggios as an organ whose tempered third and 1' ring, slow 3rd percussion, scanner chorus",
+   "inst": "guitar",
+   "genres": [
+    "pop"
+   ],
+   "subgenres": [
+    "art-pop",
+    "indie-pop"
+   ],
+   "gain": "clean",
+   "use": "texture",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright"
+   ],
+   "default": false,
+   "params": {
+    "register": "Chime",
+    "click": 20
+   },
+   "notes": "Single notes above the 7th fret speak best"
+  },
+  {
+   "id": "velvet-ballad",
+   "type": "guitar-organ",
+   "name": "Mellow ballad organ",
+   "desc": "Chords at one even level as a mellow 80 3600 000 organ with a slow rotor",
+   "inst": "guitar",
+   "genres": [
+    "pop",
+    "rnb"
+   ],
+   "subgenres": [
+    "adult-contemporary",
+    "quiet-storm"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "warm",
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "register": "Velvet",
+    "touch": 0
+   }
+  },
+  {
+   "id": "octave-lead",
+   "type": "guitar-organ",
+   "name": "Octave organ lead",
+   "desc": "Lead lines doubled an octave up by the organ's coupler, soft percussion, a touch of dry",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "blues-rock"
+   ],
+   "gain": "clean",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "default": false,
+   "params": {
+    "register": "Coupler",
+    "click": 60,
+    "dry": -6
+   }
+  },
+  {
+   "id": "organ-layer",
+   "type": "guitar-organ",
+   "name": "Guitar plus organ",
+   "desc": "The dry guitar untouched with an organ layer under it",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "pop"
+   ],
+   "subgenres": [
+    "indie-rock",
+    "pop-rock"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "register": "Trio",
+    "dry": 0,
+    "organ": -6
+   }
+  },
+  {
+   "id": "bass-organ",
+   "type": "guitar-organ",
+   "name": "Bass organ",
+   "desc": "Bass lines as an 88 8000 000 organ, foldback keeping the 16' above 65 Hz, no rotor",
+   "inst": "bass",
+   "genres": [
+    "rnb",
+    "jazz"
+   ],
+   "subgenres": [
+    "funk",
+    "soul-jazz"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "dark"
+   ],
+   "default": true,
+   "params": {
+    "register": "Custom",
+    "db16": 8,
+    "db513": 8,
+    "db8": 8,
+    "db4": 0,
+    "lowest": 35,
+    "speaker": "Off"
+   }
+  },
+  {
+   "id": "custom-ballad-800000008",
+   "type": "guitar-organ",
+   "name": "Ballad drawbars 80 0000 008",
+   "desc": "A near-sine 16' with the 1' on top: Hammond's pop ballad sheet, slow rotor",
+   "inst": "guitar",
+   "genres": [
+    "pop"
+   ],
+   "subgenres": [
+    "adult-contemporary"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "subtle"
+   ],
+   "default": false,
+   "params": {
+    "register": "Custom",
+    "db16": 8,
+    "db513": 0,
+    "db8": 0,
+    "db4": 0,
+    "db1": 8
+   }
+  },
+  {
+   "id": "custom-full-888888888",
+   "type": "guitar-organ",
+   "name": "Full organ 88 8888 888",
+   "desc": "Every drawbar out: a full, bright organ on a fast rotor",
+   "inst": "guitar",
+   "genres": [
+    "rock",
+    "rnb"
+   ],
+   "subgenres": [
+    "classic-rock",
+    "traditional-black-gospel"
+   ],
+   "gain": "clean",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "bright",
+    "extreme"
+   ],
+   "default": false,
+   "params": {
+    "register": "Custom",
+    "db4": 8,
+    "db223": 8,
+    "db2": 8,
+    "db135": 8,
+    "db113": 8,
+    "db1": 8,
+    "leslie": "Fast"
+   }
+  },
+  {
+   "id": "no-leslie-rotary-after",
+   "type": "guitar-organ",
+   "name": "Organ for a rotary after it",
+   "desc": "The Trio registration with the speaker off, for gfx-rotary's full panel after the pedal",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "classic-rock"
+   ],
+   "gain": "clean",
+   "use": "utility",
+   "refs": [],
+   "level_db": 0,
+   "tags": [],
+   "default": false,
+   "params": {
+    "register": "Custom",
+    "perc": true,
+    "perc_harm": "3rd",
+    "speaker": "Off"
+   },
+   "notes": "Custom starts as golem's organ block (88 8000 000); add the 3rd percussion as Trio has it"
+  }
+ ]
+}

@@ -1875,6 +1875,38 @@
     "lookahead"
    ],
    "presets": 17
+  },
+  "gfx-organ": {
+   "crate": "gfx-organ",
+   "name": "GoleM FX Organ",
+   "blocks": [
+    "guitar-organ"
+   ],
+   "purpose": "Polyphonic tonewheel organ from a guitar or bass DI, no MIDI: each string one organ note with drawbars, percussion, scanner and Rotor.",
+   "roles": [
+    "guitar",
+    "bass"
+   ],
+   "position": "input",
+   "position_note": "clean DI, first in the lane, before any drive; chords bloom into the registration 100 - 170 ms after the pick",
+   "pairs_well_with": [],
+   "avoid": [
+    {
+     "id": "gfx-drive",
+     "why": "any drive before it: the filterbank needs clean partials"
+    },
+    {
+     "id": "gfx-fuzz",
+     "why": "fuzz before it smears partials into intermodulation"
+    },
+    {
+     "id": "gfx-rotary",
+     "why": "its Leslie is inside (speaker Off if a full gfx-rotary panel follows)"
+    }
+   ],
+   "cpu": "medium",
+   "cpu_note": "worst case 5.8 % of a core at 48 kHz (88 8888 888, percussion, scanner, Leslie), 7.7 % at 96 kHz, 11.5 % at 192 kHz",
+   "presets": 14
   }
  },
  "rules": [
@@ -2217,10 +2249,11 @@
   },
   {
    "id": "synth-and-sustainer-before-drive",
-   "text": "gfx-polysynth and gfx-sustainer go before any drive or amp: they need the clean partials of the DI.",
+   "text": "gfx-polysynth, gfx-organ and gfx-sustainer go before any drive or amp: they need the clean partials of the DI.",
    "applies_to": [
     "gfx-polysynth",
     "gfx-sustainer",
+    "gfx-organ",
     "gfx-drive",
     "gfx-fuzz",
     "gfx-dist",

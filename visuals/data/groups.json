@@ -2649,6 +2649,80 @@
           "bypass"
         ]
       }
+    ],
+    "gfx-organ": [
+      {
+        "id": "drawbars",
+        "name": "Drawbars",
+        "custom": null,
+        "params": [
+          "db16",
+          "db513",
+          "db8",
+          "db4",
+          "db223",
+          "db2",
+          "db135",
+          "db113",
+          "db1"
+        ]
+      },
+      {
+        "id": "percussion",
+        "name": "Percussion",
+        "custom": null,
+        "params": [
+          "perc",
+          "perc_harm",
+          "perc_decay",
+          "perc_vol",
+          "perc_trig"
+        ]
+      },
+      {
+        "id": "modulation",
+        "name": "Scanner & Rotor",
+        "custom": null,
+        "params": [
+          "vibrato",
+          "speaker",
+          "drive",
+          "ramp",
+          "spacing"
+        ]
+      },
+      {
+        "id": "voice",
+        "name": "Voice",
+        "custom": null,
+        "params": [
+          "tuning",
+          "hold",
+          "touch",
+          "strings",
+          "swell",
+          "release"
+        ]
+      },
+      {
+        "id": "detection",
+        "name": "Detection",
+        "custom": null,
+        "params": [
+          "bank",
+          "lowest",
+          "thresh"
+        ]
+      },
+      {
+        "id": "output",
+        "name": "Output",
+        "custom": null,
+        "params": [
+          "bypass",
+          "trails"
+        ]
+      }
     ]
   },
   "help": {
@@ -3083,6 +3157,24 @@
       "echo_time": "The slap's delay (ms), gliding when moved",
       "echo_fb": "The slap's repeats, through a 4 kHz low-pass in the loop",
       "level": "Output level (dB), after everything; presets are level-matched with it"
+    },
+    "gfx-organ": {
+      "register": "Tutti 88 8800 008 · Trio 88 8000 000 + 3rd percussion · Choir 66 8848 588 · Bark 88 8800 000, 147 driven · Nave 80 8808 008, slow attack, scanner · Chime 00 8000 808 (the tempered third rings) · Velvet 80 3600 000 · Combo 00 8030 200, reedy, scanner · Coupler 00 8800 000 · Custom: the expert drawbars, percussion, vibrato and speaker",
+      "leslie": "Stop · Slow · Fast: the rotor's speed, the footswitch (golem organ's id); the ramp is the rotors' inertia",
+      "perc_trig": "Pick: every pick restarts the percussion · Single: only after every note has stopped (the Hammond and B9 rule)",
+      "bank": "Dual: fast bank on attacks, clean bank on held notes · Fast: the 8' tight, the registration still from the clean bank · Clean: slowest attack, cleanest",
+      "tuning": "Tonewheel: the gear ratios (1⅗' +14 ¢, the fifths −1.4 ¢) · Pure: exact ratios",
+      "speaker": "Off: no rotor (gfx-rotary after the pedal) · 122 · 147 · 145 · Vibratone · 122 Rear: gfx-rotary's cabinets",
+      "vibrato": "Off · V1 / V2 / V3: the scanner's vibrato, shallow to deep · C1 / C2 / C3: the same with the dry (chorus)",
+      "db16": "Custom only. Drawbar 16' (sub-octave): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db513": "Custom only. Drawbar 5⅓' (the fifth below the 8'): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db8": "Custom only. Drawbar 8' (the note): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db4": "Custom only. Drawbar 4' (octave): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db223": "Custom only. Drawbar 2⅔' (twelfth): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db2": "Custom only. Drawbar 2' (two octaves): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db135": "Custom only. Drawbar 1⅗' (the tempered third, two octaves up): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db113": "Custom only. Drawbar 1⅓' (nineteenth): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB",
+      "db1": "Custom only. Drawbar 1' (three octaves; muted while percussion is on): 0 out, 1 – 8 in 3 dB steps, 8 = 0 dB"
     }
   },
   "depends": {
@@ -3510,6 +3602,68 @@
       "air_level": {
         "param": "split",
         "equals": "Three"
+      }
+    },
+    "gfx-organ": {
+      "db16": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db513": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db8": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db4": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db223": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db2": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db135": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db113": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "db1": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "perc": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "perc_harm": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "perc_decay": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "perc_vol": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "vibrato": {
+        "param": "register",
+        "equals": "Custom"
+      },
+      "speaker": {
+        "param": "register",
+        "equals": "Custom"
       }
     }
   }

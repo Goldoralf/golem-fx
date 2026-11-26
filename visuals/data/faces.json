@@ -967,6 +967,23 @@
     "engine"
    ],
    "category": "pitch"
+  },
+  "gfx-organ": {
+   "name": "Organ",
+   "blocks": [
+    "guitar-organ"
+   ],
+   "knobs": [
+    "organ",
+    "dry",
+    "mod",
+    "click"
+   ],
+   "selectors": [
+    "register",
+    "leslie"
+   ],
+   "category": "pitch"
   }
  }
 }

@@ -1,14 +1,18 @@
 # gfx-organ
 
-> **Status: DESIGNED 2026-11-26** (Claude Opus 5.5), **reviewed 2026-11-26** (Claude Fable 5.2: the
-> Review at the end). Not coded. Roadmap 0.8, item 2. Working name `gfx-organ`, displayed **"GoleM FX
-> Organ"**. This directory holds this document and a numpy prototype (`proto/`), nothing else: no crate
-> yet. The prototype's figures (§1.4) come from synthetic strings and golem's two clean guitar DIs.
-> Synthetic strings: every drawbar within 0.8 dB of its target on single notes E2 – A4. The review
-> rewrote the root sieve (§2.3) after measuring the draft's on inputs with a noise floor. With the
-> reviewed sieve: no ghost root on single notes, ≤ −39 dB in the attack of six chords, every note of an
-> arpeggio sounds. **The registration arrives 100 – 170 ms after the pick** (the draft said 64 ms; that
-> figure was computed, not measured). The sieve on real DIs is the first task before any code (§5).
+> **Status: CODED v0.1.0, 2026-11-26** (Claude Opus 5.5), from the design below (DESIGNED and reviewed
+> 2026-11-26: Claude Opus 5.5, Claude Fable 5.2, the Review at the end). Displayed **"GoleM FX Organ"**,
+> golem block `guitar-organ` (proposed). Measured on the Rust code (details in **As coded**):
+> - **Root sieve** on synthetic strings with a −100 dBFS floor, through the pedal at 48 kHz: single notes
+>   E2 – A4 **no ghost root**, one root, the fundamental a root **87 – 143 ms** after the pick; six chords:
+>   no ghost at 70 – 200 ms except E4 + G♯4 (−39.5 dB), no note missed; arpeggio 6 / 6; picked again
+>   −12 … −17 dB, open E strummed three times −5.4 dB (*not met*, as in the model); golem's `clean` DI
+>   96.6 % of root time on the grid, median 5 roots, max 9 (*not met*: over 6 for 17 % of the time).
+> - Drawbars within 0.02 dB of their target, −3.00 dB per step; percussion T60 1.00 / 4.00 s, Normal
+>   drop 4.36 dB; latency 0; CPU worst case **5.8 % of a core at 48 kHz** (5.0 at 44.1, 7.7 at 96,
+>   11.5 at 192); gfx-bench check 28 / 28.
+> - The three gfx-dsp moves (`spectral`, `rotary`, `scanner`) bit-identical on their owners' renders,
+>   their owners no slower.
 >
 > **Decided by Raph, 2026-11-26.** The bloom (registration 100 – 170 ms after the pick, the 8' at 20 ms)
 > is accepted for now, to be judged by ear at coding. Raph records annotated DIs (chords, arpeggios, fast
@@ -948,6 +952,159 @@ Poly's were for gfx-polysynth.
 - golem-fx: gfx-polysynth (Spectral core, its review and As coded), gfx-octaver (Poly √z), gfx-rotary,
   gfx-vibrato (Scanner), gfx-tuner §2.5 (collision table), `docs/golem-contract.md`,
   `docs/design-review.md`; golem's catalogue `organ` block (catalogue v51) for the shared ids.
+
+## As coded (v0.1.0, 2026-11-26)
+
+**Order of work, as the review set it.** Each step one commit or more, the history keeps them apart:
+1. **Nulls first** (`0cdb757`): an FNV hash of each owner's renders, written and committed before its
+   code moved: gfx-polysynth (14 settings: both engines, every `bank`, `wave`, `octave`, sub / noise /
+   detune / compress / residue, wave and octave switched mid-render; 44.1 / 48 / 96 kHz, mono and
+   stereo), gfx-rotary (every cabinet × speed × transition, mono and stereo, 48 / 96 kHz), gfx-vibrato's
+   Scanner (V1 / V2 / V3 depths, chorus, a model switch out of and back into Scanner, drive, three rates).
+2. **gfx-dsp `rotary`**: `gfx-rotary/src/lib.rs` moved as is (paths only); gfx-rotary re-exports it.
+   Null identical; its profile 183 – 189 ns / sample after against 215 – 227 before.
+3. **gfx-dsp `scanner`**: the Scanner arm of `Vibrato::model_out` as a type, same expressions. Null
+   identical; 104 – 127 ns / sample after, 117 – 172 before.
+4. **gfx-dsp `spectral`**: the analysis of polysynth's core as `Core<S: Shaper>`, the per-band shaper a
+   generic (static dispatch, `#[inline(always)]`), called per sounding band and sample and once per tick;
+   polysynth keeps its waveform series as `WaveShaper` and a `Core` wrapper with its old API. Null
+   byte-identical; the core alone A / B against the old file in one binary (7 rounds, minimum each):
+   −2.2 … −7.5 % (no slower); `cpu_report` 968 – 1052 ns / sample at defaults (941 – 1080 before).
+5. **The root sieve** on the coded core (`gfx-dsp/src/spectral_sieve.rs`), then its bench, then the pedal.
+
+**Files.** `gfx-dsp/src/spectral.rs` (core, `Shaper`), `gfx-dsp/src/spectral_sieve.rs` (§2.3),
+`gfx-dsp/src/rotary.rs`, `gfx-dsp/src/scanner.rs`; `src/law.rs` (the organ law as the core's shaper:
+drawbars, tonewheel rotors, foldback, fcap, percussion, the click's bounce), `src/lib.rs` (processor:
+registers, detection, touch, swell, the click's burst and tail, scanner, `organ` gain, Leslie, ceiling,
+bypass), `src/plugin.rs` (VST3 "GoleM FX Organ", class id `GoleMFxOrgan0001`, 1 / 1 first then 2 / 2,
+latency 0, meters `state` and `roots`), `src/tests.rs` (pedal rows), `src/sieve_bench.rs` (the sieve's
+rows, DIs, annotated takes). `presets/gfx-organ.json` (the 14 preset ideas of §4; defaults `trio-comp`
+guitar, `bass-organ` bass), face, groups, help and depends, glyph `guitar-organ`, motif `drawbars`, hue
+`#20226a`, rune `#f0e6c8`, `ai.json` entry, gfx-ui bundle and meters, gfx-bench (`EFFECTS`, `make`,
+options: latency skipped, silence floor −90 dBFS, stereo by nature in 2 / 2).
+
+### The sieve on the coded core (README §5, "Inputs have a noise floor" to "Annotated DIs")
+
+The reviewed prototype's sieve (`proto/sieve_review.py`, `Reviewed.sieve`) ported step by step and
+causally (the snapshot 5 ms before a pick is a ring of the last 8 ticks). Constants as reviewed: ±6 ¢,
+B_max 2 × 10⁻⁴, k ≤ 48, depth and parent 40 dB, 4 τ_b, purity 0.5, allowance 15 ¢ × (9.5 − age / τ_b)
+capped at 80 ¢, novelty 1 × what the band held, window 20 ms + 3 τ, late entries 150 ms, hold 250 ms,
+undecided max(8 τ_b, 220 ms). The same-pick rule is on; the "lowest candidate" fast path is coded and off
+(`SieveParams::lowest_fast`). **Not refitted**: the prototype's settling constants already give the
+model's figures on the coded core (below), so they were kept; refitting waits for the annotated DIs.
+
+Measured through the whole pedal at 48 kHz (detector A finds the picks, the core at 24 kHz; Custom,
+no Leslie, scanner, percussion or click, `touch` 100 %), the prototype's strings, −100 dBFS of noise
+from the first sample; ghost-root output = the same input rendered twice, once with every root band
+that is not within 30 ¢ of a played fundamental forced out (`cargo test --release -p gfx-organ
+--no-default-features sieve_report -- --ignored --nocapture`, 40 s):
+
+| Row | Rust code | Model (§1.4 (6)) | Bound (§5) |
+|---|---|---|---|
+| Single notes E2 … A4, 4 seeds: ghost-root output at 70 – 200 / 200 – 450 / 450 – 1400 ms | **none** in every window | none | ≤ −40 dB: **met** (a test, `sieve_single_notes`) |
+| Single notes: roots at once / when the fundamental is a root | 1 / **87 – 143 ms** (A4 87 – 111, E2 115 – 134) | 1 / 101 – 169 ms | ≤ 1, ≤ 200 ms: met |
+| Chords (3 seeds), 70 – 200 ms: E5 / open E / open C / A minor / E4 + G♯4 / E2 + G♯2 | none / none / none / none / −39.5 / none dB | none / none / −54.3 / none / −39.0 / none | ≤ −35 dB resolved: met |
+| Same, 200 – 450 ms | none except open E −17.0, E4 + G♯4 −59.3, E2 + G♯2 −24.7 | — | E2 + G♯2 ≤ −20: met; open E: a window the bench did not bound |
+| Same, body 450 – 1400 ms | none except A minor −27.9, E2 + G♯2 −36.4 | A minor −26.8, E2 + G♯2 −67.5 | ≤ −25: met |
+| Chords: each note root (ms, worst seed) or covered | E5: E2 129, B2 222, E3 covered · open E: E2, B2, G♯3 252, E3 / B3 / E4 covered · open C: C3 124, E3 163, G3 144, C4 / E4 covered · A minor: A2 145, E3 140, C4 130, A3 / E4 covered · E4 + G♯4: 189, 333 · E2 + G♯2: 253, 152 | 141 – 181 ms (two at 251, 342) | every note a root or covered: met; `roots` ≤ strings: met except E4 + G♯4 (6 roots briefly) |
+| Arpeggio open E, 0.3 s apart, ringing | 6 / 6 (B3 in 3 seeds of 4); ghosts −17.9 dB worst, −30.7 median | 6 / 6; −15.9 | six of six: met; ghosts ≤ −20: **not met** |
+| Melody E3 E4 B3 over a ringing E2 | E3 2 / 4 seeds, E4 2 / 4, B3 4 / 4; ghosts −33.8 | E3 2 – 4, E4 2 – 3, B3 4 | each a root: **not met** (as the model) |
+| Bass E2 under a held E4, once / three times | E4 kept 4 / 4; ghosts −27.3 / −21.9 dB | kept; −22.0 / −16.5 | met |
+| Octave dyad E3 + E4 together | E4 covered | covered | unknowable (§2.3) |
+| One note picked five times (E2; A2) | ghosts −16.7; −12.2 dB | −13.2; −13.0 | ≤ −20: **not met** |
+| Open E strummed three times | ghosts −5.4 dB worst, −17.3 median; E3 / B3 / E4 covered | −10.1 / −18.4 | ≤ −20: **not met** |
+| golem's `clean` DI (12 s) | 96.6 % of root time within ±30 ¢ of the grid (offset −9.4 ¢); roots per frame median 5, 95 % 7, max 9; over 6 for 17.1 % | 97.1 %; median 5 – 6 with step 5 | ≥ 95 %: met; never over 6 for > 20 ms: **not met** |
+| `lead-clean` | 90.3 % (offset −13.5 ¢); 1 / 4 / 5; never over 6 | 88.4 % | — |
+| `funk` | 65.8 %; 3 / 7 / 12; over 6 for 5.8 % | — | ≥ 95 %: **not met** (a funk take: muted ghost notes and scratches) |
+| Annotated DIs | none exist yet | — | waits on Raph's takes |
+
+**Reading.** On first picks the coded core does what the reviewed model did, with a registration a
+little earlier (the coded selection is cleaner than the model's). The faults the review left open are
+still the faults: strings picked again (−5 … −17 dB of ghosts), the median of five roots and the peaks
+of nine on the strummed `clean` take, sequential octaves over a ringing bass in half the seeds. These
+are what the annotated takes must settle; the review's fallbacks (§5: step 5 off; a hold on new
+confirmations after a pick) are one constant each in `SieveParams` and were not switched without them.
+
+**Annotated DIs: the format.** A folder (`GFX_ORGAN_DI_DIR`, default `gfx-organ/bench/annotated/`) of
+`<take>.wav` (mono or stereo, any rate, PCM 16 / 24 / 32 or float 32) with `<take>.notes` beside it:
+one line per pick, `time_s note [string]`; `note` in scientific pitch (`E2`, `G#3`, `Bb3`) or a MIDI
+number; `string` an integer (a string picked again ends its previous note; without it every line is
+its own string); `#` starts a comment at a line's start or after a space. Example:
+```
+# open E strummed, then arpeggiated (bridge pickup)
+0.512 E2 6
+0.516 B2 5
+0.520 E3 4
+1.800 G#3 3
+```
+`sieve_report` then prints, per take, the notes rooted / covered (an integer multiple of a lower note
+of its own strum, 30 ms) / missed, and the longest root that is no sounding played note (bound 20 ms).
+
+### The pedal
+
+| Row | Measured | Bound |
+|---|---|---|
+| Drawbar accuracy (88 8000 000, 88 8800 000, 83 8000 000, 80 8808 008, 88 8888 888, 66 8848 588 × D3 G3 B3 E4 A4, Pure) | worst 0.02 dB after one gain | ±1 dB |
+| Drawbar step (8' against 16', 8 → 1) | −3.00 dB per step (worst ±0.00) | ±0.3 dB |
+| Percussion 3rd fast / slow | T60 1.00 s / 4.00 s; Normal drop 4.36 dB; 1' muted | 1.0 ± 10 %, 4.0 s; 4.4 ± 0.3 |
+| Foldback, E2 with 16' alone | at 82 Hz, −106 dB under it at 41 Hz | nothing under 65 Hz |
+| Latency, dry | 0 reported; the dry's impulse at sample 0 at 44.1 – 192 kHz | — |
+| Level bound (−6 dBFS strum, 88 8888 888, percussion, drive 100 %, organ +12) | organ never past 0 dBFS (ceiling) | ≤ 0 dBFS |
+| Determinism; 2 / 2 at spacing 0 | bit-exact; L = R | — |
+| gfx-bench check (44.1 / 48 / 96 / 192 kHz) | 28 / 28; worst step burst −61 dB (register Custom → Tutti, 48 kHz) | −50 dB |
+| CPU, worst case (88 8888 888, percussion, scanner C3, Leslie fast + drive, strums, Dual) | **1.21 µs / sample, 5.8 % of a core at 48 kHz**; 5.0 % at 44.1, 7.7 % at 96, 11.5 % at 192 | ≤ 10 % at 44.1 / 48 (Raph: per rate) |
+| CPU per register at 48 kHz | Tutti 5.7, Trio 5.5, Choir 6.0, Bark 5.7, Nave 4.7, Chime 5.1, Velvet 5.1, Combo 4.7, Coupler 5.1, Custom 5.1 % | — |
+
+### Values the design left open, and deviations
+
+- **Percussion level**: Normal 0 dB = a drawbar at 8; Soft −6 dB; Fast +3.5 dB (§2.4's figures).
+- **Touch**: P_ref −18 dBFS, the gain clamped to ±24 dB, smoothed 10 ms.
+- **Click**: bounce depth = `click` (0 = no bounce); burst 4 ms of Hann-shaped xorshift noise through
+  two 2 kHz band-passes (Q 0.7), peak 2 × P_ref × click × strength; tail at 6 × the loudest root's (or
+  undecided band's) f̂, −20 dB, τ 10 ms (≈ −60 dB at 70 ms). Strength as polysynth's `fenv_vel`.
+- **Drawbars and register changes**: one 20 ms linear ramp of the drawbar gains (the §3.1 "20 ms
+  crossfade" for registers, "10 ms" for drawbars, as one ramp); percussion, its 1' mute and its drop
+  switch at once; the scanner and the Leslie fade in and out over 20 ms (one-pole); a cabinet change is
+  gfx-rotary's own 15 ms dip. Not the two-engine crossfade §3.1 implies; gfx-bench's step check passes.
+- **Folded components** play without their tonewheel rotor (a folded 5⅓' on a bass is 1.4 ¢ off at
+  most); `tuning` Pure stops the rotors where they are (no phase jump on a switch).
+- **The √ branch is not handed to the neighbouring band** on a bend (§2.2 point 1): the status is (sieve
+  step 7), the branch restarts in the new band. The model showed no cancellation; the bench row "Bend
+  across bands" is still to run on the code.
+- **Relative gate** (§2.4, "more than 40 dB under P_max fades"): the sieve's candidate depth plays that
+  role; the band floor is the core's (`thresh` − 10 dB, 6 dB hysteresis), fading over `release`
+  (`CoreSettings::release`, new; polysynth passes 0 = its 30 ms, unchanged).
+- **Fast-bank bands** take F and U interpolated from the clean bands at their centre (the core's map).
+- **Pitch motion** never hands a sieve root to the fast bank (§2.6), in the core, compiled out for
+  polysynth.
+- **The Leslie** is gfx-dsp `rotary` with gfx-rotary's defaults except speed, cabinet, depth (the
+  register's × `mod` / 50 %, ≤ 100), drive (register + `drive`, ≤ 100), ramp, spacing and mix 100 %. In
+  1 / 1 the mics are summed (½ (L + R)). The scanner: gfx-dsp `scanner` on its own 2 ms line, a sine at
+  6.9 Hz, depth V1 / V2 / V3 × `mod` / 50 % (≤ 1), chorus mix ½.
+- **Not run yet** from §5: Bend across bands, Vibrato, Aliasing, Sympathetic strings, Third vs 5th
+  harmonic, Touch, Hold, EXP sidebands and the Listening row (renders and ear). The registration's
+  bloom and the 3 dB law are still to judge by ear (Raph's decisions).
+- **Builds**: tests ran in this worktree's own target dir. The shared one gives gfx-dsp the same
+  metadata hash in every worktree (another agent's gfx-dsp was linked once), and `cargo xtask bundle`
+  run from a worktree nested in the main checkout builds the **main** checkout's workspace
+  (nih_plug_xtask takes the topmost `Cargo.toml`): the VST3 was proven by `cargo build --release -p
+  gfx-organ --features gui` (exports `GetPluginFactory`, carries `GoleMFxOrgan0001`) and a hand-made
+  `.vst3` folder; the lead's bundle from main is the real one.
+
+### What golem-rack must do
+
+Catalogue entry `guitar-organ` ("Guitar Organ", short "Organ"), category `pitch` (not `keys`: no
+`input_claim`), layout **1 / 1 first** (2 / 2 second), plugin "GoleM FX Organ"; the `leslie` footswitch
+mapped as on `organ` (same id and options); the `roots` and `state` meters; the factory presets
+(`presets/gfx-organ.json`) seeded under `library/block-presets/guitar-organ/`.
+
+### Still open (the maintainer)
+
+- **Vibratone**: gfx-rotary's cabinet name, repeated by `speaker` (gfx-rotary's call).
+- **Crosstalk / leakage** of the wheels (open question 7): not modelled.
+- **The drawbar law by ear**: 3 dB steps as decided, to A / B against setBfree, then frozen.
+- **The bloom by ear** (100 – 170 ms decided; the code gives 87 – 143 ms on single notes, up to 252 ms
+  in strums) and the sieve on Raph's annotated DIs.
 
 ## Review (Fable 5.2, 2026-11-26)
 

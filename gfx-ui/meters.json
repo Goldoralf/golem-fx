@@ -57,6 +57,8 @@
                                 { "id": "harm", "kind": "value", "label": "Harmonic" }] },
   "gfx-polysynth":   { "rows": [{ "id": "state", "kind": "state", "label": "Synth", "states": ["Silence", "Core", "Voice"] },
                                 { "id": "note", "kind": "value", "label": "Pitch" }] },
+  "gfx-organ":       { "rows": [{ "id": "state", "kind": "state", "label": "Organ", "states": ["Silence", "Attack", "Organ"] },
+                                { "id": "roots", "kind": "bar", "label": "Notes", "min": 0, "max": 12 }] },
   "gfx-spectralcomp": { "rows": [{ "id": "gr", "kind": "gr", "label": "Cut", "max": 24 },
                                  { "id": "lift_gr", "kind": "gr", "label": "Lift", "max": 24 },
                                  { "kind": "bands", "label": "Octaves", "ids": ["dyn_63", "dyn_125", "dyn_250", "dyn_500", "dyn_1k", "dyn_2k", "dyn_4k", "dyn_8k"],

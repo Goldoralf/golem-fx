@@ -95,6 +95,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 52 | [gfx-polysynth](gfx-polysynth/) | new block `polysynth` (polyphonic guitar synth) | — | **coded** (v1: Spectral, Mono; Poly held back), bench green, to test in golem |
 | 53 | [gfx-spectralcomp](gfx-spectralcomp/) | `spectral-comp` | Spectral Compressor (CLAP) | **coded** (Live + Studio, key input), bench green, to test in golem |
 | 54 | [gfx-morph](gfx-morph/) | new block `morph` (live vocal mangler: guard, de-fizz, multiband A/B dirt, modal objects) | — | **coded**, bench green, to test in golem |
+| 55 | [gfx-organ](gfx-organ/) | new block `guitar-organ` (polyphonic tonewheel organ from a DI) | — | **coded** (v0.1.0: nine registers + Custom, root sieve, percussion, click, scanner, Rotor), bench green, to test in golem |
 
 gfx-met, gfx-emet and gfx-shem (2026-11-13) are high-gain companions designed from the function of three
 Fortin / Neural DSP pedals, as new sounds; their A / B against the Nameless Suite waits for the Windows

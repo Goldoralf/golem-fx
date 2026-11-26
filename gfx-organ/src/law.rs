@@ -131,7 +131,7 @@ pub struct OrganLaw {
     fb: f64,
     fcap: f64,
     bands: [LawBands; 2],
-    /// drawbars now (10 ms linear towards `s.d`)
+    /// drawbars now (20 ms linear towards `s.d`: a drawbar pulled or a register changed)
     d: [f64; 9],
     d_step: f64,
     /// percussion envelope (per sample decay), its armed state for Single
@@ -262,10 +262,7 @@ impl OrganLaw {
                 lb.bi[b] = 0.0;
             }
         } else {
-            lb.ar[b] = 1.0;
-            lb.ai[b] = 0.0;
-            lb.br[b] = 1.0;
-            lb.bi[b] = 0.0;
+            // Pure (or no registration): the rotors stop where they are (no phase jump on a switch)
             lb.asr[b] = 1.0;
             lb.asi[b] = 0.0;
             lb.bsr[b] = 1.0;
@@ -314,7 +311,7 @@ impl Shaper for OrganLaw {
         self.fcap = sp::FCAP * fb;
         self.bands[0].prepare(clean.len());
         self.bands[1].prepare(fast.len());
-        self.d_step = sp::TICK as f64 / (0.010 * fb);
+        self.d_step = sp::TICK as f64 / (0.020 * fb);
         self.bounce_n = (BOUNCE_END_MS * 1e-3 * fb) as u64;
         self.bounce_ms_per = 1e3 / fb;
     }
@@ -338,7 +335,7 @@ impl Shaper for OrganLaw {
 
     fn tick(&mut self, a: &Analysis) {
         let s = self.s;
-        // drawbars: 10 ms linear
+        // drawbars: 20 ms linear
         for i in 0..9 {
             let t = s.d[i];
             let c = self.d[i];

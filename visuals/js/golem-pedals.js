@@ -403,10 +403,13 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-polysynth': '#ff9ecf',
     // deep crimson: a raw throat, the darker sister of the lofi family's raspberry (gfx-morph's design:
     // ΔE*ab 29 from raspberry, 34 from gfx-acoustic's rosewood, 35 from gfx-correct's plum)
-    'gfx-morph': '#9a0d2a' };
+    'gfx-morph': '#9a0d2a',
+    // midnight blue: a lacquered console at night, the darkest blue of the family (gfx-organ's design:
+    // ΔE*ab 41 from the eq blue, 41 from gfx-correct's plum, 43 from the dynamics slate)
+    'gfx-organ': '#20226a' };
   const THRASH_HUE = { drive: '#c8160e' };
   // the rune's light where the body's own hue would glow too dull
-  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a', 'gfx-stretch': '#3040c8', 'gfx-polysynth': '#8a1060', 'gfx-morph': '#ff6a4d' };
+  const RUNE_LIGHT = { dynamics: '#5fb0ff', preamp: '#ecb8ff', 'gfx-gapmeter': '#d8dde3', 'gfx-swell': '#ffd0dc', 'gfx-tape': '#94461a', 'gfx-widener': '#3a7fc0', 'gfx-tuner': '#3ddc2e', 'gfx-correct': '#ff5fb4', 'gfx-acoustic': '#ffc46b', 'gfx-radio': '#c8d86a', 'gfx-stretch': '#3040c8', 'gfx-polysynth': '#8a1060', 'gfx-morph': '#ff6a4d', 'gfx-organ': '#f0e6c8' };
   const MOTIF = {
     'gfx-drive': 'flames', 'gfx-boost': 'chevrons', 'gfx-gate': 'barbed', 'gfx-comp': 'clamp', 'gfx-limiter': 'clamp',
     'gfx-deesser': 'clamp', 'gfx-wah': 'crescent', 'gfx-autowah': 'crescent', 'gfx-eq': 'curve', 'gfx-tremolo': 'pulse',
@@ -441,14 +444,15 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-polysynth': 'saws',
     'gfx-spectralcomp': 'skyline',
     'gfx-morph': 'canned',
-    'gfx-formant': 'formants' };
+    'gfx-formant': 'formants',
+    'gfx-organ': 'drawbars' };
   const METAL_STYLES = ['anodized', 'thrash'];
   // style 'auto' (the default): the finish follows the family. Aggressive families (drive, dynamics,
   // utility) are thrash, the rest anodized; the killswitch's lightning is thrash, the gap meter anodized.
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash', 'gfx-polysynth': 'anodized' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash', 'gfx-polysynth': 'anodized', 'gfx-organ': 'anodized' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -760,6 +764,28 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         lens(r0, r1, a, .3);
         lens(r0, rm, a, 1);
         lens(rm, r1, a, 1);
+        break;
+      }
+      case 'drawbars': {
+        // a registration pulled out (gfx-organ). Two fields in the rune band, left and right of the
+        // cartouche, clear of the knobs: nine bars hang from a rail at the field's top edge, each a line
+        // ending in a short wide tip (2.5 × the stroke); lengths follow a registration, the left field
+        // 88 8000 000 (Trio), the right 88 8888 888 (full organ); a drawbar at 0 is its tip alone on the
+        // rail. The Hammond colours as opacity: brown (16', 5⅓') .55, white (8', 4', 2', 1') 1, black
+        // (2⅔', 1⅗', 1⅓') .75
+        const op = [.55, .55, 1, 1, .75, 1, .75, .75, 1];
+        const top = cy - ch / 2, len = ch;
+        const field = (x0, x1, reg) => {
+          line(`M${f1(x0)} ${f1(top)}H${f1(x1)}`, .45);
+          const step = (x1 - x0) / 9;
+          reg.forEach((n, i) => {
+            const x = x0 + step * (i + .5), y = top + len * n / 8;
+            if (n > 0) line(`M${f1(x)} ${f1(top)}V${f1(y)}`, op[i]);
+            line(`M${f1(x - 1.25)} ${f1(y)}H${f1(x + 1.25)}`, op[i]);
+          });
+        };
+        field(6, cx - cw / 2 - 6, [8, 8, 8, 0, 0, 0, 0, 0, 0]);
+        field(cx + cw / 2 + 6, W - 6, [8, 8, 8, 8, 8, 8, 8, 8, 8]);
         break;
       }
       case 'saws': {

@@ -480,6 +480,11 @@
    "label": "Formant shifter (gfx)",
    "uni": "⏜",
    "svg": "<path d='M2.5 16C4.5 16 5 5.5 7 5.5s2.5 7 4.5 7 2.5-4.5 4.5-4.5 3 8 5 8'/><path d='M5 21h14M7 19l-2 2 2 2M17 19l2 2-2 2' opacity='.6'/>"
+  },
+  "guitar-organ": {
+   "label": "Guitar organ (gfx)",
+   "uni": "⫼",
+   "svg": "<path d='M2 12Q4 7 6 12T10 12' opacity='.45'/><path d='M11 3H22M13 3V16M16.5 3V16M20 3V9'/><path d='M13 16v.01M16.5 16v.01M20 9v.01' stroke-width='3.4'/>"
   }
  }
 }

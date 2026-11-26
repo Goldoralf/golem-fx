@@ -919,6 +919,7 @@ dependencies = [
  "gfx-met",
  "gfx-morph",
  "gfx-octaver",
+ "gfx-organ",
  "gfx-phaser",
  "gfx-pitch",
  "gfx-pitch-classic",
