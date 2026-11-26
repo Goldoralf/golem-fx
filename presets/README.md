@@ -54,6 +54,17 @@ Written in **English** (the product and the model are). Built and checked by
 | `params` | The pedal's own ids (descriptors.json) and values: floats within range, enums as their **labels**, bools `true` / `false`. Write the parameters the sound depends on; **the export completes every other parameter with the plugin's default**, so an exported preset is always the whole sound |
 | `notes` | Optional, ≤ 200 characters: why these values (for maintainers and the AI's reasoning) |
 
+## Before a release tag
+
+Every new or changed pedal's presets are checked **before** the tag (golem-fx-vstpresets.zip is built
+from the tag; a preset fixed afterwards needs a point release, as 0.8.1 did for gfx-organ):
+
+- **Levelled**: `python3 tools/preset-levels.py <crate>` renders each preset with gfx-bench on golem's
+  clean and funk DIs and prints its loudness re the bypass. Set the pedal's level parameter so the mean
+  is within about ±2 dB (move `dry` with it where the preset mixes the dry); then `level_db` 0 is true.
+- **No gesture stored on**: the same script flags a preset that stores a footswitch gesture
+  (`gesture: true` in descriptors.json, `gestures` in visuals/data/groups.json) on.
+
 ## How golem loads them
 
 A preset sets **every** parameter of the block (the export is complete): on load golem resets every setting
