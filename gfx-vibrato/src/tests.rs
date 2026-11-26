@@ -147,3 +147,84 @@ fn every_model_and_shape_is_stable() {
         }
     }
 }
+
+// ---------------------------------------------------------------- gfx-dsp `scanner` extraction: the null
+
+fn fnv(h: &mut u64, x: &[f32]) {
+    for v in x {
+        for b in v.to_bits().to_le_bytes() {
+            *h ^= b as u64;
+            *h = h.wrapping_mul(0x100_0000_01b3);
+        }
+    }
+}
+
+/// Scanner renders (V1 / V2 / V3 depths, chorus mix, both channels, a model switch out of and back
+/// into Scanner, drive, three rates): the hash written before the extraction into gfx-dsp `scanner`.
+fn scanner_null_hash() -> u64 {
+    let mut h = 0xcbf2_9ce4_8422_2325u64;
+    for sr in [44100.0f32, 48000.0, 96000.0] {
+        for (depth, speed, mix, drive, shape) in [(0.47f32, 6.9f32, 1.0f32, 0.0f32, 0u32), (0.68, 6.9, 0.5, 0.0, 0), (1.0, 6.9, 1.0, 0.3, 1), (0.3, 2.0, 0.5, 0.0, 2), (1.0, 12.0, 0.7, 0.0, 0)] {
+            for nch in [1usize, 2] {
+                for switch in [false, true] {
+                    let mut v = Vibrato::new();
+                    v.prepare(sr, 512, nch);
+                    let s = Settings { depth, speed, model: Model::Scanner, shape, mix, drive, stereo_phase: 45.0, ..Settings::default() };
+                    v.set(s);
+                    v.reset();
+                    let n = (0.5 * sr) as usize;
+                    let x: Vec<f32> = (0..n).map(|i| 0.3 * (std::f32::consts::TAU * 440.0 * i as f32 / sr).sin() + 0.2 * (std::f32::consts::TAU * 2717.0 * i as f32 / sr).sin()).collect();
+                    let mut l = x.clone();
+                    let mut r: Vec<f32> = x.iter().map(|a| 0.7 * a).collect();
+                    let mut k = 0;
+                    while k < n {
+                        if switch && k == 256 * 40 {
+                            v.set(Settings { model: Model::Clean, ..s });
+                        }
+                        if switch && k == 256 * 70 {
+                            v.set(Settings { model: Model::Scanner, ..s });
+                        }
+                        let e = (k + 256).min(n);
+                        if nch == 2 {
+                            v.process(&mut [&mut l[k..e], &mut r[k..e]]);
+                        } else {
+                            v.process(&mut [&mut l[k..e]]);
+                        }
+                        k = e;
+                    }
+                    fnv(&mut h, &l);
+                    if nch == 2 {
+                        fnv(&mut h, &r);
+                    }
+                }
+            }
+        }
+    }
+    h
+}
+
+#[test]
+fn scanner_null_against_the_build_before_the_move() {
+    let h = scanner_null_hash();
+    println!("scanner null hash {h:#018x}");
+    assert_eq!(h, SCANNER_NULL);
+}
+
+const SCANNER_NULL: u64 = 0xb7182436ca4165dc;
+
+#[test]
+#[ignore]
+fn scanner_profile() {
+    for (name, depth, mix) in [("Scanner V3", 1.0f32, 1.0f32), ("Scanner C2", 0.68, 0.5)] {
+        let mut v = vib(|s| {
+            s.model = Model::Scanner;
+            s.depth = depth;
+            s.mix = mix;
+            s.speed = 6.9;
+        });
+        let x = sine(220.0, 48000 * 5);
+        let t = std::time::Instant::now();
+        let _ = run(&mut v, &x);
+        eprintln!("{name:12} {:6.1} ns / sample", t.elapsed().as_secs_f64() * 1e9 / x.len() as f64);
+    }
+}

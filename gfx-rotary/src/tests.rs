@@ -97,3 +97,71 @@ fn profile() {
         eprintln!("{name:22} {:6.1} ns", t.elapsed().as_secs_f64() * 1e9 / n as f64);
     }
 }
+
+// ---------------------------------------------------------------- gfx-dsp `rotary` move: the null
+
+/// FNV-1a over the output samples' bits.
+fn fnv(h: &mut u64, x: &[f32]) {
+    for v in x {
+        for b in v.to_bits().to_le_bytes() {
+            *h ^= b as u64;
+            *h = h.wrapping_mul(0x100_0000_01b3);
+        }
+    }
+}
+
+/// Every cabinet × speed × transition (slow → fast, fast → stop), mono and stereo, at 48 and 96 kHz,
+/// drive and depth moved: the renders' hash, written before the move into gfx-dsp `rotary` (gfx-organ
+/// README §2.5). Any arithmetic change fails it.
+fn null_hash() -> u64 {
+    let mut h = 0xcbf2_9ce4_8422_2325u64;
+    for sr in [48000.0f32, 96000.0] {
+        for cab in 0..5 {
+            for (from, to) in [(0.0f32, 0.0f32), (1.0, 1.0), (2.0, 2.0), (1.0, 2.0), (2.0, 0.0)] {
+                for nch in [1usize, 2] {
+                    let mut r = Rotary::new();
+                    r.prepare(sr, 512, nch);
+                    let s = Settings::default().with(p::CABINET, cab as f32).with(p::SPEED, from).with(p::DRIVE, if cab % 2 == 0 { 20.0 } else { 70.0 }).with(p::DEPTH, 40.0 + 10.0 * cab as f32);
+                    r.set(s);
+                    r.reset();
+                    let n = (0.6 * sr) as usize;
+                    let x: Vec<f32> = (0..n)
+                        .map(|i| {
+                            let t = i as f32 / sr;
+                            0.25 * (std::f32::consts::TAU * 110.0 * t).sin() + 0.15 * (std::f32::consts::TAU * 1234.5 * t).sin() + 0.1 * (std::f32::consts::TAU * 3321.0 * t).sin()
+                        })
+                        .collect();
+                    let mut l = x.clone();
+                    let mut rr: Vec<f32> = x.iter().map(|v| -0.5 * v).collect();
+                    let mut k = 0;
+                    while k < n {
+                        if k == 256 * 60 {
+                            r.set(r.settings().with(p::SPEED, to));
+                        }
+                        let e = (k + 256).min(n);
+                        if nch == 2 {
+                            r.process(&mut [&mut l[k..e], &mut rr[k..e]]);
+                        } else {
+                            r.process(&mut [&mut l[k..e]]);
+                        }
+                        k = e;
+                    }
+                    fnv(&mut h, &l);
+                    if nch == 2 {
+                        fnv(&mut h, &rr);
+                    }
+                }
+            }
+        }
+    }
+    h
+}
+
+#[test]
+fn null_against_the_build_before_the_move() {
+    let h = null_hash();
+    println!("rotary null hash {h:#018x}");
+    assert_eq!(h, ROTARY_NULL);
+}
+
+const ROTARY_NULL: u64 = 0x4bdc92c401da4958;

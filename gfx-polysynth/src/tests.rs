@@ -928,3 +928,79 @@ fn mono_chord_takes_the_lowest_note() {
     println!("E5 chord: voice after {} ms at {:.1} Hz ({:+.0} ¢ re E2)", start as i64 - 50, f, cents(f, midi_hz(40.0)));
     assert!((start as i64 - 50) <= 400 && cents(f, midi_hz(40.0)).abs() < 50.0);
 }
+
+// ---------------------------------------------------------------- gfx-dsp `spectral` move: the null
+
+fn fnv(h: &mut u64, x: &[f32]) {
+    for v in x {
+        for b in v.to_bits().to_le_bytes() {
+            *h ^= b as u64;
+            *h = h.wrapping_mul(0x100_0000_01b3);
+        }
+    }
+}
+
+/// Both engines, every `bank`, `wave`, `octave`, plus sub / noise / detune / compress / residue, at
+/// 44.1, 48 and 96 kHz, mono and stereo, with wave and octave switched mid-render: the hash written
+/// before the Spectral core moved into gfx-dsp `spectral` (gfx-organ README §2.8). One differing
+/// sample fails it.
+fn spectral_null_hash() -> u64 {
+    let mut h = 0xcbf2_9ce4_8422_2325u64;
+    let sets: Vec<Vec<(&str, f32)>> = vec![
+        vec![],
+        vec![("bank", 1.0)],
+        vec![("bank", 2.0)],
+        vec![("wave", 1.0), ("pw", 30.0)],
+        vec![("wave", 2.0), ("octave", -1.0)],
+        vec![("wave", 3.0), ("octave", -2.0), ("bank", 2.0)],
+        vec![("octave", 1.0), ("bank", 1.0)],
+        vec![("octave", 2.0)],
+        vec![("sub", 60.0), ("noise", 30.0), ("detune", 12.0)],
+        vec![("detune", 1.0), ("compress", 100.0), ("octave", -1.0)],
+        vec![("engine", 1.0)],
+        vec![("engine", 1.0), ("residue", 30.0), ("detune", 7.0), ("bank", 2.0)],
+        vec![("engine", 1.0), ("octave", -1.0), ("sub", 40.0)],
+        vec![("lowest", 35.0), ("thresh", -80.0), ("compress", 0.0)],
+    ];
+    let notes: [&[f64]; 2] = [&[40.0, 47.0, 52.0, 56.0, 59.0, 64.0], &[57.0]];
+    for (si, set) in sets.iter().enumerate() {
+        for (sr, nch) in [(48000.0f32, 1usize), (44100.0, 1), (96000.0, 2)] {
+            if si % 3 != 0 && sr != 48000.0 {
+                continue;
+            }
+            let x = chord(notes[si % 2], 1.2, 7 + si as u64, 3.0, sr as f64);
+            let mut e = make(sr, nch, set);
+            let mut l = x.clone();
+            let mut r: Vec<f32> = x.iter().map(|v| 0.9 * v).collect();
+            let mut k = 0;
+            let n = l.len();
+            while k < n {
+                if k == 256 * 100 {
+                    e.set_param("wave", ((si + 1) % 4) as f32);
+                    e.set_param("octave", [0.0, -1.0, 1.0][si % 3]);
+                }
+                let end = (k + 256).min(n);
+                if nch == 2 {
+                    e.process(&mut [&mut l[k..end], &mut r[k..end]]);
+                } else {
+                    e.process(&mut [&mut l[k..end]]);
+                }
+                k = end;
+            }
+            fnv(&mut h, &l);
+            if nch == 2 {
+                fnv(&mut h, &r);
+            }
+        }
+    }
+    h
+}
+
+#[test]
+fn spectral_null_against_the_build_before_the_move() {
+    let h = spectral_null_hash();
+    println!("spectral null hash {h:#018x}");
+    assert_eq!(h, SPECTRAL_NULL);
+}
+
+const SPECTRAL_NULL: u64 = 0x1662439ff3511578;
