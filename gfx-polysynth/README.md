@@ -844,6 +844,13 @@ modulation pedals after it do that job; a `cutoff` LFO is the first thing to add
   `filterbank.rs` (added only): `band_gain`, `crossover`, `design_rotation`. One unit test each file.
 - `src/spectral.rs`: the core (banks, analysis tick, selection, skirt, shaper, purity, octave / sub / detune
   / noise, hold and floor, handover with its events and snap, ownership mask, the bridge's measures).
+  **Moved 2026-11-26 (gfx-organ §2.8):** the analysis (banks, tick, selection, skirt, purity, hold and
+  floor, handover, ownership mask) is now gfx-dsp `spectral`, generic over a per-band `Shaper` (static
+  dispatch); this file keeps the waveform shaper (`WaveShaper`: series, octave / sub / detune / noise, the
+  bridge's power and phase) and a `Core` wrapper with the old API. Guarded by `spectral_null_against_the_build_before_the_move`
+  (14 settings × up to 3 rates, both engines: byte-identical); the core alone A / B against the old file
+  in one binary, 7 rounds each: −2.2 … −7.5 % (no slower); `cpu_report` 968 – 1052 ns / sample at defaults
+  after, 941 – 1080 before.
   `src/lib.rs`: the processor (`Polysynth`, `PARAMS`, labels), detection, Mono's voices and bridge,
   envelopes, the drive stage, `vcf` with structural crossfades, the ceiling, bypass. `src/plugin.rs`: the
   VST3, class id `GoleMFxPolysyn01`, "GoleM FX Polysynth", mono 1 / 1 first then 2 / 2, latency 0, `bypass`
