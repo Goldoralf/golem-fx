@@ -360,7 +360,11 @@ Still open:
    a read-only φ meter if the LED should show the travel, as the Ricochet's trajectory ladder.
 4. **The engines at ratio 1 after a sweep** (golem-fx): re-centring the Whammy's heads and resetting the
    vocoder's phases at unison would make `rest` Mix clean at `shift` 0 and fix Poly's −2 to −2.9 dB after a
-   return; to try in gfx-dsp against the bit-identity test, apart from this item.
+   return; to try in gfx-dsp against the bit-identity test, apart from this item. **Coded 2026-11-26** (gfx-dsp
+   `CenteredShifter::set_recentre`, `pv_shift` at ratio 1; test `the_wet_returns_to_the_delayed_input_after_a_bend`):
+   after a bend through `shift` (+12, −12, +2, +24, −5 on tones of 82 – 660 Hz, E5 and Am) the wet nulls against
+   the delayed input at −144 dB (Whammy) / −134 dB (Poly), level 0.000 dB; it gets there within 1.6 s (Whammy: the
+   heads glide back at ≤ 7 cents) / 270 ms (Poly). Before: +4.9 dB at worst (no null), Poly down to −4.2 dB.
 
 ## Review (Fable 5.2, 2026-11-26) — triggered bend
 

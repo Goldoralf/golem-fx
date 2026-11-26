@@ -152,7 +152,17 @@ pub struct CenteredShifter {
     age: [f64; 2],
     d: [f64; 2],
     ratio: f64,
+    /// at ratio 1, the heads glide back to the centre (`set_recentre`)
+    recentre: bool,
 }
+
+/// Re-centring at ratio 1 (`set_recentre`): the heads' glide back to the centre, at most `RECENTRE_RATE`
+/// samples per sample (a pitch offset of 1731 × rate cents while it lasts), slowing exponentially over the
+/// last `RECENTRE_TAU` samples so the pitch comes back without a step; within `RECENTRE_SNAP` samples the heads
+/// land on the centre exactly.
+const RECENTRE_RATE: f64 = 0.004;
+const RECENTRE_TAU: f64 = 1200.0;
+const RECENTRE_SNAP: f64 = 1e-3;
 
 impl CenteredShifter {
     pub fn new() -> Self {
@@ -217,6 +227,15 @@ impl CenteredShifter {
         let life = remaining / (1.0 - phi).max(1e-6);
         self.life[k] = life;
         self.age[k] = phi * life;
+    }
+
+    /// At ratio 1 exactly, return to the delayed input (off by default: gfx-detune, gfx-widener and
+    /// gfx-acoustic keep their behaviour). Without it the heads come back from a sweep period-aligned to
+    /// each other but anywhere around the centre, so the wet at unison combs against a delayed dry. With it,
+    /// at ratio 1 a new grain starts on the other head's delay (the same signal: nothing to search) and both
+    /// heads glide to the centre (`RECENTRE_RATE`), where the output is the input delayed by the centre.
+    pub fn set_recentre(&mut self, on: bool) {
+        self.recentre = on;
     }
 
     /// The two heads' current delays (samples): a diagnostic.
@@ -299,6 +318,29 @@ impl CenteredShifter {
         best as f64 + frac + (other - o as f64)
     }
 
+    /// One sample of the glide back to the centre (ratio 1, `recentre` on): both heads move together, by
+    /// the louder head's distance, so a pair that reads the same delay keeps reading the same delay.
+    fn recentre_step(&mut self) {
+        let wv = |k: usize| (std::f64::consts::PI * self.age[k] / self.life[k]).sin().abs();
+        let r = if wv(0) >= wv(1) { 0 } else { 1 };
+        let off = self.d[r] - self.centre;
+        if off == 0.0 {
+            return;
+        }
+        if off.abs() <= RECENTRE_SNAP {
+            for k in 0..2 {
+                self.d[k] -= off;
+                if (self.d[k] - self.centre).abs() <= RECENTRE_SNAP {
+                    self.d[k] = self.centre;
+                }
+            }
+            return;
+        }
+        let step = (off / RECENTRE_TAU).clamp(-RECENTRE_RATE, RECENTRE_RATE);
+        self.d[0] -= step;
+        self.d[1] -= step;
+    }
+
     #[inline]
     pub fn process(&mut self, x: f32) -> f32 {
         self.line.push(x);
@@ -309,12 +351,19 @@ impl CenteredShifter {
         for k in 0..2 {
             if self.age[k] >= self.life[k] {
                 let life = self.grain();
-                let travel = life * (self.ratio - 1.0);
-                let nominal = self.centre + 0.5 * travel;
-                self.d[k] = self.best_splice(nominal, self.d[1 - k]);
+                if self.recentre && self.ratio == 1.0 {
+                    self.d[k] = self.d[1 - k];
+                } else {
+                    let travel = life * (self.ratio - 1.0);
+                    let nominal = self.centre + 0.5 * travel;
+                    self.d[k] = self.best_splice(nominal, self.d[1 - k]);
+                }
                 self.age[k] = 0.0;
                 self.life[k] = life;
             }
+        }
+        if self.recentre && self.ratio == 1.0 {
+            self.recentre_step();
         }
         // a grain planned at one ratio overruns when the ratio sweeps meanwhile (a long grain begun near
         // unison, then an EXP / slew sweep to +24): when the head would leave the line before its fade

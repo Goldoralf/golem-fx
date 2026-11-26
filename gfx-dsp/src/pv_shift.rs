@@ -104,6 +104,12 @@ impl Default for PvShifter {
     }
 }
 
+/// At ratio 1 the synthesis phases return to the analysis phases: the offset is multiplied by this per
+/// hop (two neighbouring frames differ by at most a quarter of it: no dip in the overlap-add), and below
+/// `UNISON_SNAP` rad it is dropped (from π: 36 hops, 120 ms Fast, 180 ms Stable).
+const UNISON_DECAY: f32 = 0.75;
+const UNISON_SNAP: f32 = 1e-4;
+
 /// Peaks below this (relative to the frame's largest) are left to their neighbours' regions.
 const PEAK_FLOOR: f32 = 1e-8;
 /// atan2 to ~1e-5 rad (a minimax polynomial for atan on [0, 1] and the octant folds): the phases of a
@@ -360,10 +366,22 @@ impl PvShifter {
                 // the phase advance from the previous frame's peak to this one, unwrapped around the
                 // bins' frequency, scaled by the ratio: at ratio 1 the output is the input, exactly
                 let th = if !fresh && near != usize::MAX {
-                    let adv = ph - self.phase_prev[near];
-                    let expect = adv_per_bin * (p + near) as f32;
-                    let adv = expect + wrap(adv - expect);
-                    v.syn_prev[near] + a * adv
+                    if a == 1.0 {
+                        // unison: the offset a sweep left between the synthesis and the analysis phase
+                        // (kept as is, the output stays a comb of the input, 2 – 3 dB down on chords) decays
+                        // by UNISON_DECAY per hop, then the phase is the analysis' and the output the input
+                        let off = UNISON_DECAY * wrap(v.syn_prev[near] - self.phase_prev[near]);
+                        if off.abs() <= UNISON_SNAP {
+                            ph
+                        } else {
+                            ph + off
+                        }
+                    } else {
+                        let adv = ph - self.phase_prev[near];
+                        let expect = adv_per_bin * (p + near) as f32;
+                        let adv = expect + wrap(adv - expect);
+                        v.syn_prev[near] + a * adv
+                    }
                 } else {
                     ph
                 };

@@ -295,6 +295,8 @@ impl Effect for Pitch {
         }
         for v in self.v1.iter_mut().chain(self.v2.iter_mut()) {
             v.allocate(sample_rate, WHAMMY_MS, 6.0);
+            // back at shift 0 after a sweep, the wet is the delayed input again (no comb with the dry)
+            v.set_recentre(true);
         }
         for pv in self.pv.iter_mut() {
             pv.prepare(sample_rate);

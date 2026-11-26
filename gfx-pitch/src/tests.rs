@@ -296,3 +296,65 @@ fn poly_metric() {
         }
     }
 }
+
+/// Six harmonics (1 / h) at `f`, or a chord of such tones.
+fn rich(fs: &[f32], n: usize) -> Vec<f32> {
+    (0..n)
+        .map(|i| {
+            let t = i as f32 / SR;
+            fs.iter().map(|f| (1..=6).map(|h| (std::f32::consts::TAU * f * h as f32 * t).sin() / h as f32).sum::<f32>()).sum::<f32>() * 0.15 / fs.len() as f32
+        })
+        .collect()
+}
+
+/// `shift` 0 for 1 s, `bend` st for 1 s, 0 again (a bend through `shift` itself), `mix` 100 %. Over the last
+/// second (2.5 – 3.5 s after the return): (the wet against the input delayed by the latency, dB; the wet's level
+/// against it, dB; ms after the return until the wet stays within 1e-5 of the delayed input).
+fn after_a_bend(engine: f32, x: &[f32], bend: f32) -> (f64, f64, f64) {
+    let mut q = ps(Settings::default().with(p::ENGINE, engine).with(p::SHIFT, 0.0).with(p::MIX, 100.0));
+    let lat = q.latency_samples();
+    let mut y = x.to_vec();
+    for (k, c) in y.chunks_mut(256).enumerate() {
+        let t = k * 256;
+        let st = if (48000..96000).contains(&t) { bend } else { 0.0 };
+        if st != q.settings().v[p::SHIFT] {
+            q.set(q.settings().with(p::SHIFT, st));
+        }
+        q.process(&mut [c]);
+    }
+    let n = x.len();
+    let (mut e, mut r, mut w) = (0.0f64, 0.0f64, 0.0f64);
+    for i in n - 48000..n {
+        let d = x[i - lat] as f64;
+        e += (y[i] as f64 - d).powi(2);
+        r += d * d;
+        w += (y[i] as f64).powi(2);
+    }
+    let last = (96000..n).rev().find(|&i| (y[i] - x[i - lat]).abs() > 1e-5).unwrap_or(96000);
+    (10.0 * (e / r).log10(), 10.0 * (w / r).log10(), (last - 96000) as f64 / 48.0)
+}
+
+/// The rest after a bend (README §2.1, the review's finding 1): once the shift is back at 0, the wet is the
+/// delayed input again — the Whammy's heads glide back to their centre (gfx-dsp `CenteredShifter::set_recentre`),
+/// the vocoder's phases decay back to the analysis' — so `mix` at `shift` 0 does not comb and Poly keeps its
+/// level. Before the fix (v0.1.0) the same measurement gave no null at all (+4.9 dB at worst) and Poly
+/// down to −4.2 dB (−2.0 to −3.1 dB on the chords).
+#[test]
+fn the_wet_returns_to_the_delayed_input_after_a_bend() {
+    let sigs: [(&str, &[f32]); 5] = [("82", &[82.41]), ("196", &[196.0]), ("660", &[659.3]), ("E5", &[82.41, 123.47, 164.81]), ("Am", &[110.0, 164.81, 220.0, 261.63, 329.63])];
+    for engine in [0.0f32, 1.0] {
+        let mut worst = (f64::MIN, 0.0f64, 0.0f64);
+        for (name, fs) in sigs {
+            let x = rich(fs, 264000);
+            for bend in [12.0f32, -12.0, 2.0, 24.0, -5.0] {
+                let (null, level, settle) = after_a_bend(engine, &x, bend);
+                eprintln!("engine {engine} {name:>4} {bend:+5}: null {null:+7.1} dB, level {level:+6.2} dB, settled {settle:6.0} ms after the return");
+                worst.0 = worst.0.max(null);
+                worst.1 = if level.abs() > worst.1.abs() { level } else { worst.1 };
+                worst.2 = worst.2.max(settle);
+            }
+        }
+        eprintln!("engine {engine}: worst null {:+.1} dB, worst level {:+.3} dB, slowest {:.0} ms", worst.0, worst.1, worst.2);
+        assert!(worst.0 < -90.0 && worst.1.abs() < 0.01, "engine {engine}: {worst:?}");
+    }
+}
