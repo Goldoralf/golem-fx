@@ -14,6 +14,12 @@
 //! A good shifter needs latency. Each engine reports its fixed centre at initialisation or on an engine /
 //! tracking change, never when `shift` moves; the dry is delayed by it, so the mix stays coherent.
 //! Everything is allocated in `prepare`: nothing allocates or blocks on enable (the ReaPitch failure).
+//!
+//! **Triggered bend** (README §2.1, the Whammy Ricochet's movement): while `bend` is on, one state φ rises to
+//! 1 in `rise` ms, and falls back to 0 in `fall` ms once it is off; the wet moves by `interval` × curve(φ)
+//! (the travel held inside ±24), after `glide`'s one-pole and before the slew limit. While φ = 0 the code
+//! takes v0.1.0's expressions untouched (one branch): a preset that never presses `bend` renders bit for bit
+//! as before. `rest` Dry gates the wet out while not bending.
 
 #![allow(clippy::needless_range_loop)]
 
@@ -29,7 +35,7 @@ use gfx_dsp::{Effect, ParamInfo};
 pub mod plugin;
 
 const MAX_CH: usize = 2;
-pub static PARAMS: [ParamInfo; 11] = [
+pub static PARAMS: [ParamInfo; 17] = [
     ParamInfo::float("shift", "Shift", -24.0, 24.0, 12.0).with_exp(),
     ParamInfo::float("mix", "Mix", 0.0, 100.0, 50.0).with_exp(),
     ParamInfo::enumeration("engine", "Engine", 2, 0),
@@ -42,6 +48,14 @@ pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::enumeration("harmony", "Harmony", 2, 0),
     ParamInfo::enumeration("key", "Key", 12, 0),
     ParamInfo::enumeration("scale", "Scale", SCALES.len() as u32, 0),
+    // the triggered bend (appended, 2026-11-26): `bend` is a level (golem's foot mode makes it momentary
+    // or latching); `curve` Linear · Smooth, `rest` Mix · Dry grow at the end only
+    ParamInfo::boolean("bend", "Bend", false),
+    ParamInfo::float("interval", "Bend Interval", -24.0, 24.0, 12.0),
+    ParamInfo::float("rise", "Rise", 0.0, 8000.0, 100.0),
+    ParamInfo::float("fall", "Fall", 0.0, 8000.0, 250.0),
+    ParamInfo::enumeration("curve", "Curve", 2, 0),
+    ParamInfo::enumeration("rest", "At Rest", 2, 0),
 ];
 
 pub mod p {
@@ -56,7 +70,13 @@ pub mod p {
     pub const HARMONY: usize = 8;
     pub const KEY: usize = 9;
     pub const SCALE: usize = 10;
-    pub const N: usize = 11;
+    pub const BEND: usize = 11;
+    pub const INTERVAL: usize = 12;
+    pub const RISE: usize = 13;
+    pub const FALL: usize = 14;
+    pub const CURVE: usize = 15;
+    pub const REST: usize = 16;
+    pub const N: usize = 17;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -84,6 +104,16 @@ fn idx(v: f32, n: usize) -> usize {
 
 /// The Whammy's centre (ms).
 pub const WHAMMY_MS: f32 = 12.0;
+
+/// `rest` Dry: the wet's fade in and out around a bend (ms, raised cosine).
+pub const REST_FADE_MS: f32 = 10.0;
+
+/// The bend's offset from the rest `b` (semitones) at state `phi` > 0: the travel actually available,
+/// clamp(b + interval, ±24) − b, times the curve (Linear φ, Smooth 3φ² − 2φ³). b + offset stays inside ±24.
+#[inline]
+fn bend_offset(b: f64, interval: f64, c: f64) -> f64 {
+    ((b + interval).clamp(-24.0, 24.0) - b) * c
+}
 
 /// Reported latency (samples) of an engine at `sr`: the Whammy's centre, or the vocoder's synthesis
 /// window (at 48 kHz: Fast 319 samples, 6.6 ms; Stable 479, 10 ms).
@@ -122,6 +152,14 @@ pub struct Pitch {
     /// harmony: the played note (detected on the undelayed input, so ~12 ms ahead of the wet)
     det: PitchDetector,
     notes: NoteTracker,
+    /// the bend's state φ ∈ [0, 1] (0 = at rest), advanced per sample by `rise_step` / `fall_step`
+    phi: f64,
+    rise_step: f64,
+    fall_step: f64,
+    /// `rest` Dry: voice 1's offset through its own copy of the slew limit (the gate waits for it to land)
+    off_slew: f64,
+    /// `rest` Dry: the wet's gate (1 = the mix of today, 0 = the dry alone)
+    wet: LinearRamp,
 }
 
 impl Pitch {
@@ -150,6 +188,39 @@ impl Pitch {
             clock: 0,
             det: PitchDetector::default(),
             notes: NoteTracker::default(),
+            phi: 0.0,
+            rise_step: 0.0,
+            fall_step: 0.0,
+            off_slew: 0.0,
+            wet: LinearRamp::new(REST_FADE_MS, 1.0),
+        }
+    }
+
+    /// The applied intervals (semitones, after the slew limit; the audio follows them by the latency):
+    /// what the bend's timing is measured on.
+    pub fn applied_semitones(&self) -> [f64; 2] {
+        self.st_out
+    }
+
+    /// The bend's state φ (0 = at rest, 1 = bent).
+    pub fn bend_state(&self) -> f64 {
+        self.phi
+    }
+
+    fn bend_steps(&mut self) {
+        // φ per sample: the full travel in `rise` / `fall` ms (0 ms: at once, then the slew limit)
+        let step = |ms: f32| if ms > 0.0 { 1000.0 / (ms as f64 * self.sr as f64) } else { 2.0 };
+        self.rise_step = step(self.s.v[p::RISE]);
+        self.fall_step = step(self.s.v[p::FALL]);
+    }
+
+    #[inline]
+    fn curve(&self) -> f64 {
+        let x = self.phi;
+        if self.s.v[p::CURVE] >= 0.5 {
+            x * x * (3.0 - 2.0 * x)
+        } else {
+            x
         }
     }
 
@@ -181,6 +252,7 @@ impl Pitch {
             self.gate.set_target(0.0);
         }
         self.s = s;
+        self.bend_steps();
     }
 
     fn apply_engine(&mut self) {
@@ -218,7 +290,19 @@ impl Pitch {
             let gs = 0.5 - 0.5 * (std::f32::consts::PI * g).cos();
             let lim = 1000.0 / self.sr as f64;
             let (sh1, sh2, fine) = (self.shift.next(), self.shift2.next(), self.fine.next());
+            // the bend's state: up while `bend` is on, down once it is off
+            let bend_on = self.s.v[p::BEND] >= 0.5;
+            if bend_on {
+                if self.phi < 1.0 {
+                    self.phi = (self.phi + self.rise_step).min(1.0);
+                }
+            } else if self.phi > 0.0 {
+                self.phi = (self.phi - self.fall_step).max(0.0);
+            }
+            let phi = self.phi;
+            let c = if phi > 0.0 { self.curve() } else { 0.0 };
             let v = &self.s.v;
+            let mut o1 = 0.0f64;
             let (t1, t2) = if v[p::HARMONY] >= 0.5 {
                 // the shifts become scale steps above the played note; the slew limit below makes
                 // each interval change a ~1 ms bend
@@ -229,10 +313,22 @@ impl Pitch {
                 let key = idx(v[p::KEY], 12) as u8;
                 let scale = idx(v[p::SCALE], SCALES.len());
                 let pc = self.notes.pitch_class().unwrap_or(key);
-                (
-                    harmony_interval(pc, key, scale, v[p::SHIFT]) as f64 + (fine * 0.01) as f64,
-                    harmony_interval(pc, key, scale, v[p::SHIFT2]) as f64,
-                )
+                if phi > 0.0 {
+                    // the bend: chromatic semitones added to the in-key intervals
+                    let (b1, b2) = (harmony_interval(pc, key, scale, v[p::SHIFT]) as f64, harmony_interval(pc, key, scale, v[p::SHIFT2]) as f64);
+                    let iv = v[p::INTERVAL] as f64;
+                    o1 = bend_offset(b1, iv, c);
+                    (b1 + o1 + (fine * 0.01) as f64, b2 + bend_offset(b2, iv, c))
+                } else {
+                    (
+                        harmony_interval(pc, key, scale, v[p::SHIFT]) as f64 + (fine * 0.01) as f64,
+                        harmony_interval(pc, key, scale, v[p::SHIFT2]) as f64,
+                    )
+                }
+            } else if phi > 0.0 {
+                let (b1, b2, iv) = (sh1 as f64, sh2 as f64, v[p::INTERVAL] as f64);
+                o1 = bend_offset(b1, iv, c);
+                (b1 + o1 + (fine * 0.01) as f64, b2 + bend_offset(b2, iv, c))
             } else {
                 ((sh1 + fine * 0.01) as f64, sh2 as f64)
             };
@@ -241,7 +337,16 @@ impl Pitch {
             let (st1, st2) = (self.st_out[0], self.st_out[1]);
             let v2db = self.voice2.next();
             let v2g = if v2db <= -60.0 { 0.0 } else { 10f32.powf(v2db / 20.0) };
-            let mix = self.mix.next() * 0.01 * std::f32::consts::FRAC_PI_2;
+            // `rest` Dry: the wet is in while bending or landing (voice 1's offset through the slew limit),
+            // out at rest; `rest` Mix keeps it in (the gate stays at 1 and the mix's expression untouched)
+            self.off_slew += (o1 - self.off_slew).clamp(-lim, lim);
+            let open = v[p::REST] < 0.5 || bend_on || phi > 0.0 || self.off_slew != 0.0;
+            self.wet.set_target(if open { 1.0 } else { 0.0 });
+            let wv = self.wet.next();
+            let mut mix = self.mix.next() * 0.01 * std::f32::consts::FRAC_PI_2;
+            if wv < 1.0 {
+                mix *= 0.5 - 0.5 * (std::f32::consts::PI * wv).cos();
+            }
             let (dg, wg) = (mix.cos() * gs, mix.sin() * gs);
             let lat = self.lat_used;
             let poly = self.engine == 1;
@@ -290,6 +395,8 @@ impl Effect for Pitch {
         }
         self.mix.prepare(sample_rate);
         self.gate.prepare(sample_rate);
+        self.wet.prepare(sample_rate);
+        self.bend_steps();
         for d in self.dry.iter_mut() {
             d.prepare((0.03 * sample_rate as f64) as usize);
         }
@@ -318,7 +425,19 @@ impl Effect for Pitch {
             d.reset();
         }
         self.lat_used = self.latency_samples();
-        self.st_out = [(v[p::SHIFT] + v[p::FINE] * 0.01) as f64, v[p::SHIFT2] as f64];
+        // a session saved with `bend` on reloads bent, without a ramp
+        self.phi = if v[p::BEND] >= 0.5 { 1.0 } else { 0.0 };
+        if self.phi > 0.0 {
+            let c = self.curve();
+            let (b1, b2, iv) = (v[p::SHIFT] as f64, v[p::SHIFT2] as f64, v[p::INTERVAL] as f64);
+            let o1 = bend_offset(b1, iv, c);
+            self.st_out = [b1 + o1 + (v[p::FINE] * 0.01) as f64, b2 + bend_offset(b2, iv, c)];
+            self.off_slew = o1;
+        } else {
+            self.st_out = [(v[p::SHIFT] + v[p::FINE] * 0.01) as f64, v[p::SHIFT2] as f64];
+            self.off_slew = 0.0;
+        }
+        self.wet.set_immediate(if v[p::REST] < 0.5 || self.phi > 0.0 { 1.0 } else { 0.0 });
         self.clock = 0;
         self.det.reset();
         self.notes.reset();

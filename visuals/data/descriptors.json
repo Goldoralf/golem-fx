@@ -24414,7 +24414,8 @@
     "shift",
     "mix",
     "engine",
-    "shift2"
+    "shift2",
+    "bend"
    ],
    "groups": [
     {
@@ -24436,6 +24437,18 @@
       "harmony",
       "key",
       "scale"
+     ]
+    },
+    {
+     "id": "bend",
+     "name": "Bend",
+     "custom": null,
+     "params": [
+      "interval",
+      "rise",
+      "fall",
+      "curve",
+      "rest"
      ]
     }
    ],
@@ -24648,6 +24661,108 @@
      "structural": true,
      "depends": null,
      "help": "Grows at the end only"
+    },
+    "bend": {
+     "name": "Bend",
+     "kind": "bool",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "The footswitch gesture: on = bent to shift + interval, off = back to shift"
+    },
+    "interval": {
+     "name": "Bend Interval",
+     "kind": "float",
+     "min": -24,
+     "max": 24,
+     "default": 12,
+     "unit": "st",
+     "display": "lin",
+     "step": null,
+     "decimals": 2,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Added to shift (and shift2) while triggered; semitones, also in harmony Scale"
+    },
+    "rise": {
+     "name": "Rise",
+     "kind": "float",
+     "min": 0,
+     "max": 8000,
+     "default": 100,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Time of the full travel rest → bend (the Ricochet's Shift, the PS-6's Rise Time)"
+    },
+    "fall": {
+     "name": "Fall",
+     "kind": "float",
+     "min": 0,
+     "max": 8000,
+     "default": 250,
+     "unit": "ms",
+     "display": "log",
+     "step": null,
+     "decimals": 0,
+     "options": null,
+     "exp": false,
+     "structural": false,
+     "depends": null,
+     "help": "Time of the full travel bend → rest (Return, Fall Time)"
+    },
+    "curve": {
+     "name": "Curve",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Linear",
+      "Smooth"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "Shape of the travel: Linear = constant rate in semitones (a treadle at constant foot speed); Smooth = eases out of rest and into the target (smoothstep)"
+    },
+    "rest": {
+     "name": "At Rest",
+     "kind": "enum",
+     "min": 0,
+     "max": 1,
+     "default": 0,
+     "unit": null,
+     "display": null,
+     "step": 1,
+     "decimals": 0,
+     "options": [
+      "Mix",
+      "Dry"
+     ],
+     "exp": false,
+     "structural": true,
+     "depends": null,
+     "help": "What plays while not bending"
     }
    },
    "meters": [],
@@ -24693,7 +24808,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Put the expression pedal on shift 0 → +12; glide 0 so the pedal is the bend. Single notes only"
     },
@@ -24740,7 +24861,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "glide 300 ms makes a scene switch crawl up to +24 rather than jump; with an expression pedal on shift, set glide 0"
     },
@@ -24787,7 +24914,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Fully wet: the dry note would give it away. Neck pickup and single notes; off for the full chords of the chorus"
     },
@@ -24832,7 +24965,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Glide makes the scene change a dive; the 12 ms Whammy engine keeps the attack tight at −24"
     },
@@ -24877,7 +25016,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Same voice as octave-up-bends, meant for a riff rocked on and off the toe with the expression pedal after the drive"
     },
@@ -24915,7 +25060,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "The dry is delayed by the 12 ms latency so the blend stays coherent. For a synth-like sub use gfx-octaver"
     },
@@ -24954,7 +25105,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Poly handles power chords and open chords; Stable (10 ms) keeps low partials on target"
     },
@@ -24993,7 +25150,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Virtual capo for songs tuned down a half step; Fast tracking (6.6 ms) for feel. fine can match a slightly detuned record"
     },
@@ -25032,7 +25195,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      }
     },
     {
@@ -25069,7 +25238,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Stable for the low register; put it before the amp so the drive sees the low note"
     },
@@ -25115,7 +25290,13 @@
       "fine": 5,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "fine +5 ct keeps the octave from fusing with the dry, as real octave strings drift"
     },
@@ -25153,7 +25334,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Fixed interval, so it stays parallel (not in key): right for riffs, wrong for melodic leads (see twin-lead-third)"
     },
@@ -25203,7 +25390,13 @@
       "fine": 0,
       "harmony": "Scale",
       "key": "E",
-      "scale": "Minor"
+      "scale": "Minor",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Scale: shift 4 = a third in the scale; golem sets key / scale per song (E minor is the placeholder). Single notes; bends hold the old interval"
     },
@@ -25253,7 +25446,13 @@
       "fine": 0,
       "harmony": "Scale",
       "key": "E",
-      "scale": "Minor"
+      "scale": "Minor",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Scale: shift 4 = third, shift2 7 = fifth above. Key placeholder; voice 2 −4 dB keeps the third as the main harmony"
     },
@@ -25293,7 +25492,13 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Works on guitar chords too; the octave up 6 dB under the octave down keeps the stack warm"
     },
@@ -25331,9 +25536,332 @@
       "fine": 0,
       "harmony": "Off",
       "key": "C",
-      "scale": "Major"
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 100,
+      "fall": 250,
+      "curve": "Linear",
+      "rest": "Mix"
      },
      "notes": "Single notes. For a bass that keeps its low end and adds a guitar-like octave, gfx-octaver's octave_up is the lower-latency option"
+    },
+    {
+     "id": "switch-squeal",
+     "type": "pitch",
+     "name": "Squeal on the switch",
+     "desc": "Two octaves up while the switch is held, back at once on release: rhythmic squeals with the foot free",
+     "inst": "guitar",
+     "genres": [
+      "metal",
+      "rock"
+     ],
+     "subgenres": [
+      "rap-metal",
+      "alternative-metal",
+      "rap-rock"
+     ],
+     "gain": "high",
+     "use": "solo",
+     "refs": [
+      {
+       "artist": "Rage Against the Machine",
+       "song": "Killing in the Name",
+       "why": "Morello's solo with the Whammy set two octaves up",
+       "source": "Rolling Stone, 2023",
+       "verified": true
+      }
+     ],
+     "level_db": 0,
+     "tags": [
+      "extreme",
+      "aggressive"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "mix": 100,
+      "engine": "Whammy",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": 24,
+      "rise": 0,
+      "fall": 0,
+      "curve": "Linear",
+      "rest": "Dry"
+     },
+     "notes": "bend on a momentary footswitch (golem: latching until it has one). 24 ms up and down by the slew limit; interval 12 for the tamer octave"
+    },
+    {
+     "id": "switch-dive-bomb",
+     "type": "pitch",
+     "name": "Dive bomb on a switch",
+     "desc": "Two octaves down over 1.5 s while held, a fast snap back on release: the dive without a treadle",
+     "inst": "guitar",
+     "genres": [
+      "metal",
+      "rock"
+     ],
+     "subgenres": [
+      "heavy-metal",
+      "glam-metal",
+      "hard-rock"
+     ],
+     "gain": "high",
+     "use": "solo",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "extreme"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "mix": 100,
+      "engine": "Whammy",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": -24,
+      "rise": 1500,
+      "fall": 150,
+      "curve": "Smooth",
+      "rest": "Dry"
+     },
+     "notes": "Single notes. Smooth eases out of the note and into the bottom; the return takes 150 ms"
+    },
+    {
+     "id": "whole-step-stabs",
+     "type": "pitch",
+     "name": "Whole-step chord stabs",
+     "desc": "Chords dip a whole step for as long as the switch is held: short, repeatable bends of a strummed chord",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "alternative-rock",
+      "funk-rock",
+      "nu-metal"
+     ],
+     "gain": "crunch",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "tight"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "mix": 100,
+      "engine": "Poly",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": -2,
+      "rise": 20,
+      "fall": 40,
+      "curve": "Linear",
+      "rest": "Dry"
+     },
+     "notes": "Poly for chords; interval +2 to stab upwards. At rest the chord is the dry, at its level"
+    },
+    {
+     "id": "seven-string-switch",
+     "type": "pitch",
+     "name": "Low note on demand",
+     "desc": "The guitar a fourth lower while the switch is on: the 7-string drop without retuning",
+     "inst": "guitar",
+     "genres": [
+      "metal"
+     ],
+     "subgenres": [
+      "djent",
+      "nu-metal",
+      "progressive-metal"
+     ],
+     "gain": "high",
+     "use": "rhythm",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "modern",
+      "dark"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "mix": 100,
+      "engine": "Poly",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": -5,
+      "rise": 0,
+      "fall": 0,
+      "curve": "Linear",
+      "rest": "Dry"
+     },
+     "notes": "A latching footswitch on bend: on = 5 st down, polyphonic. rest Dry keeps the open guitar exactly as it was"
+    },
+    {
+     "id": "octave-swell",
+     "type": "pitch",
+     "name": "Octave lift into a chorus",
+     "desc": "An octave up swells in under the chords over 3 s and back out over 2 s: a pad lift on the switch",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "pop"
+     ],
+     "subgenres": [
+      "post-rock",
+      "shoegaze",
+      "dream-pop"
+     ],
+     "gain": "clean",
+     "use": "texture",
+     "refs": [],
+     "level_db": 1,
+     "tags": [
+      "dreamy",
+      "wide"
+     ],
+     "default": false,
+     "params": {
+      "shift": 0,
+      "mix": 50,
+      "engine": "Poly",
+      "tracking": "Stable",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 3000,
+      "fall": 2000,
+      "curve": "Smooth",
+      "rest": "Dry"
+     },
+     "notes": "Latching. The dry stays under the rising octave, 0 dB at both ends"
+    },
+    {
+     "id": "harmony-bend",
+     "type": "pitch",
+     "name": "Harmony that bends",
+     "desc": "An in-key third above, and a whole step up off it on the switch: a twin-lead bend into the note",
+     "inst": "guitar",
+     "genres": [
+      "rock",
+      "metal"
+     ],
+     "subgenres": [
+      "hard-rock",
+      "classic-rock",
+      "heavy-metal"
+     ],
+     "gain": "high",
+     "use": "lead",
+     "refs": [],
+     "level_db": 1,
+     "tags": [
+      "vintage"
+     ],
+     "default": false,
+     "params": {
+      "shift": 4,
+      "mix": 50,
+      "engine": "Whammy",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Scale",
+      "key": "E",
+      "scale": "Minor",
+      "bend": false,
+      "interval": 2,
+      "rise": 150,
+      "fall": 150,
+      "curve": "Smooth",
+      "rest": "Mix"
+     },
+     "notes": "Key placeholder (golem sets it per song). The bend is chromatic: +2 is a whole step above the in-key third; interval 1 for a half step"
+    },
+    {
+     "id": "capo-jump",
+     "type": "pitch",
+     "name": "Bend from a capo",
+     "desc": "The expression pedal sets a capo on shift, the switch jumps an octave up from wherever the foot is",
+     "inst": "guitar",
+     "genres": [
+      "rock"
+     ],
+     "subgenres": [
+      "alternative-rock",
+      "indie-rock",
+      "post-rock"
+     ],
+     "gain": "any",
+     "use": "lead",
+     "refs": [],
+     "level_db": 0,
+     "tags": [
+      "modern"
+     ],
+     "default": false,
+     "params": {
+      "shift": -5,
+      "mix": 100,
+      "engine": "Poly",
+      "tracking": "Fast",
+      "glide": 0,
+      "shift2": 0,
+      "voice2": -60,
+      "fine": 0,
+      "harmony": "Off",
+      "key": "C",
+      "scale": "Major",
+      "bend": false,
+      "interval": 12,
+      "rise": 80,
+      "fall": 120,
+      "curve": "Linear",
+      "rest": "Mix"
+     },
+     "notes": "Expression pedal on shift (rest −5 … 0), bend on a footswitch: the octave rides on the foot"
     }
    ]
   },
@@ -43994,7 +44522,7 @@
      "exp": false,
      "structural": false,
      "depends": null,
-     "help": "Relative to the circuit's own supply (9 V; the Blend OD's pumped rails follow; the Discrete OD's 8 V): headroom, bias, rails"
+     "help": "Relative to the circuit's own supply (9 V; the Blend OD's pumped rails follow; the Discrete OD's 8.1 V through its regulator): headroom, bias, rails"
     },
     "hp": {
      "name": "HP Mode",

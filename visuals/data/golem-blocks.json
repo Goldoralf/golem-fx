@@ -1,6 +1,6 @@
 {
  "_comment": "Snapshot of golem's catalogue (library/catalog/effects.json): only what the visuals need. Refresh: tools/build-data.py --golem ~/golem",
- "catalog_version": 49,
+ "catalog_version": 51,
  "effects": [
   {
    "type": "gate",
@@ -209,58 +209,58 @@
    "short": "Grit",
    "category": "lofi",
    "engine": "plugin",
-   "plugin": "Prisma",
+   "plugin": "VST3: GoleM FX Grit (GoleM)",
    "color": "#e07a3a",
    "glyph": "◩",
    "icon": "◩",
    "params": [
     {
-     "id": "lo_m1",
-     "name": "Low Module 1 Type",
+     "id": "wet",
+     "name": "Wet",
+     "min": 0,
+     "max": 100,
+     "default": 100,
+     "unit": "%"
+    },
+    {
+     "id": "quality",
+     "name": "Quality",
      "min": null,
      "max": null,
-     "default": "Off",
+     "default": false,
      "unit": null
     },
     {
-     "id": "lo_v1",
+     "id": "drive",
+     "name": "Drive",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "focus",
+     "name": "Focus",
+     "min": -100,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "level",
+     "name": "Level",
+     "min": -24,
+     "max": 12,
+     "default": 0,
+     "unit": "dB"
+    },
+    {
+     "id": "lo_amt1",
      "name": "Low Module 1 Value",
      "min": 0,
      "max": 100,
      "default": 0,
      "unit": "%"
-    },
-    {
-     "id": "lo_m2",
-     "name": "Low Module 2 Type",
-     "min": null,
-     "max": null,
-     "default": "Off",
-     "unit": null
-    },
-    {
-     "id": "lo_v2",
-     "name": "Low Module 2 Value",
-     "min": 0,
-     "max": 100,
-     "default": 0,
-     "unit": "%"
-    },
-    {
-     "id": "lo_gain",
-     "name": "Low Gain",
-     "min": 0,
-     "max": 100,
-     "default": 50,
-     "unit": "%"
-    },
-    {
-     "id": "lm_m1",
-     "name": "Low Mid Module 1 Type",
-     "min": null,
-     "max": null,
-     "default": "Off",
-     "unit": null
     }
    ]
   },
@@ -2173,7 +2173,7 @@
    "type": "bitcrusher",
    "name": "Bitcrusher",
    "short": "Bitcrush",
-   "category": "utility",
+   "category": "lofi",
    "engine": "plugin",
    "plugin": "MDA Degrade",
    "color": "#8a94a3",
@@ -2953,7 +2953,7 @@
    "type": "widener",
    "name": "Stereo Widener",
    "short": "Wide",
-   "category": "utility",
+   "category": "modulation",
    "engine": "plugin",
    "plugin": "VST3: GoleM FX Widener (GoleM)",
    "color": "#c0e0f8",
@@ -3340,6 +3340,59 @@
      "min": null,
      "max": null,
      "default": "Tin Can",
+     "unit": null
+    }
+   ]
+  },
+  {
+   "type": "formant",
+   "name": "Formant",
+   "short": "Formant",
+   "category": "pitch",
+   "engine": "plugin",
+   "plugin": "VST3: GoleM FX Formant (GoleM)",
+   "color": null,
+   "glyph": null,
+   "icon": null,
+   "params": [
+    {
+     "id": "formant",
+     "name": "Formant",
+     "min": -12,
+     "max": 12,
+     "default": -3,
+     "unit": "st"
+    },
+    {
+     "id": "growl",
+     "name": "Growl",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "vowel",
+     "name": "Vowel",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "vowel_amt",
+     "name": "Vowel Amount",
+     "min": 0,
+     "max": 100,
+     "default": 0,
+     "unit": "%"
+    },
+    {
+     "id": "engine",
+     "name": "Engine",
+     "min": null,
+     "max": null,
+     "default": "Live",
      "unit": null
     }
    ]

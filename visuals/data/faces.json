@@ -299,6 +299,9 @@
    ],
    "selectors": [
     "engine"
+   ],
+   "toggles": [
+    "bend"
    ]
   },
   "gfx-pitch-classic": {

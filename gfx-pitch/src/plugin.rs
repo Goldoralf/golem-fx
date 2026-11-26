@@ -112,6 +112,26 @@ enum ScaleP {
     MinorPentatonic,
 }
 
+#[derive(Enum, Debug, PartialEq, Clone, Copy)]
+enum CurveP {
+    #[id = "linear"]
+    #[name = "Linear"]
+    Linear,
+    #[id = "smooth"]
+    #[name = "Smooth"]
+    Smooth,
+}
+
+#[derive(Enum, Debug, PartialEq, Clone, Copy)]
+enum RestP {
+    #[id = "mix"]
+    #[name = "Mix"]
+    Mix,
+    #[id = "dry"]
+    #[name = "Dry"]
+    Dry,
+}
+
 fn f(i: usize, unit: &'static str, decimals: usize) -> FloatParam {
     let pi = PARAMS[i];
     FloatParam::new(pi.name, pi.default, FloatRange::Linear { min: pi.min, max: pi.max })
@@ -144,6 +164,19 @@ struct PitchParams {
     key: EnumParam<KeyP>,
     #[id = "scale"]
     scale: EnumParam<ScaleP>,
+    // the triggered bend (appended)
+    #[id = "bend"]
+    bend: BoolParam,
+    #[id = "interval"]
+    interval: FloatParam,
+    #[id = "rise"]
+    rise: FloatParam,
+    #[id = "fall"]
+    fall: FloatParam,
+    #[id = "curve"]
+    curve: EnumParam<CurveP>,
+    #[id = "rest"]
+    rest: EnumParam<RestP>,
 }
 
 impl Default for PitchParams {
@@ -160,6 +193,12 @@ impl Default for PitchParams {
             harmony: EnumParam::new("Harmony", HarmonyP::Off),
             key: EnumParam::new("Key", KeyP::C),
             scale: EnumParam::new("Scale", ScaleP::Major),
+            bend: BoolParam::new("Bend", false),
+            interval: f(12, " st", 2),
+            rise: f(13, " ms", 0),
+            fall: f(14, " ms", 0),
+            curve: EnumParam::new("Curve", CurveP::Linear),
+            rest: EnumParam::new("At Rest", RestP::Mix),
         }
     }
 }
@@ -179,6 +218,12 @@ impl PitchParams {
                 self.harmony.value() as usize as f32,
                 self.key.value() as usize as f32,
                 self.scale.value() as usize as f32,
+                if self.bend.value() { 1.0 } else { 0.0 },
+                self.interval.value(),
+                self.rise.value(),
+                self.fall.value(),
+                self.curve.value() as usize as f32,
+                self.rest.value() as usize as f32,
             ],
         }
     }

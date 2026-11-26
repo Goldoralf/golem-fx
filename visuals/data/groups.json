@@ -890,6 +890,18 @@
           "key",
           "scale"
         ]
+      },
+      {
+        "id": "bend",
+        "name": "Bend",
+        "custom": null,
+        "params": [
+          "interval",
+          "rise",
+          "fall",
+          "curve",
+          "rest"
+        ]
       }
     ],
     "gfx-pitch-classic": [
