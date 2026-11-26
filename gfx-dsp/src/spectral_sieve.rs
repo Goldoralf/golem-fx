@@ -291,7 +291,7 @@ impl Sieve {
             m >>= tz;
             if self.cand[b] {
                 let mm = (clean.fhat[b] / fq).round() as usize;
-                if (2..=8).contains(&mm) && mm % k != 0 {
+                if (2..=8).contains(&mm) && !mm.is_multiple_of(k) {
                     let c = Self::cents(clean.fhat[b], mm as f64 * fq);
                     if -self.p.tol_c - tolx < c && c < self.p.tol_c + tolx + self.st_k[mm] {
                         return true;

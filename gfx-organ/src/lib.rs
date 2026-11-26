@@ -152,6 +152,7 @@ pub struct Register {
     pub strings_floor: f64,
 }
 
+#[allow(clippy::too_many_arguments)]
 const fn reg(drawbars: [u8; 9], perc: Perc, leslie_depth: f32, scanner: usize, speaker: usize, parked: bool, drive: f32, attack_ms: f32, strings_floor: f64) -> Register {
     Register { drawbars, perc, leslie_depth, scanner, speaker, parked, drive, attack_ms, strings_floor }
 }
@@ -533,7 +534,7 @@ impl Organ {
         let modr = (self.modp.value() as f64 / 50.0).clamp(0.0, 2.0);
         let (sdepth, smix) = match vo.scanner {
             0 => (0.0, 1.0),
-            k => (V_DEPTH[(k - 1) / 2] * modr, if k % 2 == 0 { 0.5 } else { 1.0 }),
+            k => (V_DEPTH[(k - 1) / 2] * modr, if k.is_multiple_of(2) { 0.5 } else { 1.0 }),
         };
         self.scan_on.set_target(if vo.scanner > 0 { 1.0 } else { 0.0 });
         if vo.scanner > 0 {
@@ -789,7 +790,7 @@ impl Effect for Organ {
         self.scan_on.set_immediate(if vo.scanner > 0 { 1.0 } else { 0.0 });
         if vo.scanner > 0 {
             self.scan_depth.set_immediate((V_DEPTH[(vo.scanner - 1) / 2] * modr).min(1.0) as f32);
-            self.scan_mix.set_immediate(if vo.scanner % 2 == 0 { 0.5 } else { 1.0 });
+            self.scan_mix.set_immediate(if vo.scanner.is_multiple_of(2) { 0.5 } else { 1.0 });
         }
         self.rot_on.set_immediate(if vo.speaker > 0 { 1.0 } else { 0.0 });
         if vo.speaker > 0 {
