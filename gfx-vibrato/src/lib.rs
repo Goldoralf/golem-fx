@@ -21,6 +21,7 @@ use gfx_dsp::bbd::Bbd;
 use gfx_dsp::delay::{DelayLine, Interp};
 use gfx_dsp::exp_smooth::ExpSmoother;
 use gfx_dsp::lfo::Rng;
+use gfx_dsp::scanner::Scanner;
 use gfx_dsp::smooth::{LinearRamp, OnePole};
 use gfx_dsp::svf::{Svf, SvfMode};
 use gfx_dsp::transport::{Sync, TransportInfo};
@@ -33,9 +34,6 @@ pub mod plugin;
 const MAX_CH: usize = 2;
 /// Longest mean delay (s).
 const MAX_DELAY: f64 = 0.025;
-/// Scanner: one ladder section (s), 19 sections.
-const SCANNER_STEP: f64 = 55e-6;
-const SCANNER_TAPS: usize = 19;
 /// Rounded triangle: asin(k sin θ) / asin(k).
 const ROUND_K: f64 = 0.97;
 
@@ -111,7 +109,7 @@ struct Channel {
     ap: [(f32, f32); 2],
     vibe: Vibe,
     lamp: Lamp,
-    scan_lp: Svf,
+    scanner: Scanner,
     tone: Svf,
     adaa: Adaa1,
     rnd_from: f64,
@@ -130,7 +128,7 @@ impl Channel {
             ap: [(0.0, 0.0); 2],
             vibe: Vibe::default(),
             lamp: Lamp::default(),
-            scan_lp: Svf::new(),
+            scanner: Scanner::new(),
             tone: Svf::new(),
             adaa: Adaa1::new(),
             rnd_from: 0.0,
@@ -149,7 +147,7 @@ impl Channel {
                 self.vibe.reset();
                 self.lamp.reset();
             }
-            Model::Scanner => self.scan_lp.reset(),
+            Model::Scanner => self.scanner.reset(),
             Model::Clean => {}
         }
     }
@@ -317,15 +315,9 @@ impl Vibrato {
                 let r = ch.lamp.next((0.5 + 0.5 * w) as f32, depth as f32, 30.0, self.sr);
                 ch.vibe.process(x, r, self.sr)
             }
-            Model::Scanner => {
-                // depth sweeps the reach continuously: V1 ≈ 0.47 (tap 9), V2 ≈ 0.68 (13), V3 = 1 (19)
-                let pos = SCANNER_TAPS as f64 * depth * (0.5 + 0.5 * w);
-                let i = pos.floor() as usize;
-                let f = (pos - i as f64) as f32;
-                let tap = |k: usize| ch.line.read((k.min(SCANNER_TAPS) as f64 * SCANNER_STEP + guard) * sr, Interp::Lagrange3);
-                let y = tap(i) + f * (tap(i + 1) - tap(i));
-                ch.scan_lp.process(y)
-            }
+            // gfx-dsp `scanner`: depth sweeps the reach continuously, V1 ≈ 0.47 (tap 9), V2 ≈ 0.68 (13),
+            // V3 = 1 (19)
+            Model::Scanner => ch.scanner.process(&ch.line, depth, w, guard, sr),
         }
     }
 
@@ -419,7 +411,7 @@ impl Effect for Vibrato {
             c.line.prepare(len);
             c.bbd.prepare(sample_rate);
             c.bbd.set_filters(0.45, 9000.0);
-            c.scan_lp.set(SvfMode::LowPass, 7000.0f32.min(0.45 * sample_rate), std::f32::consts::FRAC_1_SQRT_2, 0.0, sample_rate);
+            c.scanner.prepare(sample_rate);
         }
     }
 

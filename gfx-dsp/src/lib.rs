@@ -53,6 +53,7 @@ pub mod pot;
 pub mod psola;
 pub mod reverb;
 pub mod rotary;
+pub mod scanner;
 pub mod shapers;
 pub mod sidechain;
 pub mod smooth;
