@@ -2,6 +2,7 @@
 //! The rotary's own bench suite (README.md §6).
 
 use super::*;
+use gfx_dsp::Effect;
 
 const SR: f32 = 48000.0;
 

@@ -52,6 +52,7 @@ pub mod pitch;
 pub mod pot;
 pub mod psola;
 pub mod reverb;
+pub mod rotary;
 pub mod shapers;
 pub mod sidechain;
 pub mod smooth;
