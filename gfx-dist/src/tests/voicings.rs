@@ -459,3 +459,28 @@ fn plexi_low_supply() {
         }
     }
 }
+
+#[test]
+#[ignore = "diagnostics: loudness of the new presets re the bypass (DI proxy), for their `level`"]
+fn preset_levels() {
+    let sr = 48000.0;
+    let x = di_proxy(sr);
+    let lin = loudness(&x, sr);
+    type Set = &'static [(&'static str, f32)];
+    let presets: [(&str, Set); 10] = [
+        ("edge-of-breakup", &[("circuit", 4.0), ("gain", 35.0), ("tone_stack", 35.0)]),
+        ("cranked-blues", &[("circuit", 4.0), ("gain", 75.0), ("tone_stack", 40.0)]),
+        ("fat-blues", &[("circuit", 4.0), ("gain", 40.0), ("tone_stack", 40.0), ("fat", 1.0)]),
+        ("volume-knob-blues", &[("circuit", 4.0), ("gain", 60.0), ("tone_stack", 35.0)]),
+        ("studio-crunch", &[("circuit", 5.0), ("gain", 35.0), ("tone_stack", 55.0), ("tight", 120.0)]),
+        ("spectrum-lead", &[("circuit", 5.0), ("gain", 75.0), ("tone_stack", 75.0)]),
+        ("dark-spectrum", &[("circuit", 5.0), ("gain", 25.0), ("tone_stack", 15.0)]),
+        ("plexi-crunch", &[("circuit", 6.0), ("gain", 40.0), ("tone_stack", 55.0)]),
+        ("scooped-stack", &[("circuit", 6.0), ("gain", 80.0), ("contour", 0.0), ("tight", 100.0)]),
+        ("plexi-bass", &[("circuit", 6.0), ("gain", 50.0), ("contour", 60.0), ("bass_keep", 100.0)]),
+    ];
+    for (id, set) in presets {
+        let y = run(&mut dist(sr as f32, set), &x);
+        eprintln!("{id}: {:+.1} dB re bypass", loudness(&y, sr) - lin);
+    }
+}

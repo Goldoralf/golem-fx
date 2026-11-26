@@ -1,6 +1,6 @@
 [package]
 name = "gfx-dist"
-version = "0.1.0"
+version = "0.2.0"
 description = "GoleM FX Dist — golem's circuit-simulated distortion pedals"
 edition.workspace = true
 license.workspace = true

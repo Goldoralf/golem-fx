@@ -14,6 +14,17 @@
 > behaviour tests, CPU 4.2 µs / sample mono at the defaults (20 % of a core, the contract's bound).
 > Deviations and numbers: "As coded" below.
 >
+> **Three more circuits CODED 2026-11-26** (v0.2.0, roadmap 0.8 item 3): **Discrete OD, Studio OD,
+> Plexi Dist** appended to `circuit`, `fat` and `contour` appended after `bass_keep`; gfx-dsp
+> `circuit_nl` gains the JFET and the JFET pair port. The four v0.1.0 circuits and gfx-fuzz render
+> **bit-identically** (golden hashes recorded before any change). Anchors of §5 all within their
+> tolerances; aliasing (1.2 kHz, −12 dBFS, full gain) own parts −74.7 / −72.2 / −71.5 dB, worst swap
+> −73.9 / −66.2 / −65.8 dB (the Plexi's Germanium swap runs at 16×). **Two misses, stated:** CPU — the
+> Discrete OD and the Plexi Dist measure **5.2 – 6.0 µs per sample** mono at 48 kHz on a guitar-like
+> signal and **8.5 – 10.7 µs on gfx-bench's pink noise** (the Op-Amp Dist: 2.3 / 3.7 µs on the same
+> machine), above the 5 µs Raph accepted; the Plexi at its 150 % supply cap aliases −64.6 dB (bound
+> −65). Details and the other deviations: "As coded (v0.2.0, 2026-11-26)" below.
+>
 > **Three more circuits DESIGNED 2026-11-26** (roadmap 0.8, item 3), by Claude Opus 5.5, not coded: the
 > **Discrete OD** finished (the BD-2 family, with the "Custom" bass switch as a new `fat` id), the
 > **Studio OD** (the ODR-1 family; its Spectrum is its `tone_stack`) and the **Plexi Dist** (a Red
@@ -34,6 +45,99 @@
 > Plexi" preset is dropped; ≈ 24 % of a core is accepted for the Discrete OD and the Plexi Dist if the
 > coded measurement is ≤ 5 µs per sample. Names, `fat`, `contour` expert-only at 70 %, the Red Rox: as
 > the review settled, confirmed by ear at coding.
+
+## As coded (v0.2.0, 2026-11-26): Discrete OD, Studio OD, Plexi Dist
+
+**Files.** gfx-dsp `circuit_nl.rs`: `JfetModel` / `Netlist::jfet` (Shichman–Hodges, drain / source
+symmetric, VTOTC / BETATCE, optional soft knee; `J` cards and `NJF` / `PJF` models in `to_spice`, a
+B-source when soft), `PairModel` / `Netlist::jfet_pair` (the pair port of §2.11: the tail from the
+previous sample's common mode, latched after each solved sample and held on an unsolved one, copied by
+`copy_state_from`, kept by a temperature change, solved implicitly at the DC point by a fixed point on
+the common mode and linearized implicitly in `ac_response`; `to_spice` writes the implicit tail as a
+B-source), `Netlist::node_named`, and the opt-in `set_lean_exp` (exponentials of an argument under −36
+taken as 0). `circuit_nl/tests.rs`: five more tests. Here: `circuits.rs` (the three netlists, the parts,
+`rail`), `lib.rs` (`fat`'s glide, `contour`, the fast-variant lists), `plugin.rs`, `tests/voicings.rs`
+(the rows of §5 added 2026-11-26), `tests/golden.rs` and gfx-fuzz's `tests/golden.rs` (the bit-identity
+hashes, recorded before any change), `fixtures/{discrete-od,studio-od,plexi-dist}.cir` and twelve
+reference lines; `presets/gfx-dist.json` (ten presets); visuals: `groups.json` (`fat`, `contour` in the
+Circuit group with their `depends`), `ai.json`, regenerated descriptors / manifest / gfx-ui bundle.
+
+**Measured** (tests, release build, i9-13900H pinned to one P-core, other agents building alongside):
+
+| What | Target (§5) | Measured |
+|---|---|---|
+| Old presets and circuits, gfx-fuzz | bit-identical | 16 presets × 44.1 / 48 / 96 / 192 kHz + stereo, knob moves and switches, the 16 reference cases: identical; gfx-fuzz's 18 presets × 4 rates + stereo + moves: identical |
+| Anchors, Discrete OD | stage 1 +21.9 / +27.6 / +41.7, stage 2 +24.1 / +28.3 / +40.7 dB ± 0.5; lift +5.8 ± 0.5 at 120 Hz ± 5 %; `fat` +4.8 / +2.0 ± 0.5 | +22.2 / +27.9 / +42.0 and +24.1 / +28.3 / +40.6; +5.9 dB at 124 Hz; +4.7 dB at 120 Hz, +2.1 dB at 1 kHz (+7.2 dB at 40 Hz) |
+| Anchors, Studio OD | 2.8 kHz ± 5 %, 11 ± 0.5 dB; −15.7 ± 1; +4.1 ± 1 | 2,848 Hz, 11.0 dB; −15.7 dB; +4.0 dB |
+| Anchors, Plexi Dist | 67.6 ± 0.5 dB; contour −11.7 / −7.2 / −2.5 ± 0.5 | 67.6 dB; −11.6 / −7.2 / (70 %: −4.6) / −2.5 dB |
+| Response curves (0.1 mV, gain / tone 0 / 50 / 100 %, contour, `fat`) | ± 0.25 dB of `ac_response` | within 0.25 dB at 100 Hz – 8 kHz on all 3 × 11 settings (curves printed by `response_curves_follow_the_netlist`) |
+| Discrete stage vs transistor level (2 JFETs on the tail, 64×) | h2 – h9 within 1 dB (≥ −60 dBc), 10 mV – 1 V, 1 / 4 kHz, 3 gains | stage 2: within 1.15 dB everywhere (one 8th at −31 dBc, 1 V full gain); stage 1: within 0.04 dB below clipping, **up to 5 dB on h2 and 28 dB on an h6 near a null once it clips** (see deviation 3) |
+| Aliasing, 1.2 kHz, −12 dBFS, full gain, tone open, 44.1 kHz | ≤ −70 own; ≤ −65 any swap, contour 0 %, supply 50 / 200 % | Discrete OD −74.7 / worst swap −73.9, supply 50 / 200 % −67.1 / −72.2, `fat` −76.3. Studio OD (4×) −72.2 / worst −66.2 (MOSFET), Ideal −69.3, supply −75.2 / −72.2. Plexi Dist (contour 100 %) −71.5; contour 70 / 0 % −72.2 / −70.8; worst swap −65.8 (MOSFET), Germanium −61.4 at 8× → runs at 16×; supply 50 % −71.8, **150 % (= 200 %) −64.6 dB** |
+| Newton (+12 dBFS squares and noise, every part, 44.1 – 192 kHz) | 0 unsolved, mean ≤ 3 | 0 unsolved on every row but one (below); −6 dBFS 220 Hz at the defaults: 1.02 / 1.01 / 0.83 it per stage-sample, worst sample 17 / 2 / 7 |
+| Stage cuts vs monolithic | ≤ −100 dB | −142 / −209 / −173 dB |
+| Stiff modes | ≤ 3 dB over the 2 fs solve | Studio −124 vs −126, Plexi −101 vs −103 dB; **Discrete OD −47 vs −52 dB** (deviation 4) |
+| Rail clipping where claimed | IC2B, IC2.2 at their rails; linear stamps ≥ 0.5 V inside | IC2.2 1.48 … 7.23 V of 1.50 … 7.20: at its rails; IC2B at a rail at 257 Hz / Spectrum 100 %, 0.13 – 0.3 V short at 55 / 100 Hz (deviation 5); the Discrete OD's IC stage and IC2A ≥ 0.5 V inside at 100 – 200 %, IC2A 0.39 V inside at 50 %, IC1.2 0.04 – 0.45 V inside (it follows IC2.2) |
+| DC point, switches, `fat` / `contour` | ≤ −60 dBFS; ≤ −30 dB burst | silent at activation / reset / switch; re-solve 21 – 31 µs (a 64-sample block with the switch 245 – 309 µs); `fat` −171 dB, `contour` 0 ↔ 100 % −78 dB, circuit switches −50 to −169 dB |
+| Bass keep, cleanup, level | as §5 | 60 Hz THD −53 / −100 / −83 dB; THD with `input` 0 / −6 / −12 dB: Discrete OD −10.5 / −12.6 / −21.5 (≥ 10 dB drop), Studio −13.6 / −14.2 / −16.0, Plexi −11.4 / −11.4 / −11.5 (its rails, not its input, set the clip) |
+| gfx-bench check gfx-dist | — | 28 / 28 at 44.1 – 192 kHz (parameter steps include every `circuit`, `fat`, `contour`: worst burst −53 dB); its CPU line (the defaults: Op-Amp Dist) 3,578 ns mono, 3,591 ns per stereo frame |
+| CPU, mono, 48 kHz | ≤ 5 µs (Discrete OD, Plexi), ≤ 4.2 µs | see below |
+
+**CPU** (best of 3, ns per sample, mono, 48 kHz, `cpu_parts`; the v0.1.0 circuits for scale):
+
+| `circuit` | guitar DI proxy, defaults | DI, full gain | gfx-bench's line (pink noise 0.1 RMS, blocks of 128) |
+|---|---|---|---|
+| Op-Amp Dist | 2,316 – 2,505 | 2,409 – 2,575 | 3,682 – 3,989 |
+| Booster Dist | 3,239 – 3,412 | 3,446 – 3,637 | 5,516 |
+| Discrete OD | **5,207 – 5,333** | **5,321 – 6,247** | **8,489 – 9,069** |
+| Studio OD | 2,238 – 2,354 | 2,291 – 4,570 | 3,258 |
+| Plexi Dist | **5,436 – 6,032** | **5,437 – 6,082** | **9,420 – 10,727** |
+
+**Above the 5 µs Raph accepted** (≈ 24 % of a core) on every signal, for both (the closest: the Discrete
+OD at its defaults on a guitar, 5.2 µs); the Studio OD is within the contract's 4.2 µs. On this machine
+the v0.1.0 circuits measure 10 – 20 % under their README numbers, so the overrun is not the machine. Where
+it goes: pink noise keeps the discrete stage 2 and the Plexi's IC1.1 / IC2.1 stage clipping, 3.0 – 3.6
+Newton iterations per stage-sample against 1 – 2.4 on the four (worst samples 20 – 46). Tried: gfx-fuzz's
+reciprocal pivots and quadratic seed (no measurable gain; the seed left one Plexi sample unsolved at 50 %
+supply: dropped), `set_lean_exp` (kept: −10 % of the exponentials, within the noise in time). Not tried:
+the design's next steps (the last-solution cache on the pair / PNP stages; IC1.1 linear below full
+gain). **The owner's decision.**
+
+**Deviations from the design, and why.**
+
+1. **Supply mapping** (`circuits::rail`): Discrete OD VA = 0.9 × the jack's; Studio OD VA = jack − 0.35 V;
+   **Plexi Dist VA = jack − 0.30 V** (its DC table's 8.7 V; §2.11's text said − 0.35), held at 150 %.
+2. **The gyrators' followers** (Q8, Q2) are linear stamps as designed, written as an ideal buffer + r_e
+   (V_T / I_E at the prototype's bias, 0.31 / 1.0 mA) + r_π = β r_e from base to emitter: the lift comes
+   out at +5.9 dB (prototype with the real NPN +5.8).
+3. **Discrete stage 1 when it clips.** The pair port follows the transistor level below clipping (0.04 dB)
+   and stage 2 everywhere (1.15 dB), but stage 1 clipping into the fixed stack and its diodes differs on
+   the even harmonics (h2 up to 5 dB, an h6 near a null 28 dB): its + JFET leaves saturation when the PNP
+   saturates, which the port's always-saturated law (§2.11, "Limits of the port") does not model. The
+   bench row asserts stage 2 (1.5 dB) and stage 1 below clipping (1 dB); the clipped stage 1 is reported.
+   The two-port pair would not fix this (it is not the lag); a triode-aware pair law would.
+4. **Stiff mode on the Discrete OD kept trapezoidal**: its 0.4 – 0.5 fs band is +4.4 dB over the 2 fs
+   solve. Backward Euler on the 47 / 100 pF across the feedback removes it (−60 vs −53 dB) but costs 3 – 6
+   dB of alias (−74.7 → −68.6 dB, under the policy) and 0.4 dB at 8 kHz; on the Miller capacitors it does
+   not remove it. The band is far above the decimator's stop band. The test allows 5 dB there.
+5. **IC2B "rail-clips on a 100 Hz sine at −12 dBFS"**: measured at a rail at 257 Hz with the Spectrum at
+   100 % (the survey's 4.5 V case), 0.13 – 0.3 V short of it at 55 and 100 Hz (the input's 184 Hz
+   high-pass and IC1A's 48 Hz leg keep low notes from filling the hard clipper at −12 dBFS). Its macro
+   stays. IC1.2's linear stamp: inside its rails, not 0.5 V inside, when IC2.2 clips (it is the same part
+   on the same rails behind a passive network: it cannot be asked more).
+6. **Plexi Dist at its 150 % cap: −64.6 dB of alias** against −65 dB (prototype −65.9 with an ideal
+   decimator); the alias test carries this one case at −64.5 dB and says so. **And at the 50 % floor**
+   (VA 4.2 V, the LM833's 1.2 V of swing) one sample per 1 – 2 s is held on some sines of 0.2 – 0.5 V
+   (`supply_moves_bias_and_rails_monotonically` allows 1 there; 50.5 – 65 % solve every sample).
+7. **`opamp` is not hidden on the Discrete OD**: `groups.json`'s `depends` has an `equals` form only; it
+   stays visible and inert (`fat`, `contour` are hidden off their circuits as designed).
+8. **The Discrete OD's offline reference** keeps the netlist's exact cuts (13 ports at transistor level,
+   over a stage's 12): the gates' 10⁻¹⁴ A of reverse current is what the cut at Q5's gate leaves out.
+9. **ngspice is not installed**: the three decks are committed (`fixtures/*.cir`, the Discrete OD's with
+   its four JFETs as `J` cards) and the reference lines come from `circuit_nl`'s offline mode.
+10. `level` 0 dB = unity at the defaults: **K = +0.2 / −17.6 / −22.4 dB** (DI proxy); hardware level pot
+    fully up: Discrete OD +20.7 dB over its fixed 50 % (§2.11), Studio OD +17.6, Plexi Dist +22.4 dB.
+11. Presets: the ten of §4 (the "18 Volt Plexi" dropped as decided), `level` set so each is within ±2 dB
+    of the bypass on the DI proxy (`preset_levels`).
 
 ## As coded (v0.1.0)
 
