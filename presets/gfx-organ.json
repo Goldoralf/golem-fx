@@ -114,7 +114,8 @@
    "params": {
     "register": "Bark",
     "drive": 20,
-    "leslie": "Fast"
+    "leslie": "Fast",
+    "organ": 3
    }
   },
   {
@@ -140,7 +141,8 @@
    "default": false,
    "params": {
     "register": "Combo",
-    "mod": 60
+    "mod": 60,
+    "organ": -4
    }
   },
   {
@@ -169,7 +171,8 @@
     "register": "Nave",
     "swell": 600,
     "hold": 100,
-    "dry": -12
+    "dry": -17,
+    "organ": -5
    },
    "notes": "The slow attack hides the registration's bloom entirely"
   },
@@ -196,7 +199,8 @@
    "default": false,
    "params": {
     "register": "Chime",
-    "click": 20
+    "click": 20,
+    "organ": 3
    },
    "notes": "Single notes above the 7th fret speak best"
   },
@@ -225,7 +229,8 @@
    "default": false,
    "params": {
     "register": "Velvet",
-    "touch": 0
+    "touch": 0,
+    "organ": -2
    }
   },
   {
@@ -252,7 +257,8 @@
    "params": {
     "register": "Coupler",
     "click": 60,
-    "dry": -6
+    "dry": -9,
+    "organ": -3
    }
   },
   {
@@ -312,7 +318,8 @@
     "db8": 8,
     "db4": 0,
     "lowest": 35,
-    "speaker": "Off"
+    "speaker": "Off",
+    "organ": -5
    }
   },
   {
@@ -375,7 +382,8 @@
     "db135": 8,
     "db113": 8,
     "db1": 8,
-    "leslie": "Fast"
+    "leslie": "Fast",
+    "organ": -4
    }
   },
   {
@@ -400,7 +408,8 @@
     "register": "Custom",
     "perc": true,
     "perc_harm": "3rd",
-    "speaker": "Off"
+    "speaker": "Off",
+    "organ": -3
    },
    "notes": "Custom starts as golem's organ block (88 8000 000); add the 3rd percussion as Trio has it"
   }

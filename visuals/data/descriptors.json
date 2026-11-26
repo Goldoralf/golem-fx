@@ -69328,7 +69328,7 @@
      "default": false,
      "params": {
       "register": "Bark",
-      "organ": 0,
+      "organ": 3,
       "dry": -60,
       "mod": 50,
       "click": 30,
@@ -69388,7 +69388,7 @@
      "default": false,
      "params": {
       "register": "Combo",
-      "organ": 0,
+      "organ": -4,
       "dry": -60,
       "mod": 60,
       "click": 30,
@@ -69449,8 +69449,8 @@
      "default": false,
      "params": {
       "register": "Nave",
-      "organ": 0,
-      "dry": -12,
+      "organ": -5,
+      "dry": -17,
       "mod": 50,
       "click": 30,
       "leslie": "Slow",
@@ -69510,7 +69510,7 @@
      "default": false,
      "params": {
       "register": "Chime",
-      "organ": 0,
+      "organ": 3,
       "dry": -60,
       "mod": 50,
       "click": 20,
@@ -69573,7 +69573,7 @@
      "default": false,
      "params": {
       "register": "Velvet",
-      "organ": 0,
+      "organ": -2,
       "dry": -60,
       "mod": 50,
       "click": 30,
@@ -69633,8 +69633,8 @@
      "default": false,
      "params": {
       "register": "Coupler",
-      "organ": 0,
-      "dry": -6,
+      "organ": -3,
+      "dry": -9,
       "mod": 50,
       "click": 60,
       "leslie": "Slow",
@@ -69755,7 +69755,7 @@
      "default": true,
      "params": {
       "register": "Custom",
-      "organ": 0,
+      "organ": -5,
       "dry": -60,
       "mod": 50,
       "click": 30,
@@ -69876,7 +69876,7 @@
      "default": false,
      "params": {
       "register": "Custom",
-      "organ": 0,
+      "organ": -4,
       "dry": -60,
       "mod": 50,
       "click": 30,
@@ -69933,7 +69933,7 @@
      "default": false,
      "params": {
       "register": "Custom",
-      "organ": 0,
+      "organ": -3,
       "dry": -60,
       "mod": 50,
       "click": 30,
