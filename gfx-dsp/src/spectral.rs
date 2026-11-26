@@ -190,11 +190,13 @@ pub struct CoreSettings {
     /// The ownership fade (polysynth: 0 Spectral, 1 Mono) and `residue` (0 – 1).
     pub mono: f64,
     pub residue: f64,
+    /// The floor's fade-out (s); 0 = 30 ms (polysynth's, precomputed).
+    pub release: f64,
 }
 
 impl Default for CoreSettings {
     fn default() -> Self {
-        Self { bank: BankMode::Dual, compress: 0.4, thresh_db: -66.0, lowest: 70.0, mono: 0.0, residue: 1.0 }
+        Self { bank: BankMode::Dual, compress: 0.4, thresh_db: -66.0, lowest: 70.0, mono: 0.0, residue: 1.0, release: 0.0 }
     }
 }
 
@@ -209,6 +211,9 @@ pub trait Shaper {
     fn reset(&mut self);
     /// Once per control tick, after the analysis, the sieve and the gains.
     fn tick(&mut self, a: &Analysis);
+    /// Once per bank sample, before the bands (per-sample envelopes).
+    #[inline(always)]
+    fn sample(&mut self) {}
     /// One sample of band `b` of bank `bank` (0 clean, 1 fast): `ur`, `ui` its turned unit phasor,
     /// `m` = |z_b|, `kk` its gain (selection, floor, enable, handover, hold, skirt, × 2), `mk` its mask,
     /// `f` = f̂_b, `pur` its purity. Adds into `out` (main, copy).
@@ -357,6 +362,7 @@ impl Bank {
         let open = close * 2.0;
         let lo = 0.8 * s.lowest;
         let c = s.compress.clamp(0.0, 1.0);
+        let g_down = if s.release > 0.0 { k.tick_s / s.release } else { k.g_down };
         for b in 0..self.n {
             let (zr, zi) = (re[b], im[b]);
             let m2 = zr * zr + zi * zi;
@@ -410,7 +416,7 @@ impl Bank {
             } else if !self.gate_open[b] && lv > open {
                 self.gate_open[b] = true;
             }
-            self.gate[b] = if self.gate_open[b] { (self.gate[b] + k.g_up).min(1.0) } else { (self.gate[b] - k.g_down).max(0.0) };
+            self.gate[b] = if self.gate_open[b] { (self.gate[b] + k.g_up).min(1.0) } else { (self.gate[b] - g_down).max(0.0) };
             // enabled above `lowest` × 0.8
             let on = fc >= lo * (1.0 - 1e-9);
             self.en[b] = if on { (self.en[b] + k.en_step).min(1.0) } else { (self.en[b] - k.en_step).max(0.0) };
@@ -677,6 +683,7 @@ impl<S: Shaper> Core<S> {
         if self.phase == TICK {
             self.phase = 0;
         }
+        self.shaper.sample();
         let (a1, b1) = self.a.clean.render(0, &mut self.shaper);
         let (a2, b2) = self.a.fast.render(1, &mut self.shaper);
         (a1 + a2, b1 + b2)
@@ -698,7 +705,7 @@ impl<S: Shaper> Core<S> {
         }
         // ---- the root sieve, on the clean bank (gfx-organ §2.3)
         if S::SIEVE {
-            a.sieve.tick(&a.clean, a.picked, now);
+            a.sieve.tick(&a.clean, a.picked, now, s.thresh_db);
         }
         let n = a.clean.n;
         if s.bank == BankMode::Dual {

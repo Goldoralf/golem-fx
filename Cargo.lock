@@ -1256,6 +1256,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gfx-organ"
+version = "0.1.0"
+dependencies = [
+ "gfx-dsp",
+ "gfx-ui",
+ "nih_plug",
+ "realfft",
+]
+
+[[package]]
 name = "gfx-phaser"
 version = "0.1.0"
 dependencies = [

@@ -365,7 +365,7 @@ impl Core {
 
     /// The settings for the coming ticks.
     pub fn set(&mut self, s: CoreSettings) {
-        self.core.set(sp::CoreSettings { bank: s.bank, compress: s.compress, thresh_db: s.thresh_db, lowest: s.lowest, mono: s.mono, residue: s.residue });
+        self.core.set(sp::CoreSettings { bank: s.bank, compress: s.compress, thresh_db: s.thresh_db, lowest: s.lowest, mono: s.mono, residue: s.residue, release: 0.0 });
         self.core.shaper.s = s;
     }
 
