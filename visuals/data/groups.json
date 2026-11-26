@@ -1615,7 +1615,9 @@
           "diodes",
           "opamp",
           "supply",
-          "hp"
+          "hp",
+          "fat",
+          "contour"
         ]
       },
       {
@@ -3473,6 +3475,14 @@
       "hp": {
         "param": "circuit",
         "equals": "MOSFET OD"
+      },
+      "fat": {
+        "param": "circuit",
+        "equals": "Discrete OD"
+      },
+      "contour": {
+        "param": "circuit",
+        "equals": "Plexi Dist"
       }
     },
     "gfx-mbcomp": {

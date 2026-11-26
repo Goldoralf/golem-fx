@@ -43,15 +43,25 @@ pub mod p {
     pub const TIGHT: usize = 8;
     pub const INPUT: usize = 9;
     pub const BASS_KEEP: usize = 10;
+    pub const FAT: usize = 11;
+    pub const CONTOUR: usize = 12;
 }
 
-/// The `circuit` options shipped, in the README's order.
-pub const CIRCUITS: [&str; N_CIRCUITS] = ["Op-Amp Dist", "Booster Dist", "Blend OD", "MOSFET OD"];
-pub const N_CIRCUITS: usize = 4;
+/// The `circuit` options shipped, in the README's order; the three of 0.8 appended after MOSFET OD
+/// (an enum grows at the end only).
+pub const CIRCUITS: [&str; N_CIRCUITS] = ["Op-Amp Dist", "Booster Dist", "Blend OD", "MOSFET OD", "Discrete OD", "Studio OD", "Plexi Dist"];
+pub const N_CIRCUITS: usize = 7;
+/// The circuits of v0.1.0 (their renders are bit-identical: tests/golden.rs).
+pub const N_CIRCUITS_V1: usize = 4;
+pub const DISCRETE_OD: usize = 4;
+pub const STUDIO_OD: usize = 5;
+pub const PLEXI_DIST: usize = 6;
 pub const DIODES: [&str; 7] = ["Circuit", "Silicon", "Germanium", "LED", "MOSFET", "MOSFET + Ge", "None"];
 pub const OPAMPS: [&str; 6] = ["Circuit", "LM308", "LM358", "4558", "TL072", "Ideal"];
 
-pub static PARAMS: [ParamInfo; 11] = [
+pub const NP: usize = 13;
+
+pub static PARAMS: [ParamInfo; NP] = [
     ParamInfo::enumeration("circuit", "Circuit", N_CIRCUITS as u32, 0),
     ParamInfo::float("gain", "Gain", 0.0, 100.0, 50.0).with_exp(),
     ParamInfo::float("tone_stack", "Tone", 0.0, 100.0, 50.0).with_exp(),
@@ -63,11 +73,14 @@ pub static PARAMS: [ParamInfo; 11] = [
     ParamInfo::float("tight", "Tight", 20.0, 1000.0, 20.0),
     ParamInfo::float("input", "Input", -12.0, 12.0, 0.0),
     ParamInfo::float("bass_keep", "Bass Keep", 0.0, 500.0, 0.0),
+    // appended 2026-11-26 (after `bass_keep`: no parameter index moves)
+    ParamInfo::boolean("fat", "Fat", false),
+    ParamInfo::float("contour", "Contour", 0.0, 100.0, 70.0).with_exp(),
 ];
 
 /// K(circuit), dB: `level` 0 dB = the bypass loudness at `gain` 50 %, `tone_stack` 50 % (README §2.4;
 /// measured by `tests::level_constants`). "Hardware level pot fully up" = `level` −K.
-pub const K_DB: [f64; N_CIRCUITS] = [-14.0, -3.6, -27.0, -16.3];
+pub const K_DB: [f64; N_CIRCUITS] = [-14.0, -3.6, -27.0, -16.3, 0.2, -17.6, -22.4];
 
 const MAX_CH: usize = 2;
 const FADE_CIRCUIT_MS: f64 = 30.0;
@@ -82,7 +95,10 @@ pub fn build(k: usize) -> Circuit {
         0 => opamp_dist(),
         1 => booster_dist(),
         2 => blend_od(),
-        _ => mosfet_od(),
+        3 => mosfet_od(),
+        DISCRETE_OD => discrete_od(),
+        STUDIO_OD => studio_od(),
+        _ => plexi_dist(),
     }
 }
 
@@ -138,7 +154,14 @@ impl Compiled {
         let base = if fast { def.ideal_stages } else { def.stages };
         let stages = force.unwrap_or_else(|| stages_at(base, sr));
         let fs = sr * (1usize << stages) as f64;
-        let nc = NonlinearCircuit::new(&def.net, fs);
+        let mut nc = NonlinearCircuit::new(&def.net, fs);
+        if k >= N_CIRCUITS_V1 {
+            // the circuits of 0.8 skip the negligible exponentials; the four of v0.1.0 keep their
+            // solve (bit-identical renders). gfx-fuzz's reciprocal pivots and quadratic seed were
+            // tried: no measurable gain here, and the seed left one sample unsolved on the Plexi Dist
+            // at `supply` 50 %
+            nc.set_lean_exp(true);
+        }
         let tw = def.net.linear_twin(def.twin.0, def.twin.1);
         let twin = NonlinearCircuit::new(&tw, sr);
         Self { def, nc, twin, stages }
@@ -158,6 +181,22 @@ impl Compiled {
         }
     }
 
+    /// `fat`'s switch resistor (a glide in log R: no matrix change but Woodbury's).
+    fn set_fat(&mut self, ohms: f64) {
+        if let Some((v, _)) = self.def.fat {
+            self.nc.set_var(v, ohms);
+            self.twin.set_var(v - first_twin_var(&self.def), ohms);
+        }
+    }
+
+    fn set_contour(&mut self, contour: f64) {
+        for &(pt, rev) in &self.def.contour {
+            let t = if rev { 1.0 - contour } else { contour };
+            self.nc.set_pot(pt, t);
+            self.twin.set_pot(pt, t);
+        }
+    }
+
     fn set_pots(&mut self, gain: f64, tone: f64) {
         for &(pt, rev) in &self.def.gain {
             let t = if rev { 1.0 - gain } else { gain };
@@ -171,6 +210,7 @@ impl Compiled {
         }
     }
 
+    /// `vs`: the netlist's own supply (its u₁: `rail` of the jack's).
     fn set_supply(&mut self, vs: f64) {
         self.nc.set_input(IN_VS, vs);
         self.nc.set_input(IN_VB, 0.5 * vs);
@@ -213,7 +253,9 @@ impl Slot {
     /// The variant a configuration runs on.
     fn variant(&self, cfg: Config) -> usize {
         let fast = N_CIRCUITS + cfg.circuit;
-        if cfg.opamp == 5 && self.circuits[fast].stages != self.circuits[cfg.circuit].stages {
+        let def = &self.circuits[cfg.circuit].def;
+        let swap = def.fast_opamps.contains(&cfg.opamp) || def.fast_diodes.contains(&cfg.diodes);
+        if swap && self.circuits[fast].stages != self.circuits[cfg.circuit].stages {
             fast
         } else {
             cfg.circuit
@@ -286,12 +328,16 @@ struct Chan {
 
 pub struct Dist {
     sr: f64,
-    v: [f32; 11],
+    v: [f32; NP],
     ch: Vec<Chan>,
     now: u64,
     gain: ExpSmoother,
     tone: ExpSmoother,
     level: ExpSmoother,
+    contour: ExpSmoother,
+    /// `fat`'s switch resistor, ln R: glides exponentially (20 ms) to its target.
+    fat_ln: f64,
+    fat_coef: f64,
     supply: OnePole,
     tight: OnePole,
     input: OnePole,
@@ -325,7 +371,7 @@ pub struct Dist {
 
 impl Dist {
     pub fn new() -> Self {
-        let v: [f32; 11] = std::array::from_fn(|i| PARAMS[i].default);
+        let v: [f32; NP] = std::array::from_fn(|i| PARAMS[i].default);
         let exp = |i: usize| ExpSmoother::new(PARAMS[i].min, PARAMS[i].max, PARAMS[i].default);
         Self {
             sr: 48000.0,
@@ -335,6 +381,9 @@ impl Dist {
             gain: exp(p::GAIN),
             tone: exp(p::TONE),
             level: exp(p::LEVEL),
+            contour: exp(p::CONTOUR),
+            fat_ln: FAT_OFF.ln(),
+            fat_coef: 0.0,
             supply: OnePole::new(100.0, 100.0, 1e-4),
             tight: OnePole::new(30.0, 20.0, 1e-2),
             input: OnePole::new(20.0, 0.0, 1e-4),
@@ -365,8 +414,17 @@ impl Dist {
         }
     }
 
+    /// The netlist's supply (VA) for circuit `k` at the present `supply`.
     fn supply_volts(&self, k: usize) -> f64 {
-        build_supply(k) * self.supply.value() as f64 / 100.0
+        rail(k, build_supply(k) * self.supply.value() as f64 / 100.0)
+    }
+
+    fn fat_target(&self) -> f64 {
+        if self.v[p::FAT] > 0.5 {
+            FAT_ON.ln()
+        } else {
+            FAT_OFF.ln()
+        }
     }
 
     /// Puts slot `s` of every channel on `cfg` at rest (DC point), with the current controls.
@@ -386,6 +444,8 @@ impl Dist {
             let cc = &mut dst.circuits[k];
             cc.apply(cfg);
             cc.set_pots(g, t);
+            cc.set_contour(self.contour.value() as f64 / 100.0);
+            cc.set_fat(self.fat_ln.exp());
             cc.set_supply(vs);
             cc.nc.set_input(IN_SIG, 0.0);
             cc.nc.solve_dc();
@@ -467,13 +527,14 @@ impl Dist {
     }
 }
 
-/// A circuit's own supply.
+/// A circuit's own supply at the jack (V); the netlist sees `circuits::rail` of it.
 pub fn build_supply(k: usize) -> f64 {
     SUPPLY[k]
 }
 
-/// Each circuit's own supply (V): 9 V on all four shipped circuits (the Blend OD's pumped
-/// +18 / −9 V rails follow it as multiples; the Discrete OD's 8 V will be the first to differ).
+/// Each circuit's own supply at the jack (V): 9 V on all seven (the Blend OD's pumped +18 / −9 V
+/// rails follow it as multiples; the Discrete OD's VA ≈ 0.9 × it through its regulator; the Studio
+/// OD and the Plexi Dist lose their Schottky's drop: `circuits::rail`).
 pub const SUPPLY: [f64; N_CIRCUITS] = [9.0; N_CIRCUITS];
 
 impl Default for Dist {
@@ -498,7 +559,8 @@ impl Effect for Dist {
                 let cfg = Config { circuit: k, diodes: 0, opamp: 0, hp: false };
                 c.apply(cfg);
                 c.set_pots(0.5, 0.5);
-                c.set_supply(build_supply(k));
+                c.set_contour(PARAMS[p::CONTOUR].default as f64 / 100.0);
+                c.set_supply(rail(k, build_supply(k)));
                 c.nc.init_dc();
                 c.twin.init_dc();
                 c
@@ -523,9 +585,11 @@ impl Effect for Dist {
         for c in &mut self.ch {
             c.dc.set(5.0, self.sr);
         }
-        for e in [&mut self.gain, &mut self.tone, &mut self.level] {
+        for e in [&mut self.gain, &mut self.tone, &mut self.level, &mut self.contour] {
             e.prepare(sample_rate);
         }
+        // the 20 ms glide: ln R within 1 % of the way (e⁻⁴·⁶) in 20 ms
+        self.fat_coef = 1.0 - (-4.6 / (0.020 * self.sr)).exp();
         for s in [&mut self.supply, &mut self.tight, &mut self.input, &mut self.bass_keep, &mut self.tight_mix] {
             s.prepare(sample_rate);
         }
@@ -540,6 +604,9 @@ impl Effect for Dist {
         self.tone.reset();
         self.level.settle(v[p::LEVEL]);
         self.level.reset();
+        self.contour.settle(v[p::CONTOUR]);
+        self.contour.reset();
+        self.fat_ln = self.fat_target();
         let on = if v[p::TIGHT] > 20.5 { 1.0 } else { 0.0 };
         self.tight_mix.set_target(on);
         for s in [&mut self.supply, &mut self.tight, &mut self.input, &mut self.bass_keep, &mut self.tight_mix] {
@@ -586,6 +653,7 @@ impl Effect for Dist {
             p::GAIN => self.gain.set_target(v, now),
             p::TONE => self.tone.set_target(v, now),
             p::LEVEL => self.level.set_target(v, now),
+            p::CONTOUR => self.contour.set_target(v, now),
             p::SUPPLY => self.supply.set_target(v),
             p::TIGHT => self.tight.set_target(v),
             p::INPUT => self.input.set_target(v),
@@ -641,9 +709,20 @@ impl Effect for Dist {
             }
             // ---- continuous controls
             let pots = !self.gain.is_settled() || !self.tone.is_settled();
+            let contour = !self.contour.is_settled();
             self.gain.next();
             self.tone.next();
             self.level.next();
+            self.contour.next();
+            // `fat`: its resistor glides in log R (README §2.11), then snaps to the end value
+            let ft = self.fat_target();
+            let fat = self.fat_ln != ft;
+            if fat {
+                self.fat_ln += self.fat_coef * (ft - self.fat_ln);
+                if (ft - self.fat_ln).abs() < 1e-3 {
+                    self.fat_ln = ft;
+                }
+            }
             let sup = !self.supply.is_settled();
             self.supply.next();
             for s in [&mut self.tight, &mut self.input, &mut self.bass_keep] {
@@ -653,8 +732,9 @@ impl Effect for Dist {
             let (g, t) = (self.gain.value() as f64 / 100.0, self.tone.value() as f64 / 100.0);
             let running = [self.active, 1 - self.active];
             let n_run = if self.fade > 0.0 { 2 } else { 1 };
-            if pots || sup {
+            if pots || sup || contour || fat {
                 let pct = self.supply.value() as f64 / 100.0;
+                let (ct, fr) = (self.contour.value() as f64 / 100.0, self.fat_ln.exp());
                 for c in self.ch.iter_mut().take(live) {
                     for &s in &running[..n_run] {
                         let slot = &mut c.slots[s];
@@ -663,8 +743,14 @@ impl Effect for Dist {
                         if pots {
                             cc.set_pots(g, t);
                         }
+                        if contour {
+                            cc.set_contour(ct);
+                        }
+                        if fat {
+                            cc.set_fat(fr);
+                        }
                         if sup {
-                            cc.set_supply(build_supply(k) * pct);
+                            cc.set_supply(rail(k, build_supply(k) * pct));
                         }
                     }
                 }

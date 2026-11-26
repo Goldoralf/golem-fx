@@ -913,7 +913,7 @@
    ]
   },
   "gfx-dist": {
-   "purpose": "Circuit-simulated distortion pedals (op-amp dist, booster dist, clean-blend OD, MOSFET OD) solved as real circuits; swappable diodes and op-amps.",
+   "purpose": "Seven circuit-simulated drives (op-amp, booster, clean-blend, MOSFET, discrete blues, studio OD, plexi) solved as real circuits; swappable diodes, op-amps.",
    "roles": [
     "guitar",
     "bass"
@@ -932,7 +932,7 @@
    ],
    "avoid": [],
    "cpu": "heavy",
-   "cpu_note": "per circuit 3.1-4.1 us; 6.8 us on a loaded machine; a circuit switch doubles it for 30 ms; L!=R stereo doubles"
+   "cpu_note": "2.3-4.1 us per circuit, Discrete OD / Plexi 5-6 us; a circuit switch doubles it 30 ms; L!=R stereo doubles"
   },
   "gfx-transient": {
    "purpose": "Threshold-free transient shaper: boosts or cuts attacks and sustain in dB, the same at any playing level, for picks, bass, drums and voice.",

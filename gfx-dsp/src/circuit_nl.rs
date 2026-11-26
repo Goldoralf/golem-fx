@@ -9,7 +9,10 @@
 //!   with an optional MOSFET channel), BJTs (Ebers–Moll, NPN / PNP, SPICE temperature law, collector-
 //!   junction leakage scale), op-amp macromodels (a tanh or square-law input stage charging a 30 pF
 //!   compensation capacitor — slew and gain-bandwidth from one law — with a leak setting A₀, rails
-//!   that follow the supply, an optional output resistance). Every device constant is a run-time
+//!   that follow the supply, an optional output resistance), JFETs (Shichman–Hodges, drain / source
+//!   symmetric, optional soft pinch-off) and the JFET pair port (a differential pair on its tail as
+//!   one transconductor port, the tail following the common mode one sample late: gfx-dist §2.11's
+//!   discrete op-amps). Every device constant is a run-time
 //!   parameter: no matrix depends on one.
 //! - **Discretisation**: trapezoidal companion models at the given (oversampled) rate, or backward
 //!   Euler for a capacitor that would ring at half the rate (a stiff mode). States are the companions'
@@ -67,6 +70,8 @@ pub const MAX_PORTS: usize = 12;
 pub const MAX_VARS: usize = 12;
 /// Exponentials continue linearly beyond this argument (SPICE).
 const EXP_LIM: f64 = 40.0;
+/// [`NonlinearCircuit::set_lean_exp`]: e^(−36) = 2.3·10⁻¹⁶.
+const LEAN_LIM: f64 = 36.0;
 
 /// The thermal voltage kT / q at `celsius`.
 pub fn thermal_voltage(celsius: f64) -> f64 {
@@ -276,6 +281,61 @@ pub struct OpAmpModel {
     pub square_law: bool,
 }
 
+/// Shichman–Hodges JFET (SPICE level 1), drain / source symmetric (the higher of the two is the
+/// drain). Ports (v_GS, v_GD) like the BJT's (v_BE, v_BC); currents (i_G, i_D). gfx-dist §2.11: the
+/// transistor-level reference of the discrete op-amps, `to_spice`, and later gfx-fuzz / preamps.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct JfetModel {
+    pub n_channel: bool,
+    /// Pinch-off, V, in the device's own sign as SPICE writes it (negative for a depletion JFET, N or
+    /// P: the P channel's voltages are mirrored, its V_TO is not).
+    pub vto: f64,
+    /// A / V².
+    pub beta: f64,
+    /// 1 / V.
+    pub lambda: f64,
+    /// The gate junctions' saturation current, A; 0 = no gate current (exact cuts at a gate).
+    pub is: f64,
+    /// Their emission coefficient.
+    pub n: f64,
+    /// V / °C (ngspice VTOTC; 0 = SPICE's default).
+    pub vtotc: f64,
+    /// % / °C (ngspice BETATCE; 0).
+    pub betatce: f64,
+    pub tnom: f64,
+    /// Knee width at pinch-off, V: v_ov = soft · ln(1 + e^((v_GS − V_TO) / soft)); 0 = SPICE's hard knee.
+    pub soft: f64,
+}
+
+/// A JFET differential pair on a tail, as one transconductor port (the op-amp macro's input port,
+/// with the exact pair law and its own output node): i(drain → 0) = I_t / 2 + Δ / 2,
+/// Δ = β v_d √(2 I_t / β − v_d²) for |v_d| < √(I_t / β), ±I_t beyond; v_d = v(+) − v(−); no gate
+/// current. `tail_r` > 0: I_t follows the common mode, I_t = v_s / tail_r with v_s = v_cm − (V_TO +
+/// √(I_t / 2β)), v_cm from the previous sample (one port); `i_tail` is then only the DC seed. I_t is a
+/// constant during a sample's Newton solve; it is latched from the node voltages after each solved
+/// sample (gfx-dist §2.11).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PairModel {
+    pub beta: f64,
+    pub i_tail: f64,
+    /// 0 = fixed tail.
+    pub tail_r: f64,
+    pub vto: f64,
+}
+
+impl PairModel {
+    /// The tail current a common mode `vcm` gives (the closed form: a quadratic in √I_t).
+    pub fn tail_at(&self, vcm: f64) -> f64 {
+        if self.tail_r <= 0.0 {
+            return self.i_tail;
+        }
+        let a = 1.0 / (2.0 * self.beta).sqrt();
+        let c = (vcm - self.vto).max(0.0);
+        let s = (-a + (a * a + 4.0 * self.tail_r * c).sqrt()) / (2.0 * self.tail_r);
+        (s * s).max(1e-15)
+    }
+}
+
 /// What a device is.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DeviceModel {
@@ -288,13 +348,15 @@ pub enum DeviceModel {
     /// the circuit's matrices: a part swap keeps it ([`NonlinearCircuit::set_device`] asserts).
     /// gfx-octafuzz's Q2 (gfx-fuzz §2.8, way 2).
     BjtForward(BjtModel),
+    Jfet(JfetModel),
+    Pair(PairModel),
 }
 
 impl DeviceModel {
     fn ports(&self) -> usize {
         match self {
-            DeviceModel::Clipper(_) | DeviceModel::BjtForward(_) => 1,
-            DeviceModel::Bjt(_) | DeviceModel::OpAmp(_) => 2,
+            DeviceModel::Clipper(_) | DeviceModel::BjtForward(_) | DeviceModel::Pair(_) => 1,
+            DeviceModel::Bjt(_) | DeviceModel::OpAmp(_) | DeviceModel::Jfet(_) => 2,
         }
     }
 }
@@ -348,6 +410,55 @@ enum Eval {
         ivlin: f64,
         ivc: f64,
     },
+    Jfet {
+        s: f64,
+        beta: f64,
+        vto: f64,
+        lambda: f64,
+        soft: f64,
+        is: f64,
+        nvt: f64,
+        vcrit: f64,
+        ivt: f64,
+    },
+    Pair {
+        beta: f64,
+        /// The latched tail current, and from it √(I_t / β) and 2 I_t / β.
+        it: f64,
+        lim: f64,
+        k2: f64,
+        model: PairModel,
+    },
+}
+
+/// The pair port's constants for tail current `it`.
+fn pair_eval(model: PairModel, it: f64) -> Eval {
+    Eval::Pair { beta: model.beta, it, lim: (it / model.beta).sqrt(), k2: 2.0 * it / model.beta, model }
+}
+
+/// A JFET channel in its normal mode (v_GS = `a` ≥ v_GD = `b`): (i_DS, ∂i/∂a, ∂i/∂b).
+#[inline]
+fn jfet_channel(beta: f64, vto: f64, lambda: f64, soft: f64, a: f64, b: f64) -> (f64, f64, f64) {
+    let x = a - vto;
+    let (g, gp) = if soft > 0.0 {
+        softplus(x, soft, 1.0 / soft)
+    } else if x > 0.0 {
+        (x, 1.0)
+    } else {
+        (0.0, 0.0)
+    };
+    if g <= 0.0 {
+        return (0.0, 0.0, 0.0);
+    }
+    let d = a - b;
+    let cl = 1.0 + lambda * d;
+    let (i, di_dd, di_dg) = if d >= g {
+        (beta * g * g * cl, beta * g * g * lambda, 2.0 * beta * g * cl)
+    } else {
+        let f = d * (2.0 * g - d);
+        (beta * f * cl, beta * ((2.0 * g - 2.0 * d) * cl + f * lambda), 2.0 * beta * d * cl)
+    };
+    (i, di_dd + di_dg * gp, -di_dd)
 }
 
 /// The rail clamp: a knee of 20 mV, then a conductance that holds the full slew current within
@@ -414,13 +525,42 @@ fn evaluate(model: &DeviceModel, rails: (f64, f64), celsius: f64, supply: f64) -
                 ivc: 1.0 / RAIL_KNEE,
             }
         }
+        DeviceModel::Jfet(f) => {
+            // ngspice level 1: V_TO + VTOTC (T − T₀), β · 1.01^(BETATCE (T − T₀)); Is by the junction law
+            let dt = celsius - f.tnom;
+            let (is, nvt) = if f.is > 0.0 { Junction { is: f.is, n: f.n, eg: 1.11, xti: 3.0, tnom: f.tnom }.at(celsius) } else { (0.0, f.n * thermal_voltage(celsius)) };
+            Eval::Jfet {
+                s: if f.n_channel { 1.0 } else { -1.0 },
+                beta: f.beta * 1.01f64.powf(f.betatce * dt),
+                vto: f.vto + f.vtotc * dt,
+                lambda: f.lambda,
+                soft: f.soft,
+                is,
+                nvt,
+                vcrit: if is > 0.0 { vcrit(is, nvt) } else { 1e9 },
+                ivt: 1.0 / nvt,
+            }
+        }
+        DeviceModel::Pair(p) => pair_eval(p, p.i_tail),
+    }
+}
+
+impl Eval {
+    /// The device's port count.
+    fn ports(&self) -> usize {
+        match self {
+            Eval::Clipper { .. } | Eval::BjtFwd { .. } | Eval::Pair { .. } => 1,
+            _ => 2,
+        }
     }
 }
 
 impl Eval {
     /// Port currents and their Jacobian (rows / cols `off..off + ports`, row stride `m`).
     #[inline]
-    fn eval(&self, v: &[f64], i: &mut [f64], jac: &mut [f64], m: usize, off: usize) -> usize {
+    /// `lean`: an exponential whose argument is below −LEAN_LIM is taken as 0 (its term is under
+    /// 10⁻¹⁵ of the device's scale), and skipped ([`NonlinearCircuit::set_lean_exp`]).
+    fn eval(&self, v: &[f64], i: &mut [f64], jac: &mut [f64], m: usize, off: usize, lean: bool) -> usize {
         match *self {
             Eval::Clipper { isp, nvp, isn, nvn, chp, chn, ivp, ivn, .. } => {
                 let x = v[off];
@@ -466,8 +606,9 @@ impl Eval {
             Eval::Bjt { s, is, bf, br, kl, ivt, ivtr, .. } => {
                 let vbe = s * v[off];
                 let vbc = s * v[off + 1];
-                let (ef, def) = exp_lin(vbe * ivt);
-                let (er, der) = exp_lin(vbc * ivtr);
+                let (xf, xr) = (vbe * ivt, vbc * ivtr);
+                let (ef, def) = if lean && xf < -LEAN_LIM { (0.0, 0.0) } else { exp_lin(xf) };
+                let (er, der) = if lean && xr < -LEAN_LIM { (0.0, 0.0) } else { exp_lin(xr) };
                 let i_f = is * (ef - 1.0);
                 let i_r = is * (er - 1.0);
                 let gf = is * def * ivt;
@@ -499,6 +640,9 @@ impl Eval {
                         i[off] = it * y.signum();
                         jac[off * m + off] = 0.0;
                     }
+                } else if lean && 2.0 * x.abs() > LEAN_LIM {
+                    jac[off * m + off] = 0.0;
+                    i[off] = it * x.signum();
                 } else {
                     let a = fast_exp(-2.0 * x.abs());
                     let q = 1.0 / (1.0 + a);
@@ -514,15 +658,85 @@ impl Eval {
                 // the rail clamp: a diode-like conductance gc with a soft-plus knee of vc
                 let x = if w > mid { w - hi } else { lo - w };
                 let s = if w > mid { 1.0 } else { -1.0 };
-                let (sp, ds) = softplus(x, vc, ivc);
-                cur += s * gc * sp;
-                d += gc * ds;
-                exps += 1;
+                if !(lean && x * ivc < -LEAN_LIM) {
+                    let (sp, ds) = softplus(x, vc, ivc);
+                    cur += s * gc * sp;
+                    d += gc * ds;
+                    exps += 1;
+                }
                 i[off + 1] = cur;
                 jac[(off + 1) * m + off + 1] = d;
                 exps
             }
+            Eval::Jfet { s, beta, vto, lambda, soft, is, ivt, .. } => {
+                let x = s * v[off];
+                let y = s * v[off + 1];
+                let (ic, dx, dy) = if x >= y {
+                    jfet_channel(beta, vto, lambda, soft, x, y)
+                } else {
+                    let (i2, da, db) = jfet_channel(beta, vto, lambda, soft, y, x);
+                    (-i2, -db, -da)
+                };
+                let mut exps = if soft > 0.0 { 1 } else { 0 };
+                let (mut igs, mut ggs, mut igd, mut ggd) = (0.0, 0.0, 0.0, 0.0);
+                if is > 0.0 {
+                    let (es, des) = exp_lin(x * ivt);
+                    let (ed, ded) = exp_lin(y * ivt);
+                    igs = is * (es - 1.0);
+                    ggs = is * des * ivt;
+                    igd = is * (ed - 1.0);
+                    ggd = is * ded * ivt;
+                    exps += 2;
+                }
+                i[off] = s * (igs + igd);
+                i[off + 1] = s * (ic - igd);
+                jac[off * m + off] = ggs;
+                jac[off * m + off + 1] = ggd;
+                jac[(off + 1) * m + off] = dx;
+                jac[(off + 1) * m + off + 1] = dy - ggd;
+                exps
+            }
+            Eval::Pair { beta, it, lim, k2, .. } => {
+                let x = v[off];
+                if x.abs() < lim {
+                    let r = (k2 - x * x).sqrt();
+                    i[off] = 0.5 * (it + beta * x * r);
+                    jac[off * m + off] = 0.5 * beta * (k2 - 2.0 * x * x) / r;
+                } else {
+                    i[off] = 0.5 * (it + it * x.signum());
+                    jac[off * m + off] = 0.0;
+                }
+                0
+            }
         }
+    }
+
+    /// The pair port's small-signal transconductance to its common mode (the tail's share), at port
+    /// voltage `vd` and common mode `vcm`; 0 for a fixed tail or another device.
+    fn pair_gcm(&self, vd: f64, vcm: f64) -> f64 {
+        let Eval::Pair { beta, model, .. } = *self else { return 0.0 };
+        if model.tail_r <= 0.0 || vcm - model.vto <= 0.0 {
+            return 0.0;
+        }
+        let it = model.tail_at(vcm);
+        // R_t I + a √I = v_cm − V_TO  →  dI / dv_cm = 1 / (R_t + a / (2 √I))
+        let a = 1.0 / (2.0 * beta).sqrt();
+        let di = 1.0 / (model.tail_r + a / (2.0 * it.sqrt()));
+        let k2 = 2.0 * it / beta;
+        let dd = if vd * vd < it / beta { vd / (k2 - vd * vd).sqrt() } else { vd.signum() };
+        0.5 * di * (1.0 + dd)
+    }
+
+    /// Latches a pair's tail from the common mode `vcm` (no-op for a fixed tail or another device).
+    fn latch(&mut self, vcm: f64) -> f64 {
+        if let Eval::Pair { model, it, .. } = *self {
+            if model.tail_r > 0.0 {
+                let nt = model.tail_at(vcm);
+                *self = pair_eval(model, nt);
+                return (nt - it).abs();
+            }
+        }
+        0.0
     }
 
     /// Device limiting of a Newton step: `vnew` is changed in place.
@@ -568,6 +782,14 @@ impl Eval {
                     vnew[off + 1] = lo + k;
                 }
             }
+            Eval::Jfet { s, is, nvt, vcrit, .. } => {
+                // the gate junctions only; the channel is a square law (gfx-dist §2.11)
+                if is > 0.0 {
+                    vnew[off] = s * pnjlim(s * vnew[off], s * vold[off], nvt, vcrit);
+                    vnew[off + 1] = s * pnjlim(s * vnew[off + 1], s * vold[off + 1], nvt, vcrit);
+                }
+            }
+            Eval::Pair { .. } => {}
         }
     }
 }
@@ -718,6 +940,11 @@ impl Netlist {
         n
     }
 
+    /// The node given `name` by [`Netlist::named`] (tests and probes).
+    pub fn node_named(&self, name: &str) -> Option<Node> {
+        self.names.iter().find(|x| x.1 == name).map(|x| x.0)
+    }
+
     /// The node driven by input `k` (an ideal source to ground; one node per input).
     pub fn input(&mut self, k: usize) -> Node {
         assert!(k < self.inputs, "input {k} of {}", self.inputs);
@@ -807,6 +1034,18 @@ impl Netlist {
     /// the device index.
     pub fn bjt_forward(&mut self, c: Node, b: Node, e: Node, model: BjtModel) -> usize {
         self.device(DeviceModel::BjtForward(model), (0.0, 0.0), [c, b, e])
+    }
+
+    /// A JFET (drain, gate, source): 2 ports. Returns the device index.
+    pub fn jfet(&mut self, d: Node, g: Node, s: Node, model: JfetModel) -> usize {
+        self.device(DeviceModel::Jfet(model), (0.0, 0.0), [d, g, s])
+    }
+
+    /// A JFET differential pair on its tail as one port: the + device's drain current into `drain`
+    /// (from `drain` to ground), controlled by v(`plus`) − v(`minus`); the − device's drain and the
+    /// tail are not nodes of the netlist. Returns the device index.
+    pub fn jfet_pair(&mut self, plus: Node, minus: Node, drain: Node, model: PairModel) -> usize {
+        self.device(DeviceModel::Pair(model), (0.0, 0.0), [plus, minus, drain])
     }
 
     /// An op-amp macromodel (+, −, out). `rails` = (negative, positive) rail as multiples of the
@@ -1027,6 +1266,61 @@ impl Netlist {
                                 clamp(format!("{lo} - {w}"))
                             );
                         }
+                    }
+                    DeviceModel::Jfet(f) => {
+                        let m = format!("J{k}M");
+                        if f.soft > 0.0 {
+                            // ngspice's level 1 has no soft knee: the channel as a B-source (flagged), the
+                            // gate junctions as diodes
+                            s += &format!("* J{k}: soft pinch-off knee ({} V), written as a B-source\n", f.soft);
+                            let sg = if f.n_channel { 1.0 } else { -1.0 };
+                            let (d, g, sn) = (name(n[0]), name(n[1]), name(n[2]));
+                            let vgs = format!("({sg}*V({g},{sn}))");
+                            let vgd = format!("({sg}*V({g},{d}))");
+                            let ov = |v: &str| format!("({} * ln(1 + exp(({v} - {}) / {})))", f.soft, f.vto, f.soft);
+                            let ch = |a: &str, b: &str| {
+                                let (g2, dd) = (ov(a), format!("({a} - {b})"));
+                                format!("({dd} >= {g2} ? {:e} * {g2}^2 * (1 + {} * {dd}) : {:e} * {dd} * (2 * {g2} - {dd}) * (1 + {} * {dd}))", f.beta, f.lambda, f.beta, f.lambda)
+                            };
+                            s += &format!("B{k}ch {d} {sn} I = {sg} * ({vgs} >= {vgd} ? {} : -{})\n", ch(&vgs, &vgd), ch(&vgd, &vgs));
+                            if f.is > 0.0 {
+                                let (a, b) = if f.n_channel { (g.clone(), sn.clone()) } else { (sn.clone(), g.clone()) };
+                                s += &format!("D{k}gs {a} {b} {m}D\nD{k}gd {} {} {m}D\n", if f.n_channel { &g } else { &d }, if f.n_channel { &d } else { &g });
+                                models += &format!(".model {m}D D(IS={:e} N={} TNOM={})\n", f.is, f.n, f.tnom);
+                            }
+                        } else {
+                            s += &format!("J{k} {} {} {} {m}\n", name(n[0]), name(n[1]), name(n[2]));
+                            models += &format!(
+                                ".model {m} {}(VTO={} BETA={:e} LAMBDA={} IS={:e} N={} VTOTC={} BETATCE={} TNOM={})\n",
+                                if f.n_channel { "NJF" } else { "PJF" },
+                                f.vto,
+                                f.beta,
+                                f.lambda,
+                                f.is,
+                                f.n,
+                                f.vtotc,
+                                f.betatce,
+                                f.tnom
+                            );
+                        }
+                    }
+                    DeviceModel::Pair(p) => {
+                        // the pair port with its tail solved implicitly (the DC point the real-time solve
+                        // latches: gfx-dist §2.11)
+                        let vd = format!("V({},{})", name(n[0]), name(n[1]));
+                        let it = if p.tail_r > 0.0 {
+                            let a = 1.0 / (2.0 * p.beta).sqrt();
+                            let c = format!("max(0.5 * (V({}) + V({})) - ({}), 0)", name(n[0]), name(n[1]), p.vto);
+                            format!("((-{a:e} + sqrt({:e} + {:e} * {c})) / {:e})^2", a * a, 4.0 * p.tail_r, 2.0 * p.tail_r)
+                        } else {
+                            format!("{:e}", p.i_tail)
+                        };
+                        s += &format!("* B{k}: JFET pair port (beta {:e}, V_TO {}, tail {} ohm)\n", p.beta, p.vto, p.tail_r);
+                        s += &format!(
+                            "B{k} {} 0 I = 0.5 * {it} + 0.5 * (abs({vd}) < sqrt({it} / {b:e}) ? {b:e} * {vd} * sqrt(2 * {it} / {b:e} - {vd}^2) : {it} * sgn({vd}))\n",
+                            name(n[2]),
+                            b = p.beta
+                        );
                     }
                 },
             }
@@ -1344,6 +1638,8 @@ struct Stage {
     var_g0: Vec<f64>,
     var_g: Vec<f64>,
     obs: Vec<Node>,
+    /// The pair ports whose tail follows the common mode: (local device, obs row of +, obs row of −).
+    tails: Vec<(usize, usize, usize)>,
     m: usize,
     nr: usize,
     nu: usize,
@@ -1388,6 +1684,7 @@ struct Stage {
     lazy: usize,
     stepped: bool,
     recip: bool,
+    lean: bool,
     stats: Stats,
 }
 
@@ -1407,13 +1704,15 @@ struct Newton<'a> {
     /// The Jacobian solve multiplies by each pivot's reciprocal instead of dividing (opt-in:
     /// [`NonlinearCircuit::set_fast_solve`]).
     recip: bool,
+    /// Negligible exponentials skipped (opt-in: [`NonlinearCircuit::set_lean_exp`]).
+    lean: bool,
 }
 
 /// The device block of every port.
 fn blocks(devs: &[(usize, usize, Eval)]) -> [(usize, usize); MAX_PORTS] {
     let mut b = [(0, 0); MAX_PORTS];
     for &(_, off, ev) in devs {
-        let n = if let Eval::Clipper { .. } | Eval::BjtFwd { .. } = ev { 1 } else { 2 };
+        let n = ev.ports();
         for k in off..off + n {
             b[k] = (off, off + n);
         }
@@ -1430,7 +1729,7 @@ impl Newton<'_> {
         }
         let mut e = 0;
         for d in self.devs {
-            e += d.2.eval(v, i, jf, m, d.1);
+            e += d.2.eval(v, i, jf, m, d.1, self.lean);
         }
         e as u32
     }
@@ -1612,6 +1911,12 @@ impl Stage {
                     v[off] = 0.0;
                     v[off + 1] = 0.5 * (hi + lo);
                 }
+                Eval::Jfet { s, .. } => {
+                    // SPICE's MODEINITJCT point: the channel on, saturated
+                    v[off] = 0.0;
+                    v[off + 1] = -s;
+                }
+                Eval::Pair { .. } => v[off] = 0.0,
             }
         }
     }
@@ -1933,8 +2238,9 @@ impl Stage {
         self.x[nr..nr + nu].copy_from_slice(&self.u);
         let mut p = [0.0; MAX_PORTS];
         matvec(&self.p, ncol, &self.x[..nr + nu], None, &mut p[..m]);
+        let mut held = false;
         if m > 0 {
-            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+            let nw = Newton { k: &self.kbuf[..m * m], m, devs: &self.devs, tol: self.tol, dc: false, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
             let mut v = self.v;
             if self.quad && self.plain[0] && self.plain[1] && self.plain2 {
                 for r in 0..m {
@@ -2008,6 +2314,7 @@ impl Stage {
                 }
                 plain = false;
                 if !solved {
+                    held = true;
                     self.stats.unsolved += 1;
                     v = self.v;
                     // and its currents: f at the old point may be another device by now (a swap)
@@ -2043,6 +2350,14 @@ impl Stage {
         }
         let now = self.no - self.lazy;
         matvec(&self.p[(m + nr) * ncol..], ncol, &self.x, None, &mut self.y[..now]);
+        // the pairs' tails follow the common mode one sample late; a held sample keeps the old latch
+        if !held {
+            for q in 0..self.tails.len() {
+                let (d, a, b) = self.tails[q];
+                let vcm = 0.5 * (self.y[a] + self.y[b]);
+                self.devs[d].2.latch(vcm);
+            }
+        }
         self.stepped = true;
         std::mem::swap(&mut self.j, &mut self.jn);
     }
@@ -2134,7 +2449,7 @@ impl Stage {
                 k[r * m + c] = self.p_dc[r * ncd + nu + c];
             }
         }
-        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip };
+        let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
         let pdc = |u: &[f64], p: &mut [f64; MAX_PORTS], pdc: &[f64]| {
             for r in 0..m {
                 let mut acc = 0.0;
@@ -2210,7 +2525,42 @@ impl Stage {
                 }
             }
         }
+        // the pairs' tails solved implicitly: a fixed point on the common mode (gfx-dist §2.11)
+        if ok && !self.tails.is_empty() {
+            pdc(&u[..nu], &mut p, &self.p_dc);
+            let mut last = [f64::NAN; MAX_PORTS];
+            for _ in 0..200 {
+                let mut moved: f64 = 0.0;
+                for q in 0..self.tails.len() {
+                    let (d, a, b) = self.tails[q];
+                    let obs = |row: usize| {
+                        let row = m + nr + row;
+                        let mut acc = 0.0;
+                        for c in 0..nu {
+                            acc += self.p_dc[row * ncd + c] * u[c];
+                        }
+                        for c in 0..m {
+                            acc += self.p_dc[row * ncd + nu + c] * i[c];
+                        }
+                        acc
+                    };
+                    let vcm = 0.5 * (obs(a) + obs(b));
+                    moved = moved.max((vcm - last[q]).abs());
+                    last[q] = vcm;
+                    self.devs[d].2.latch(vcm);
+                }
+                if moved < 1e-9 {
+                    break;
+                }
+                let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
+                if !nw.solve(&p, &mut v, &mut i, 50).0 {
+                    ok = false;
+                    break;
+                }
+            }
+        }
         if m > 0 {
+            let nw = Newton { k: &k[..m * m], m, devs: &self.devs, tol: self.tol.min(1e-9), dc: true, plain_steps: false, blk: blocks(&self.devs), recip: self.recip, lean: self.lean };
             let mut jf = [0.0; MAX_PORTS * MAX_PORTS];
             nw.eval(&v, &mut i, &mut jf);
         }
@@ -2320,7 +2670,7 @@ impl Stage {
             let mut jf = [0.0; MAX_PORTS * MAX_PORTS];
             let mut i = [0.0; MAX_PORTS];
             for d in &self.devs {
-                d.2.eval(&self.v, &mut i, &mut jf, m, d.1);
+                d.2.eval(&self.v, &mut i, &mut jf, m, d.1, false);
             }
             for k in 0..m {
                 for l in 0..m {
@@ -2344,6 +2694,19 @@ impl Stage {
                         }
                         if vn > 0 {
                             add(&mut a, row - 1, vn - 1, (-s * g, 0.0));
+                        }
+                    }
+                }
+            }
+            // a pair's tail follows the common mode: its share of the drain current, linearized
+            for &(d, ya, yb) in &self.tails {
+                let off = self.devs[d].1;
+                let gcm = self.devs[d].2.pair_gcm(self.v[off], 0.5 * (self.y[ya] + self.y[yb]));
+                let pt = self.ports[off];
+                if gcm != 0.0 && pt[2] > 0 {
+                    for nd in [pt[0], pt[1]] {
+                        if nd > 0 {
+                            add(&mut a, pt[2] - 1, nd - 1, (0.5 * gcm, 0.0));
                         }
                     }
                 }
@@ -2418,6 +2781,14 @@ fn solve_complex(a: &mut [(f64, f64)], b: &mut [(f64, f64)], n: usize) -> Vec<(f
 // ---------------------------------------------------------------------------------------------
 // The circuit: a graph of stages
 
+/// A re-evaluated pair keeps its latched tail (it is state, not a constant).
+fn keep_latch(old: Eval, new: Eval) -> Eval {
+    match (old, new) {
+        (Eval::Pair { it, .. }, Eval::Pair { model, .. }) if model.tail_r > 0.0 => pair_eval(model, it),
+        _ => new,
+    }
+}
+
 /// A netlist compiled at one sample rate: a directed graph of stages, solved in order.
 #[derive(Clone, Debug)]
 pub struct NonlinearCircuit {
@@ -2490,6 +2861,19 @@ impl NonlinearCircuit {
         }
         let mut out_map = Vec::new();
         let mut stage_obs: Vec<Vec<Node>> = exports.clone();
+        // the pair ports' input nodes, read after every sample (their tails' common mode)
+        let mut tail_obs: Vec<Vec<(usize, usize, usize)>> = vec![Vec::new(); ns];
+        for (k, e) in net.elements.iter().enumerate() {
+            if let Element::Device(d, n) = *e {
+                if let DeviceModel::Pair(_) = net.devices[d] {
+                    let s = stage_of(k);
+                    stage_obs[s].push(n[0]);
+                    stage_obs[s].push(n[1]);
+                    let a = stage_obs[s].len() - 2;
+                    tail_obs[s].push((d, a, a + 1));
+                }
+            }
+        }
         out_map.resize(net.outputs.len(), (0, 0));
         let mut lazy = vec![0usize; ns];
         // the outputs computed every sample first, the probes last (rows the step leaves out)
@@ -2599,6 +2983,13 @@ impl NonlinearCircuit {
                                 ports.push([ln[0], ln[1], 0, ln[2]]);
                                 ports.push([ln[2], 0, ln[2], 0]);
                             }
+                            // (d, g, s) as the BJT's (c, b, e): (v_GS, i_G g → s), (v_GD, i_D d → s)
+                            DeviceModel::Jfet(_) => {
+                                ports.push([ln[1], ln[2], ln[1], ln[2]]);
+                                ports.push([ln[1], ln[0], ln[0], ln[2]]);
+                            }
+                            // (+, −, drain): v(+) − v(−), the current from the drain to ground
+                            DeviceModel::Pair(_) => ports.push([ln[0], ln[1], ln[2], 0]),
                         }
                         dev_map[d] = (s, devs.len());
                         devs.push((d, off, evaluate(&net.devices[d], net.rails[d], 25.0, 9.0)));
@@ -2608,6 +2999,7 @@ impl NonlinearCircuit {
                 elems.push(le);
             }
             let obs: Vec<Node> = stage_obs[s].iter().map(|&nd| map(nd, &mut local, &mut nn, &mut srcs, &mut in_map)).collect();
+            let tails: Vec<(usize, usize, usize)> = tail_obs[s].iter().map(|&(d, a, b)| (dev_map[d].1, a, b)).collect();
             let m = ports.len();
             assert!(m <= MAX_PORTS, "stage {s}: {m} ports (max {MAX_PORTS})");
             let nu = in_map.len();
@@ -2632,6 +3024,7 @@ impl NonlinearCircuit {
                 var_g0,
                 var_g,
                 obs,
+                tails,
                 m,
                 nr,
                 nu,
@@ -2670,6 +3063,7 @@ impl NonlinearCircuit {
                 lazy: lazy[s],
                 stepped: false,
                 recip: false,
+                lean: false,
                 stats: Stats::default(),
             };
             st.build();
@@ -2721,6 +3115,16 @@ impl NonlinearCircuit {
         }
     }
 
+    /// Exponentials of an argument below −36 taken as 0 and not computed (the op-amp macro's tanh in
+    /// saturation and its rail clamp far from the rail, a BJT's reverse-biased junction): their terms
+    /// are below 2·10⁻¹⁶ of the device's scale. Off by default (gfx-dist's four v0.1.0 circuits and
+    /// gfx-fuzz are unchanged); gfx-dist's circuits of 0.8 turn it on.
+    pub fn set_lean_exp(&mut self, on: bool) {
+        for s in &mut self.stages {
+            s.lean = on;
+        }
+    }
+
     /// Newton's seed by quadratic extrapolation of the last three solutions (when all three were
     /// solved by plain Newton; linear otherwise): fewer iterations on an oversampled signal. Off by
     /// default (gfx-dist's renders are unchanged); gfx-fuzz turns it on.
@@ -2732,7 +3136,8 @@ impl NonlinearCircuit {
 
     fn reevaluate(&mut self) {
         for (d, &(s, k)) in self.dev_map.iter().enumerate() {
-            self.stages[s].devs[k].2 = evaluate(&self.dev_models[d], self.dev_rails[d], self.celsius, self.supply);
+            let old = self.stages[s].devs[k].2;
+            self.stages[s].devs[k].2 = keep_latch(old, evaluate(&self.dev_models[d], self.dev_rails[d], self.celsius, self.supply));
         }
     }
 
@@ -2765,7 +3170,8 @@ impl NonlinearCircuit {
         if self.dev_models[device] != model {
             self.dev_models[device] = model;
             let (s, k) = self.dev_map[device];
-            self.stages[s].devs[k].2 = evaluate(&model, self.dev_rails[device], self.celsius, self.supply);
+            let old = self.stages[s].devs[k].2;
+            self.stages[s].devs[k].2 = keep_latch(old, evaluate(&model, self.dev_rails[device], self.celsius, self.supply));
         }
     }
 
@@ -2931,7 +3337,7 @@ impl NonlinearCircuit {
             st2.woodbury();
         }
         st2.kmat(&mut k);
-        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false, blk: blocks(&st.devs), recip: st.recip };
+        let nw = Newton { k: &k[..m * m], m, devs: &st.devs, tol: st.tol, dc: false, plain_steps: false, blk: blocks(&st.devs), recip: st.recip, lean: st.lean };
         let mut vv = [0.0; MAX_PORTS];
         vv[..m].copy_from_slice(v);
         let mut i = [0.0; MAX_PORTS];
