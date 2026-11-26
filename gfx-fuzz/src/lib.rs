@@ -61,8 +61,10 @@ pub const NP: usize = 18;
 pub const GE_PAIR: usize = 0;
 pub const SI_PAIR: usize = 1;
 pub const MUFF: usize = 2;
-pub const KINDS: usize = 3;
-pub const KIND_NAMES: [&str; KINDS] = ["Ge Pair", "Si Pair", "Si Four"];
+/// Octave Up: not a `model` option of gfx-fuzz; the circuit of gfx-octafuzz ([`Fuzz::octafuzz`]).
+pub const OCTAVE: usize = 3;
+pub const KINDS: usize = 4;
+pub const KIND_NAMES: [&str; KINDS] = ["Ge Pair", "Si Pair", "Si Four", "Octave Up"];
 
 /// The `model` options shipped, in the README's order, and the circuit each one runs. Si Pair is
 /// coded but not shipped: at the 16× its aliases need it costs ≈ 9 µs per sample (README, As coded);
@@ -96,16 +98,17 @@ pub static PARAMS: [ParamInfo; NP] = [
 
 /// Half-band stages per circuit at 44.1 / 48 kHz (README §2.4; measured by
 /// `tests::aliasing_meets_the_policy`): Ge Pair 8×, Si Pair 16×, Si Four 4×.
-pub const STAGES: [usize; KINDS] = [3, 4, 2];
+/// Octave Up 8× (gfx-octafuzz's `tests::aliasing_meets_the_policy`).
+pub const STAGES: [usize; KINDS] = [3, 4, 2, 3];
 
 /// The sign that makes each model's small-signal mid-band gain positive (measured by
 /// `tests::polarity_is_normalised`).
-pub const POLARITY: [f64; KINDS] = [1.0, 1.0, 1.0];
+pub const POLARITY: [f64; KINDS] = [1.0, 1.0, 1.0, 1.0];
 
 /// K(model), dB: `level` 0 dB = the bypass loudness at the defaults (README §2.1; measured by
 /// `tests::level_is_unity_at_the_defaults` on the DI proxy). "The hardware volume pot fully up" =
 /// `level` −K. Si Pair's is not measured (not shipped).
-pub const K_DB: [f64; KINDS] = [-2.5, 0.0, -11.3];
+pub const K_DB: [f64; KINDS] = [-2.5, 0.0, -11.3, -21.7];
 
 /// The guitar of each `pickup` option.
 pub const GUITARS: [Guitar; 4] = [
@@ -153,6 +156,22 @@ impl Config {
         }
         v
     }
+
+    /// Every configuration of Octave Up (gfx-octafuzz's pool).
+    pub fn octave_all() -> Vec<Config> {
+        let mut v = Vec::new();
+        for pickup in 0..4 {
+            for buffer in [false, true] {
+                v.push(Config {
+                    model: OCTAVE,
+                    pickup,
+                    buffer,
+                    stack: 0,
+                });
+            }
+        }
+        v
+    }
 }
 
 /// The netlist of a configuration.
@@ -161,6 +180,7 @@ pub fn build(cfg: Config) -> Circuit {
     match cfg.model {
         0 => ge_pair(g, cfg.buffer),
         1 => si_pair(g, cfg.buffer),
+        OCTAVE => octave_up(g, cfg.buffer),
         _ => si_four(cfg.stack, g, cfg.buffer),
     }
 }
@@ -238,7 +258,9 @@ impl Compiled {
             }
         }
         if ch(|c| c.bias) {
-            self.nc.set_var(d.bias.0, d.bias.1 * (-c.bias).exp2());
+            // (−1 · x is −x exactly: the faces and the muff are bit for bit as before)
+            self.nc
+                .set_var(d.bias.0, d.bias.1 * (d.bias_sign * c.bias).exp2());
         }
         if ch(|c| c.sag) {
             self.nc.set_var(d.sag, (SAG_MAX * c.sag).max(R_MIN));
@@ -304,6 +326,42 @@ impl HighPass {
     }
 }
 
+/// Second-order Butterworth high-pass (prewarped bilinear, direct form I in f64): Octave Up's 20 Hz
+/// DC guard (README §2.3: the rectified output carries the note's envelope).
+#[derive(Clone, Copy, Debug, Default)]
+struct HighPass2 {
+    b: [f64; 3],
+    a: [f64; 2],
+    x: [f64; 2],
+    y: [f64; 2],
+}
+
+impl HighPass2 {
+    fn set(&mut self, f: f64, sr: f64) {
+        let k = (std::f64::consts::PI * f.min(0.45 * sr) / sr).tan();
+        let q = std::f64::consts::FRAC_1_SQRT_2;
+        let n = 1.0 / (1.0 + k / q + k * k);
+        self.b = [n, -2.0 * n, n];
+        self.a = [2.0 * (k * k - 1.0) * n, (1.0 - k / q + k * k) * n];
+    }
+    fn clear(&mut self) {
+        self.x = [0.0; 2];
+        self.y = [0.0; 2];
+    }
+    #[inline]
+    fn process(&mut self, x: f64) -> f64 {
+        let y = self.b[0] * x + self.b[1] * self.x[0] + self.b[2] * self.x[1]
+            - self.a[0] * self.y[0]
+            - self.a[1] * self.y[1];
+        self.x = [x, self.x[0]];
+        self.y = [y, self.y[0]];
+        y
+    }
+}
+
+/// Octave Up's DC guard (README §2.3, decided O7).
+pub const OCTAVE_GUARD_HZ: f64 = 20.0;
+
 /// A running configuration of one channel: its oversamplers and post filters.
 #[derive(Clone, Debug)]
 struct Slot {
@@ -341,6 +399,8 @@ struct Chan {
     pool: Vec<Compiled>,
     slots: [Slot; 2],
     dc: HighPass,
+    /// Octave Up's guard (in place of `dc`).
+    dc2: HighPass2,
     bias_v: f64,
 }
 
@@ -355,6 +415,10 @@ pub struct Fuzz {
     vol: ExpSmoother,
     mids: ExpSmoother,
     mix: ExpSmoother,
+    /// gfx-octafuzz's `octave` (0 – 100 %): the crossfade from the fuzz tap to the rectifier.
+    octave: ExpSmoother,
+    /// Octave Up's engine (gfx-octafuzz): the pool is Octave Up's, `model` / `stack` are ignored.
+    octafuzz: bool,
     bias: OnePole,
     temp: OnePole,
     leak: OnePole,
@@ -413,6 +477,8 @@ impl Fuzz {
             vol: exp(p::GUITAR_VOL),
             mids: exp(p::MIDS),
             mix: exp(p::MIX),
+            octave: ExpSmoother::new(0.0, 100.0, 100.0),
+            octafuzz: false,
             bias: pole(p::BIAS, 300.0),
             temp: pole(p::TEMP, 300.0),
             leak: pole(p::LEAKAGE, 300.0),
@@ -442,7 +508,31 @@ impl Fuzz {
         }
     }
 
+    /// gfx-octafuzz's engine: Octave Up, its pool of (pickup, buffer), the `octave` crossfade, the
+    /// 20 Hz guard. Its parameters are gfx-fuzz's ids (`model`, `stack`, `mids`, `leakage` inert)
+    /// plus [`Fuzz::set_octave`].
+    pub fn octafuzz() -> Self {
+        Self {
+            octafuzz: true,
+            configs: Config::octave_all(),
+            ..Self::new()
+        }
+    }
+
+    /// `octave` (0 – 100 %), gfx-octafuzz: 0 = the fuzz tap, 100 = the rectified output.
+    pub fn set_octave(&mut self, v: f32) {
+        self.octave.set_target(v.clamp(0.0, 100.0), self.now);
+    }
+
     fn target(&self) -> Config {
+        if self.octafuzz {
+            return Config {
+                model: OCTAVE,
+                pickup: (self.v[p::PICKUP].round() as usize).min(3),
+                buffer: self.v[p::BUFFER] > 0.5,
+                stack: 0,
+            };
+        }
         let model = SHIPPED[(self.v[p::MODEL].round() as usize).min(N_MODELS - 1)];
         Config {
             model,
@@ -533,6 +623,7 @@ impl Fuzz {
             d.split_hi.clone_from(&s.split_hi);
         }
         dst.dc = src.dc;
+        dst.dc2 = src.dc2;
         dst.bias_v = src.bias_v;
     }
 
@@ -586,9 +677,10 @@ impl Effect for Fuzz {
             volts: 9.0,
             sag: 0.0,
         };
-        let pool: Vec<Compiled> = Config::all()
-            .into_iter()
-            .map(|cfg| {
+        let pool: Vec<Compiled> = self
+            .configs
+            .iter()
+            .map(|&cfg| {
                 let mut c = Compiled::new(cfg, self.sr, self.stages_override);
                 c.apply(&defaults, None);
                 c.nc.init_dc();
@@ -597,11 +689,14 @@ impl Effect for Fuzz {
             .collect();
         let mut dc = HighPass::default();
         dc.set(5.0, self.sr);
+        let mut dc2 = HighPass2::default();
+        dc2.set(OCTAVE_GUARD_HZ, self.sr);
         self.ch = (0..n)
             .map(|_| Chan {
                 pool: pool.clone(),
                 slots: [Slot::new(), Slot::new()],
                 dc,
+                dc2,
                 bias_v: 0.0,
             })
             .collect();
@@ -612,6 +707,7 @@ impl Effect for Fuzz {
             &mut self.vol,
             &mut self.mids,
             &mut self.mix,
+            &mut self.octave,
         ] {
             e.prepare(sample_rate);
         }
@@ -644,6 +740,9 @@ impl Effect for Fuzz {
             e.settle(v[i]);
             e.reset();
         }
+        let o = self.octave.target();
+        self.octave.settle(o);
+        self.octave.reset();
         for s in [
             &mut self.bias,
             &mut self.temp,
@@ -679,6 +778,8 @@ impl Effect for Fuzz {
             c.dc.x1 = 0.0;
             c.dc.y1 = 0.0;
             c.dc.set(5.0, sr);
+            c.dc2.clear();
+            c.dc2.set(OCTAVE_GUARD_HZ, sr);
             for s in &mut c.slots {
                 s.os.reset();
                 s.dry_os.reset();
@@ -774,6 +875,9 @@ impl Effect for Fuzz {
             ] {
                 e.next();
             }
+            if self.octafuzz {
+                self.octave.next();
+            }
             for s in [
                 &mut self.bias,
                 &mut self.temp,
@@ -863,6 +967,8 @@ impl Effect for Fuzz {
                 (1.0, 0.0)
             };
             let byp = self.bypass.value() as f64;
+            let oct = self.octave.value() as f64 / 100.0;
+            let octafuzz = self.octafuzz;
             let mc = self.meter_coef;
             let active = self.active;
             let k_lin = self.k_lin;
@@ -880,11 +986,23 @@ impl Effect for Fuzz {
                     let mut buf = [0.0; MAX_FACTOR];
                     slot.os.up(xin, &mut buf);
                     let nf = 1usize << cc.stages;
-                    for v in buf.iter_mut().take(nf) {
-                        let e = cc.emf.process(*v);
-                        cc.nc.set_input(IN_SIG, e);
-                        cc.nc.process();
-                        *v = cc.nc.output(cc.def.out);
+                    if let Some(tap) = cc.def.tap {
+                        // Octave Up: the `octave` crossfade, linear, before the decimation (one
+                        // decimator for both outputs)
+                        for v in buf.iter_mut().take(nf) {
+                            let e = cc.emf.process(*v);
+                            cc.nc.set_input(IN_SIG, e);
+                            cc.nc.process();
+                            let (o, t) = (cc.nc.output(cc.def.out), cc.nc.output(tap));
+                            *v = t + oct * (o - t);
+                        }
+                    } else {
+                        for v in buf.iter_mut().take(nf) {
+                            let e = cc.emf.process(*v);
+                            cc.nc.set_input(IN_SIG, e);
+                            cc.nc.process();
+                            *v = cc.nc.output(cc.def.out);
+                        }
                     }
                     let mut f = slot.os.down(&mut buf) * POLARITY[model] * k_lin[model];
                     let dry = if need_dry {
@@ -913,7 +1031,11 @@ impl Effect for Fuzz {
                         }
                     }
                 }
-                let y = ch.dc.process(lg * y);
+                let y = if octafuzz {
+                    ch.dc2.process(lg * y)
+                } else {
+                    ch.dc.process(lg * y)
+                };
                 let out = y + byp * (x - y);
                 buffers[ci][i] = if out.is_finite() { out as f32 } else { 0.0 };
             }

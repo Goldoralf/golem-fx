@@ -74,6 +74,7 @@ In order. The golem block each effect stands for is its catalogue `type`.
 | 31 | [gfx-geq](gfx-geq/) | `eq-graphic` | GxGraphicEQ | **coded** (Accurate mode; Pedal mode waits for its voicing), bench green, to test in golem |
 | 32 | [gfx-swell](gfx-swell/) | new block `swell` (auto-swell) | — | **coded**, bench green, to test in golem |
 | 33 | [gfx-fuzz](gfx-fuzz/) | new block `fuzz` (circuit fuzzes, guitar in the netlist) | — | **coded** (Ge Pair, Si Four; others later), bench green, to test in golem |
+| 33b | [gfx-octafuzz](gfx-octafuzz/) | new block `octafuzz` (transformer octave fuzz on gfx-fuzz's engine) | — | **coded** (v0.1.0, 2026-11-26), bench green; CPU 38 % of a core (per-pedal exception); alias rule missed at 8× on the octave (maintainer); L_m to measure |
 | 34 | [gfx-dist](gfx-dist/) | new block `dist` (circuit distortions and overdrives) | — | **coded** (4 circuits; Discrete OD later), bench green, to test in golem |
 | 35 | [gfx-bassdi](gfx-bassdi/) | new block `bass-di` (bass preamp / DI) | — | **coded** (cab voicings and loudness tables [A] until bass DIs exist), bench green, to test in golem |
 | 36 | [gfx-tape](gfx-tape/) | new block `tape` (tape and media saturation) | — | **coded**, bench green, to test in golem |

@@ -714,6 +714,24 @@
    "category": "drive",
    "color": "#b0602a"
   },
+  "gfx-octafuzz": {
+   "name": "Octafuzz",
+   "blocks": [
+    "octafuzz"
+   ],
+   "knobs": [
+    "fuzz",
+    "octave",
+    "tone",
+    "level",
+    "guitar_vol"
+   ],
+   "toggles": [
+    "buffer"
+   ],
+   "category": "drive",
+   "color": "#b0602a"
+  },
   "gfx-tuner": {
    "name": "Tune",
    "blocks": [

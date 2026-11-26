@@ -387,6 +387,60 @@ fn bjt_common_emitter_biases_and_amplifies() {
 }
 
 #[test]
+fn forward_only_bjt_matches_ebers_moll_out_of_saturation() {
+    // the same CE stage, NPN and its PNP mirror, the transistor forward-only (one port) or full
+    // Ebers–Moll: DC point, the small-signal gain and a transient that stays out of saturation
+    // agree within the reverse junction's dropped saturation current (fA)
+    for npn in [true, false] {
+        let s = if npn { 1.0 } else { -1.0 };
+        let build = |fwd: bool| {
+            let mut n = Netlist::new(2);
+            let sig = n.input(0);
+            let vs = n.input(1);
+            let b = n.node();
+            let cn = n.node();
+            let e = n.node();
+            let cin = n.node();
+            n.r(sig, cin, 100.0);
+            n.c(cin, b, 10e-6);
+            n.r(vs, b, 82e3);
+            n.r(b, 0, 10e3);
+            n.r(vs, cn, 10e3);
+            n.r(e, 0, 1e3);
+            let m = BjtModel { npn, is: 1e-14, bf: 200.0, br: 4.0, leak: 1.0, eg: 1.11, xti: 3.0, tnom: 25.0, nf: 1.0, nr: 1.0 };
+            if fwd {
+                n.bjt_forward(cn, b, e, m);
+            } else {
+                n.bjt(cn, b, e, m);
+            }
+            let oc = n.output(cn);
+            let mut c = NonlinearCircuit::new(&n, 384000.0);
+            c.set_input(1, s * 9.0);
+            assert!(c.init_dc());
+            (c, oc)
+        };
+        let (mut a, oa) = build(true);
+        let (mut b, ob) = build(false);
+        assert_eq!(a.ports(), vec![1]);
+        assert!((a.output(oa) - b.output(ob)).abs() < 1e-6, "{} {}", a.output(oa), b.output(ob));
+        let (ga, gb) = (db(a.ac_response(1000.0, 0, oa)), db(b.ac_response(1000.0, 0, ob)));
+        assert!((ga - gb).abs() < 1e-3, "{ga} {gb}");
+        let mut worst: f64 = 0.0;
+        for k in 0..3840 {
+            let x = 0.1 * (2.0 * PI * 1000.0 * k as f64 / 384000.0).sin();
+            a.set_input(0, x);
+            b.set_input(0, x);
+            a.process();
+            b.process();
+            worst = worst.max((a.output(oa) - b.output(ob)).abs());
+        }
+        // Newton's 10⁻⁶ V on the ports, times the stage's gain of 10
+        assert!(worst < 5e-5, "{npn}: {worst}");
+        assert_eq!(a.stats().unsolved, 0);
+    }
+}
+
+#[test]
 fn ebers_moll_leakage_is_the_collector_junction() {
     // open base: I_CEO = Is (1 + (βF + 1) / βR) grows with `leak`
     let mk = |leak: f64| {

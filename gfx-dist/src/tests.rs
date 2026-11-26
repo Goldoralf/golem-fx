@@ -1093,3 +1093,35 @@ fn linked_mono_is_block_size_invariant() {
         assert!(run_pair(&mut dist2(&[], false), &l, &r, b, &LINK_EVENTS) == reference, "block {b}");
     }
 }
+
+/// gfx-dsp `circuit_nl` gained a forward-only BJT (gfx-octafuzz, 2026-11-26): every circuit, two
+/// gains, every clipper and op-amp option, renders bit for bit as before (FNV-1a of the f32 bits).
+#[test]
+fn renders_are_bit_identical_to_before_the_forward_only_bjt() {
+    let mut h = 0xcbf29ce484222325u64;
+    let mut fnv = |y: &[f32]| {
+        for v in y {
+            for b in v.to_bits().to_le_bytes() {
+                h ^= b as u64;
+                h = h.wrapping_mul(0x100000001b3);
+            }
+        }
+    };
+    let x = noise(4800, 0.4, 11);
+    for c in 0..N_CIRCUITS {
+        for g in [30.0, 100.0] {
+            let mut e = dist(48000.0, &[("circuit", c as f32), ("gain", g)]);
+            fnv(&run(&mut e, &x));
+        }
+    }
+    for d in 0..7 {
+        let mut e = dist(48000.0, &[("diodes", d as f32), ("gain", 80.0)]);
+        fnv(&run(&mut e, &x));
+    }
+    for o in 0..6 {
+        let mut e = dist(48000.0, &[("opamp", o as f32), ("gain", 80.0), ("supply", 60.0)]);
+        fnv(&run(&mut e, &x));
+    }
+    eprintln!("renders: {h:#018x}");
+    assert_eq!(h, 0xf3c1_5910_839d_26ef);
+}

@@ -388,6 +388,9 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     // germanium copper (gfx-fuzz's review: a third thrash-red drive pedal would be told apart by its
     // motif alone; no other pedal is copper)
     'gfx-fuzz': '#b0602a',
+    // gfx-octafuzz: the same germanium copper (gfx-fuzz's engine, its family and finish); the motif tells
+    // them apart
+    'gfx-octafuzz': '#b0602a',
     // deep scope green: separated from gfx-glitch's lime and modulation's green by lightness (L* 40)
     'gfx-tuner': '#126e1c',
     // deep plum: a darker sister of the pitch family's magenta (gfx-correct's review: ΔE00 16 from it,
@@ -431,6 +434,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
     'gfx-widener': 'fan',
     'gfx-ducker': 'dips',
     'gfx-fuzz': 'sputter',
+    'gfx-octafuzz': 'octring',
     'gfx-tuner': 'strobe',
     'gfx-cab': 'cone',
     'gfx-irfx': 'impulse',
@@ -452,7 +456,7 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
   const FAMILY_FINISH = { drive: 'thrash', dynamics: 'thrash', utility: 'thrash', lofi: 'thrash' };
   // the high-gain companions (Fortin's role) and the vocal doubler have their own black finish
   // the swell removes attacks (violins, pads): anodized, against the dynamics family's thrash
-  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash', 'gfx-polysynth': 'anodized', 'gfx-organ': 'anodized' };
+  const CRATE_FINISH = { 'gfx-killswitch': 'thrash', 'gfx-gapmeter': 'anodized', 'gfx-swell': 'anodized', 'gfx-tape': 'anodized', 'gfx-widener': 'anodized', 'gfx-fuzz': 'anodized', 'gfx-octafuzz': 'anodized', 'gfx-tuner': 'anodized', 'gfx-correct': 'anodized', 'gfx-met': 'blackwork', 'gfx-emet': 'blackwork', 'gfx-shem': 'blackwork', 'gfx-golem': 'blackwork', 'gfx-acoustic': 'anodized', 'gfx-radio': 'thrash', 'gfx-polysynth': 'anodized', 'gfx-organ': 'anodized' };
   const finishFor = spec => CRATE_FINISH[spec.crate] || FAMILY_FINISH[spec.category] || 'anodized';
   let metalCount = 0;
   const f1 = v => (+v).toFixed(1);
@@ -1056,6 +1060,24 @@ ${stompSwitch(W / 2, H - 21, 8.5)}
         line(d + 'Z', .8);
         ring(r0 + 8, .6);
         ring(r0 + 10.5, 1);
+        break;
+      }
+      case 'octring': {
+        // the octave: left of the rune a sine (2 periods), right of it the same sine full-wave
+        // rectified (4 arches at twice the frequency, the octave), at the same amplitude ±0.3 · ch (≤ 7);
+        // a thin pill round the cartouche at 60 %, the octave's ring. Polylines sampled every 1 px
+        const a = Math.min(7, .3 * ch), xl = cx - cw / 2 - 4, xr = cx + cw / 2 + 4, x0 = 6, x1 = W - 6;
+        line(sine(x0, xl, cy, a, (xl - x0) / 2, 0));
+        let d = '';
+        const pr = (x1 - xr) / 2;
+        for (let x = xr; x <= x1 + .01; x += 1) {
+          const v = Math.abs(Math.sin(((x - xr) / pr) * 2 * Math.PI));
+          d += (d ? 'L' : 'M') + f1(x) + ' ' + f1(cy + a - 2 * a * v);
+        }
+        line(d);
+        // the ring: a pill round the cartouche, as tall as the waves plus 3 units each side
+        const h = 2 * a + 6;
+        line(pill(cx - cw / 2 - 1, cy - h / 2, cw + 2, h), .6);
         break;
       }
       case 'sputter': {

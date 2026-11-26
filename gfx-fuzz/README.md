@@ -14,7 +14,14 @@
 > where it costs ≈ 9 µs per sample (44 %). Ge Three is not coded (no netlist entered from a named
 > document). Deviations and numbers: "As coded" below.
 >
-> **Octave Up: DESIGNED 2026-11-26** (roadmap 0.8, item 1; not coded). It is now the **transformer
+> **Octave Up: CODED 2026-11-26 as gfx-octafuzz v0.1.0** (its README: parameters, As coded, the
+> measurements). Every prototype figure reproduces (DC within 0.03 V, the Octave row within 0.2 dB, the
+> thump, the flux); CPU 7.7 – 7.9 µs per sample (38 % of a core) with the forward-only Q2, under the
+> per-pedal exception; the alias rule is **not** met at 8× on the rectified output (−57.4 dB at 1.2 kHz,
+> the fuzz tap −70.8 dB): the −76 dB below came from a test frequency whose folds land next to harmonics.
+> This crate's renders are bit-identical (`tests::shipped_renders_are_bit_identical`).
+>
+> **Octave Up: DESIGNED 2026-11-26** (roadmap 0.8, item 1). It is now the **transformer
 > octave**, the circuit of the Octavia / Octavio this item names, and no longer the phase-splitter type that
 > open question 4 first chose. Its netlist comes from madbean's Retrograde24 (2024), which prints the values
 > and measured voltages, and from PCB Guitar Mania's Octavius (2021) schematic, which gives the topology.
@@ -173,8 +180,13 @@ not depend on the block size):
   (20 ms in §3). Model, buffer and bias steps stay below −35 dB.
 
 **Not done (for later or for the maintainer).**
-- Ge Three: no netlist entered from a named clone document; Octave Up: designed 2026-11-26 (§2.3),
-  to code as the engine of the separate pedal gfx-octafuzz (not a `model` option); Si Pair: CPU. The `model`
+- Ge Three: no netlist entered from a named clone document; Octave Up: coded 2026-11-26 as the engine
+  of gfx-octafuzz (`OCTAVE`, an internal kind, `Fuzz::octafuzz`; see gfx-octafuzz/README.md), not a
+  `model` option; Si Pair: CPU.
+- The alias test (`aliasing_meets_the_policy`) runs 1200 Hz at 44.1 kHz: at 8× (352.8 kHz = 294 ×
+  1.2 kHz) and 16× every fold of the circuit lands exactly on a harmonic, so the figures above measure
+  the decimator, not the circuit's aliasing. gfx-octafuzz's test picks a frequency whose folds land
+  half-way between harmonics; Ge Pair and Si Four are worth measuring again that way (not done here). The `model`
   enum lists the shipped ones in the README's order (Ge Pair, Si Four), as the coding brief asks;
   appending Si Pair later puts it after Si Four, against the README's order, or reorders the enum
   (contract: enums only grow at the end): **The maintainer decides** before Si Pair ships.

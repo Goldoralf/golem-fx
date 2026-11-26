@@ -446,6 +446,11 @@
    "uni": "⊓",
    "svg": "<path d='M2 17V6h5v11h2.5V8.5H13V17h2.5v-6h2.5v6h2v-3.5h1.5V17H22'/>"
   },
+  "octafuzz": {
+   "label": "Octafuzz (circuit-simulated transformer octave fuzz, the guitar included)",
+   "uni": "∿",
+   "svg": "<path d='M2 12c1.5-6 4.5-6 6 0'/><path d='M8 12c1.5 6 4.5 6 6 0' opacity='.45'/><path d='M8 18c.9-7 2.1-7 3 0c.9-7 2.1-7 3 0M14 18c.9-7 2.1-7 3 0c.9-7 2.1-7 3 0c.5-3 1.2-4 2-4'/>"
+  },
   "vocoder": {
    "label": "Vocoder (gfx)",
    "uni": "⌢",

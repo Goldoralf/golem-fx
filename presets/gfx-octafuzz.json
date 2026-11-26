@@ -1,0 +1,151 @@
+{
+ "crate": "gfx-octafuzz",
+ "presets": [
+  {
+   "id": "octave-ring",
+   "type": "octafuzz",
+   "name": "Octave ring",
+   "desc": "Neck humbucker, tone rolled back: the rectified octave rings over sustained notes above the 12th fret",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "classic-rock"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [
+    {
+     "artist": "Jimi Hendrix",
+     "why": "transformer octave fuzz on the neck pickup, high on the neck",
+     "verified": false
+    }
+   ],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "dark"
+   ],
+   "default": true,
+   "params": {
+    "fuzz": 70,
+    "pickup": "Humbucker",
+    "tone": -40,
+    "level": -1.5
+   },
+   "notes": "Play single notes above the 12th fret and let them ring: 2f up to 24 dB over f on a held note at L_m = 1 H"
+  },
+  {
+   "id": "octave-bloom",
+   "type": "octafuzz",
+   "name": "Octave bloom",
+   "desc": "The pick attack in fuzz, the octave growing as the note decays and the input clamp lets go",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "stoner-rock"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage",
+    "dreamy"
+   ],
+   "params": {
+    "fuzz": 60,
+    "input": -6,
+    "level": 1.5
+   },
+   "notes": "Hold single notes: the coupling capacitors release the bias over a few tens of ms and the octave swells in"
+  },
+  {
+   "id": "octave-blend",
+   "type": "octafuzz",
+   "name": "Octave blend",
+   "desc": "Half fuzz, half octave: the octave as a colour on a plain fuzz, chords stay readable",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "garage-rock",
+    "classic-rock"
+   ],
+   "gain": "high",
+   "use": "rhythm",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "vintage"
+   ],
+   "params": {
+    "octave": 50,
+    "fuzz": 80,
+    "level": -2
+   },
+   "notes": "octave 50 % is a clone's lifted-diode position to first order: one half-wave added to the fuzz"
+  },
+  {
+   "id": "ring-chords",
+   "type": "octafuzz",
+   "name": "Ring chords",
+   "desc": "Full fuzz on double stops and bends: ring-modulator intermodulation and dive-bombs",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "psychedelic-rock",
+    "garage-rock"
+   ],
+   "gain": "high",
+   "use": "solo",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "extreme",
+    "aggressive"
+   ],
+   "params": {
+    "fuzz": 100,
+    "level": -1
+   },
+   "notes": "The rectifier multiplies the notes of a double stop: sum and difference tones, the dive on a bent double stop"
+  },
+  {
+   "id": "octave-lead-hot",
+   "type": "octafuzz",
+   "name": "Octave lead, hot",
+   "desc": "Raised bias and a 12 V supply: Q3 further from saturation, the octave holds on harder picking",
+   "inst": "guitar",
+   "genres": [
+    "rock"
+   ],
+   "subgenres": [
+    "hard-rock",
+    "psychedelic-rock"
+   ],
+   "gain": "high",
+   "use": "lead",
+   "refs": [],
+   "level_db": 0,
+   "tags": [
+    "modern",
+    "bright"
+   ],
+   "params": {
+    "bias": 60,
+    "voltage": 12,
+    "level": -3
+   },
+   "notes": "bias_v ≈ 7.5 V at 12 V (4.9 V stock at 9 V): more headroom before the duty moves; to be judged by ear"
+  }
+ ]
+}
