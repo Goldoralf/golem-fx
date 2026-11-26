@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option). Factory presets live in presets/<crate>.json.",
+  "_comment": "Hand-written: the expert groups of each golem-fx pedal, in the block sheet's order. The front panel is the pedal face (faces.json); every other parameter sits in exactly one group. `custom` is the bool parameter that unlocks the group (its params greyed until it is on); null when the group has none. Checked by tools/build-descriptors.py against the code. `help` gives the one-line help of parameters whose documentation table leaves the role empty. `depends` greys a parameter that only acts in one mode (the builder checks the value is an option). `gestures` lists the bool parameters that are a performance gesture played by a footswitch (momentary or latched by golem's foot mode): descriptors.json marks them `gesture: true`; never stored on in a preset or a scene, never on an expression pedal, shown read-only or hidden in a patch editor. Factory presets live in presets/<crate>.json.",
   "groups": {
     "gfx-boost": [],
     "gfx-gate": [
@@ -3715,5 +3715,16 @@
         "equals": "Custom"
       }
     }
+  },
+  "gestures": {
+    "gfx-delay": ["hold"],
+    "gfx-killswitch": ["kill"],
+    "gfx-pitch": ["bend"],
+    "gfx-swell": ["fire"],
+    "gfx-ducker": ["force"],
+    "gfx-vocoder": ["freeze"],
+    "gfx-stretch": ["capture", "freeze"],
+    "gfx-grains": ["freeze"],
+    "gfx-sustainer": ["feed"]
   }
 }

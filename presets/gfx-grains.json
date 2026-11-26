@@ -591,14 +591,14 @@
    "default": false,
    "params": {
     "mode": "Cloud",
-    "freeze": true,
+    "freeze": false,
     "scan": 25,
     "size": 200,
     "grains": 8,
     "spray": 5,
     "length": 4000
    },
-   "notes": "Freeze is on in the preset: it holds what the last four seconds held when the block came in"
+   "notes": "Stomp Freeze (the footswitch gesture) to hold the last four seconds, then scan through them; Freeze is a gesture, never stored on"
   },
   {
    "id": "granular-doubler",

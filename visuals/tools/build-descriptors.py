@@ -384,6 +384,10 @@ def build(manifest: dict) -> tuple:
 
         help_extra = json.loads((DATA / "groups.json").read_text()).get("help", {}).get(crate, {})
         dep_extra = json.loads((DATA / "groups.json").read_text()).get("depends", {}).get(crate, {})
+        gestures = json.loads((DATA / "groups.json").read_text()).get("gestures", {}).get(crate, [])
+        for i in gestures:
+            if kinds.get(i) != "bool":
+                errors.append(f"{crate}: gesture {i} must be a bool parameter of the plugin")
         custom_of = {i: g["custom"] for g in groups if g.get("custom") for i in g["params"] if i != g["custom"]}
         pout = {}
         for p in params:
@@ -402,6 +406,7 @@ def build(manifest: dict) -> tuple:
                 "options": None,
                 "exp": bool(p.get("exp")),
                 "structural": kind == "enum",
+                "gesture": i in gestures,
                 "depends": None,
                 "help": help_extra.get(i) or useful(first_sentence(d["role"]) if d.get("role") else None),
             }
